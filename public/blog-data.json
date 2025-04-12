@@ -1,15 +1,17 @@
 [
   {
-    "slug": "testing-things",
+    "slug": "lora-without-lorawan",
     "metadata": {
-      "title": "Testing things",
+      "title": "LoRa without LoRaWAN",
       "date": "2025-04-12",
-      "excerpt": "this is at est",
+      "excerpt": "How to use LoRa Layer 2 wireless protocol.",
       "tags": [
-        ""
+        "firmware",
+        "lora",
+        "wireless"
       ],
       "author": "Battle With Bytes",
-      "coverImage": "/images/blog/testing-things/cover.png"
+      "coverImage": "/api/blog-content/lora-without-lorawan/images/cover.png"
     }
   }
 ]

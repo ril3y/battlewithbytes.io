@@ -4,6 +4,9 @@ import matter from 'gray-matter';
 
 const BLOG_DIR = path.join(process.cwd(), 'src/content/blog');
 
+// Add cache busting for development
+const isDev = process.env.NODE_ENV === 'development';
+
 export interface BlogPost {
   slug: string;
   metadata: {
@@ -32,9 +35,38 @@ export function getBlogPostBySlug(slug: string): BlogPost {
   // Read content file
   const content = fs.readFileSync(contentPath, 'utf8');
   
+  // Debug: Log meta file path and existence
+  console.log(`[DEBUG] Reading meta from: ${metaPath}, exists: ${fs.existsSync(metaPath)}`);
+  
   // Read and parse metadata file
   const metaContent = fs.readFileSync(metaPath, 'utf8');
-  const { data } = matter(metaContent);
+  
+  // Debug: Log raw meta content
+  console.log(`[DEBUG] Raw meta content for ${slug}:`, metaContent);
+  
+  // Fix: Add frontmatter delimiters if they don't exist
+  const contentWithDelimiters = metaContent.trim().startsWith('---') 
+    ? metaContent 
+    : `---\n${metaContent}\n---`;
+  
+  const { data } = matter(contentWithDelimiters);
+  
+  // Debug: Log parsed metadata
+  console.log(`[DEBUG] Parsed metadata for ${slug}:`, data);
+  
+  // Process cover image path if it exists and is relative
+  let coverImage = data.coverImage;
+  if (coverImage && coverImage.startsWith('./')) {
+    // Convert relative path to absolute path for Next.js Image component
+    // For example, "./images/cover.png" becomes "/api/blog-content/lora-without-lorawan/images/cover.png"
+    const relativePath = coverImage.substring(2); // Remove './'
+    coverImage = `/api/blog-content/${slug}/${relativePath}`;
+    
+    // Add cache busting for development
+    if (isDev) {
+      coverImage = `${coverImage}?t=${new Date().toISOString().split('T')[0]}`;
+    }
+  }
   
   return {
     slug,
@@ -44,20 +76,39 @@ export function getBlogPostBySlug(slug: string): BlogPost {
       excerpt: data.excerpt || '',
       tags: data.tags || [],
       author: data.author || 'Battle With Bytes',
-      coverImage: data.coverImage,
+      coverImage: coverImage,
     },
     content,
   };
 }
 
+// Use a more compatible approach for development
+let cachedPosts: BlogPost[] | null = null;
+
 export function getAllBlogPosts(): BlogPost[] {
-  const slugs = getBlogSlugs();
+  // In development, always reload the data
+  if (isDev || !cachedPosts) {
+    const slugs = getBlogSlugs();
+    console.log(`[DEBUG] Found blog slugs:`, slugs);
+    
+    const posts = slugs
+      .map(slug => getBlogPostBySlug(slug))
+      .sort((a, b) => new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime());
+    
+    // Debug: Log processed posts data
+    console.log(`[DEBUG] Processed posts:`, posts.map(p => ({
+      slug: p.slug,
+      title: p.metadata.title,
+      titleType: typeof p.metadata.title,
+      titleLength: p.metadata.title ? p.metadata.title.length : 0
+    })));
+    
+    cachedPosts = posts;
+  } else {
+    console.log(`[DEBUG] Using cached posts`);
+  }
   
-  const posts = slugs
-    .map(slug => getBlogPostBySlug(slug))
-    .sort((a, b) => new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime());
-  
-  return posts;
+  return cachedPosts;
 }
 
 export function getBlogPostsByTag(tag: string): BlogPost[] {

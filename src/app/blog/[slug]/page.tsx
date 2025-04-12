@@ -9,13 +9,15 @@ type Params = {
 
 // Define the page props according to Next.js 15 requirements
 type PageProps = {
-  params: Params;
+  params: Promise<Params> | Params;
   searchParams: Record<string, string | string[] | undefined>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  // Use destructuring to get the slug
-  const { slug } = params;
+  // Await the params before using them
+  const resolvedParams = await Promise.resolve(params);
+  const slug = resolvedParams.slug;
+  
   const post = getBlogPostBySlug(slug);
   
   return {
@@ -30,8 +32,10 @@ export function generateStaticParams(): Array<Params> {
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
-  // Use destructuring to get the slug
-  const { slug } = params;
+  // Await the params before using them
+  const resolvedParams = await Promise.resolve(params);
+  const slug = resolvedParams.slug;
+  
   const post = getBlogPostBySlug(slug);
   
   return (

@@ -1,0 +1,100 @@
+# LoRa Without LoRaWAN  
+
+This is about using LoRa the way it was meant to be used — simple, fast, and without LoRaWAN bloat.  
+
+LoRaWAN is great for big networks.  
+But for embedded projects like Boats No Woes — it’s completely unnecessary.  
+
+## My Use Case  
+
+Project: Boats No Woes  
+
+Goal: Ultra-low power sensor network for boats.  
+
+Hardware: RAK3172 module (STM32WLE5 + SX1262 radio)  
+
+Problem:  
+- I don’t need LoRaWAN join procedures.  
+- I don’t want AT command parsing.  
+- I don’t need network servers.  
+
+What I want:  
+- Raw LoRa packets.  
+- Full control over the radio.  
+- Deterministic timing.  
+- Minimal power usage.  
+
+## How I Did It  
+
+The RAK3172 is perfect — once you erase the AT firmware.  
+
+Flash it with your own STM32 code using STM32CubeMX:  
+
+Guide here:  
+https://stm32world.com/wiki/RAK3172#Setting_up_the_IOC_file  
+
+Important Settings:  
+
+- Disable everything you don’t need.  
+- Setup only:  
+  - UART (for CLI)  
+  - GPIO (for sensors / wake / LEDs)  
+  - RTC (low power wakeup)  
+- Enable the SX1262 radio driver.  
+
+Bare metal LoRa means:  
+
+```c  
+Radio.SetTxConfig(...);  
+Radio.Send(buffer, length);  
+```  
+
+Done. No stacks. No middleware. No magic.  
+
+## Why This Rocks  
+
+- Lower power — I decide when to sleep.  
+- Smaller binary — flash is for code I wrote.  
+- Simpler debugging — packets in / packets out.  
+- Total control of LoRa parameters:  
+  - Bandwidth  
+  - Spreading Factor  
+  - TX Power  
+  - Frequencies  
+
+## Boats No Woes Design  
+
+- LoRa TX for hatch sensors / battery alerts.  
+- LoRa RX for ACK or remote commands.  
+- CLI over UART for config / debugging.  
+- SD card logging of traffic.  
+
+Network Architecture:  
+
+```
+[Sensor] ---> LoRa ---> [Gateway MCU] ---> WiFi/LTE ---> Cloud  
+```  
+
+Future ideas:  
+
+- LoRa-based OTA updates.  
+- Custom packet framing + encryption.  
+- Wake-on-radio or preamble sniffing for ultra-low power.  
+
+## Final Thoughts  
+
+LoRa without LoRaWAN is the right move for embedded control systems.  
+
+My rule:  
+
+> If you own the network — you don’t need LoRaWAN.  
+
+Raw LoRa is faster, cleaner, and puts control back in your hands.  
+
+Battle With Bytes is about control.  
+
+Hardware-first.  
+Minimal dependencies.  
+Maximum ownership.  
+
+More coming soon.  
