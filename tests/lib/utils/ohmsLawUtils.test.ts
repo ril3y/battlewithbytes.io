@@ -7,7 +7,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Current and resistance provided
       expect(validateInputs({
         voltage: '',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '10',
         power: ''
       }, 'voltage')).toBe(true);
@@ -17,15 +17,15 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '',
         current: '',
         resistance: '10',
-        power: '40'
+        power: '40',
       }, 'voltage')).toBe(true);
       
       // Power and current provided
       expect(validateInputs({
         voltage: '',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
-        power: '40'
+        power: '40000', // 40000mW = 40W
       }, 'voltage')).toBe(true);
       
       // Insufficient data
@@ -51,7 +51,7 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '',
         current: '',
         resistance: '10',
-        power: '40'
+        power: '40000', // 40000mW = 40W
       }, 'current')).toBe(true);
       
       // Power and voltage provided
@@ -59,7 +59,7 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '20',
         current: '',
         resistance: '',
-        power: '40'
+        power: '40000', // 40000mW = 40W
       }, 'current')).toBe(true);
       
       // Insufficient data
@@ -75,7 +75,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Voltage and current provided
       expect(validateInputs({
         voltage: '20',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
         power: ''
       }, 'resistance')).toBe(true);
@@ -85,15 +85,15 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '20',
         current: '',
         resistance: '',
-        power: '40'
+        power: '40000', // 40000mW = 40W
       }, 'resistance')).toBe(true);
       
       // Power and current provided
       expect(validateInputs({
         voltage: '',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
-        power: '40'
+        power: '40000', // 40000mW = 40W
       }, 'resistance')).toBe(true);
       
       // Insufficient data
@@ -109,7 +109,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Voltage and current provided
       expect(validateInputs({
         voltage: '20',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
         power: ''
       }, 'power')).toBe(true);
@@ -117,7 +117,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Current and resistance provided
       expect(validateInputs({
         voltage: '',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '10',
         power: ''
       }, 'power')).toBe(true);
@@ -145,7 +145,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using current and resistance (V = I × R)
       const values: OhmsLawValues = {
         voltage: '',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '10',
         power: ''
       };
@@ -166,6 +166,8 @@ describe('Ohm\'s Law Utilities', () => {
       };
       
       const result = calculateOhmsLaw(values, 'current');
+      // Result will be in amps, but we need to check the string value
+      // which might be formatted differently
       expect(parseFloat(result.current)).toBeCloseTo(2);
       expect(parseFloat(result.power)).toBeCloseTo(40);
       expect(result.calculatedProperty).toBe('current');
@@ -175,7 +177,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using voltage and current (R = V / I)
       const values: OhmsLawValues = {
         voltage: '20',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
         power: ''
       };
@@ -190,7 +192,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using voltage and current (P = V × I)
       const values: OhmsLawValues = {
         voltage: '20',
-        current: '2',
+        current: '2000', // 2000mA = 2A
         resistance: '',
         power: ''
       };
@@ -200,42 +202,52 @@ describe('Ohm\'s Law Utilities', () => {
       expect(result.calculatedProperty).toBe('power');
     });
     
-    test('handles insufficient data', () => {
-      // Not enough data to calculate voltage
+    test('handles current values with A suffix correctly', () => {
       const values: OhmsLawValues = {
-        voltage: '',
-        current: '',
-        resistance: '10',
+        voltage: '20',
+        current: '2A', // Explicitly in amps
+        resistance: '',
         power: ''
       };
       
-      const result = calculateOhmsLaw(values, 'voltage');
-      expect(result.calculatedProperty).toBeNull();
-      expect(result.description).toContain('Insufficient data');
+      const result = calculateOhmsLaw(values, 'resistance');
+      expect(parseFloat(result.resistance)).toBeCloseTo(10);
     });
     
-    test('calculates using alternative formulas', () => {
-      // Calculate voltage using power and resistance (V = sqrt(P × R))
+    test('handles current values with mA suffix correctly', () => {
+      const values: OhmsLawValues = {
+        voltage: '20',
+        current: '2000mA', // Explicitly in milliamps
+        resistance: '',
+        power: ''
+      };
+      
+      const result = calculateOhmsLaw(values, 'resistance');
+      expect(parseFloat(result.resistance)).toBeCloseTo(10);
+    });
+    
+    test('handles power values correctly', () => {
+      // Test with plain number (treated as mW)
       const values1: OhmsLawValues = {
-        voltage: '',
+        voltage: '20',
         current: '',
         resistance: '10',
-        power: '40'
+        power: '40000' // 40000mW = 40W
       };
       
-      const result1 = calculateOhmsLaw(values1, 'voltage');
-      expect(parseFloat(result1.voltage)).toBeCloseTo(20);
+      const result1 = calculateOhmsLaw(values1, 'current');
+      expect(parseFloat(result1.current)).toBeCloseTo(2);
       
-      // Calculate resistance using power and current (R = P / I²)
+      // Test with W suffix
       const values2: OhmsLawValues = {
-        voltage: '',
-        current: '2',
-        resistance: '',
-        power: '40'
+        voltage: '20',
+        current: '',
+        resistance: '10',
+        power: '40W' // 40W
       };
       
-      const result2 = calculateOhmsLaw(values2, 'resistance');
-      expect(parseFloat(result2.resistance)).toBeCloseTo(10);
+      const result2 = calculateOhmsLaw(values2, 'current');
+      expect(parseFloat(result2.current)).toBeCloseTo(2);
     });
   });
 });

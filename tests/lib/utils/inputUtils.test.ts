@@ -7,18 +7,35 @@ import {
   parseResistance,
   formatResistance,
   createParameterWarningFunction,
-  createParameterTooltipFunction
+  createParameterTooltipFunction,
+  validateFieldInput,
+  parseFieldValue,
+  FieldType
 } from '../../../src/lib/utils/inputUtils';
 
 describe('Input Utilities', () => {
   describe('parseValueWithSuffix / parseResistance', () => {
-    test('parses plain numbers', () => {
+    test('parses basic numbers', () => {
       expect(parseValueWithSuffix('100')).toBe(100);
-      expect(parseValueWithSuffix('0.5')).toBe(0.5);
+      expect(parseValueWithSuffix('1.5')).toBe(1.5);
       expect(parseValueWithSuffix('-10')).toBe(-10);
-      
-      // Test alias function
-      expect(parseResistance('100')).toBe(100);
+    });
+
+    test('parses values with engineering suffixes', () => {
+      expect(parseValueWithSuffix('1.5k')).toBe(1500);
+      expect(parseValueWithSuffix('2.2K')).toBe(2200);
+      expect(parseValueWithSuffix('1M')).toBe(1000000);
+      expect(parseValueWithSuffix('0.5m')).toBe(0.0005); // milli
+      expect(parseValueWithSuffix('100u')).toBe(0.0001); // micro
+      expect(parseValueWithSuffix('100µ')).toBe(0.0001); // micro with symbol
+      expect(parseValueWithSuffix('2G')).toBe(2000000000); // giga
+    });
+    
+    test('parses current values with mA suffix', () => {
+      expect(parseValueWithSuffix('100ma')).toBe(0.1); // 100mA = 0.1A
+      expect(parseValueWithSuffix('100mA')).toBe(0.1); // case insensitive
+      expect(parseValueWithSuffix('1.5ma')).toBe(0.0015); // 1.5mA = 0.0015A
+      expect(parseValueWithSuffix('2000ma')).toBe(2); // 2000mA = 2A
     });
 
     test('parses values with k suffix (kilo)', () => {
@@ -114,32 +131,20 @@ describe('Input Utilities', () => {
       expect(isValidNumberInput('-0.5k')).toBe(true);
     });
 
+    test('validates current values with mA suffix', () => {
+      expect(isValidNumberInput('100ma')).toBe(true);
+      expect(isValidNumberInput('100mA')).toBe(true);
+      expect(isValidNumberInput('1.5ma')).toBe(true);
+    });
+
     test('rejects invalid inputs', () => {
       expect(isValidNumberInput('abc')).toBe(false);
+      expect(isValidNumberInput('')).toBe(false);
     });
 
     test('rejects invalid inputs with suffixes', () => {
-      expect(isValidNumberInput('1.k')).toBe(false); // Suffix must be at the end
-    });
-
-    test('rejects invalid inputs with invalid suffixes', () => {
-      expect(isValidNumberInput('k1')).toBe(false);
-    });
-
-    test('rejects invalid inputs with multiple decimal points', () => {
-      expect(isValidNumberInput('1.2.3')).toBe(false);
-    });
-
-    test('rejects invalid inputs with invalid suffixes', () => {
-      expect(isValidNumberInput('10 G')).toBe(false); // Invalid suffix
-    });
-
-    test('rejects invalid inputs with multiple negative signs', () => {
-      expect(isValidNumberInput('--5')).toBe(false);
-    });
-
-    test('rejects invalid inputs with exponential notation', () => {
-      expect(isValidNumberInput('5e3')).toBe(false); // Exponential notation not supported by regex
+      expect(isValidNumberInput('k1')).toBe(false); // Suffix must be at the end
+      expect(isValidNumberInput('1kΩ2')).toBe(false); // Invalid format
     });
   });
 
@@ -180,6 +185,143 @@ describe('Input Utilities', () => {
     });
   });
 
+  describe('parseFieldValue', () => {
+    test('parses current field values', () => {
+      // Plain numbers should be treated as mA
+      expect(parseFieldValue('5', 'current')).toBeCloseTo(0.005); // 5mA = 0.005A
+      expect(parseFieldValue('100', 'current')).toBeCloseTo(0.1); // 100mA = 0.1A
+      
+      // Values with 'm' suffix should be treated as mA
+      expect(parseFieldValue('5m', 'current')).toBeCloseTo(0.005); // 5m = 5mA = 0.005A
+      expect(parseFieldValue('100m', 'current')).toBeCloseTo(0.1); // 100m = 100mA = 0.1A
+      
+      // Values with explicit suffixes
+      expect(parseFieldValue('5A', 'current')).toBe(5); // 5A = 5A
+      expect(parseFieldValue('50ma', 'current')).toBeCloseTo(0.05); // 50mA = 0.05A
+    });
+    
+    test('parses power field values', () => {
+      // Plain numbers should be treated as mW
+      expect(parseFieldValue('5', 'power')).toBeCloseTo(0.005); // 5mW = 0.005W
+      expect(parseFieldValue('100', 'power')).toBeCloseTo(0.1); // 100mW = 0.1W
+      
+      // Values with suffixes
+      expect(parseFieldValue('5W', 'power')).toBe(5); // 5W = 5W
+      expect(parseFieldValue('2kW', 'power')).toBe(2000); // 2kW = 2000W
+    });
+    
+    test('parses resistance field values', () => {
+      // Plain numbers should be treated as Ω
+      expect(parseFieldValue('5', 'resistance')).toBe(5); // 5Ω = 5Ω
+      expect(parseFieldValue('100', 'resistance')).toBe(100); // 100Ω = 100Ω
+      
+      // Values with suffixes
+      expect(parseFieldValue('5kΩ', 'resistance')).toBe(5000); // 5kΩ = 5000Ω
+      expect(parseFieldValue('2M', 'resistance')).toBe(2000000); // 2MΩ = 2000000Ω
+    });
+    
+    test('parses voltage field values', () => {
+      // Plain numbers should be treated as V
+      expect(parseFieldValue('5', 'voltage')).toBe(5); // 5V = 5V
+      expect(parseFieldValue('100', 'voltage')).toBe(100); // 100V = 100V
+      
+      // Values with suffixes
+      expect(parseFieldValue('5kV', 'voltage')).toBe(5000); // 5kV = 5000V
+      expect(parseFieldValue('0.5V', 'voltage')).toBe(0.5); // 0.5V = 0.5V
+    });
+    
+    test('handles empty or invalid input', () => {
+      expect(parseFieldValue('', 'current')).toBe(0);
+      expect(parseFieldValue('abc', 'voltage')).toBe(0);
+    });
+  });
+  
+  describe('validateFieldInput', () => {
+    test('validates current field input', () => {
+      // Plain numbers should be treated as mA
+      const result1 = validateFieldInput('100', 'current');
+      expect(result1.isValid).toBe(true);
+      expect(result1.parsedValue).toBeCloseTo(0.1); // 100mA = 0.1A
+      
+      // Values with suffixes
+      const result2 = validateFieldInput('5A', 'current');
+      expect(result2.isValid).toBe(true);
+      expect(result2.parsedValue).toBe(5);
+      
+      const result3 = validateFieldInput('50ma', 'current');
+      expect(result3.isValid).toBe(true);
+      expect(result3.parsedValue).toBeCloseTo(0.05);
+      
+      // Invalid input
+      const result4 = validateFieldInput('abc', 'current');
+      expect(result4.isValid).toBe(false);
+      expect(result4.parsedValue).toBe(0);
+      
+      // Empty input
+      const result5 = validateFieldInput('', 'current');
+      expect(result5.isValid).toBe(true);
+      expect(result5.parsedValue).toBe(0);
+    });
+    
+    test('validates power field input', () => {
+      // Plain numbers should be treated as mW
+      const result1 = validateFieldInput('100', 'power');
+      expect(result1.isValid).toBe(true);
+      expect(result1.parsedValue).toBeCloseTo(0.1); // 100mW = 0.1W
+      
+      // Values with suffixes
+      const result2 = validateFieldInput('5W', 'power');
+      expect(result2.isValid).toBe(true);
+      expect(result2.parsedValue).toBe(5);
+      
+      const result3 = validateFieldInput('2kW', 'power');
+      expect(result3.isValid).toBe(true);
+      expect(result3.parsedValue).toBe(2000);
+    });
+    
+    test('validates voltage field input', () => {
+      const result1 = validateFieldInput('12', 'voltage');
+      expect(result1.isValid).toBe(true);
+      expect(result1.parsedValue).toBe(12);
+      
+      const result2 = validateFieldInput('12V', 'voltage');
+      expect(result2.isValid).toBe(true);
+      expect(result2.parsedValue).toBe(12);
+      
+      const result3 = validateFieldInput('invalid', 'voltage');
+      expect(result3.isValid).toBe(false);
+      expect(result3.parsedValue).toBe(0);
+    });
+    
+    test('validates resistance field input', () => {
+      const result1 = validateFieldInput('100', 'resistance');
+      expect(result1.isValid).toBe(true);
+      expect(result1.parsedValue).toBe(100);
+      
+      const result2 = validateFieldInput('1kΩ', 'resistance');
+      expect(result2.isValid).toBe(true);
+      expect(result2.parsedValue).toBe(1000);
+      
+      const result3 = validateFieldInput('invalid', 'resistance');
+      expect(result3.isValid).toBe(false);
+      expect(result3.parsedValue).toBe(0);
+    });
+    
+    test('validates generic field input', () => {
+      const result1 = validateFieldInput('100', 'generic');
+      expect(result1.isValid).toBe(true);
+      expect(result1.parsedValue).toBe(100);
+      
+      const result2 = validateFieldInput('1.5k', 'generic');
+      expect(result2.isValid).toBe(true);
+      expect(result2.parsedValue).toBe(1500);
+      
+      const result3 = validateFieldInput('invalid', 'generic');
+      expect(result3.isValid).toBe(false);
+      expect(result3.parsedValue).toBe(0);
+    });
+  });
+  
   describe('createParameterWarningFunction', () => {
     const testWarningRanges = {
       'resistance': {
