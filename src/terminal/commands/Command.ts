@@ -9,4 +9,3 @@ export abstract class Command {
       return `${this.name} - ${this.description}\nUsage: ${this.usage}`
     }
   }
-  

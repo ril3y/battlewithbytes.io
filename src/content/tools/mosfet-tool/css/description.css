@@ -1,0 +1,61 @@
+.description-container {
+    padding: 20px;
+  }
+  
+  #output {
+    margin-bottom: 10px;
+  }
+  
+  .description-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+  }
+  
+  .description-table {
+    grid-row: 1 / 2;
+  }
+  
+  .description-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .description-table th, .description-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .description-table th {
+    background-color: #f4f4f4;
+  }
+  
+  .description-text {
+    grid-row: 2 / 3;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #fafafa;
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    word-wrap: break-word; /* Ensure long words break and wrap within the container */
+    font-family: monospace; /* Use a monospace font for better readability of equations */
+  }
+  
+  .description-details {
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #fafafa;
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    word-wrap: break-word; /* Ensure long words break and wrap within the container */
+    font-family: Arial, sans-serif; /* Use a readable font */
+  }
+  
+  .green {
+    color: green;
+  }
+  
+  .red {
+    color: red;
+  }
+  

@@ -1,0 +1,6 @@
+title: "Testing things"
+date: "2025-04-12"
+excerpt: "this is at est"
+tags: []
+author: "Battle With Bytes"
+coverImage: "/images/blog/testing-things/cover.png"

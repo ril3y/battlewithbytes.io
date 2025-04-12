@@ -111,6 +111,17 @@ async function listBlogPosts() {
   }
 }
 
+// Function to update blog data JSON
+function updateBlogData() {
+  try {
+    const generateScript = path.join(__dirname, 'generate-blog-data.js');
+    require(generateScript);
+    console.log(chalk.green('Blog data updated successfully.'));
+  } catch (error) {
+    console.error(chalk.red(`Error updating blog data: ${error.message}`));
+  }
+}
+
 // Function to create a new blog post
 async function createBlogPost() {
   console.log(chalk.green.bold('\nCreate New Blog Post\n'));
@@ -180,6 +191,9 @@ async function createBlogPost() {
     console.log(chalk.yellow(`Path: ${postDir}`));
     console.log(chalk.yellow(`Edit the content in: ${path.join(postDir, 'index.mdx')}`));
     console.log(chalk.yellow(`Add images to: ${imagesDir}`));
+    
+    // Update blog data JSON
+    updateBlogData();
   } catch (error) {
     console.error(chalk.red(`Error creating blog post: ${error.message}`));
   }
@@ -267,6 +281,9 @@ async function deleteBlogPost() {
     fs.rmSync(postDir, { recursive: true, force: true });
     
     console.log(chalk.green(`Blog post "${selectedPost.title}" deleted successfully.`));
+    
+    // Update blog data JSON
+    updateBlogData();
   } catch (error) {
     console.error(chalk.red(`Error deleting blog post: ${error.message}`));
   }

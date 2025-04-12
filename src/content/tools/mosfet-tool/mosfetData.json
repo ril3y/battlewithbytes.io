@@ -1,0 +1,102 @@
+{
+  "mosfets": {
+    "n-channel": {
+      "IRLZ44N": {
+        "vth": 1,
+        "rds_on": 0.022,
+        "Id": "47A",
+        "P_max": "94W",
+        "Vds_max": "55V",
+        "Vgs_max": "20V"
+      },
+      "2N7002K": {
+        "vth": 0.8,
+        "rds_on": 3.5,
+        "Id": "380mA",
+        "P_max": "200mW",
+        "Vds_max": "60V",
+        "Vgs_max": "20V"
+      },
+      "IRLB3034PBF": {
+        "vth": 1.35,
+        "rds_on": 0.0018,
+        "Id": "195A",
+        "P_max": "375W",
+        "Vds_max": "60V",
+        "Vgs_max": "20V"
+      },
+      "STP75NF75": {
+        "vth": 2,
+        "rds_on": 0.009,
+        "Id": "80A",
+        "P_max": "300W",
+        "Vds_max": "75V",
+        "Vgs_max": "20V"
+      },
+      "IRF3205": {
+        "vth": 2,
+        "rds_on": 0.008,
+        "Id": "110A",
+        "P_max": "200W",
+        "Vds_max": "55V",
+        "Vgs_max": "20V"
+      },
+      "IRL540N": {
+        "vth": 1,
+        "rds_on": 0.044,
+        "Id": "36A",
+        "P_max": "150W",
+        "Vds_max": "100V",
+        "Vgs_max": "20V"
+      }
+    },
+    "p-channel": {
+      "IRF9540N": {
+        "vth": -3,
+        "rds_on": 0.117,
+        "Id": "23A",
+        "P_max": "140W",
+        "Vds_max": "-100V",
+        "Vgs_max": "20V"
+      },
+      "IRF5305": {
+        "vth": -2,
+        "rds_on": 0.065,
+        "Id": "22A",
+        "P_max": "70W",
+        "Vds_max": "-55V",
+        "Vgs_max": "20V"
+      },
+      "IRF5210": {
+        "vth": -2,
+        "rds_on": 0.045,
+        "Id": "40A",
+        "P_max": "200W",
+        "Vds_max": "-100V",
+        "Vgs_max": "20V"
+      },
+      "AO3401": {
+        "vth": -1.5,
+        "rds_on": 0.03,
+        "Id": "4A",
+        "P_max": "1.4W",
+        "Vds_max": "-30V",
+        "Vgs_max": "20V"
+      },
+      "SI2301": {
+        "vth": -2,
+        "rds_on": 0.1,
+        "Id": "2.1A",
+        "P_max": "1.25W",
+        "Vds_max": "-20V",
+        "Vgs_max": "12V",
+        "test_inputs": {
+          "loadResistance": 240,
+          "gate_voltage": -3,
+          "vs": 12
+        }
+      }
+    
+    }
+  }
+}

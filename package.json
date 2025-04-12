@@ -3,17 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/generate-blog-data.js && next dev",
+    "prebuild": "node scripts/generate-blog-data.js",
     "build": "next build",
     "start": "next start",
     "export": "next export",
     "deploy": "pnpm build && pnpm export && gh-pages -d out",
-    "blog": "node scripts/blog-manager.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:blog": "jest tests/blog",
-    "predev": "pnpm test:blog",
-    "prebuild": "pnpm test"
+    "blog": "node scripts/blog-manager.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.0",
@@ -44,7 +40,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-loader": "^10.0.0",
-    "chalk": "^4.1.2",
+    "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",

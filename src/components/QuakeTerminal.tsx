@@ -14,8 +14,12 @@ const commands = Object.fromEntries(
     {
       description: cmd.description,
       usage: cmd.usage,
-      // Pass the arguments as an array.
-      fn: (...args: string[]) => cmd.execute(args),
+      // Pass the arguments as an array and handle both sync and async results
+      fn: async (...args: string[]) => {
+        const result = cmd.execute(args);
+        // Handle both synchronous and asynchronous results
+        return result instanceof Promise ? await result : result;
+      },
     },
   ])
 )

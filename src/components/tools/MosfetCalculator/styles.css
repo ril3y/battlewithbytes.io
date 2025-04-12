@@ -1,0 +1,252 @@
+/* MOSFET Calculator Styles - Adapted for Battle With Bytes cyber aesthetic */
+
+.mosfet-calculator {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+  width: 100%;
+}
+
+.mosfet-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .mosfet-container {
+    flex-direction: row;
+  }
+}
+
+.mosfet-left-section, 
+.mosfet-right-section {
+  flex: 1;
+}
+
+.mosfet-diagram {
+  position: relative;
+  margin-top: 1.5rem;
+  font-family: var(--font-mono);
+  white-space: pre;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* Aspect ratio 1:1 */
+}
+
+.scaled-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mosfet-inputs {
+  margin-top: 1.5rem;
+}
+
+.mosfet-inputs div {
+  margin-bottom: 1rem;
+}
+
+.mosfet-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.mosfet-input,
+.mosfet-select,
+.mosfet-button {
+  width: 100%;
+  padding: 0.75rem;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+}
+
+.mosfet-input:focus,
+.mosfet-select:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--accent-primary);
+}
+
+.mosfet-button {
+  background-color: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.mosfet-button:hover {
+  background-color: var(--accent-primary);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+}
+
+.description-container {
+  width: 100%;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.mosfet-output {
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  text-align: center;
+}
+
+.mosfet-output.conducting {
+  background-color: rgba(0, 255, 157, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.mosfet-output.not-conducting {
+  background-color: rgba(255, 0, 0, 0.1);
+  color: #ff5555;
+  border: 1px solid #ff5555;
+}
+
+.overlay {
+  position: absolute;
+  font-weight: bold;
+  color: var(--foreground);
+}
+
+.conducting-status {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.focused {
+  border: 2px dashed var(--accent-primary);
+  min-height: 2ch;
+  min-width: 2ch;
+}
+
+/* N-Channel Specific Overlays */
+.nchannel-vcc {
+  color: #ff5555;
+  font-weight: bold;
+  top: 5%;
+  left: 28%;
+}
+
+.n-channel_gate_green {
+  top: 36%;
+  left: 7%;
+  font-weight: bold;
+  color: var(--accent-primary);
+}
+
+.n-channel_drain_grey {
+  top: 17%;
+  left: 84%;
+  font-weight: bold;
+}
+
+.n-channel_source_orange {
+  top: 50%;
+  left: 88%;
+  font-weight: bold;
+  color: #ff9900;
+}
+
+/* P-Channel Specific Overlays */
+.p-channel_gate_green {
+  top: 36%;
+  left: 7%;
+  font-weight: bold;
+  color: var(--accent-primary);
+}
+
+.p-channel_drain_grey {
+  top: 50%;
+  left: 88%;
+  font-weight: bold;
+}
+
+.p-channel_source_orange {
+  top: 17%;
+  left: 84%;
+  font-weight: bold;
+  color: #ff9900;
+}
+
+.type-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.type-button {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: transparent;
+  border: 1px solid #333;
+  color: var(--foreground);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+}
+
+.type-button.active {
+  background-color: var(--accent-primary);
+  color: #000;
+  border-color: var(--accent-primary);
+}
+
+.type-button:hover:not(.active) {
+  border-color: var(--accent-primary);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.result-item {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+.result-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.result-value {
+  font-size: 1.1rem;
+  color: var(--accent-primary);
+}
