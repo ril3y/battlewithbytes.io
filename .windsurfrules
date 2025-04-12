@@ -1,6 +1,4 @@
-## Next.js AI Code Generation Guidelines
 
-### General Principles
 - Do not create folders or files if they already exist.
 - Follow existing project structure and conventions.
 - Always review and understand the current directory structure before making changes.
@@ -8,25 +6,21 @@
 - Prefer functional components and hooks over class components.
 - Do not create scripts or code that automates shell commands unless explicitly requested.
 
-### Coding Style
 - Follow established project linting and formatting rules (Prettier, ESLint, etc.).
 - Use TypeScript types and interfaces where appropriate for clarity and safety.
 - Use environment variables for configuration — never hardcode sensitive data.
 - Keep components and functions small — single-responsibility principle.
 
-### Changes & Commits
 - Do not make large changes to code that is passing tests unless explicitly instructed.
 - When modifying a feature:
   - Only touch what is necessary.
   - Leave unrelated code untouched.
 - Preserve existing code comments, structure, and naming unless directed otherwise.
 
-### Testing
 - All tests must pass before and after making changes.
 - Add new tests for new functionality or changes to critical logic.
 - Do not remove tests unless instructed.
 
-### Next.js Specific
 - Pages belong in `src/app/` (for App Router) or `src/pages/` (for Pages Router).
 - Components go in `src/components/`.
 - Utilities or shared code go in `src/lib/` or `src/utils/`.
@@ -34,11 +28,9 @@
 - For dynamic imports or API calls — handle loading and error states gracefully.
 - Follow Next.js best practices for SEO (metadata, Head component usage).
 
-### UX & Accessibility
 - Use semantic HTML.
 - Ensure basic accessibility (alt text for images, proper heading levels, labels for inputs).
 - Avoid introducing UI changes without context or approval.
 
----
 
-> Remember: The goal is to augment a human developer workflow — not overwrite decisions or force major structural changes without discussion.
+- Remember: The goal is to augment a human developer workflow — not overwrite decisions or force major structural changes without discussion.
