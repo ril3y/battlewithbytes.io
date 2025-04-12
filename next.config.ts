@@ -1,8 +1,12 @@
 import withMDX from '@next/mdx'
 import type { NextConfig } from 'next'
+import remarkGfm from 'remark-gfm'
 
 const nextConfig: NextConfig = {
   output: 'export',
+  images: {
+    unoptimized: true,
+  },
   webpack: (config, options) => {
     // Transpile react-console-emulator package
     config.module.rules.push({
@@ -19,4 +23,9 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withMDX()(nextConfig)
+export default withMDX({
+  options: {
+    remarkPlugins: [remarkGfm],
+    rehypePlugins: [],
+  }
+})(nextConfig)

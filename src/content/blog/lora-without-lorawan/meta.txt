@@ -1,0 +1,6 @@
+title: "Using LoRa on the RAK3172 Without LoRaWAN"
+date: "2025-04-12"
+excerpt: "A guide to setting up the RAK3172 module for pure LoRa communications without the complexity of LoRaWAN."
+tags: ["embedded", "LoRa", "hardware", "wireless", "STM32"]
+author: "Battle With Bytes"
+coverImage: "/images/blog/lora-without-lorawan/cover.png"

@@ -1,26 +1,118 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --accent-primary: #00ff9d;
+  --accent-secondary: #0088ff;
+  --grid-color: rgba(0, 255, 157, 0.05);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center center;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* Selection styling */
+::selection {
+  background: var(--accent-primary);
+  color: #000000;
+}
+
+/* Terminal styling overrides */
+.react-console-emulator {
+  font-family: var(--font-mono) !important;
+  background: rgba(10, 10, 10, 0.95) !important;
+}
+
+.react-console-emulator__content {
+  padding: 1rem !important;
+}
+
+.react-console-emulator__input {
+  caret-color: var(--accent-primary) !important;
+}
+
+/* Glowing text effect for headings */
+.glow-text {
+  text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
+}
+
+/* Code block styling */
+code {
+  font-family: var(--font-mono);
+  background: #1a1a1a;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+pre {
+  background: #1a1a1a;
+  border-radius: 4px;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* Link styling */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(0, 255, 157, 0.7);
+}
+
+/* Button styling */
+button, .button {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+}
+
+button:hover, .button:hover {
+  background: var(--accent-primary);
+  color: #000000;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
 }
