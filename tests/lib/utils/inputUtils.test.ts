@@ -116,11 +116,29 @@ describe('Input Utilities', () => {
 
     test('rejects invalid inputs', () => {
       expect(isValidNumberInput('abc')).toBe(false);
+    });
+
+    test('rejects invalid inputs with suffixes', () => {
       expect(isValidNumberInput('1.k')).toBe(false); // Suffix must be at the end
+    });
+
+    test('rejects invalid inputs with invalid suffixes', () => {
       expect(isValidNumberInput('k1')).toBe(false);
+    });
+
+    test('rejects invalid inputs with multiple decimal points', () => {
       expect(isValidNumberInput('1.2.3')).toBe(false);
+    });
+
+    test('rejects invalid inputs with invalid suffixes', () => {
       expect(isValidNumberInput('10 G')).toBe(false); // Invalid suffix
+    });
+
+    test('rejects invalid inputs with multiple negative signs', () => {
       expect(isValidNumberInput('--5')).toBe(false);
+    });
+
+    test('rejects invalid inputs with exponential notation', () => {
       expect(isValidNumberInput('5e3')).toBe(false); // Exponential notation not supported by regex
     });
   });
