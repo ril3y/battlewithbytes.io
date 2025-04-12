@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import nChannelImg from './img/nchannel.png';
 import pChannelImg from './img/pchannel.png';
 
@@ -8,8 +9,16 @@ function MosfetDiagram({ mosfetType, inputValues }) {
 
   return (
     <div className="mosfet-diagram">
-      <div className="image-container">
-        <img id="mosfetImage" className="scaled-image" src={mosfetImageSrc} alt="MOSFET Diagram" />
+      <div className="image-container relative">
+        <Image 
+          id="mosfetImage" 
+          className="scaled-image" 
+          src={mosfetImageSrc} 
+          alt="MOSFET Diagram"
+          width={500}
+          height={300}
+          priority
+        />
         <div id="gateValue" className={`overlay ${mosfetType}_gate_green`}>{vg}V</div>
         {mosfetType === 'n-channel' && (
           <div id="vccValue" className={`overlay nchannel-vcc`}>{vcc}V</div>

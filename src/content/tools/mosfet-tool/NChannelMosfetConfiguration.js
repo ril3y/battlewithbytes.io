@@ -137,7 +137,7 @@ function NChannelMosfetConfiguration({ mosfetName, mosfetDetails, inputValues, o
     if (inputValues && mosfetDetails) {
       checkConductionNChannel();
     }
-  }, [inputValues.vg, inputValues.loadResistance, inputValues.vcc]);
+  }, [inputValues.vg, inputValues.loadResistance, inputValues.vcc, inputValues, mosfetDetails, checkConductionNChannel]);
 
   return (
     <div>

@@ -1,9 +1,5 @@
-const fs = require('fs');
-const path = require('path');
-
-// Load the MOSFET data JSON file
-const mosfetDataPath = path.join(__dirname, 'mosfetData.json');
-let mosfetData = require(mosfetDataPath);
+import path from 'path';
+import mosfetData from './mosfetData.json';
 
 const calculateNChannelMOSFET = (inputValues, mosfetDetails) => {
     const { gate_voltage: vg, vcc, vs, loadResistance } = inputValues;
@@ -105,7 +101,7 @@ if (process.argv.includes('--generate')) {
     generateExpectedOutputs();
 }
 
-module.exports = {
+export {
     calculateNChannelMOSFET,
     calculatePChannelMOSFET,
     generateExpectedOutputs

@@ -134,7 +134,7 @@ function PChannelMosfetConfiguration({ mosfetName, mosfetDetails, inputValues, o
     if (inputValues && mosfetDetails) {
       checkConductionPChannel();
     }
-  }, [inputValues.vg, inputValues.loadResistance, inputValues.vs]);
+  }, [inputValues.vg, inputValues.loadResistance, inputValues.vs, inputValues, mosfetDetails, checkConductionPChannel]);
 
   return (
     <div>

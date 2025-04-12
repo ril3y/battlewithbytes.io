@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const { checkConduction } = require('../mosfetUtils'); // Adjust the import as necessary
-const { calculateNChannelMOSFET } = require('../mosfetCalculations'); // Adjust the import as necessary
+import fs from 'fs';
+import path from 'path';
+import { checkConduction } from '../mosfetUtils'; // Adjust the import as necessary
+import { calculateNChannelMOSFET } from '../mosfetCalculations'; // Adjust the import as necessary
 
 // Load the MOSFET data JSON file
 const mosfetDataPath = path.join(__dirname, '../mosfetData.json');

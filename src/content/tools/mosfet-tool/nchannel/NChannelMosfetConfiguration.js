@@ -4,7 +4,7 @@ import '../css/styles.css';
 import Description from '../Description'; // Ensure Description component is imported
 import { checkConduction } from '../mosfetUtils'; // Ensure the function is correctly imported
 
-function NChannelMosfetConfiguration({ mosfetName, mosfetDetails, inputValues, onDetailsChange, onInputChange, updateDescription }) {
+function NChannelMosfetConfiguration({ mosfetName, mosfetDetails, inputValues, onDetailsChange, onInputChange }) {
   const [description, setDescription] = useState('');
   const [conducting, setConducting] = useState(null);
   const [voltageAcrossLoad, setVoltageAcrossLoad] = useState('');
