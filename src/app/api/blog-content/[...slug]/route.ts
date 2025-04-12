@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const isDev = process.env.NODE_ENV === 'development';
+// This tells Next.js to exclude this route from static export
+export const dynamic = 'error';
 
 /**
  * API route to serve blog content files (images, etc.)
  * Example: /api/blog-content/lora-without-lorawan/images/cover.png
  */
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Get the file path from the URL directly instead of using route params
-    // This avoids the type issues with Next.js 15.3.0's dynamic params handling
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/api/blog-content/')[1]?.split('/') || [];
     
@@ -24,12 +24,11 @@ export function GET(request: NextRequest) {
     
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
-      console.warn(`File not found at path: ${filePath}`);
-      return new NextResponse('File not found', { status: 404 });
+      return new NextResponse('Not found', { status: 404 });
     }
     
-    // Get the file contents
-    const fileContents = fs.readFileSync(filePath);
+    // Read the file
+    const fileContent = fs.readFileSync(filePath);
     
     // Determine content type based on file extension
     const ext = path.extname(filePath).toLowerCase();
@@ -40,18 +39,18 @@ export function GET(request: NextRequest) {
     else if (ext === '.gif') contentType = 'image/gif';
     else if (ext === '.svg') contentType = 'image/svg+xml';
     else if (ext === '.webp') contentType = 'image/webp';
+    else if (ext === '.pdf') contentType = 'application/pdf';
+    else if (ext === '.json') contentType = 'application/json';
+    else if (ext === '.txt') contentType = 'text/plain';
+    else if (ext === '.html') contentType = 'text/html';
+    else if (ext === '.css') contentType = 'text/css';
+    else if (ext === '.js') contentType = 'application/javascript';
     
-    // Set cache headers based on environment
-    const cacheControl = isDev 
-      ? 'no-store, must-revalidate' // No caching in development
-      : 'public, max-age=86400';     // Cache for 1 day in production
-    
-    // Return the file
-    return new NextResponse(fileContents, {
-      status: 200,
+    // Return the file with the appropriate content type
+    return new NextResponse(fileContent, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': cacheControl,
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
       },
     });
   } catch (error) {
