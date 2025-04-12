@@ -58,10 +58,10 @@ export function getBlogPostBySlug(slug: string): BlogPost {
   let coverImage = data.coverImage;
   if (coverImage && coverImage.startsWith('./')) {
     // Convert relative path to absolute path for Next.js Image component
-    // For example, "./images/cover.png" becomes "/api/blog-content/lora-without-lorawan/images/cover.png"
-    const relativePath = coverImage.substring(2); // Remove './'
-    coverImage = `/api/blog-content/${slug}/${relativePath}`;
-    
+    // For example, "./images/cover.png" becomes "/images/blog/lora-without-lorawan/cover.png"
+    const imageName = path.basename(coverImage); // Get 'cover.png'
+    coverImage = `/images/blog/${slug}/${imageName}`; // Construct path relative to public dir
+ 
     // Add cache busting for development
     if (isDev) {
       coverImage = `${coverImage}?t=${new Date().toISOString().split('T')[0]}`;
