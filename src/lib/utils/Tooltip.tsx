@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface TooltipProps {
   text: string;
@@ -64,7 +64,7 @@ const Tooltip: React.FC<TooltipProps> = ({
     }, 500); // 500ms delay
   };
   
-  const handleHideTooltip = () => {
+  const handleHideTooltip = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -74,7 +74,7 @@ const Tooltip: React.FC<TooltipProps> = ({
     }
     
     setShowTooltip(false);
-  };
+  }, [tooltipId]);
   
   // Add event listeners for focus, blur, and keyboard events
   useEffect(() => {

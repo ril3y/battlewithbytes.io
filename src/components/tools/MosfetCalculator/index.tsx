@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { calculateNChannelConduction, calculatePChannelConduction } from './mosfetUtils';
 import MosfetTypeSelector from './MosfetTypeSelector';
 import MosfetDiagram from './MosfetDiagram';
 import NChannelMosfetConfiguration from './NChannelMosfetConfiguration';
@@ -55,7 +56,6 @@ export default function MosfetCalculator() {
       vs: '0',
       loadResistance: ''
     });
-    // Clear results when changing MOSFET type
     setDescription('');
     setConducting(null);
     setVoltageAcrossLoad('');
@@ -75,26 +75,46 @@ export default function MosfetCalculator() {
     setInputValues({ ...inputValues, [name]: value });
   };
 
-  // Use useCallback to prevent unnecessary re-renders and ensure the description persists
-  const updateDescription = useCallback((
-    desc: string, 
-    isConducting: boolean | null, 
-    voltageAcrossLoad: string, 
-    powerDissipated: string, 
-    currentThroughLoad: string, 
-    vgs: string, 
-    id: string, 
-    vd: string
-  ) => {
-    setDescription(desc);
-    setConducting(isConducting);
-    setVoltageAcrossLoad(voltageAcrossLoad);
-    setPowerDissipated(powerDissipated);
-    setCurrentThroughLoad(currentThroughLoad);
-    setVgs(vgs);
-    setId(id);
-    setVd(vd);
-  }, []);
+  useEffect(() => {
+    const vth = parseFloat(mosfetDetails.vth);
+    const rds_on = parseFloat(mosfetDetails.rds_on);
+    const vg = parseFloat(inputValues.vg);
+    const vs = parseFloat(inputValues.vs);
+    const vcc = parseFloat(inputValues.vcc);
+    const loadResistance = parseFloat(inputValues.loadResistance);
+
+    const hasRequiredDetails = !isNaN(vth) && !isNaN(rds_on);
+    const hasRequiredInputs = !isNaN(vg) && !isNaN(vs) && !isNaN(loadResistance);
+    const hasNChannelPower = mosfetType === 'n-channel' && !isNaN(vcc);
+    const hasPChannelPower = mosfetType === 'p-channel';
+
+    if (hasRequiredDetails && hasRequiredInputs && (hasNChannelPower || hasPChannelPower)) {
+      let results;
+      if (mosfetType === 'n-channel') {
+        results = calculateNChannelConduction(vth, vg, vs, vcc, loadResistance, rds_on);
+      } else {
+        results = calculatePChannelConduction(vth, vg, vs, vcc, loadResistance, rds_on);
+      }
+
+      setDescription(results.description || '');
+      setConducting(results.conducting);
+      setVoltageAcrossLoad(results.voltageAcrossLoad || '');
+      setPowerDissipated(results.powerDissipated || '');
+      setCurrentThroughLoad(results.currentThroughLoad || '');
+      setVgs(results.vgs || '');
+      setId(results.id || '');
+      setVd(results.vd || '');
+    } else {
+      setDescription('Please select a MOSFET and provide valid numeric input values.');
+      setConducting(null);
+      setVoltageAcrossLoad('');
+      setPowerDissipated('');
+      setCurrentThroughLoad('');
+      setVgs('');
+      setId('');
+      setVd('');
+    }
+  }, [mosfetType, inputValues, mosfetDetails]);
 
   return (
     <div className="mosfet-calculator">
@@ -111,7 +131,6 @@ export default function MosfetCalculator() {
               inputValues={inputValues}
               onDetailsChange={handleMosfetDetailsChange}
               onInputChange={handleInputChange}
-              updateDescription={updateDescription}
             />
           ) : (
             <PChannelMosfetConfiguration
@@ -120,7 +139,6 @@ export default function MosfetCalculator() {
               inputValues={inputValues}
               onDetailsChange={handleMosfetDetailsChange}
               onInputChange={handleInputChange}
-              updateDescription={updateDescription}
             />
           )}
         </div>

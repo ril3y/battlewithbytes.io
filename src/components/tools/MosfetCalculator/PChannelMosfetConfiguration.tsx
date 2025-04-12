@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 // import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
 import {
   parseValueWithSuffix,
@@ -12,7 +12,6 @@ import {
   getParameterTooltip  // Assuming these are correctly defined elsewhere
 } from '../../../lib/utils/inputUtils';
 import mosfetData from './mosfetData.json';
-import { calculatePChannelConduction } from './mosfetUtils'; // Import P-Channel calculation
 
 // --- Interfaces (Assume they are correct) ---
 interface MosfetDetails {
@@ -29,37 +28,27 @@ interface PChannelMosfets {
 }
 
 interface PChannelMosfetConfigurationProps {
-mosfetName: string;
-mosfetDetails: { vth: string; rds_on: string };
-inputValues: {
+  mosfetName: string;
+  mosfetDetails: { vth: string; rds_on: string };
+  inputValues: {
     vg: string;
     vcc: string;
     // vd: string; // vd seems unused as input
     vs: string;     // Vs is crucial for P-channel calculation
     loadResistance: string;
-};
-onDetailsChange: (name: string, details: { vth: string; rds_on: string }) => void;
-onInputChange: (name: string, value: string) => void;
-updateDescription: (
-    desc: string,
-    isConducting: boolean | null,
-    voltageAcrossLoad: string,
-    powerDissipated: string,
-    currentThroughLoad: string,
-    vgs: string,
-    id: string,
-    vd: string // vd is an output parameter
-) => void;
+  };
+  onDetailsChange: (name: string, details: { vth: string; rds_on: string }) => void;
+  onInputChange: (name: string, value: string) => void;
 }
 
 // --- Component ---
+// Use the interface for props
 export default function PChannelMosfetConfiguration({
   mosfetName,
   mosfetDetails,
   inputValues,
   onDetailsChange,
-  onInputChange,
-  updateDescription
+  onInputChange
 }: PChannelMosfetConfigurationProps) {
   const pChannelMosfets = mosfetData.mosfets['p-channel'] as PChannelMosfets;
   const [warnings, setWarnings] = useState<{[key: string]: string}>({});
@@ -85,7 +74,7 @@ export default function PChannelMosfetConfiguration({
     // Calculation triggers via useEffect
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let isValid = true; // Assume valid initially or for empty string
 
@@ -104,9 +93,9 @@ export default function PChannelMosfetConfiguration({
         setWarnings(prev => ({ ...prev, [name]: warning || '' }));
     }
      // Calculation triggers via useEffect
-  };
+  }, [onInputChange]);
 
-  const handleCustomParamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomParamChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let isValid = true; // Assume valid initially or for empty string
 
@@ -125,86 +114,7 @@ export default function PChannelMosfetConfiguration({
         setWarnings(prev => ({ ...prev, [name]: warning || '' }));
     }
     // Calculation triggers via useEffect
-  };
-
-  // --- Calculation Logic Moved to useEffect ---
-  useEffect(() => {
-    console.log("P-Channel useEffect triggered for calculation");
-    // Gather necessary values from state/props
-    const { vth: vthStr, rds_on: rdsOnStr } = mosfetDetails;
-    const { vg: vgStr, vcc: vccStr, vs: vsStr, loadResistance: loadResistanceStr } = inputValues;
-
-    // 1. Check if all *required* string inputs have values
-    //    For P-Channel, Vs is crucial and usually provided (often == Vcc)
-    if (!vthStr || !rdsOnStr || !vgStr || !vccStr || !vsStr || !loadResistanceStr) {
-      console.log("P-Channel required fields missing.");
-      updateDescription('Please fill in all required fields.', null, '', '', '', '', '', '');
-      return; // Exit early
-    }
-
-    // 2. Attempt to parse all values
-    const vth = parseFloat(vthStr);
-    const rds_on = parseValueWithSuffix(rdsOnStr); // Use robust parser
-    const vg = parseFloat(vgStr);
-    const vs = parseFloat(vsStr); // Vs must be provided for P-channel
-    const vcc = parseFloat(vccStr);
-    const loadResistance = parseValueWithSuffix(loadResistanceStr); // Use robust parser
-
-    // 3. Check if parsing resulted in valid numbers
-    if (isNaN(vth) || isNaN(rds_on) || isNaN(vg) || isNaN(vs) || isNaN(vcc) || isNaN(loadResistance) || loadResistance <= 0 || rds_on <= 0) {
-       console.log("P-Channel invalid numeric input detected after parsing:", { vth, rds_on, vg, vs, vcc, loadResistance });
-       let errorMsg = 'Invalid numeric value detected in inputs.';
-       if (isNaN(loadResistance) || loadResistance <= 0) errorMsg = 'Invalid or non-positive Load Resistance value.';
-       if (isNaN(rds_on) || rds_on <= 0) errorMsg = 'Invalid or non-positive Rds_on value.';
-       if (isNaN(vth)) errorMsg = 'Invalid Vth value.'; // Add more specifics
-       if (isNaN(vg)) errorMsg = 'Invalid Vg value.';
-       if (isNaN(vs)) errorMsg = 'Invalid Vs value.';
-       if (isNaN(vcc)) errorMsg = 'Invalid Vcc value.';
-       updateDescription(errorMsg, null, '', '', '', '', '', '');
-       return; // Exit early
-    }
-
-    // Optional P-Channel Specific Validation: Vth should be negative
-    if (vth >= 0) {
-        console.log("P-Channel Vth is not negative.");
-        updateDescription('Vth must be negative for a P-Channel MOSFET.', null, '', '', '', '', '', '');
-        return;
-    }
-
-    // 4. All checks passed, perform the calculation
-    console.log("P-Channel calculating with values:", { vth, vg, vs, vcc, loadResistance, rds_on });
-    const result = calculatePChannelConduction(vth, vg, vs, vcc, loadResistance, rds_on);
-
-    // 5. Update the description with results
-    console.log("P-Channel calculation result:", result);
-    updateDescription(
-      result.description,
-      result.conducting,
-      result.voltageAcrossLoad,
-      result.powerDissipated,
-      result.currentThroughLoad,
-      result.vgs,
-      result.id,
-      result.vd
-    );
-
-  }, [
-      mosfetDetails.vth,
-      mosfetDetails.rds_on,
-      inputValues.vg,
-      inputValues.vcc,
-      inputValues.vs, // Vs is a critical input here
-      inputValues.loadResistance,
-      updateDescription,
-      inputValues, // Add entire inputValues object
-      mosfetDetails // Add entire mosfetDetails object
-  ]);
-
-  // Effect to clear description when MOSFET name changes
-  useEffect(() => {
-    console.log("P-Channel MOSFET name changed, clearing description.");
-    updateDescription('', null, '', '', '', '', '', '');
-  }, [mosfetName, updateDescription]); // Add updateDescription
+  }, [mosfetDetails, onDetailsChange]);
 
   // --- JSX Rendering (Using standard HTML title for tooltips) ---
   return (

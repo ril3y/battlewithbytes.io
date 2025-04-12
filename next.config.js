@@ -12,10 +12,6 @@ const nextConfig = {
       config.cache = false;
     }
     return config;
-  },
-  // Exclude API routes from static export
-  experimental: {
-    excludeRoutes: ['/api/blog-content/**']
   }
 };
 
