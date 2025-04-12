@@ -287,3 +287,162 @@ export const parseResistance = (value: string): number => {
 export const formatResistance = (value: number): string => {
     return formatValueWithSuffix(value, 'Ω');
 };
+
+/**
+ * Checks if a parameter value is within a reasonable range for MOSFET applications
+ * Returns a warning message if the value is outside the expected range
+ * 
+ * @param paramType The type of parameter being checked
+ * @param value The value to check
+ * @param warningRanges Optional custom warning ranges for different parameter types
+ * @returns Warning message if value is unusual, empty string otherwise
+ */
+export const getParameterWarning = (
+  paramType: string, 
+  value: string | number,
+  warningRanges?: Record<string, {
+    min?: number;
+    max?: number;
+    checkFn?: (value: number) => boolean;
+    warningMessage: string;
+  }>
+): string => {
+  // Convert string to number if needed
+  const numValue = typeof value === 'string' ? 
+    (paramType === 'loadResistance' || paramType === 'resistance' ? parseValueWithSuffix(value) : parseFloat(value)) : 
+    value;
+  
+  // Skip check for empty or invalid values
+  if (isNaN(numValue)) return '';
+
+  // Use custom warning ranges if provided
+  if (warningRanges && warningRanges[paramType]) {
+    const range = warningRanges[paramType];
+    
+    // Check custom function if provided
+    if (range.checkFn && range.checkFn(numValue)) {
+      return range.warningMessage;
+    }
+    
+    // Check min/max ranges
+    if (range.min !== undefined && numValue < range.min) {
+      return range.warningMessage;
+    }
+    
+    if (range.max !== undefined && numValue > range.max) {
+      return range.warningMessage;
+    }
+    
+    return '';
+  }
+  
+  // Default MOSFET-specific warnings if no custom ranges provided
+  switch (paramType) {
+    case 'loadResistance':
+    case 'resistance':
+      if (numValue > 100000) {
+        return 'Warning: Resistance is unusually high for typical applications.';
+      } else if (numValue < 1) {
+        return 'Warning: Resistance is extremely low. This may cause excessive current flow.';
+      }
+      break;
+    
+    case 'vg':
+    case 'voltage':
+      if (Math.abs(numValue) > 20) {
+        return 'Warning: Voltage is unusually high.';
+      }
+      break;
+    
+    case 'vcc':
+      if (numValue > 50) {
+        return 'Warning: Supply voltage is high. Ensure this is within the component\'s maximum rating.';
+      } else if (numValue < 1) {
+        return 'Warning: Supply voltage is very low.';
+      }
+      break;
+    
+    case 'vth':
+      if (Math.abs(numValue) > 10) {
+        return 'Warning: Threshold voltage is unusually high.';
+      }
+      break;
+    
+    case 'rds_on':
+      if (numValue > 100) {
+        return 'Warning: On-resistance is unusually high.';
+      } else if (numValue < 0.001) {
+        return 'Warning: On-resistance is extremely low.';
+      }
+      break;
+      
+    case 'current':
+      if (numValue > 10) {
+        return 'Warning: Current is unusually high.';
+      } else if (numValue < 0.0001) {
+        return 'Warning: Current is extremely low.';
+      }
+      break;
+      
+    case 'power':
+      if (numValue > 100) {
+        return 'Warning: Power is unusually high.';
+      } else if (numValue < 0.0001) {
+        return 'Warning: Power is extremely low.';
+      }
+      break;
+  }
+  
+  return '';
+};
+
+/**
+ * Gets a tooltip description for a parameter
+ * 
+ * @param paramType The type of parameter
+ * @param tooltips Optional custom tooltips for different parameter types
+ * @returns Description of the parameter
+ */
+export const getParameterTooltip = (
+  paramType: string,
+  tooltips?: Record<string, string>
+): string => {
+  // Use custom tooltips if provided
+  if (tooltips && tooltips[paramType]) {
+    return tooltips[paramType];
+  }
+  
+  // Default MOSFET-specific tooltips
+  switch (paramType) {
+    case 'vth':
+      return 'Threshold Voltage (Vth): The gate-source voltage at which the MOSFET begins to conduct. For N-channel, typically positive (1-4V). For P-channel, typically negative (-1 to -4V). This is a key parameter that determines when the MOSFET turns on.';
+    
+    case 'rds_on':
+      return 'On Resistance (Rds_on): The drain-source resistance when the MOSFET is fully conducting. Lower values (0.001Ω to 1Ω) mean less power dissipation and higher efficiency. This is the resistance between drain and source when the MOSFET is fully turned on.';
+    
+    case 'vg':
+      return 'Gate Voltage (Vg): The voltage applied to the gate terminal. Controls whether the MOSFET conducts or not. Must exceed threshold voltage (Vth) to turn on an N-channel MOSFET or be below Vth for P-channel.';
+    
+    case 'vcc':
+      return 'Supply Voltage (Vcc): The main power supply voltage for the circuit. Provides the potential difference needed to drive current through the load when the MOSFET is conducting.';
+    
+    case 'vs':
+      return 'Source Voltage (Vs): The voltage at the source terminal. For N-channel MOSFETs, typically connected to ground (0V). For P-channel MOSFETs, typically connected to Vcc.';
+    
+    case 'loadResistance':
+    case 'resistance':
+      return 'Resistance (Ω): The resistance of the component or circuit. Can use suffixes like k (kilo), M (mega), m (milli), u (micro).';
+      
+    case 'voltage':
+      return 'Voltage (V): The electrical potential difference. Measured in volts (V).';
+      
+    case 'current':
+      return 'Current (I): The flow of electrical charge. Measured in amperes (A).';
+      
+    case 'power':
+      return 'Power (P): The rate of energy transfer. Measured in watts (W).';
+    
+    default:
+      return '';
+  }
+};

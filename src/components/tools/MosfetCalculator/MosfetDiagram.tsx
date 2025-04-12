@@ -22,7 +22,7 @@ export default function MosfetDiagram({ mosfetType, inputValues }: MosfetDiagram
           <div className="relative w-full h-64 bg-black/30 rounded-lg p-4">
             <svg viewBox="0 0 300 200" className="w-full h-full">
               {/* VCC Connection */}
-              <line x1="150" y1="10" x2="150" y2="50" stroke="#00ff9d" strokeWidth="2" />
+              <line x1="150" y1="20" x2="150" y2="50" stroke="#00ff9d" strokeWidth="2" />
               
               {/* Load Resistor */}
               <path d="M150,50 L140,55 L160,65 L140,75 L160,85 L140,95 L160,105 L150,110" fill="none" stroke="#00ff9d" strokeWidth="2" />
@@ -35,7 +35,7 @@ export default function MosfetDiagram({ mosfetType, inputValues }: MosfetDiagram
               )}
               
               {/* VCC Label */}
-              <text x="160" y="30" fill="#ff5555" className="text-sm font-mono">
+              <text x="135" y="10" fill="#ff5555" className="text-sm font-mono">
                 {inputValues.vcc ? `${inputValues.vcc}V` : 'VCC'}
               </text>
               
@@ -98,7 +98,7 @@ export default function MosfetDiagram({ mosfetType, inputValues }: MosfetDiagram
           <div className="relative w-full h-64 bg-black/30 rounded-lg p-4">
             <svg viewBox="0 0 300 200" className="w-full h-full">
               {/* VCC Connection */}
-              <line x1="150" y1="10" x2="150" y2="25" stroke="#00ff9d" strokeWidth="2" />
+              <line x1="150" y1="20" x2="150" y2="25" stroke="#00ff9d" strokeWidth="2" />
               
               {/* P-Channel Enhancement MOSFET Symbol (Wikipedia style) */}
               {/* Source Connection */}
@@ -134,7 +134,7 @@ export default function MosfetDiagram({ mosfetType, inputValues }: MosfetDiagram
               <polygon points="145,55 140,65 145,75" fill="#00ff9d" stroke="#00ff9d" strokeWidth="1" />
               
               {/* VCC Label */}
-              <text x="160" y="25" fill="#ff5555" className="text-sm font-mono">
+              <text x="135" y="10" fill="#ff5555" className="text-sm font-mono">
                 {inputValues.vcc ? `${inputValues.vcc}V` : 'VCC'}
               </text>
               

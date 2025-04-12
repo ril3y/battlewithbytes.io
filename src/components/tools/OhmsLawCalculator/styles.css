@@ -1,0 +1,96 @@
+/* Ohm's Law Calculator Styles */
+
+.ohms-law-calculator {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: var(--font-sans);
+}
+
+.ohms-law-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .ohms-law-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ohms-law-left-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ohms-law-right-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ohms-law-diagram {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ohms-law-form input,
+.ohms-law-form select {
+  background-color: rgba(10, 10, 10, 0.3);
+  border: 1px solid #333;
+  color: #ededed;
+  transition: all 0.2s ease;
+}
+
+.ohms-law-form input:focus,
+.ohms-law-form select:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.2);
+  outline: none;
+}
+
+.ohms-law-form button {
+  transition: all 0.2s ease;
+}
+
+.ohms-law-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ohms-law-form button:active {
+  transform: translateY(0);
+}
+
+/* Glow effect for calculated values */
+.ohms-law-description .bg-\[\#00ff9d\]\/10 {
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+}
+
+/* Grid pattern background for the diagram */
+.ohms-law-diagram .relative {
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0;
+}
+
+/* Pulse animation for calculated property */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 157, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 157, 0);
+  }
+}
+
+.bg-\[\#00ff9d\]\/10 {
+  animation: pulse 2s infinite;
+}
