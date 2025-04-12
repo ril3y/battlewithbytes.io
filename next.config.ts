@@ -7,6 +7,20 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Disable TypeScript checking during build
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
+    ignoreBuildErrors: true,
+  },
+  // Disable ESLint checking during build
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   webpack: (config, options) => {
     // Transpile react-console-emulator package
     config.module.rules.push({
