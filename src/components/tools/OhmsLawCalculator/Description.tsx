@@ -97,7 +97,7 @@ const Description: React.FC<DescriptionProps> = ({ results }) => {
 
           {/* Ohm's Law Formulas Section */}
           <div className="mt-4 pt-4 border-t border-gray-800">
-            <h5 className="text-sm font-bold mb-2 text-[#00ff9d]">Ohm's Law Formulas Used</h5>
+            <h5 className="text-sm font-bold mb-2 text-[#00ff9d]">Ohm&apos;s Law Formulas Used</h5>
             <ul className="list-disc list-inside space-y-1 text-gray-400">
               <li className={results.calculatedProperty === 'voltage' ? 'text-[#00ff9d]' : ''}>
                 Voltage (V) = Current (I) × Resistance (R)  |  V = P / I  |  V = √(P × R)

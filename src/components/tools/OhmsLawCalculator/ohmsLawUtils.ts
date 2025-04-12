@@ -196,11 +196,11 @@ export function validateInputs(
   const resistance = parseValueWithSuffix(values.resistance);
   const power = parseValueWithSuffix(values.power);
 
-  let count = 0;
-  if (voltage > 0) count++;
-  if (current > 0) count++;
-  if (resistance > 0) count++;
-  if (power > 0) count++;
+  // let count = 0;
+  // if (voltage > 0) count++;
+  // if (current > 0) count++;
+  // if (resistance > 0) count++;
+  // if (power > 0) count++;
 
   // Need exactly 2 values provided (excluding the one being calculated)
   // Or just check if enough data exists for the specific calculation
@@ -222,11 +222,11 @@ export function validateInputs(
 
   // Also ensure that not *too many* inputs were provided, as calculateOhmsLaw uses specific pairs.
   // Count how many of the *needed* inputs for the non-calculated fields exist.
-  let providedInputCount = 0;
-  if (calculationMode !== 'voltage' && voltage > 0) providedInputCount++;
-  if (calculationMode !== 'current' && current > 0) providedInputCount++;
-  if (calculationMode !== 'resistance' && resistance > 0) providedInputCount++;
-  if (calculationMode !== 'power' && power > 0) providedInputCount++;
+  // let providedInputCount = 0;
+  // if (calculationMode !== 'voltage' && voltage > 0) providedInputCount++;
+  // if (calculationMode !== 'current' && current > 0) providedInputCount++;
+  // if (calculationMode !== 'resistance' && resistance > 0) providedInputCount++;
+  // if (calculationMode !== 'power' && power > 0) providedInputCount++;
 
 
   // The core logic now checks specific pairs, so just ensure at least 2 inputs are provided overall.

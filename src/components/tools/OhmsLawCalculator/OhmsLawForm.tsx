@@ -54,7 +54,7 @@ const OhmsLawForm: React.FC<OhmsLawFormProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    let fieldType = name as keyof OhmsLawValues; // Get field type from name
+    const fieldType = name as keyof OhmsLawValues; // Get field type from name
 
     // --- Basic Input Filtering (Optional but good UX) ---
     let allowUpdate = false;

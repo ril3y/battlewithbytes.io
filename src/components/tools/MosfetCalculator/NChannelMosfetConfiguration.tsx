@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
+// import Tooltip from '../../../lib/utils/Tooltip'; // Commented out unused import
 import {
   parseValueWithSuffix,
   formatValueWithSuffix,
-  isValidNumberInput, // Keep for basic validation if needed, but rely on parsing for calculation check
-  isValidResistance,
+  // isValidNumberInput, // Commented out unused import
+  // isValidResistance, // Commented out unused import
   isValidVoltage,
   getParameterWarning, // Assuming these are correctly defined elsewhere
   getParameterTooltip  // Assuming these are correctly defined elsewhere
@@ -193,7 +193,9 @@ export default function NChannelMosfetConfiguration({
       inputValues.vcc, // Dependency: Vcc string
       inputValues.vs, // Dependency: Vs string (even if defaults)
       inputValues.loadResistance, // Dependency: Load Resistance string
-      updateDescription // Dependency: Callback function
+      updateDescription, // Dependency: Callback function
+      inputValues, // Add entire inputValues object
+      mosfetDetails // Add entire mosfetDetails object
   ]); // Add updateDescription to dependency array
 
 

@@ -1,4 +1,3 @@
-import path from 'path';
 import mosfetData from './mosfetData.json';
 
 const calculateNChannelMOSFET = (inputValues, mosfetDetails) => {

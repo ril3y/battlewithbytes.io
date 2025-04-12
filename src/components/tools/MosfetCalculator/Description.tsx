@@ -11,7 +11,12 @@ interface DescriptionProps {
   vgs: string;
   id: string;
   vd: string;
-  mosfetDetails: any;
+  mosfetDetails: {
+    rds_on?: string;
+    vgs_th?: string;
+    type?: string;
+    [key: string]: string | undefined;
+  } | null;
 }
 
 export default function Description({
@@ -40,12 +45,12 @@ export default function Description({
     const idNum = parseFloat(id);
     const vdNum = parseFloat(vd);
     const voltageAcrossLoadNum = parseFloat(voltageAcrossLoad);
-    const currentThroughLoadNum = parseFloat(currentThroughLoad);
-    const powerDissipatedNum = parseFloat(powerDissipated);
+    // These variables are declared but not used in the component
+    // const currentThroughLoadNum = parseFloat(currentThroughLoad);
+    // const powerDissipatedNum = parseFloat(powerDissipated);
     
-    // Recalculate power dissipation with higher precision
-    // P = Id² × Rds_on
-    const recalculatedPower = idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0');
+    // This calculation is not used in the component
+    // const recalculatedPower = idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0');
     
     return (
       <div className="math-explanation bg-black/50 p-4 rounded-lg border border-gray-800 font-mono text-sm mt-4">

@@ -78,7 +78,7 @@ export default function OhmsLawCalculator() {
       <div className="max-w-screen-xl mx-auto">
         <div className="ohms-law-container">
           <div className="ohms-law-left-section">
-            <h2 className="text-xl font-bold mb-4">Ohm's Law Calculator</h2>
+            <h2 className="text-xl font-bold mb-4">Ohm&apos;s Law Calculator</h2>
             <OhmsLawDiagram values={values} calculatedProperty={results.calculatedProperty} />
           </div>
           <div className="ohms-law-right-section">

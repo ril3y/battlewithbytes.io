@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
+// import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
 import {
   parseValueWithSuffix,
   formatValueWithSuffix,
   // isValidNumberInput, // Less critical now, validation happens in useEffect
-  isValidResistance, // Can keep for basic input filtering if desired
+  // isValidResistance, // Can keep for basic input filtering if desired
   isValidVoltage,   // Can keep for basic input filtering if desired
   getParameterWarning, // Assuming these are correctly defined elsewhere
   getParameterTooltip  // Assuming these are correctly defined elsewhere
@@ -195,7 +195,9 @@ export default function PChannelMosfetConfiguration({
       inputValues.vcc,
       inputValues.vs, // Vs is a critical input here
       inputValues.loadResistance,
-      updateDescription // Add callback to dependencies
+      updateDescription,
+      inputValues, // Add entire inputValues object
+      mosfetDetails // Add entire mosfetDetails object
   ]);
 
   // Effect to clear description when MOSFET name changes

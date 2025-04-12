@@ -53,7 +53,7 @@ export const checkConductionNChannel = (inputValues, mosfetDetails, updateDescri
   const specifiedRdsOn = parseFloat(mosfetDetails.rds_on);
   const specifiedVgs = parseFloat(mosfetDetails.rds_on_vgs);
 
-  const { adjustedRdsOn, conductionPercentage: cp, isAdjusted } = calculateAdjustedRdsOn(specifiedRdsOn, specifiedVgs, vgs, false);
+  const { adjustedRdsOn, conductionPercentage: cp } = calculateAdjustedRdsOn(specifiedRdsOn, specifiedVgs, vgs, false);
   conductionPercentage = cp;
 
   const values = {

@@ -16,10 +16,10 @@ interface OhmsLawDiagramProps {
  * @param fieldType The type of field (voltage, current, resistance, power)
  * @returns Formatted value with appropriate unit
  */
-const formatDisplayValue = (value: string, fieldType: string): string => {
+const formatDisplayValue = (value: string, fieldType: 'voltage' | 'current' | 'resistance' | 'power'): string => {
   if (!value || value.trim() === '') return '';
   
-  const numericValue = parseFieldValue(value, fieldType as any);
+  const numericValue = parseFieldValue(value, fieldType);
   
   // Special handling for current to display mA when appropriate
   if (fieldType === 'current') {
@@ -74,7 +74,7 @@ const OhmsLawDiagram: React.FC<OhmsLawDiagramProps> = ({ values, calculatedPrope
   return (
     <div className="ohms-law-diagram">
       <div className="bg-black/30 border border-gray-800 rounded-lg p-6 mb-6">
-        <div className="text-sm text-[#00ff9d] font-mono mb-4">OHM'S LAW DIAGRAM</div>
+        <div className="text-sm text-[#00ff9d] font-mono mb-4">OHM&apos;S LAW DIAGRAM</div>
         
         <div className="w-full max-w-md mx-auto">
           <svg viewBox="0 0 400 400" className="w-full h-auto">
