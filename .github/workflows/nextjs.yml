@@ -63,16 +63,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Add TypeScript configuration for import attributes
-      - name: Configure TypeScript
+      # Downgrade @mdx-js/loader to a compatible version
+      - name: Fix MDX loader compatibility
         run: |
-          echo '{ "compilerOptions": { "moduleResolution": "bundler" } }' > tsconfig.build.json
+          pnpm remove @mdx-js/loader @mdx-js/react
+          pnpm add @mdx-js/loader@2.3.0 @mdx-js/react@2.3.0
 
       # Step 4: Build and Export with environment variables
       - name: Build Next.js site
-        run: |
-          export NODE_OPTIONS="--experimental-import-attributes"
-          pnpm run build
+        run: pnpm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
