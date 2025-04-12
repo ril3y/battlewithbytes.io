@@ -52,7 +52,7 @@ const OhmsLawDiagram: React.FC<OhmsLawDiagramProps> = ({ values, calculatedPrope
               {values.voltage && (
                 <text 
                   x="0" 
-                  y="40" 
+                  y="-35" 
                   textAnchor="middle" 
                   fill={getHighlightColor('voltage')} 
                   className="text-sm font-mono"
@@ -85,7 +85,7 @@ const OhmsLawDiagram: React.FC<OhmsLawDiagramProps> = ({ values, calculatedPrope
               {values.current && (
                 <text 
                   x="0" 
-                  y="40" 
+                  y="50" 
                   textAnchor="middle" 
                   fill={getHighlightColor('current')} 
                   className="text-sm font-mono"
@@ -118,7 +118,7 @@ const OhmsLawDiagram: React.FC<OhmsLawDiagramProps> = ({ values, calculatedPrope
               {values.resistance && (
                 <text 
                   x="0" 
-                  y="40" 
+                  y="50" 
                   textAnchor="middle" 
                   fill={getHighlightColor('resistance')} 
                   className="text-sm font-mono"

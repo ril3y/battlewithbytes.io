@@ -12,6 +12,7 @@
  * - "100u" -> 0.0001 (micro)
  * - "100µ" -> 0.0001 (micro)
  * - "2G" -> 2000000000 (giga)
+ * - "100ma" -> 0.1 (milliamps)
  *
  * @param value The value as a string
  * @returns The parsed value as a number, or 0 for invalid/empty input.
@@ -23,6 +24,14 @@ export const parseValueWithSuffix = (value: string): number => {
   // Remove all spaces and common units like Ω, V, A, etc. for parsing flexibility
   // Keep the core number and potential suffix
   const cleanedValue = value.replace(/[\sΩVAWFHz]/gi, ''); // Add other units if needed
+
+  // Special case for 'ma' suffix (milliamps)
+  if (cleanedValue.toLowerCase().endsWith('ma')) {
+    const numPart = cleanedValue.slice(0, -2);
+    const numValue = parseFloat(numPart);
+    if (isNaN(numValue)) return 0;
+    return numValue / 1000; // Convert milliamps to amps
+  }
 
   // Regex to match optional sign, number (potentially decimal), and optional suffix
   // Ensures suffix is at the very end. Allows '.' or '5.'
@@ -53,28 +62,27 @@ export const parseValueWithSuffix = (value: string): number => {
     return 0;
   }
 
-  if (!suffix) {
-    // No suffix, return the parsed number
-    return numValue;
+  // Apply suffix multiplier
+  if (suffix) {
+    switch (suffix) {
+      case 'k':
+      case 'K':
+        return numValue * 1000;
+      case 'M':
+        return numValue * 1000000;
+      case 'm':
+        return numValue / 1000; // milli
+      case 'u':
+      case 'µ':
+        return numValue / 1000000; // micro
+      case 'G':
+        return numValue * 1000000000; // giga
+      default:
+        return numValue;
+    }
   }
 
-  switch (suffix) {
-    case 'k':
-    case 'K':
-      return numValue * 1000;
-    case 'M':
-      return numValue * 1000000;
-    case 'G': // Added Giga
-      return numValue * 1000000000;
-    case 'm':
-      return numValue / 1000; // milli
-    case 'u':
-    case 'µ': // Added micro symbol
-      return numValue / 1000000; // micro
-    default:
-      // Should not happen if regex is correct, but return 0 as fallback
-      return 0;
-  }
+  return numValue;
 };
 
 /**

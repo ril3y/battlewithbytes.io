@@ -9,6 +9,9 @@ interface TooltipProps {
   className?: string;
 }
 
+// Create a global state to track the active tooltip
+let activeTooltipId: string | null = null;
+
 /**
  * A reusable tooltip component that can be used across different tools
  * 
@@ -25,6 +28,8 @@ const Tooltip: React.FC<TooltipProps> = ({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const childRef = useRef<HTMLDivElement>(null);
+  const tooltipId = useRef(`tooltip-${Math.random().toString(36).substr(2, 9)}`).current;
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Function to check if child contains an input element that has focus
   const checkChildFocus = () => {
@@ -36,25 +41,78 @@ const Tooltip: React.FC<TooltipProps> = ({
       }
     }
   };
+
+  const handleShowTooltip = () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Set a timeout to show the tooltip
+    timeoutRef.current = setTimeout(() => {
+      // Close any other open tooltips
+      if (activeTooltipId && activeTooltipId !== tooltipId) {
+        // This will trigger a re-render for any other open tooltip
+        document.dispatchEvent(new CustomEvent('closeOtherTooltips', {
+          detail: { currentTooltipId: tooltipId }
+        }));
+      }
+      
+      // Set this as the active tooltip
+      activeTooltipId = tooltipId;
+      setShowTooltip(true);
+    }, 500); // 500ms delay
+  };
   
-  // Add event listeners for focus and blur events
+  const handleHideTooltip = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    if (activeTooltipId === tooltipId) {
+      activeTooltipId = null;
+    }
+    
+    setShowTooltip(false);
+  };
+  
+  // Add event listeners for focus, blur, and keyboard events
   useEffect(() => {
     const handleFocus = () => {
       checkChildFocus();
     };
     
     const handleKeyDown = () => {
-      setShowTooltip(false);
+      handleHideTooltip();
+    };
+    
+    const handleCloseOtherTooltips = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail.currentTooltipId !== tooltipId) {
+        setShowTooltip(false);
+      }
     };
     
     document.addEventListener('focusin', handleFocus);
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('closeOtherTooltips', handleCloseOtherTooltips as EventListener);
     
+    // Clean up event listeners on unmount
     return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       document.removeEventListener('focusin', handleFocus);
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('closeOtherTooltips', handleCloseOtherTooltips as EventListener);
+      
+      // Clear active tooltip if this component is unmounted while active
+      if (activeTooltipId === tooltipId) {
+        activeTooltipId = null;
+      }
     };
-  }, []);
+  }, [tooltipId]);
 
   // Position-specific classes
   const positionClasses = {
@@ -68,9 +126,9 @@ const Tooltip: React.FC<TooltipProps> = ({
     <div className="relative inline-block w-full">
       <div
         ref={childRef}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        onFocus={() => setShowTooltip(false)}
+        onMouseEnter={handleShowTooltip}
+        onMouseLeave={handleHideTooltip}
+        onFocus={() => handleHideTooltip()}
         className="w-full"
       >
         {children}
