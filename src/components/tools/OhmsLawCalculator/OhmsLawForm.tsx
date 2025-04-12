@@ -83,13 +83,21 @@ const OhmsLawForm: React.FC<OhmsLawFormProps> = ({
     if (value === '' || isValidNumberInput(value)) {
       onValueChange(name, value);
       
-      // Check for warnings
-      const { isValid, parsedValue } = validateFieldInput(value, name as FieldType);
-      if (isValid) {
-        const warning = getParameterWarning(name as string, parsedValue);
+      // Check for warnings only if the field has a value
+      if (value.trim() !== '') {
+        const { isValid, parsedValue } = validateFieldInput(value, name as FieldType);
+        if (isValid) {
+          const warning = getParameterWarning(name as string, parsedValue);
+          setWarnings(prev => ({
+            ...prev,
+            [name]: warning
+          }));
+        }
+      } else {
+        // Clear warning if field is empty
         setWarnings(prev => ({
           ...prev,
-          [name]: warning
+          [name]: ''
         }));
       }
     }
