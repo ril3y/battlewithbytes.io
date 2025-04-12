@@ -75,15 +75,11 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
-      - name: Export static site
-        run: pnpm run export # Ensure your package.json has an 'export' script: "next export"
-
       # Step 5: Upload artifact
       - name: Upload artifact for deployment
         uses: actions/upload-pages-artifact@v3
         with:
-          # Path needs to match the output directory of `next export`
-          # By default, this is 'out', but check your next.config.js if you customized it
+          # Path to the output directory from next build with output: 'export'
           path: ./out
 
   deploy:
