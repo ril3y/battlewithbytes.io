@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const chalk = require('chalk');
-const { program } = require('commander');
+const { Command } = require('commander');
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -305,6 +305,8 @@ async function showMainMenu() {
 }
 
 // Command-line interface setup
+const program = new Command();
+
 program
   .name('blog-manager')
   .description('CLI tool to manage blog posts for Battle With Bytes')
