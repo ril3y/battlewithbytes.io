@@ -10,6 +10,7 @@ const navItems = [
   { name: "Tools", path: "/tools" },
   { name: "Projects", path: "/projects" },
   { name: "About", path: "/about" },
+  { name: "Contact", path: "/contact" },
 ];
 
 export default function Navigation() {

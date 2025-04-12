@@ -1,0 +1,14 @@
+# SMTP Configuration for Contact Form
+# Copy these variables to your .env.local file
+
+# SMTP Server Settings
+SMTP_HOST=mail.yourdomain.com
+SMTP_PORT=587
+SMTP_SECURE=false
+
+# SMTP Authentication
+SMTP_USER=your-smtp-username@yourdomain.com
+SMTP_PASSWORD=your-smtp-password
+
+# Set this to true to enable email sending in development mode (be careful!)
+ENABLE_EMAIL_IN_DEV=false

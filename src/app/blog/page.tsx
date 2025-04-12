@@ -30,7 +30,7 @@ export default function BlogPage() {
           </p>
         </header>
         
-        {/* Debug info - only visible in development */}
+        {/* Debug info - only visible in development
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-8 p-4 bg-red-900/30 border border-red-700 rounded">
             <h3 className="text-lg font-mono mb-2">Debug Info:</h3>
@@ -45,7 +45,7 @@ export default function BlogPage() {
               ))}
             </ul>
           </div>
-        )}
+        )} */}
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts && posts.length > 0 ? posts.map((post) => {
