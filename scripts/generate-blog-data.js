@@ -63,7 +63,7 @@ function generateBlogData() {
             } else if (key === 'coverImage' && value.startsWith('"./') && value.endsWith('"')) {
               // Process relative image paths
               const relativePath = value.slice(3, -1); // Remove "./ and "
-              value = `/api/blog-content/${slug}/${relativePath}`;
+              value = `/images/blog/${slug}/${relativePath}`; // Point directly to public path
             } else if (value.startsWith('"') && value.endsWith('"')) {
               // Handle quoted strings
               value = value.slice(1, -1);
