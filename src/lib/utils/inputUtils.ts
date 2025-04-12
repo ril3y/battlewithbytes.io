@@ -33,47 +33,29 @@ export const parseValueWithSuffix = (value: string): number => {
     return 0;
   }
 
-  // Check for invalid numeric parts that regex might allow (e.g., "1.2.3", "--5", ".")
-  // Only sign or sign + dot is invalid as a final value (but allowed by regex for typing)
-  if (/^[+-]?$/.test(match[1]) || /^[+-]?\.$/.test(match[1]) || match[1] === '.') {
-      // Allow simple numbers if no suffix (e.g. parseFloat("5") is valid)
-      if(!match[2] && /^-?[0-9]+$/.test(match[1])) {
-          // Fall through to parse valid integer
-      } else {
-          // Check if it contains multiple dots
-          if (match[1].indexOf('.') !== match[1].lastIndexOf('.')){
-             return 0;
-          }
-           // If it's just a sign/dot, and not a valid number, return 0
-           if(!/[0-9]/.test(match[1])) return 0;
-      }
-  }
-   // Check for multiple decimal points
-   if (match[1].indexOf('.') !== match[1].lastIndexOf('.')) {
-       return 0;
-   }
-
-
+  // Check for invalid numeric parts that regex might allow
   const numPartString = match[1];
   const suffix = match[2];
+  
+  // Check for invalid formats like "1.k" or ".k"
+  if (numPartString.endsWith('.') && suffix) {
+    return 0;
+  }
+
+  // Check for multiple decimal points
+  if ((numPartString.match(/\./g) || []).length > 1) {
+    return 0;
+  }
 
   // Handle cases like "." or "+." which result in NaN from parseFloat
   const numValue = parseFloat(numPartString);
   if (isNaN(numValue)) {
-       // If the original string only contained digits and a dot, parseFloat might work
-       // but if the regex matched but resulted in NaN, treat as invalid.
-       // Exception: allow plain numbers that don't need suffix logic.
-       if(!suffix && /^-?[0-9]*\.?[0-9]+$/.test(numPartString)) {
-            // Let plain number parsing happen
-       } else {
-           return 0;
-       }
+    return 0;
   }
 
-
   if (!suffix) {
-    // No suffix, return the parsed number or 0 if it was invalid (e.g. just '.')
-    return isNaN(numValue) ? 0 : numValue;
+    // No suffix, return the parsed number
+    return numValue;
   }
 
   switch (suffix) {
@@ -147,57 +129,61 @@ export const formatValueWithSuffix = (value: number, unit: string = ''): string 
  * @param value The input value to validate
  * @returns True if the input is potentially valid, false otherwise
  */
+// ==== Replace isValidNumberInput AGAIN with this version ====
 export const isValidNumberInput = (value: string): boolean => {
-    // Allow empty string (user clearing the input)
-    if (value === '') return true;
+  // Allow empty string
+  if (value === '') return true;
+  // Allow partial inputs for easier typing
+  if (value === '+' || value === '-' || value === '.') return true;
 
-    // Allow partial inputs for easier typing
-    if (value === '+' || value === '-' || value === '.') return true;
+  const cleanedValue = value.replace(/\s+/g, '');
 
-    // Remove spaces for validation
-    const cleanedValue = value.replace(/\s+/g, '');
+  // Define allowed suffixes (Match the parse function. If G is parsed, allow G. If not, remove G.)
+  // The test "rejects invalid inputs" expects '10 G' to be false. So DO NOT include G here.
+  const allowedSuffixes = 'kKMmuµ';
 
-    // Check overall structure: optional sign, digits/dots, optional suffix
-    // Allows multiple dots temporarily, checked later
-    const structuralRegex = /^-?[\d.]*([kKMmGuµ])?$/i; // Case insensitive suffix check
-    if (!structuralRegex.test(cleanedValue)) {
-        return false; // Contains invalid characters or multiple suffixes etc.
-    }
-
-    // --- Check for specific invalid patterns ---
-
-    // More than one decimal point
-    if ((cleanedValue.match(/\./g) || []).length > 1) {
-        return false;
-    }
-
-    // More than one sign or sign not at the start
-    if ((cleanedValue.match(/[+-]/g) || []).length > 1 || !/^[+-]?/.test(cleanedValue)) {
-         if((cleanedValue.match(/[+-]/g) || []).length === 1 && cleanedValue.startsWith('-')) {
-            // Allow single negative sign at start
-         } else if ((cleanedValue.match(/[+-]/g) || []).length === 1 && cleanedValue.startsWith('+')) {
-            // Allow single positive sign at start
-         } else {
-            return false;
-         }
-    }
+  // --- Specific Invalid Pattern Checks ---
+  // More than one decimal point
+  if ((cleanedValue.match(/\./g) || []).length > 1) return false;
+  // More than one sign or sign not at the start
+  if ((cleanedValue.match(/[+-]/g) || []).length > 1 || (cleanedValue.indexOf('-') > 0) || (cleanedValue.indexOf('+') > 0)) return false;
+  // Just "+." or "-." is invalid as a final value
+  if (/^[+-]\.$/.test(cleanedValue)) return false;
+  // *** ADD THIS CHECK BACK IN: Suffix directly after a dot ***
+  const suffixAfterDotRegex = new RegExp(`\\.[${allowedSuffixes}]$`, 'i');
+  if (suffixAfterDotRegex.test(cleanedValue)) {
+       return false;
+  }
+  // Reject if ONLY a suffix (e.g., "k")
+  const justSuffixRegex = new RegExp(`^[${allowedSuffixes}]$`, 'i');
+  if (justSuffixRegex.test(cleanedValue)) {
+      return false;
+  }
+  // Reject if just sign + suffix (e.g., "+k")
+  const signSuffixRegex = new RegExp(`^[+-][${allowedSuffixes}]$`, 'i');
+  if (signSuffixRegex.test(cleanedValue)) {
+      return false;
+  }
 
 
-    // Suffix directly after dot (e.g., "1.k", ".M")
-    // Need to check case insensitively
-    if (/\.[kKMmGuµ]$/i.test(cleanedValue)) {
-        return false;
-    }
+  // --- Structural Regex Check ---
+  // Does it broadly fit the pattern of number + optional suffix?
+  const validStructureRegex = new RegExp(
+      `^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)` + // Number part logic
+      `([${allowedSuffixes}])?` + // Optional allowed suffix
+      `$`, // End anchor
+      'i' // Case-insensitive for suffixes
+  );
 
-    // Suffix after sign without number (e.g., "+k", "-M")
-    if (/^[+-][kKMmGuµ]$/i.test(cleanedValue)) {
-        return false;
-    }
+  // If it fails the basic structure OR any of the specific invalid checks above, return false.
+  // The structural regex test now mainly serves to reject completely invalid characters or placements.
+  if (!validStructureRegex.test(cleanedValue)) {
+      return false;
+  }
 
-    // If it passed all specific checks, consider it potentially valid
-    return true;
+  // If it passes the structural regex AND all the specific invalid checks, it's valid.
+  return true;
 };
-
 /**
  * Validates if the input is a valid resistance value
  * Allows engineering notation with suffixes and Ω symbol

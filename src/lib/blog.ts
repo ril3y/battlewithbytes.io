@@ -34,9 +34,7 @@ export function getBlogPostBySlug(slug: string): BlogPost {
   
   // Read and parse metadata file
   const metaContent = fs.readFileSync(metaPath, 'utf8');
-  
-  // Parse metadata using gray-matter by wrapping it in frontmatter format
-  const { data } = matter(`---\n${metaContent}\n---\n`);
+  const { data } = matter(metaContent);
   
   return {
     slug,

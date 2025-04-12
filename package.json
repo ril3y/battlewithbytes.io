@@ -9,7 +9,8 @@
     "start": "next start",
     "export": "next export",
     "deploy": "pnpm build && pnpm export && gh-pages -d out",
-    "blog": "node scripts/blog-manager.js"
+    "blog": "node scripts/blog-manager.js",
+    "test": "jest"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.0",
