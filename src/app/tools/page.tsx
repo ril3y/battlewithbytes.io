@@ -32,9 +32,9 @@ export default function ToolsPage() {
           <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
             <div className="p-6">
               <div className="text-green-400 font-mono text-sm mb-2">02 // ELECTRONICS</div>
-              <h3 className="text-xl font-bold mb-3">Ohm's Law Calculator</h3>
+              <h3 className="text-xl font-bold mb-3">Ohm&apos;s Law Calculator</h3>
               <p className="text-gray-400 mb-4">
-                Calculate voltage, current, resistance, and power using Ohm's Law with an interactive visualization and detailed explanations.
+                Calculate voltage, current, resistance, and power using Ohm&apos;s Law with an interactive visualization and detailed explanations.
               </p>
               <Link href="/tools/ohms-law-calculator" className="text-green-400 font-mono text-sm hover:underline">
                 Open tool →

@@ -6,26 +6,25 @@ const isDev = process.env.NODE_ENV === 'development';
 
 /**
  * API route to serve blog content files (images, etc.)
- * This allows us to access files from the src/content/blog directory
  * Example: /api/blog-content/lora-without-lorawan/images/cover.png
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { slug: string[] } }
-) {
+export function GET(request: NextRequest) {
   try {
-    // Get the file path from the URL
-    const slug = params.slug || [];
+    // Get the file path from the URL directly instead of using route params
+    // This avoids the type issues with Next.js 15.3.0's dynamic params handling
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/api/blog-content/')[1]?.split('/') || [];
     
-    if (!slug.length) {
+    if (!pathParts.length) {
       return new NextResponse('Not found', { status: 404 });
     }
     
     // Construct the file path in the content directory
-    const filePath = path.join(process.cwd(), 'src', 'content', 'blog', ...slug);
+    const filePath = path.join(process.cwd(), 'src', 'content', 'blog', ...pathParts);
     
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
+      console.warn(`File not found at path: ${filePath}`);
       return new NextResponse('File not found', { status: 404 });
     }
     
@@ -49,6 +48,7 @@ export async function GET(
     
     // Return the file
     return new NextResponse(fileContents, {
+      status: 200,
       headers: {
         'Content-Type': contentType,
         'Cache-Control': cacheControl,

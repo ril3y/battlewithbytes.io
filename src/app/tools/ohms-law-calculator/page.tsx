@@ -1,5 +1,5 @@
 import OhmsLawCalculator from '@/components/tools/OhmsLawCalculator';
-import { generateSEO, generateToolSchema } from '@/lib/utils/seo';
+import { generateToolSchema } from '@/lib/utils/seo';
 import Script from 'next/script';
 
 // Enhanced SEO metadata

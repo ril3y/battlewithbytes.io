@@ -8,7 +8,7 @@ interface BlogPost {
     tags: string[];
     excerpt: string;
     author: string;
-    [key: string]: any;
+    [key: string]: string | string[] | number | boolean | undefined;
   };
 }
 

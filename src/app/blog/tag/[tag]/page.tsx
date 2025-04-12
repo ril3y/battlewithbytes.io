@@ -10,14 +10,14 @@ type Params = {
 };
 
 // Define the page props according to Next.js 15 requirements
-type PageProps = {
-  params: Params;
-  searchParams: Record<string, string | string[] | undefined>;
+interface PageProps {
+  params: Promise<Params>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  // Use destructuring to get the tag
-  const { tag } = params;
+  // Await the params before using them
+  const resolvedParams = await params;
+  const { tag } = resolvedParams;
   
   return {
     title: `Posts Tagged with ${tag} | Battle With Bytes`,
@@ -31,8 +31,9 @@ export function generateStaticParams() {
 }
 
 export default async function TagPage({ params }: PageProps) {
-  // Use destructuring to get the tag
-  const { tag } = params;
+  // Await the params before using them
+  const resolvedParams = await params;
+  const { tag } = resolvedParams;
   const posts = getBlogPostsByTag(tag);
   
   if (posts.length === 0) {

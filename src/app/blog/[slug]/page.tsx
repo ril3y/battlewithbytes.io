@@ -8,17 +8,15 @@ type Params = {
 };
 
 // Define the page props according to Next.js 15 requirements
-type PageProps = {
-  params: Promise<Params> | Params;
-  searchParams: Record<string, string | string[] | undefined>;
-};
+interface PageProps {
+  params: Promise<Params>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   // Await the params before using them
-  const resolvedParams = await Promise.resolve(params);
-  const slug = resolvedParams.slug;
-  
-  const post = getBlogPostBySlug(slug);
+  const resolvedParams = await params;
+  const post = getBlogPostBySlug(resolvedParams.slug);
   
   return {
     title: `${post.metadata.title} | Battle With Bytes`,
@@ -33,10 +31,8 @@ export function generateStaticParams(): Array<Params> {
 
 export default async function BlogPostPage({ params }: PageProps) {
   // Await the params before using them
-  const resolvedParams = await Promise.resolve(params);
-  const slug = resolvedParams.slug;
-  
-  const post = getBlogPostBySlug(slug);
+  const resolvedParams = await params;
+  const post = getBlogPostBySlug(resolvedParams.slug);
   
   return (
     <main className="min-h-screen py-16 px-4">
