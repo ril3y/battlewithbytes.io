@@ -1,212 +1,188 @@
 'use client';
 
-import { OhmsLawValues, OhmsLawResults } from './index';
-import { 
-  parseValueWithSuffix, 
-  formatValueWithSuffix,
-  parseFieldValue
+import { OhmsLawValues, OhmsLawResults } from './index'; // Assuming index.tsx defines these types
+import {
+  parseValueWithSuffix,     // Use the corrected, robust parser
+  formatValueWithSuffix     // Used for formatting within descriptions
+  // parseFieldValue // Removed - use parseValueWithSuffix directly
 } from '../../../lib/utils/inputUtils';
 
 /**
  * Calculate the missing value in Ohm's Law based on the provided values
- * 
- * @param values The input values for voltage, current, resistance, and power
+ *
+ * @param values The input values for voltage, current, resistance, and power (as strings)
  * @param calculationMode Which property to calculate
- * @returns The calculated results including all values and a description
+ * @returns The calculated results including all values (as strings) and a description
  */
 export function calculateOhmsLaw(
   values: OhmsLawValues,
   calculationMode: 'voltage' | 'current' | 'resistance' | 'power'
 ): OhmsLawResults {
-  // Parse input values
-  const voltage = parseFieldValue(values.voltage, 'voltage');
-  const current = parseFieldValue(values.current, 'current');
-  const resistance = parseFieldValue(values.resistance, 'resistance');
-  const power = parseFieldValue(values.power, 'power');
-  
-  // Check if the original current input was in milliamps format
-  const isCurrentInMilliamps = values.current && 
-    (values.current.toLowerCase().includes('ma') || 
-     (values.current.toLowerCase().includes('m') && !values.current.toLowerCase().includes('ma')));
-  
-  // Initialize results with input values
+  // 1. Parse ALL input values robustly using the utility function
+  // parseValueWithSuffix returns 0 for invalid/empty, which works for checks below
+  const voltage = parseValueWithSuffix(values.voltage);
+  const current = parseValueWithSuffix(values.current); // Will handle '5', '5m', '5mA' correctly -> Amps
+  const resistance = parseValueWithSuffix(values.resistance);
+  const power = parseValueWithSuffix(values.power);
+
+  // 2. Determine if the original input suggested mA display preference
+  const isCurrentInputSuggestingMilliamps = values.current &&
+    (values.current.toLowerCase().includes('ma') ||
+     (values.current.toLowerCase().includes('m') && !/^[0-9.]*M$/i.test(values.current.trim()))); // 'm' suffix, but not MegaOhms etc.
+
+
+  // 3. Initialize results object - store results as strings for consistency with input state
   const results: OhmsLawResults = {
-    voltage: values.voltage,
-    current: values.current,
-    resistance: values.resistance,
-    power: values.power,
+    voltage: '', // Will be populated below
+    current: '', // Will be populated below
+    resistance: '', // Will be populated below
+    power: '', // Will be populated below
     calculatedProperty: calculationMode,
     description: '',
-    // Add a flag to indicate if current should be displayed in mA
-    displayCurrentInMilliamps: isCurrentInMilliamps || current < 0.1
+    // Set the flag based on original input OR if calculated value is small
+    // Note: We check the *parsed* current value here for smallness check
+    displayCurrentInMilliamps: isCurrentInputSuggestingMilliamps || (current > 0 && current < 0.1)
   };
-  
-  // Helper function to format current values consistently
-  const formatCurrentForDescription = (currentValue: number): string => {
-    // For original input values, preserve the original format if possible
-    if (isCurrentInMilliamps && values.current) {
-      // Extract the numeric part from the original input
-      const match = values.current.match(/^(\d*\.?\d*)/);
-      if (match && match[1]) {
-        return `${match[1]}mA`;
-      }
-    }
-    
-    // For calculated values or small values, format consistently
-    if (isCurrentInMilliamps || currentValue < 0.1) {
-      return `${(currentValue * 1000).toFixed(3)}mA`;
-    }
-    
-    return formatValueWithSuffix(currentValue, 'A');
-  };
-  
-  // Calculate the missing value based on the calculation mode
+
+  // --- Store initially parsed values (even if not calculated yet) ---
+  // This ensures that if a value was provided but not calculated, it's still in the results
+  if (calculationMode !== 'voltage' && voltage > 0) results.voltage = voltage.toString();
+  if (calculationMode !== 'current' && current > 0) results.current = current.toString();
+  if (calculationMode !== 'resistance' && resistance > 0) results.resistance = resistance.toString();
+  if (calculationMode !== 'power' && power > 0) results.power = power.toString();
+  // ---
+
+  // 4. Perform calculations based on mode
+  let calculatedVoltage: number | null = null;
+  let calculatedCurrent: number | null = null;
+  let calculatedResistance: number | null = null;
+  let calculatedPower: number | null = null;
+  let sufficientData = false;
+
+  // Helper to format numbers for description (using base units mostly)
+  const formatForDesc = (val: number, unit: string) => formatValueWithSuffix(val, unit);
+
   switch (calculationMode) {
     case 'voltage':
-      // V = I × R or V = sqrt(P × R)
       if (current > 0 && resistance > 0) {
-        const calculatedVoltage = current * resistance;
-        results.voltage = calculatedVoltage.toString();
-        results.description = `Calculated voltage using Ohm's Law (V = I × R). With a current of ${formatCurrentForDescription(current)} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the voltage is ${formatValueWithSuffix(calculatedVoltage, 'V')}.`;
-        
-        // Also calculate power
-        const calculatedPower = calculatedVoltage * current;
-        results.power = calculatedPower.toString();
+        calculatedVoltage = current * resistance;
+        calculatedPower = calculatedVoltage * current; // Calculate power too
+        results.description = `V = I × R = ${formatForDesc(current, 'A')} × ${formatForDesc(resistance, 'Ω')} = ${formatForDesc(calculatedVoltage, 'V')}. Power P = V × I = ${formatForDesc(calculatedPower, 'W')}.`;
+        sufficientData = true;
       } else if (power > 0 && resistance > 0) {
-        const calculatedVoltage = Math.sqrt(power * resistance);
-        results.voltage = calculatedVoltage.toString();
-        results.description = `Calculated voltage using the power formula (V = sqrt(P × R)). With a power of ${formatValueWithSuffix(power, 'W')} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the voltage is ${formatValueWithSuffix(calculatedVoltage, 'V')}.`;
-        
-        // Also calculate current
-        const calculatedCurrent = calculatedVoltage / resistance;
-        results.current = calculatedCurrent.toString();
+        calculatedVoltage = Math.sqrt(power * resistance);
+        calculatedCurrent = calculatedVoltage / resistance; // Calculate current too
+        results.description = `V = √(P × R) = √(${formatForDesc(power, 'W')} × ${formatForDesc(resistance, 'Ω')}) = ${formatForDesc(calculatedVoltage, 'V')}. Current I = V / R = ${formatForDesc(calculatedCurrent, 'A')}.`;
+        sufficientData = true;
       } else if (power > 0 && current > 0) {
-        const calculatedVoltage = power / current;
-        results.voltage = calculatedVoltage.toString();
-        results.description = `Calculated voltage using the power formula (V = P / I). With a power of ${formatValueWithSuffix(power, 'W')} and a current of ${formatCurrentForDescription(current)}, the voltage is ${formatValueWithSuffix(calculatedVoltage, 'V')}.`;
-        
-        // Also calculate resistance
-        const calculatedResistance = calculatedVoltage / current;
-        results.resistance = calculatedResistance.toString();
-      } else {
-        results.calculatedProperty = null;
-        results.description = 'Insufficient data to calculate voltage. Please provide either (current and resistance) or (power and resistance) or (power and current).';
+        calculatedVoltage = power / current;
+        calculatedResistance = calculatedVoltage / current; // Calculate resistance too
+        results.description = `V = P / I = ${formatForDesc(power, 'W')} / ${formatForDesc(current, 'A')} = ${formatForDesc(calculatedVoltage, 'V')}. Resistance R = V / I = ${formatForDesc(calculatedResistance, 'Ω')}.`;
+        sufficientData = true;
       }
-      break;
-    
+      break; // End voltage case
+
     case 'current':
-      // I = V / R or I = sqrt(P / R)
       if (voltage > 0 && resistance > 0) {
-        const calculatedCurrent = voltage / resistance;
-        results.current = calculatedCurrent.toString();
-        
-        // Format description based on calculated current value
-        const currentDisplay = formatCurrentForDescription(calculatedCurrent);
-        results.description = `Calculated current using Ohm's Law (I = V / R). With a voltage of ${formatValueWithSuffix(voltage, 'V')} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the current is ${currentDisplay}.`;
-        
-        // Also calculate power
-        const calculatedPower = voltage * calculatedCurrent;
-        results.power = calculatedPower.toString();
+        calculatedCurrent = voltage / resistance;
+        calculatedPower = voltage * calculatedCurrent;
+        results.description = `I = V / R = ${formatForDesc(voltage, 'V')} / ${formatForDesc(resistance, 'Ω')} = ${formatForDesc(calculatedCurrent, 'A')}. Power P = V × I = ${formatForDesc(calculatedPower, 'W')}.`;
+        sufficientData = true;
       } else if (power > 0 && resistance > 0) {
-        const calculatedCurrent = Math.sqrt(power / resistance);
-        results.current = calculatedCurrent.toString();
-        
-        // Format description based on calculated current value
-        const currentDisplay = formatCurrentForDescription(calculatedCurrent);
-        results.description = `Calculated current using the power formula (I = sqrt(P / R)). With a power of ${formatValueWithSuffix(power, 'W')} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the current is ${currentDisplay}.`;
-        
-        // Also calculate voltage
-        const calculatedVoltage = calculatedCurrent * resistance;
-        results.voltage = calculatedVoltage.toString();
+        calculatedCurrent = Math.sqrt(power / resistance);
+        calculatedVoltage = calculatedCurrent * resistance;
+        results.description = `I = √(P / R) = √(${formatForDesc(power, 'W')} / ${formatForDesc(resistance, 'Ω')}) = ${formatForDesc(calculatedCurrent, 'A')}. Voltage V = I × R = ${formatForDesc(calculatedVoltage, 'V')}.`;
+        sufficientData = true;
       } else if (power > 0 && voltage > 0) {
-        const calculatedCurrent = power / voltage;
-        results.current = calculatedCurrent.toString();
-        
-        // Format description based on calculated current value
-        const currentDisplay = formatCurrentForDescription(calculatedCurrent);
-        results.description = `Calculated current using the power formula (I = P / V). With a power of ${formatValueWithSuffix(power, 'W')} and a voltage of ${formatValueWithSuffix(voltage, 'V')}, the current is ${currentDisplay}.`;
-        
-        // Also calculate resistance
-        const calculatedResistance = voltage / calculatedCurrent;
-        results.resistance = calculatedResistance.toString();
-      } else {
-        results.calculatedProperty = null;
-        results.description = 'Insufficient data to calculate current. Please provide either (voltage and resistance) or (power and resistance) or (power and voltage).';
+        calculatedCurrent = power / voltage;
+        calculatedResistance = voltage / calculatedCurrent;
+        results.description = `I = P / V = ${formatForDesc(power, 'W')} / ${formatForDesc(voltage, 'V')} = ${formatForDesc(calculatedCurrent, 'A')}. Resistance R = V / I = ${formatForDesc(calculatedResistance, 'Ω')}.`;
+        sufficientData = true;
       }
-      break;
-    
+       // Update mA display flag based on *calculated* current if it wasn't set by input
+       if(calculatedCurrent !== null && !isCurrentInputSuggestingMilliamps) {
+            results.displayCurrentInMilliamps = calculatedCurrent > 0 && calculatedCurrent < 0.1;
+       }
+      break; // End current case
+
     case 'resistance':
-      // R = V / I or R = V² / P
       if (voltage > 0 && current > 0) {
-        const calculatedResistance = voltage / current;
-        results.resistance = calculatedResistance.toString();
-        results.description = `Calculated resistance using Ohm's Law (R = V / I). With a voltage of ${formatValueWithSuffix(voltage, 'V')} and a current of ${formatCurrentForDescription(current)}, the resistance is ${formatValueWithSuffix(calculatedResistance, 'Ω')}.`;
-        
-        // Also calculate power
-        const calculatedPower = voltage * current;
-        results.power = calculatedPower.toString();
+        calculatedResistance = voltage / current;
+        calculatedPower = voltage * current;
+        results.description = `R = V / I = ${formatForDesc(voltage, 'V')} / ${formatForDesc(current, 'A')} = ${formatForDesc(calculatedResistance, 'Ω')}. Power P = V × I = ${formatForDesc(calculatedPower, 'W')}.`;
+        sufficientData = true;
       } else if (voltage > 0 && power > 0) {
-        const calculatedResistance = (voltage * voltage) / power;
-        results.resistance = calculatedResistance.toString();
-        results.description = `Calculated resistance using the power formula (R = V² / P). With a voltage of ${formatValueWithSuffix(voltage, 'V')} and a power of ${formatValueWithSuffix(power, 'W')}, the resistance is ${formatValueWithSuffix(calculatedResistance, 'Ω')}.`;
-        
-        // Also calculate current
-        const calculatedCurrent = voltage / calculatedResistance;
-        results.current = calculatedCurrent.toString();
+        calculatedResistance = (voltage * voltage) / power;
+        calculatedCurrent = voltage / calculatedResistance;
+        results.description = `R = V² / P = ${formatForDesc(voltage, 'V')}² / ${formatForDesc(power, 'W')} = ${formatForDesc(calculatedResistance, 'Ω')}. Current I = V / R = ${formatForDesc(calculatedCurrent, 'A')}.`;
+        sufficientData = true;
       } else if (power > 0 && current > 0) {
-        const calculatedResistance = power / (current * current);
-        results.resistance = calculatedResistance.toString();
-        results.description = `Calculated resistance using the power formula (R = P / I²). With a power of ${formatValueWithSuffix(power, 'W')} and a current of ${formatCurrentForDescription(current)}, the resistance is ${formatValueWithSuffix(calculatedResistance, 'Ω')}.`;
-        
-        // Also calculate voltage
-        const calculatedVoltage = Math.sqrt(power * calculatedResistance);
-        results.voltage = calculatedVoltage.toString();
-      } else {
-        results.calculatedProperty = null;
-        results.description = 'Insufficient data to calculate resistance. Please provide either (voltage and current) or (voltage and power) or (power and current).';
+        calculatedResistance = power / (current * current);
+        calculatedVoltage = current * calculatedResistance;
+        results.description = `R = P / I² = ${formatForDesc(power, 'W')} / ${formatForDesc(current, 'A')}² = ${formatForDesc(calculatedResistance, 'Ω')}. Voltage V = I × R = ${formatForDesc(calculatedVoltage, 'V')}.`;
+        sufficientData = true;
       }
-      break;
-    
+      // Update mA display flag based on *calculated* current if it wasn't set by input
+      if (calculatedCurrent !== null && !isCurrentInputSuggestingMilliamps) {
+        results.displayCurrentInMilliamps = calculatedCurrent > 0 && calculatedCurrent < 0.1;
+      }
+      break; // End resistance case
+
     case 'power':
-      // P = V × I or P = V² / R or P = I² × R
       if (voltage > 0 && current > 0) {
-        const calculatedPower = voltage * current;
-        results.power = calculatedPower.toString();
-        results.description = `Calculated power using the formula (P = V × I). With a voltage of ${formatValueWithSuffix(voltage, 'V')} and a current of ${formatCurrentForDescription(current)}, the power is ${formatValueWithSuffix(calculatedPower, 'W')}.`;
-        
-        // Also calculate resistance
-        const calculatedResistance = voltage / current;
-        results.resistance = calculatedResistance.toString();
+        calculatedPower = voltage * current;
+        calculatedResistance = voltage / current;
+        results.description = `P = V × I = ${formatForDesc(voltage, 'V')} × ${formatForDesc(current, 'A')} = ${formatForDesc(calculatedPower, 'W')}. Resistance R = V / I = ${formatForDesc(calculatedResistance, 'Ω')}.`;
+        sufficientData = true;
       } else if (voltage > 0 && resistance > 0) {
-        const calculatedPower = (voltage * voltage) / resistance;
-        results.power = calculatedPower.toString();
-        results.description = `Calculated power using the formula (P = V² / R). With a voltage of ${formatValueWithSuffix(voltage, 'V')} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the power is ${formatValueWithSuffix(calculatedPower, 'W')}.`;
-        
-        // Also calculate current
-        const calculatedCurrent = voltage / resistance;
-        results.current = calculatedCurrent.toString();
+        calculatedPower = (voltage * voltage) / resistance;
+        calculatedCurrent = voltage / resistance;
+        results.description = `P = V² / R = ${formatForDesc(voltage, 'V')}² / ${formatForDesc(resistance, 'Ω')} = ${formatForDesc(calculatedPower, 'W')}. Current I = V / R = ${formatForDesc(calculatedCurrent, 'A')}.`;
+        sufficientData = true;
       } else if (current > 0 && resistance > 0) {
-        const calculatedPower = current * current * resistance;
-        results.power = calculatedPower.toString();
-        results.description = `Calculated power using the formula (P = I² × R). With a current of ${formatCurrentForDescription(current)} and a resistance of ${formatValueWithSuffix(resistance, 'Ω')}, the power is ${formatValueWithSuffix(calculatedPower, 'W')}.`;
-        
-        // Also calculate voltage
-        const calculatedVoltage = current * resistance;
-        results.voltage = calculatedVoltage.toString();
-      } else {
-        results.calculatedProperty = null;
-        results.description = 'Insufficient data to calculate power. Please provide either (voltage and current) or (voltage and resistance) or (current and resistance).';
+        calculatedPower = current * current * resistance;
+        calculatedVoltage = current * resistance;
+        results.description = `P = I² × R = ${formatForDesc(current, 'A')}² × ${formatForDesc(resistance, 'Ω')} = ${formatForDesc(calculatedPower, 'W')}. Voltage V = I × R = ${formatForDesc(calculatedVoltage, 'V')}.`;
+        sufficientData = true;
       }
-      break;
+      break; // End power case
   }
-  
+
+  // 5. Update results object and handle insufficient data
+  if (sufficientData) {
+    // Populate the results object with calculated values (as strings)
+    if (calculatedVoltage !== null) results.voltage = calculatedVoltage.toString();
+    if (calculatedCurrent !== null) results.current = calculatedCurrent.toString();
+    if (calculatedResistance !== null) results.resistance = calculatedResistance.toString();
+    if (calculatedPower !== null) results.power = calculatedPower.toString();
+
+     // Ensure the display flag is correct if current was recalculated
+     if (calculatedCurrent !== null && calculationMode !== 'current' && !isCurrentInputSuggestingMilliamps) {
+          results.displayCurrentInMilliamps = calculatedCurrent > 0 && calculatedCurrent < 0.1;
+     }
+
+  } else {
+    // Not enough data provided for the selected calculation mode
+    results.calculatedProperty = null; // Reset calculated property flag
+    // Clear potentially partially filled calculated values
+    results.voltage = calculationMode === 'voltage' ? '' : results.voltage;
+    results.current = calculationMode === 'current' ? '' : results.current;
+    results.resistance = calculationMode === 'resistance' ? '' : results.resistance;
+    results.power = calculationMode === 'power' ? '' : results.power;
+
+    // Provide a generic error message (could be more specific based on mode)
+    results.description = `Insufficient data to calculate ${calculationMode}. Please provide the required two values.`;
+  }
+
   return results;
 }
 
+
 /**
- * Validates if the provided values are sufficient to perform the calculation
- * 
- * @param values The input values
+ * Validates if the provided values are sufficient to perform the calculation.
+ * NOTE: This might be redundant if the main calculate function handles insufficient data gracefully.
+ *
+ * @param values The input values (as strings)
  * @param calculationMode Which property to calculate
  * @returns True if the values are sufficient for calculation
  */
@@ -214,35 +190,47 @@ export function validateInputs(
   values: OhmsLawValues,
   calculationMode: 'voltage' | 'current' | 'resistance' | 'power'
 ): boolean {
-  // Parse input values
-  const voltage = parseFieldValue(values.voltage, 'voltage');
-  const current = parseFieldValue(values.current, 'current');
-  const resistance = parseFieldValue(values.resistance, 'resistance');
-  const power = parseFieldValue(values.power, 'power');
-  
-  // Check if we have enough data to calculate the requested property
-  switch (calculationMode) {
+  // Parse input values using the robust parser
+  const voltage = parseValueWithSuffix(values.voltage);
+  const current = parseValueWithSuffix(values.current);
+  const resistance = parseValueWithSuffix(values.resistance);
+  const power = parseValueWithSuffix(values.power);
+
+  let count = 0;
+  if (voltage > 0) count++;
+  if (current > 0) count++;
+  if (resistance > 0) count++;
+  if (power > 0) count++;
+
+  // Need exactly 2 values provided (excluding the one being calculated)
+  // Or just check if enough data exists for the specific calculation
+  let requiredInputsMet = false;
+   switch (calculationMode) {
     case 'voltage':
-      return (current > 0 && resistance > 0) || 
-             (power > 0 && resistance > 0) || 
-             (power > 0 && current > 0);
-    
+      requiredInputsMet = (current > 0 && resistance > 0) || (power > 0 && resistance > 0) || (power > 0 && current > 0);
+      break;
     case 'current':
-      return (voltage > 0 && resistance > 0) || 
-             (power > 0 && resistance > 0) || 
-             (power > 0 && voltage > 0);
-    
+      requiredInputsMet = (voltage > 0 && resistance > 0) || (power > 0 && resistance > 0) || (power > 0 && voltage > 0);
+      break;
     case 'resistance':
-      return (voltage > 0 && current > 0) || 
-             (voltage > 0 && power > 0) || 
-             (power > 0 && current > 0);
-    
+       requiredInputsMet = (voltage > 0 && current > 0) || (voltage > 0 && power > 0) || (power > 0 && current > 0);
+       break;
     case 'power':
-      return (voltage > 0 && current > 0) || 
-             (voltage > 0 && resistance > 0) || 
-             (current > 0 && resistance > 0);
-    
-    default:
-      return false;
+       requiredInputsMet = (voltage > 0 && current > 0) || (voltage > 0 && resistance > 0) || (current > 0 && resistance > 0);
+       break;
   }
+
+  // Also ensure that not *too many* inputs were provided, as calculateOhmsLaw uses specific pairs.
+  // Count how many of the *needed* inputs for the non-calculated fields exist.
+  let providedInputCount = 0;
+  if (calculationMode !== 'voltage' && voltage > 0) providedInputCount++;
+  if (calculationMode !== 'current' && current > 0) providedInputCount++;
+  if (calculationMode !== 'resistance' && resistance > 0) providedInputCount++;
+  if (calculationMode !== 'power' && power > 0) providedInputCount++;
+
+
+  // The core logic now checks specific pairs, so just ensure at least 2 inputs are provided overall.
+  // The main function handles the specific pair requirements.
+  // return providedInputCount >= 2; // Or perhaps exactly 2?
+   return requiredInputsMet; // The check inside calculateOhmsLaw is sufficient.
 }

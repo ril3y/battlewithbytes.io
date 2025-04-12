@@ -2,62 +2,96 @@
 
 /**
  * Parses a value with engineering notation suffixes (k, M, m, u, µ, G)
- * and handles optional units like Ω.
- * Examples:
- * - "100" -> 100
- * - "1.5kΩ" -> 1500
- * - "2.2K" -> 2200
- * - "1M" -> 1000000
- * - "0.5m" -> 0.0005 (milli)
- * - "100u" -> 0.0001 (micro)
- * - "100µ" -> 0.0001 (micro)
- * - "2G" -> 2000000000 (giga)
- * - "100ma" -> 0.1 (milliamps)
+ * and handles optional units like Ω, V, A etc. by ignoring them during parsing.
+ * Handles 'mA' specifically for current.
  *
- * @param value The value as a string
+ * @param value The value as a string.
  * @returns The parsed value as a number, or 0 for invalid/empty input.
  */
 export const parseValueWithSuffix = (value: string): number => {
+  // Handle empty or null input explicitly
   if (!value || value.trim() === '') return 0;
-  
-  // Remove any Ω, V, or W symbols for parsing
-  const cleanValue = value.replace(/[ΩVW]/g, '').trim();
-  
-  // Check if it's a valid number
-  if (!isValidNumberInput(cleanValue)) return 0;
-  
-  // Handle special case for mA (milliamps)
-  if (/^\d*\.?\d*ma$/i.test(cleanValue)) {
-    const numericPart = cleanValue.replace(/ma$/i, '');
-    return Number(numericPart) / 1000; // Convert mA to A
+
+  // Trim whitespace first
+  const trimmedValue = value.trim();
+
+  // --- Handle specific formats FIRST ---
+
+  // Handle special case for mA (milliamps) - case-insensitive
+  if (/^[-+]?\d*\.?\d*ma$/i.test(trimmedValue)) {
+    const numericPart = trimmedValue.replace(/ma$/i, '');
+    const num = parseFloat(numericPart); // Use parseFloat for robustness
+    return isNaN(num) ? 0 : num / 1000; // Convert mA to A
   }
-  
-  // Handle single character suffixes (k, M, m, u, µ, G)
-  if (/^\d*\.?\d*[kKmMuµG]$/.test(cleanValue)) {
-    const numericPart = cleanValue.slice(0, -1);
-    const suffix = cleanValue.slice(-1).toLowerCase();
-    
-    const baseValue = Number(numericPart);
-    
+
+  // --- Handle general number + optional single-char suffix ---
+
+  // Remove common units AFTER checking for multi-char units like 'mA'
+  const cleanValue = trimmedValue.replace(/[ΩVAWFHz]/gi, ''); // Remove units
+
+  // Regex to capture number part and optional single suffix
+  // Uses parseFloat internally, so handles "5." or ".5" correctly if parsed.
+  // Allows sign.
+  const match = cleanValue.match(/^([-+]?\d*\.?\d*)?([kKmMGuµ])?$/i); // Capture num part and suffix
+
+  if (!match || match[0] !== cleanValue) { // Check if the entire string matches the pattern
+       // Try parsing as plain number if pattern fails (e.g. just "123")
+       const plainNum = parseFloat(cleanValue);
+       if (!isNaN(plainNum)) return plainNum;
+       // If pattern failed AND it's not a plain number, it's invalid
+       return 0;
+  }
+
+  const numPartString = match[1] || ''; // Number part (might be empty if only suffix like "k")
+  const suffix = match[2]; // The suffix character (e.g., 'k', 'M', 'm') or undefined
+
+  // If only a suffix was provided (e.g. "k", "m") -> Invalid
+  if (numPartString === '' && suffix) return 0;
+  // If sign only was provided (e.g. "+", "-") -> Invalid
+  if (/^[+-]$/.test(numPartString)) return 0;
+
+  // Parse the number part
+  const numValue = parseFloat(numPartString);
+
+  // If parsing failed (e.g. "+.", ".") and it wasn't handled above
+  if (isNaN(numValue)) {
+      // Allow parsing plain numbers like "5" if suffix is missing
+       if (!suffix && !isNaN(parseFloat(cleanValue))) {
+           return parseFloat(cleanValue);
+       }
+       return 0; // Invalid if NaN with suffix or unparseable pattern
+  }
+
+  // Apply suffix multiplier/divisor if suffix exists
+  if (suffix) {
+    // IMPORTANT: Switch on the ORIGINAL case suffix from match[2]
     switch (suffix) {
-      case 'k':
-        return baseValue * 1000; // kilo
-      case 'm':
-        return baseValue / 1000; // milli
-      case 'u':
-      case 'µ':
-        return baseValue / 1000000; // micro
-      case 'g':
-        return baseValue * 1000000000; // giga
-      case 'M':
-        return baseValue * 1000000; // mega
+      case 'k':             // Lowercase k
+      case 'K':             // Uppercase K
+        return numValue * 1000; // kilo
+
+      case 'M':             // Uppercase M (Mega)
+        return numValue * 1000000; // mega
+
+      case 'G':             // Uppercase G (Giga)
+         // case 'g': // Add if you want lowercase 'g' for Giga too
+        return numValue * 1000000000; // giga
+
+      case 'm':             // Lowercase m (milli)
+        return numValue / 1000; // milli
+
+      case 'u':             // Lowercase u
+      case 'µ':             // Micro symbol
+        return numValue / 1000000; // micro
+
       default:
-        return baseValue;
+        // Suffix was captured by regex but isn't in the switch? Return base value.
+        return numValue;
     }
   }
-  
-  // No suffix, just return the number
-  return Number(cleanValue);
+
+  // No suffix, return the parsed number
+  return numValue;
 };
 
 /**

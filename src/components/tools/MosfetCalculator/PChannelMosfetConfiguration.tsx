@@ -1,45 +1,46 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Tooltip from '../../../lib/utils/Tooltip';
-import { 
-  parseValueWithSuffix, 
-  formatValueWithSuffix, 
-  isValidNumberInput, 
-  isValidResistance,
-  isValidVoltage,
-  getParameterWarning,
-  getParameterTooltip
+import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
+import {
+  parseValueWithSuffix,
+  formatValueWithSuffix,
+  // isValidNumberInput, // Less critical now, validation happens in useEffect
+  isValidResistance, // Can keep for basic input filtering if desired
+  isValidVoltage,   // Can keep for basic input filtering if desired
+  getParameterWarning, // Assuming these are correctly defined elsewhere
+  getParameterTooltip  // Assuming these are correctly defined elsewhere
 } from '../../../lib/utils/inputUtils';
 import mosfetData from './mosfetData.json';
-import { calculatePChannelConduction } from './mosfetUtils';
+import { calculatePChannelConduction } from './mosfetUtils'; // Import P-Channel calculation
 
+// --- Interfaces (Assume they are correct) ---
 interface MosfetDetails {
-  vth: number;
-  rds_on: number;
-  Id: string;
-  P_max: string;
-  Vds_max: string;
-  Vgs_max: string;
-}
+    vth: number;
+    rds_on: number;
+    Id: string;
+    P_max: string;
+    Vds_max: string;
+    Vgs_max: string;
+  }
 
 interface PChannelMosfets {
-  [key: string]: MosfetDetails;
+[key: string]: MosfetDetails;
 }
 
 interface PChannelMosfetConfigurationProps {
-  mosfetName: string;
-  mosfetDetails: { vth: string; rds_on: string };
-  inputValues: {
+mosfetName: string;
+mosfetDetails: { vth: string; rds_on: string };
+inputValues: {
     vg: string;
     vcc: string;
-    vd: string;
-    vs: string;
+    // vd: string; // vd seems unused as input
+    vs: string;     // Vs is crucial for P-channel calculation
     loadResistance: string;
-  };
-  onDetailsChange: (name: string, details: { vth: string; rds_on: string }) => void;
-  onInputChange: (name: string, value: string) => void;
-  updateDescription: (
+};
+onDetailsChange: (name: string, details: { vth: string; rds_on: string }) => void;
+onInputChange: (name: string, value: string) => void;
+updateDescription: (
     desc: string,
     isConducting: boolean | null,
     voltageAcrossLoad: string,
@@ -47,10 +48,11 @@ interface PChannelMosfetConfigurationProps {
     currentThroughLoad: string,
     vgs: string,
     id: string,
-    vd: string
-  ) => void;
+    vd: string // vd is an output parameter
+) => void;
 }
 
+// --- Component ---
 export default function PChannelMosfetConfiguration({
   mosfetName,
   mosfetDetails,
@@ -62,91 +64,119 @@ export default function PChannelMosfetConfiguration({
   const pChannelMosfets = mosfetData.mosfets['p-channel'] as PChannelMosfets;
   const [warnings, setWarnings] = useState<{[key: string]: string}>({});
 
+  // --- Event Handlers (Simplified) ---
+
   const handleMosfetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedName = e.target.value;
+    setWarnings({}); // Reset warnings
     if (selectedName === '') {
       onDetailsChange('', { vth: '', rds_on: '' });
       return;
     }
-
     if (selectedName === 'custom') {
       onDetailsChange(selectedName, { vth: '', rds_on: '' });
       return;
     }
-
     const selectedMosfet = pChannelMosfets[selectedName];
     onDetailsChange(selectedName, {
       vth: selectedMosfet.vth.toString(),
       rds_on: selectedMosfet.rds_on.toString()
     });
-    
-    // Auto-calculate when MOSFET is selected
-    setTimeout(() => calculateConduction(), 0);
+    // Calculation triggers via useEffect
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    // Validate input based on field type
-    if (name === 'loadResistance') {
-      if (!isValidResistance(value)) return;
-    } else {
-      // For voltage inputs
-      if (!isValidVoltage(value)) return;
-    }
-    
-    onInputChange(name, value);
+    let isValid = true; // Assume valid initially or for empty string
 
-    // Check for warnings
-    const warning = getParameterWarning(name, value);
-    setWarnings(prev => ({
-      ...prev,
-      [name]: warning
-    }));
-    
-    // Auto-calculate when input changes
-    setTimeout(() => calculateConduction(), 0);
+    // Optional: Basic validation for immediate feedback
+    if (value !== '') {
+        if (name === 'loadResistance') {
+            // isValid = isValidResistance(value); // Optional strict check
+        } else if (['vg', 'vcc', 'vs'].includes(name)) {
+             isValid = isValidVoltage(value);
+        }
+    }
+
+    if (isValid) { // Update state only if potentially valid or empty
+        onInputChange(name, value);
+        const warning = getParameterWarning(name, value);
+        setWarnings(prev => ({ ...prev, [name]: warning || '' }));
+    }
+     // Calculation triggers via useEffect
   };
 
   const handleCustomParamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    // Validate input
-    if (name === 'rds_on') {
-      if (!isValidResistance(value)) return;
-    } else {
-      // For voltage inputs like vth
-      if (!isValidVoltage(value)) return;
-    }
-    
-    onDetailsChange('custom', {...mosfetDetails, [name]: value});
+    let isValid = true; // Assume valid initially or for empty string
 
-    // Check for warnings
-    const warning = getParameterWarning(name, value);
-    setWarnings(prev => ({
-      ...prev,
-      [name]: warning
-    }));
-    
-    // Auto-calculate when custom parameters change
-    setTimeout(() => calculateConduction(), 0);
+    // Optional: Basic validation
+     if (value !== '') {
+        if (name === 'rds_on') {
+            // isValid = isValidResistance(value); // Optional strict check
+        } else if (name === 'vth') {
+            isValid = isValidVoltage(value); // Check voltage format
+        }
+     }
+
+    if (isValid) {
+        onDetailsChange('custom', {...mosfetDetails, [name]: value});
+        const warning = getParameterWarning(name, value);
+        setWarnings(prev => ({ ...prev, [name]: warning || '' }));
+    }
+    // Calculation triggers via useEffect
   };
 
-  const calculateConduction = () => {
-    if (!mosfetDetails.vth || !mosfetDetails.rds_on || !inputValues.vg || !inputValues.vcc || !inputValues.loadResistance) {
+  // --- Calculation Logic Moved to useEffect ---
+  useEffect(() => {
+    console.log("P-Channel useEffect triggered for calculation");
+    // Gather necessary values from state/props
+    const { vth: vthStr, rds_on: rdsOnStr } = mosfetDetails;
+    const { vg: vgStr, vcc: vccStr, vs: vsStr, loadResistance: loadResistanceStr } = inputValues;
+
+    // 1. Check if all *required* string inputs have values
+    //    For P-Channel, Vs is crucial and usually provided (often == Vcc)
+    if (!vthStr || !rdsOnStr || !vgStr || !vccStr || !vsStr || !loadResistanceStr) {
+      console.log("P-Channel required fields missing.");
       updateDescription('Please fill in all required fields.', null, '', '', '', '', '', '');
-      return;
+      return; // Exit early
     }
 
-    const vth = parseFloat(mosfetDetails.vth);
-    const rds_on = parseFloat(mosfetDetails.rds_on);
-    const vg = parseFloat(inputValues.vg);
-    const vs = parseFloat(inputValues.vs || '0');
-    const vcc = parseFloat(inputValues.vcc);
-    const loadResistance = parseValueWithSuffix(inputValues.loadResistance);
+    // 2. Attempt to parse all values
+    const vth = parseFloat(vthStr);
+    const rds_on = parseValueWithSuffix(rdsOnStr); // Use robust parser
+    const vg = parseFloat(vgStr);
+    const vs = parseFloat(vsStr); // Vs must be provided for P-channel
+    const vcc = parseFloat(vccStr);
+    const loadResistance = parseValueWithSuffix(loadResistanceStr); // Use robust parser
 
+    // 3. Check if parsing resulted in valid numbers
+    if (isNaN(vth) || isNaN(rds_on) || isNaN(vg) || isNaN(vs) || isNaN(vcc) || isNaN(loadResistance) || loadResistance <= 0 || rds_on <= 0) {
+       console.log("P-Channel invalid numeric input detected after parsing:", { vth, rds_on, vg, vs, vcc, loadResistance });
+       let errorMsg = 'Invalid numeric value detected in inputs.';
+       if (isNaN(loadResistance) || loadResistance <= 0) errorMsg = 'Invalid or non-positive Load Resistance value.';
+       if (isNaN(rds_on) || rds_on <= 0) errorMsg = 'Invalid or non-positive Rds_on value.';
+       if (isNaN(vth)) errorMsg = 'Invalid Vth value.'; // Add more specifics
+       if (isNaN(vg)) errorMsg = 'Invalid Vg value.';
+       if (isNaN(vs)) errorMsg = 'Invalid Vs value.';
+       if (isNaN(vcc)) errorMsg = 'Invalid Vcc value.';
+       updateDescription(errorMsg, null, '', '', '', '', '', '');
+       return; // Exit early
+    }
+
+    // Optional P-Channel Specific Validation: Vth should be negative
+    if (vth >= 0) {
+        console.log("P-Channel Vth is not negative.");
+        updateDescription('Vth must be negative for a P-Channel MOSFET.', null, '', '', '', '', '', '');
+        return;
+    }
+
+    // 4. All checks passed, perform the calculation
+    console.log("P-Channel calculating with values:", { vth, vg, vs, vcc, loadResistance, rds_on });
     const result = calculatePChannelConduction(vth, vg, vs, vcc, loadResistance, rds_on);
 
+    // 5. Update the description with results
+    console.log("P-Channel calculation result:", result);
     updateDescription(
       result.description,
       result.conducting,
@@ -157,22 +187,32 @@ export default function PChannelMosfetConfiguration({
       result.id,
       result.vd
     );
-  };
 
-  // Only reset description when MOSFET type or model changes, not on every input change
+  }, [
+      mosfetDetails.vth,
+      mosfetDetails.rds_on,
+      inputValues.vg,
+      inputValues.vcc,
+      inputValues.vs, // Vs is a critical input here
+      inputValues.loadResistance,
+      updateDescription // Add callback to dependencies
+  ]);
+
+  // Effect to clear description when MOSFET name changes
   useEffect(() => {
-    // Reset description when MOSFET selection changes
+    console.log("P-Channel MOSFET name changed, clearing description.");
     updateDescription('', null, '', '', '', '', '', '');
-  }, [mosfetName, updateDescription]);
+  }, [mosfetName, updateDescription]); // Add updateDescription
 
+  // --- JSX Rendering (Using standard HTML title for tooltips) ---
   return (
     <div>
       <h3 className="text-xl font-bold mb-3">P-Channel Configuration</h3>
-      
+
       <div className="mosfet-inputs">
         <div>
           <label className="mosfet-label">Select MOSFET</label>
-          <select 
+          <select
             className="mosfet-select"
             value={mosfetName}
             onChange={handleMosfetSelect}
@@ -184,185 +224,185 @@ export default function PChannelMosfetConfiguration({
             ))}
           </select>
         </div>
-        
+
         {mosfetName === 'custom' ? (
           <>
+            {/* Vth Input */}
             <div className="mt-4">
               <label className="mosfet-label">Threshold Voltage (Vth)</label>
-              <Tooltip text={getParameterTooltip('vth')} position="top">
-                <input
-                  type="text"
-                  name="vth"
-                  className="mosfet-input"
-                  value={mosfetDetails.vth}
-                  onChange={handleCustomParamChange}
-                  placeholder="Enter negative threshold voltage"
-                />
-              </Tooltip>
-              <small className="text-gray-400 block mt-1">For P-Channel MOSFETs, Vth should be negative (e.g., -2)</small>
+              <input
+                type="text"
+                name="vth"
+                className="mosfet-input"
+                value={mosfetDetails.vth}
+                onChange={handleCustomParamChange}
+                placeholder="e.g., -2 (MUST be negative)"
+                title={getParameterTooltip('vth')} // Standard HTML title attribute
+              />
+              <small className="text-gray-400 block mt-1">For P-Channel MOSFETs, Vth should be negative.</small>
               {warnings.vth && <div className="text-yellow-400 text-sm mt-1">{warnings.vth}</div>}
             </div>
-            
-            <div>
+
+            {/* Rds_on Input */}
+             <div>
               <label className="mosfet-label">On Resistance (Rds_on)</label>
-              <Tooltip text={getParameterTooltip('rds_on')} position="top">
-                <input
-                  type="text"
-                  name="rds_on"
-                  className="mosfet-input"
-                  value={mosfetDetails.rds_on}
-                  onChange={handleCustomParamChange}
-                  placeholder="Enter on resistance"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="rds_on"
+                className="mosfet-input"
+                value={mosfetDetails.rds_on}
+                onChange={handleCustomParamChange}
+                placeholder="Enter on resistance (e.g., 22m)"
+                title={getParameterTooltip('rds_on')}
+              />
+               <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.rds_on && <div className="text-yellow-400 text-sm mt-1">{warnings.rds_on}</div>}
             </div>
-            
-            <div>
+
+            {/* Vg Input */}
+             <div>
               <label className="mosfet-label">Gate Voltage (Vg)</label>
-              <Tooltip text={getParameterTooltip('vg')} position="top">
-                <input
-                  type="text"
-                  name="vg"
-                  className="mosfet-input"
-                  value={inputValues.vg}
-                  onChange={handleInputChange}
-                  placeholder="Enter gate voltage"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vg"
+                className="mosfet-input"
+                value={inputValues.vg}
+                onChange={handleInputChange}
+                placeholder="Enter gate voltage"
+                 title={getParameterTooltip('vg')}
+              />
               {warnings.vg && <div className="text-yellow-400 text-sm mt-1">{warnings.vg}</div>}
             </div>
-            
-            <div>
+
+            {/* Vcc Input */}
+             <div>
               <label className="mosfet-label">Supply Voltage (Vcc)</label>
-              <Tooltip text={getParameterTooltip('vcc')} position="top">
-                <input
-                  type="text"
-                  name="vcc"
-                  className="mosfet-input"
-                  value={inputValues.vcc}
-                  onChange={handleInputChange}
-                  placeholder="Enter supply voltage"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vcc"
+                className="mosfet-input"
+                value={inputValues.vcc}
+                onChange={handleInputChange}
+                placeholder="Enter supply voltage"
+                title={getParameterTooltip('vcc')}
+              />
               {warnings.vcc && <div className="text-yellow-400 text-sm mt-1">{warnings.vcc}</div>}
             </div>
-            
-            <div>
+
+            {/* Vs Input - Crucial for P-Channel */}
+             <div>
               <label className="mosfet-label">Source Voltage (Vs)</label>
-              <Tooltip text={getParameterTooltip('vs')} position="top">
-                <input
-                  type="text"
-                  name="vs"
-                  className="mosfet-input"
-                  value={inputValues.vs}
-                  onChange={handleInputChange}
-                  placeholder="Usually same as Vcc for P-channel"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vs"
+                className="mosfet-input"
+                value={inputValues.vs}
+                onChange={handleInputChange}
+                placeholder="Usually same as Vcc for high-side switch"
+                title={getParameterTooltip('vs')}
+              />
+               <small className="text-gray-400 block mt-1">Typically connected to Vcc.</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
-            
-            <div>
-              <label className="mosfet-label">Load Resistance (Ω)</label>
-              <Tooltip text={getParameterTooltip('loadResistance')} position="top">
-                <input
-                  type="text"
-                  name="loadResistance"
-                  className="mosfet-input"
-                  value={inputValues.loadResistance}
-                  onChange={handleInputChange}
-                  placeholder="Enter load resistance (e.g., 10k, 1M)"
-                />
-              </Tooltip>
-              <small className="text-gray-400 block mt-1">You can use k (kilo), M (mega), m (milli), u (micro)</small>
+
+            {/* Load Resistance Input */}
+             <div>
+              <label className="mosfet-label">Load Resistance</label>
+              <input
+                type="text"
+                name="loadResistance"
+                className="mosfet-input"
+                value={inputValues.loadResistance}
+                onChange={handleInputChange}
+                placeholder="Enter load resistance"
+                title={getParameterTooltip('loadResistance')}
+              />
+              <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.loadResistance && <div className="text-yellow-400 text-sm mt-1">{warnings.loadResistance}</div>}
             </div>
           </>
         ) : mosfetName && (
           <>
+            {/* Read-only Vth */}
             <div className="mt-4">
               <label className="mosfet-label">Threshold Voltage (Vth)</label>
-              <Tooltip text={getParameterTooltip('vth')} position="top">
-                <input
-                  type="text"
-                  className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
-                  value={`${mosfetDetails.vth}V`}
-                  readOnly
-                />
-              </Tooltip>
+              <input
+                type="text"
+                className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
+                value={formatValueWithSuffix(parseFloat(mosfetDetails.vth || 'NaN'), 'V')} // Format value
+                readOnly
+                title={getParameterTooltip('vth')}
+              />
             </div>
-            
+
+            {/* Read-only Rds_on */}
             <div>
               <label className="mosfet-label">On Resistance (Rds_on)</label>
-              <Tooltip text={getParameterTooltip('rds_on')} position="top">
-                <input
-                  type="text"
-                  className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
-                  value={formatValueWithSuffix(parseFloat(mosfetDetails.rds_on))}
-                  readOnly
-                />
-              </Tooltip>
+              <input
+                type="text"
+                className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
+                value={formatValueWithSuffix(parseValueWithSuffix(mosfetDetails.rds_on || '0'), 'Ω')} // Format value
+                readOnly
+                title={getParameterTooltip('rds_on')}
+              />
             </div>
-            
-            <div>
+
+            {/* Editable Vg, Vcc, Vs, LoadResistance */}
+             <div>
               <label className="mosfet-label">Gate Voltage (Vg)</label>
-              <Tooltip text={getParameterTooltip('vg')} position="top">
-                <input
-                  type="text"
-                  name="vg"
-                  className="mosfet-input"
-                  value={inputValues.vg}
-                  onChange={handleInputChange}
-                  placeholder="Enter gate voltage"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vg"
+                className="mosfet-input"
+                value={inputValues.vg}
+                onChange={handleInputChange}
+                placeholder="Enter gate voltage"
+                 title={getParameterTooltip('vg')}
+              />
               {warnings.vg && <div className="text-yellow-400 text-sm mt-1">{warnings.vg}</div>}
             </div>
-            
-            <div>
+
+             <div>
               <label className="mosfet-label">Supply Voltage (Vcc)</label>
-              <Tooltip text={getParameterTooltip('vcc')} position="top">
-                <input
-                  type="text"
-                  name="vcc"
-                  className="mosfet-input"
-                  value={inputValues.vcc}
-                  onChange={handleInputChange}
-                  placeholder="Enter supply voltage"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vcc"
+                className="mosfet-input"
+                value={inputValues.vcc}
+                onChange={handleInputChange}
+                placeholder="Enter supply voltage"
+                title={getParameterTooltip('vcc')}
+              />
               {warnings.vcc && <div className="text-yellow-400 text-sm mt-1">{warnings.vcc}</div>}
             </div>
-            
-            <div>
+
+             <div>
               <label className="mosfet-label">Source Voltage (Vs)</label>
-              <Tooltip text={getParameterTooltip('vs')} position="top">
-                <input
-                  type="text"
-                  name="vs"
-                  className="mosfet-input"
-                  value={inputValues.vs}
-                  onChange={handleInputChange}
-                  placeholder="Usually same as Vcc for P-channel"
-                />
-              </Tooltip>
+              <input
+                type="text"
+                name="vs"
+                className="mosfet-input"
+                value={inputValues.vs}
+                onChange={handleInputChange}
+                placeholder="Usually same as Vcc for high-side switch"
+                title={getParameterTooltip('vs')}
+              />
+               <small className="text-gray-400 block mt-1">Typically connected to Vcc.</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
-            
-            <div>
-              <label className="mosfet-label">Load Resistance (Ω)</label>
-              <Tooltip text={getParameterTooltip('loadResistance')} position="top">
-                <input
-                  type="text"
-                  name="loadResistance"
-                  className="mosfet-input"
-                  value={inputValues.loadResistance}
-                  onChange={handleInputChange}
-                  placeholder="Enter load resistance (e.g., 10k, 1M)"
-                />
-              </Tooltip>
-              <small className="text-gray-400 block mt-1">You can use k (kilo), M (mega), m (milli), u (micro)</small>
+
+             <div>
+              <label className="mosfet-label">Load Resistance</label>
+              <input
+                type="text"
+                name="loadResistance"
+                className="mosfet-input"
+                value={inputValues.loadResistance}
+                onChange={handleInputChange}
+                placeholder="Enter load resistance"
+                title={getParameterTooltip('loadResistance')}
+              />
+              <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.loadResistance && <div className="text-yellow-400 text-sm mt-1">{warnings.loadResistance}</div>}
             </div>
           </>
