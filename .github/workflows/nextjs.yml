@@ -25,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.10.0"
           # REMOVED cache: "pnpm" - Let pnpm/action-setup handle pnpm specifics
 
       # Step 2: Setup pnpm (this installs pnpm and sets up caching)
@@ -63,9 +63,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Step 4: Build and Export
+      # Add TypeScript configuration for import attributes
+      - name: Configure TypeScript
+        run: |
+          echo '{ "compilerOptions": { "moduleResolution": "bundler" } }' > tsconfig.build.json
+
+      # Step 4: Build and Export with environment variables
       - name: Build Next.js site
-        run: pnpm run build
+        run: |
+          export NODE_OPTIONS="--experimental-import-attributes"
+          pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
 
       - name: Export static site
         run: pnpm run export # Ensure your package.json has an 'export' script: "next export"
