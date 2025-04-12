@@ -5,10 +5,9 @@
   "scripts": {
     "dev": "node scripts/generate-blog-data.js && next dev",
     "prebuild": "node scripts/generate-blog-data.js",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start",
-    "export": "next export",
-    "deploy": "pnpm build && pnpm export && gh-pages -d out",
+    "deploy": "pnpm build && gh-pages -d out",
     "blog": "node scripts/blog-manager.js",
     "test": "jest"
   },
