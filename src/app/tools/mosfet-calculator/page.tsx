@@ -1,11 +1,44 @@
-'use client';
-
 import { Metadata } from 'next';
 import MosfetCalculator from '@/components/tools/MosfetCalculator';
+import { generateToolSchema } from '@/lib/utils/seo';
+import Script from 'next/script';
+
+// Enhanced SEO metadata
+export const metadata: Metadata = {
+  title: 'MOSFET Calculator | Battle With Bytes',
+  description: 'Interactive MOSFET calculator for N-channel and P-channel configurations. Calculate conduction states, voltages, currents, and power dissipation for electronic circuit design.',
+  keywords: ['MOSFET calculator', 'N-channel MOSFET', 'P-channel MOSFET', 'transistor calculator', 'electronics design', 'circuit analysis', 'power electronics', 'semiconductor calculator'],
+  openGraph: {
+    title: 'MOSFET Calculator | Battle With Bytes',
+    description: 'Interactive MOSFET calculator for N-channel and P-channel configurations. Calculate conduction states, voltages, currents, and power dissipation.',
+    type: 'website',
+    url: 'https://battlewithbytes.io/tools/mosfet-calculator',
+    images: [
+      {
+        url: '/images/og/mosfet-calculator.png',
+        width: 1200,
+        height: 630,
+        alt: 'MOSFET Calculator',
+      },
+    ],
+  },
+};
 
 export default function MosfetCalculatorPage() {
+  // Tool schema for structured data
+  const toolSchema = generateToolSchema(
+    'MOSFET Calculator',
+    'Interactive MOSFET calculator for N-channel and P-channel configurations. Calculate conduction states, voltages, currents, and power dissipation for electronic circuit design.',
+    '/tools/mosfet-calculator'
+  );
+
   return (
     <main className="min-h-screen py-16 px-4">
+      {/* Structured data for search engines */}
+      <Script id="mosfet-schema" type="application/ld+json">
+        {JSON.stringify(toolSchema)}
+      </Script>
+
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold font-mono mb-8 glow-text">
           <span className="text-green-400">&lt;</span> MOSFET Calculator <span className="text-green-400">/&gt;</span>

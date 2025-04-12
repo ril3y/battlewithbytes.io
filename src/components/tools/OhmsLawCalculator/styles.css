@@ -2,9 +2,8 @@
 
 .ohms-law-calculator {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  margin: 0;
+  padding: 0;
   font-family: var(--font-sans);
 }
 
@@ -12,6 +11,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  margin-bottom: 2rem;
 }
 
 @media (min-width: 768px) {
@@ -51,34 +51,79 @@
   outline: none;
 }
 
+.ohms-law-form input:disabled,
+.ohms-law-form select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .ohms-law-form button {
   transition: all 0.2s ease;
 }
 
 .ohms-law-form button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .ohms-law-form button:active {
   transform: translateY(0);
 }
 
+.ohms-law-results {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ohms-law-results h3 {
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+}
+
+.ohms-law-result-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ohms-law-result-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ohms-law-result-item {
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+.ohms-law-result-item.calculated {
+  border-color: var(--accent-primary);
+  background-color: rgba(0, 255, 157, 0.05);
+}
+
+.ohms-law-description {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+.ohms-law-formulas {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Glow effect for calculated values */
-.ohms-law-description .bg-\[\#00ff9d\]\/10 {
+.bg-accent {
   box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
 }
 
-/* Grid pattern background for the diagram */
-.ohms-law-diagram .relative {
-  background-image: 
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0;
-}
-
-/* Pulse animation for calculated property */
+/* Pulse animation for calculated values */
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4);
@@ -91,22 +136,25 @@
   }
 }
 
-.bg-\[\#00ff9d\]\/10 {
+.highlight-pulse {
   animation: pulse 2s infinite;
+}
+
+/* Grid pattern background for the diagram */
+.ohms-law-diagram .relative {
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0;
 }
 
 /* Custom styling for select dropdown to match dark theme */
 .ohms-law-form select {
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ff9d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.7rem center;
-  background-size: 1em;
+  background-position: right 0.75rem center;
+  background-size: 12px;
   padding-right: 2.5rem;
-}
-
-/* Override browser default styling for dropdown options */
-.ohms-law-form select option {
-  background-color: #0a0a0a;
-  color: #ededed;
 }

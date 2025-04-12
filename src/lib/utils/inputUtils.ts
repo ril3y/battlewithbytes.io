@@ -18,71 +18,46 @@
  * @returns The parsed value as a number, or 0 for invalid/empty input.
  */
 export const parseValueWithSuffix = (value: string): number => {
-  // Handle empty or null input explicitly
   if (!value || value.trim() === '') return 0;
-
-  // Remove all spaces and common units like Ω, V, A, etc. for parsing flexibility
-  // Keep the core number and potential suffix
-  const cleanedValue = value.replace(/[\sΩVAWFHz]/gi, ''); // Add other units if needed
-
-  // Special case for 'ma' suffix (milliamps)
-  if (cleanedValue.toLowerCase().endsWith('ma')) {
-    const numPart = cleanedValue.slice(0, -2);
-    const numValue = parseFloat(numPart);
-    if (isNaN(numValue)) return 0;
-    return numValue / 1000; // Convert milliamps to amps
-  }
-
-  // Regex to match optional sign, number (potentially decimal), and optional suffix
-  // Ensures suffix is at the very end. Allows '.' or '5.'
-  const match = cleanedValue.match(/^(-?[0-9]*\.?[0-9]*)([kKMmGuµ])?$/);
-
-  if (!match) {
-    // If it doesn't match the structure (e.g., "abc", "1.k", "k1") return 0
-    return 0;
-  }
-
-  // Check for invalid numeric parts that regex might allow
-  const numPartString = match[1];
-  const suffix = match[2];
   
-  // Check for invalid formats like "1.k" or ".k"
-  if (numPartString.endsWith('.') && suffix) {
-    return 0;
+  // Remove any Ω, V, or W symbols for parsing
+  const cleanValue = value.replace(/[ΩVW]/g, '').trim();
+  
+  // Check if it's a valid number
+  if (!isValidNumberInput(cleanValue)) return 0;
+  
+  // Handle special case for mA (milliamps)
+  if (/^\d*\.?\d*ma$/i.test(cleanValue)) {
+    const numericPart = cleanValue.replace(/ma$/i, '');
+    return Number(numericPart) / 1000; // Convert mA to A
   }
-
-  // Check for multiple decimal points
-  if ((numPartString.match(/\./g) || []).length > 1) {
-    return 0;
-  }
-
-  // Handle cases like "." or "+." which result in NaN from parseFloat
-  const numValue = parseFloat(numPartString);
-  if (isNaN(numValue)) {
-    return 0;
-  }
-
-  // Apply suffix multiplier
-  if (suffix) {
+  
+  // Handle single character suffixes (k, M, m, u, µ, G)
+  if (/^\d*\.?\d*[kKmMuµG]$/.test(cleanValue)) {
+    const numericPart = cleanValue.slice(0, -1);
+    const suffix = cleanValue.slice(-1).toLowerCase();
+    
+    const baseValue = Number(numericPart);
+    
     switch (suffix) {
       case 'k':
-      case 'K':
-        return numValue * 1000;
-      case 'M':
-        return numValue * 1000000;
+        return baseValue * 1000; // kilo
       case 'm':
-        return numValue / 1000; // milli
+        return baseValue / 1000; // milli
       case 'u':
       case 'µ':
-        return numValue / 1000000; // micro
-      case 'G':
-        return numValue * 1000000000; // giga
+        return baseValue / 1000000; // micro
+      case 'g':
+        return baseValue * 1000000000; // giga
+      case 'M':
+        return baseValue * 1000000; // mega
       default:
-        return numValue;
+        return baseValue;
     }
   }
-
-  return numValue;
+  
+  // No suffix, just return the number
+  return Number(cleanValue);
 };
 
 /**
@@ -96,137 +71,124 @@ export const formatValueWithSuffix = (value: number, unit: string = ''): string 
   if (isNaN(value)) return `NaN${unit}`; // Handle NaN input
 
   // Handle zero separately to avoid issues with log/negative powers
-  if (value === 0) return `0.00${unit}`;
+  if (value === 0) return `0.000${unit}`;
 
   if (value >= 1000000000) {
-    return `${(value / 1000000000).toFixed(2)}G${unit}`;
+    return `${(value / 1000000000).toFixed(3)}G${unit}`;
   } else if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(2)}M${unit}`;
+    return `${(value / 1000000).toFixed(3)}M${unit}`;
   } else if (value >= 1000) {
-    return `${(value / 1000).toFixed(2)}k${unit}`;
+    return `${(value / 1000).toFixed(3)}k${unit}`;
   } else if (value >= 1) {
     // Avoid unnecessary decimals for whole numbers >= 1? Optional.
     // if (value === Math.floor(value)) return `${value}${unit}`;
-    return `${value.toFixed(2)}${unit}`;
+    return `${value.toFixed(3)}${unit}`;
   } else if (value >= 0.001) {
-    return `${(value * 1000).toFixed(2)}m${unit}`;
+    return `${(value * 1000).toFixed(3)}m${unit}`;
   } else if (value >= 0.000001) {
-    return `${(value * 1000000).toFixed(2)}u${unit}`; // Use 'u' consistently
+    return `${(value * 1000000).toFixed(3)}u${unit}`; // Use 'u' consistently
   } else if (value > 0) {
      // Very small positive numbers -> micro or exponential
      const microVal = value * 1000000;
      if (microVal >= 0.01) { // Show down to 0.01 µΩ
-         return `${microVal.toFixed(2)}u${unit}`;
+         return `${microVal.toFixed(3)}u${unit}`;
      } else {
-         return `${value.toExponential(2)}${unit}`;
+         return `${value.toExponential(3)}${unit}`;
      }
   }
   // Handle negative numbers - apply same logic to absolute value then add sign
   else { // value < 0
       const absFormatted = formatValueWithSuffix(Math.abs(value), unit);
       // Check if the formatted value is just the unit (e.g., for very small negatives)
-      if (absFormatted === unit || absFormatted === `0.00${unit}`) return `0.00${unit}`;
+      if (absFormatted === unit || absFormatted === `0.000${unit}`) return `0.000${unit}`;
       return `-${absFormatted}`;
   }
 };
 
 /**
- * Validates if the input string represents a valid number potentially
- * with an engineering suffix (k, K, M, m, G, u, µ). Allows partial input like "." or "-".
- *
+ * Validates if the input is a valid number with optional engineering notation suffix
+ * 
  * @param value The input value to validate
- * @returns True if the input is potentially valid, false otherwise
+ * @returns True if the input is a valid number with optional suffix
  */
-// ==== Replace isValidNumberInput AGAIN with this version ====
 export const isValidNumberInput = (value: string): boolean => {
-  // Allow empty string
-  if (value === '') return true;
-  // Allow partial inputs for easier typing
-  if (value === '+' || value === '-' || value === '.') return true;
-
-  const cleanedValue = value.replace(/\s+/g, '');
-
-  // Define allowed suffixes (Match the parse function. If G is parsed, allow G. If not, remove G.)
-  // The test "rejects invalid inputs" expects '10 G' to be false. So DO NOT include G here.
-  const allowedSuffixes = 'kKMmuµ';
-
-  // --- Specific Invalid Pattern Checks ---
-  // More than one decimal point
-  if ((cleanedValue.match(/\./g) || []).length > 1) return false;
-  // More than one sign or sign not at the start
-  if ((cleanedValue.match(/[+-]/g) || []).length > 1 || (cleanedValue.indexOf('-') > 0) || (cleanedValue.indexOf('+') > 0)) return false;
-  // Just "+." or "-." is invalid as a final value
-  if (/^[+-]\.$/.test(cleanedValue)) return false;
-  // *** ADD THIS CHECK BACK IN: Suffix directly after a dot ***
-  const suffixAfterDotRegex = new RegExp(`\\.[${allowedSuffixes}]$`, 'i');
-  if (suffixAfterDotRegex.test(cleanedValue)) {
-       return false;
+  if (!value || value.trim() === '') return false;
+  
+  // Remove any Ω, V, or W symbols for validation
+  const cleanValue = value.replace(/[ΩVW]/g, '').trim();
+  
+  // Basic number pattern (allows decimal points, signs)
+  if (/^[-+]?\d*\.?\d*$/.test(cleanValue)) {
+    return true;
   }
-  // Reject if ONLY a suffix (e.g., "k")
-  const justSuffixRegex = new RegExp(`^[${allowedSuffixes}]$`, 'i');
-  if (justSuffixRegex.test(cleanedValue)) {
-      return false;
+  
+  // Handle special case for mA (milliamps)
+  if (/^[-+]?\d*\.?\d*ma$/i.test(cleanValue)) {
+    return true;
   }
-  // Reject if just sign + suffix (e.g., "+k")
-  const signSuffixRegex = new RegExp(`^[+-][${allowedSuffixes}]$`, 'i');
-  if (signSuffixRegex.test(cleanedValue)) {
-      return false;
+  
+  // Handle engineering notation with suffixes
+  if (/^[-+]?\d*\.?\d*[kKmMuµG]$/i.test(cleanValue)) {
+    // Make sure there's a number before the suffix
+    const numericPart = cleanValue.slice(0, -1);
+    return numericPart.length > 0 && !isNaN(Number(numericPart));
   }
-
-
-  // --- Structural Regex Check ---
-  // Does it broadly fit the pattern of number + optional suffix?
-  const validStructureRegex = new RegExp(
-      `^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)` + // Number part logic
-      `([${allowedSuffixes}])?` + // Optional allowed suffix
-      `$`, // End anchor
-      'i' // Case-insensitive for suffixes
-  );
-
-  // If it fails the basic structure OR any of the specific invalid checks above, return false.
-  // The structural regex test now mainly serves to reject completely invalid characters or placements.
-  if (!validStructureRegex.test(cleanedValue)) {
-      return false;
-  }
-
-  // If it passes the structural regex AND all the specific invalid checks, it's valid.
-  return true;
+  
+  return false;
 };
+
+/**
+ * Validates if the input is a valid voltage value
+ * Allows decimal numbers with optional V symbol
+ * 
+ * @param value The input value to validate
+ * @returns True if the input is a valid voltage value
+ */
+export const isValidVoltage = (value: string): boolean => {
+  if (!value || value.trim() === '') return false;
+  
+  // Remove V symbol if present
+  const cleanValue = value.replace(/V/gi, '').trim();
+  
+  // Basic number pattern (allows decimal points, signs)
+  if (/^[-+]?\d*\.?\d*$/.test(cleanValue)) {
+    return true;
+  }
+  
+  // Allow voltage with k, m, µ suffixes
+  if (/^[-+]?\d*\.?\d*[kKmMuµ]$/i.test(cleanValue)) {
+    const numericPart = cleanValue.slice(0, -1);
+    return numericPart.length > 0 && !isNaN(Number(numericPart));
+  }
+  
+  return false;
+};
+
 /**
  * Validates if the input is a valid resistance value
  * Allows engineering notation with suffixes and Ω symbol
  * 
  * @param value The input value to validate
- * @returns True if the input is a valid resistance, false otherwise
+ * @returns True if the input is a valid resistance value
  */
 export const isValidResistance = (value: string): boolean => {
-    // Allow empty string (user clearing the input)
-    if (value === '') return true;
-
-    // Remove spaces and Ω symbol for validation
-    const cleanedValue = value.replace(/[\sΩ]/g, '');
-    
-    // Use the general number validation
-    return isValidNumberInput(cleanedValue);
-};
-
-/**
- * Validates if the input is a valid voltage value (number + optional V)
- * 
- * @param value The input value to validate
- * @returns True if the input is a valid voltage, false otherwise
- */
-export const isValidVoltage = (value: string): boolean => {
-    // Allow empty input
-    if (!value || value.trim() === '') return true;
-
-    // Trim whitespace and remove V suffix if present
-    const cleanedValue = value.trim().replace(/\s*V$/i, '');
-    
-    // Use the general number validation without suffix
-    // For voltage, we don't allow engineering suffixes
-    return /^[+-]?[\d.]+$/.test(cleanedValue) && 
-           (cleanedValue.match(/\./g) || []).length <= 1;
+  if (!value || value.trim() === '') return false;
+  
+  // Remove Ω symbol if present
+  const cleanValue = value.replace(/Ω/g, '').trim();
+  
+  // Basic number pattern (allows decimal points, signs)
+  if (/^[-+]?\d*\.?\d*$/.test(cleanValue)) {
+    return true;
+  }
+  
+  // Allow resistance with k, M, m, µ suffixes
+  if (/^[-+]?\d*\.?\d*[kKMmuµ]$/i.test(cleanValue)) {
+    const numericPart = cleanValue.slice(0, -1);
+    return numericPart.length > 0 && !isNaN(Number(numericPart));
+  }
+  
+  return false;
 };
 
 /**
@@ -453,4 +415,119 @@ export const getParameterTooltip = (
     default:
       return '';
   }
+};
+
+/**
+ * Field types for validation
+ */
+export type FieldType = 'voltage' | 'current' | 'resistance' | 'power' | 'generic';
+
+/**
+ * Parse a value based on field type with appropriate default units
+ * - current: plain numbers treated as A (e.g., 5 → 5A)
+ * - resistance: plain numbers treated as Ω (e.g., 5 → 5Ω)
+ * - power: plain numbers treated as W (e.g., 5 → 5W)
+ * - voltage: plain numbers treated as V (e.g., 5 → 5V)
+ * 
+ * @param value The value to parse
+ * @param fieldType The type of field
+ * @returns The parsed value as a number
+ */
+export const parseFieldValue = (
+  value: string,
+  fieldType: FieldType = 'generic'
+): number => {
+  if (!value || value.trim() === '') return 0;
+  
+  // If it's a plain number with no suffix, treat it as the base unit
+  if (!isNaN(Number(value)) && !value.match(/[a-zA-Z]/)) {
+    return Number(value); // All plain numbers are in their base unit (A, V, Ω, W)
+  }
+  
+  // Handle special case for mA (milliamps) - both "ma" and "m" suffixes
+  if (fieldType === 'current') {
+    // Check for explicit mA suffix
+    if (/^\d*\.?\d*ma$/i.test(value)) {
+      const numericPart = value.replace(/ma$/i, '');
+      return Number(numericPart) / 1000; // Convert mA to A
+    }
+    
+    // Also check for just "m" suffix for current (interpret as mA)
+    if (/^\d*\.?\d*m$/i.test(value)) {
+      const numericPart = value.replace(/m$/i, '');
+      return Number(numericPart) / 1000; // Convert mA to A
+    }
+  }
+  
+  // Use standard parser for values with other suffixes
+  return parseValueWithSuffix(value);
+};
+
+/**
+ * Validates input based on field type
+ * Allows any text input but provides validation status
+ * 
+ * @param value The input value to validate
+ * @param fieldType The type of field being validated
+ * @returns Object with validation status and parsed value
+ */
+export const validateFieldInput = (
+  value: string,
+  fieldType: FieldType = 'generic'
+): { isValid: boolean; parsedValue: number } => {
+  // Empty values are considered valid but with zero value
+  if (!value || value.trim() === '') {
+    return { isValid: true, parsedValue: 0 };
+  }
+  
+  let parsedValue = 0;
+  let isValid = false;
+  
+  // If it's a plain number with no suffix
+  if (!isNaN(Number(value)) && !value.match(/[a-zA-Z]/)) {
+    parsedValue = parseFieldValue(value, fieldType);
+    isValid = true;
+    return { isValid, parsedValue };
+  }
+  
+  // For values with suffixes, validate based on field type
+  switch (fieldType) {
+    case 'current':
+      if (isValidNumberInput(value)) {
+        parsedValue = parseValueWithSuffix(value);
+        isValid = true;
+      }
+      break;
+      
+    case 'voltage':
+      if (isValidVoltage(value)) {
+        parsedValue = parseValueWithSuffix(value);
+        isValid = true;
+      }
+      break;
+      
+    case 'resistance':
+      if (isValidResistance(value)) {
+        parsedValue = parseValueWithSuffix(value);
+        isValid = true;
+      }
+      break;
+      
+    case 'power':
+      if (isValidNumberInput(value)) {
+        parsedValue = parseValueWithSuffix(value);
+        isValid = true;
+      }
+      break;
+      
+    case 'generic':
+    default:
+      if (isValidNumberInput(value)) {
+        parsedValue = parseValueWithSuffix(value);
+        isValid = true;
+      }
+      break;
+  }
+  
+  return { isValid, parsedValue };
 };
