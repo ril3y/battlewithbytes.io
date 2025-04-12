@@ -21,13 +21,6 @@
 - Add new tests for new functionality or changes to critical logic.
 - Do not remove tests unless instructed.
 
-- Pages belong in `src/app/` (for App Router) or `src/pages/` (for Pages Router).
-- Components go in `src/components/`.
-- Utilities or shared code go in `src/lib/` or `src/utils/`.
-- Use `@/` alias paths where configured (respect `tsconfig.json` paths).
-- For dynamic imports or API calls — handle loading and error states gracefully.
-- Follow Next.js best practices for SEO (metadata, Head component usage).
-
 - Use semantic HTML.
 - Ensure basic accessibility (alt text for images, proper heading levels, labels for inputs).
 - Avoid introducing UI changes without context or approval.
