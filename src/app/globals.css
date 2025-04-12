@@ -20,7 +20,7 @@ body {
     linear-gradient(var(--grid-color) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
   background-size: 30px 30px;
-  background-position: center center;
+  background-position: 0 0;
   overflow-x: hidden;
 }
 

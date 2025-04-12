@@ -2,14 +2,21 @@ import { getBlogPostBySlug, getBlogSlugs } from '@/lib/blog';
 import BlogPost from '@/components/BlogPost';
 import { Metadata } from 'next';
 
-interface BlogPostPageProps {
-  params: {
-    slug: string;
-  };
-}
+// Define the params type
+type Params = {
+  slug: string;
+};
 
-export function generateMetadata({ params }: BlogPostPageProps): Metadata {
-  const post = getBlogPostBySlug(params.slug);
+// Define the page props according to Next.js 15 requirements
+type PageProps = {
+  params: Params;
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  // Use destructuring to get the slug
+  const { slug } = params;
+  const post = getBlogPostBySlug(slug);
   
   return {
     title: `${post.metadata.title} | Battle With Bytes`,
@@ -17,12 +24,13 @@ export function generateMetadata({ params }: BlogPostPageProps): Metadata {
   };
 }
 
-export function generateStaticParams() {
+export function generateStaticParams(): Array<Params> {
   const slugs = getBlogSlugs();
   return slugs.map(slug => ({ slug }));
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
+export default async function BlogPostPage({ params }: PageProps) {
+  // Use destructuring to get the slug
   const { slug } = params;
   const post = getBlogPostBySlug(slug);
   

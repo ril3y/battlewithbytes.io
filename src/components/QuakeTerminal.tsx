@@ -25,7 +25,7 @@ const TerminalWelcome = () => (
   <div className="terminal-welcome">
     <div className="ascii-art">BATTLE WITH BYTES</div>
     <p className="terminal-tagline">Ask me about little data.</p>
-    <p className="terminal-help">Type 'help' to see available commands</p>
+    <p className="terminal-help">Type &apos;help&apos; to see available commands</p>
   </div>
 )
 

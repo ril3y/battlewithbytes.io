@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <main className="min-h-screen">
@@ -5,8 +7,8 @@ export default function Home() {
       <section className="relative py-20 md:py-32 px-4 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black"></div>
-          {/* Animated circuit pattern background - purely CSS */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--accent-primary)_0.5px,_transparent_1px)] bg-[length:20px_20px]"></div>
+          {/* Updated grid pattern to match global style */}
+          <div className="absolute inset-0 bg-[linear-gradient(var(--grid-color)_1px,_transparent_1px),_linear-gradient(90deg,_var(--grid-color)_1px,_transparent_1px)] bg-[length:30px_30px] bg-[0_0]"></div>
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -24,12 +26,12 @@ export default function Home() {
               and software engineering through a diverse mix of content.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <a href="/blog" className="button">
+              <Link href="/blog" className="button">
                 Read the Blog
-              </a>
-              <a href="/tools" className="button">
+              </Link>
+              <Link href="/tools" className="button">
                 Explore Tools
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -51,9 +53,9 @@ export default function Home() {
                 <p className="text-gray-400 mb-4">
                   Deep dives into security topics, vulnerability research, and practical defense strategies.
                 </p>
-                <a href="/blog" className="text-green-400 font-mono text-sm hover:underline">
+                <Link href="/blog" className="text-green-400 font-mono text-sm hover:underline">
                   Read more →
-                </a>
+                </Link>
               </div>
             </div>
             
@@ -65,9 +67,9 @@ export default function Home() {
                 <p className="text-gray-400 mb-4">
                   Interactive tools for hardware engineers, including MOSFET power calculators and more.
                 </p>
-                <a href="/tools" className="text-green-400 font-mono text-sm hover:underline">
+                <Link href="/tools" className="text-green-400 font-mono text-sm hover:underline">
                   Explore tools →
-                </a>
+                </Link>
               </div>
             </div>
             
@@ -79,9 +81,9 @@ export default function Home() {
                 <p className="text-gray-400 mb-4">
                   Highlights of personal and collaborative projects in embedded systems and software development.
                 </p>
-                <a href="/projects" className="text-green-400 font-mono text-sm hover:underline">
+                <Link href="/projects" className="text-green-400 font-mono text-sm hover:underline">
                   View projects →
-                </a>
+                </Link>
               </div>
             </div>
           </div>
