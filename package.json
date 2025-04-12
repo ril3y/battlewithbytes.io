@@ -20,6 +20,7 @@
     "react-console-emulator": "^5.0.2",
     "react-dom": "^19.0.0"
   },
+  "homepage": "https://ril3y.github.io/battlewithbytes.io",
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
