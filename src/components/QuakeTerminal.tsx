@@ -14,12 +14,13 @@ const commands = Object.fromEntries(
     {
       description: cmd.description,
       usage: cmd.usage,
+      // Pass the arguments as an array.
       fn: (...args: string[]) => cmd.execute(args),
     },
   ])
 )
 
-// Fixed ASCII banner for battlewithbytes.
+// Custom ASCII banner for battlewithbytes.
 const asciiArt = `
 █▄▄ ▄▀█ ▀█▀ ▀█▀ █    █▀▀   █ █ █ █ ▀█▀ █ █   █▄▄ █▄█ ▀█▀ █▀▀ █▀
 █▄█ █▀█  █   █  █▄▄ ██▄   ▀▄▀▄▀ █  █  █▀█   █▄█  █   █  ██▄ ▄█
@@ -30,7 +31,6 @@ Ask me about little data.
 export default function QuakeTerminal() {
   const [open, setOpen] = useState(false)
 
-  // Listener to toggle the terminal with tilde/backquote.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "~" || event.code === "Backquote") {
@@ -51,16 +51,20 @@ export default function QuakeTerminal() {
 
     const handleExit = () => {
       setOpen(false)
-      // Clear the input field.
       const input = document.querySelector(
         'input[name="react-console-emulator__input"]'
       ) as HTMLInputElement | null
       if (input) {
         input.value = ""
       }
-      // Do not manipulate innerHTML of output to avoid conflicts with React.
+      const output = document.querySelector(
+        '[name="react-console-emulator__content"]'
+      )
+      if (output) {
+        output.innerHTML = ""
+      }
     }
-
+    
     document.addEventListener("keydown", handleKeyDown, { capture: true })
     window.addEventListener("quake-exit", handleExit as EventListener)
 
@@ -70,7 +74,7 @@ export default function QuakeTerminal() {
     }
   }, [])
 
-  // When terminal opens, focus its input field.
+  // Focus the terminal input when the terminal is opened.
   useEffect(() => {
     if (open) {
       setTimeout(() => {
