@@ -32,6 +32,9 @@ jobs:
         with:
           version: 7.32.2
 
+      - name: Verify PNPM installation
+        run: pnpm --version
+
       - name: Install dependencies
         run: pnpm install
 
