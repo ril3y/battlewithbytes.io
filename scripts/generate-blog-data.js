@@ -49,8 +49,21 @@ function generateBlogData() {
             let value = line.substring(colonIndex + 1).trim();
             
             // Handle arrays (tags)
-            if (value.startsWith('[') && value.endsWith(']')) {
-              value = value.slice(1, -1).split(',').map(item => item.trim().replace(/"/g, ''));
+            if (key === 'tags') {
+              // Handle different tag formats: [tag1, tag2] or ["tag1", "tag2"]
+              if (value.startsWith('[') && value.endsWith(']')) {
+                value = value.slice(1, -1)
+                  .split(',')
+                  .map(item => item.trim().replace(/^["']|["']$/g, ''))
+                  .filter(item => item !== '');
+              } else {
+                // Handle comma-separated tags without brackets
+                value = value.split(',').map(item => item.trim()).filter(item => item !== '');
+              }
+            } else if (key === 'coverImage' && value.startsWith('"./') && value.endsWith('"')) {
+              // Process relative image paths
+              const relativePath = value.slice(3, -1); // Remove "./ and "
+              value = `/api/blog-content/${slug}/${relativePath}`;
             } else if (value.startsWith('"') && value.endsWith('"')) {
               // Handle quoted strings
               value = value.slice(1, -1);
@@ -60,10 +73,23 @@ function generateBlogData() {
           }
         });
         
+        // Ensure tags is always an array
+        if (!metadata.tags) {
+          metadata.tags = [];
+        } else if (!Array.isArray(metadata.tags)) {
+          metadata.tags = [metadata.tags];
+        }
+        
         return {
           slug,
           metadata
         };
+      })
+      .sort((a, b) => {
+        // Sort by date, newest first
+        const dateA = new Date(a.metadata.date);
+        const dateB = new Date(b.metadata.date);
+        return dateB - dateA;
       });
     
     // Write the blog data to a JSON file
@@ -71,6 +97,7 @@ function generateBlogData() {
     console.log(`Blog data generated successfully: ${posts.length} posts`);
   } catch (error) {
     console.error(`Error generating blog data: ${error.message}`);
+    console.error(error.stack);
   }
 }
 
