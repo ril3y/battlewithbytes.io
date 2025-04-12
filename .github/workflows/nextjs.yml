@@ -27,11 +27,12 @@ jobs:
           node-version: "20"
           cache: "pnpm"
 
-      # Install pnpm globally via npm so it's in the PATH.
-      - name: Install pnpm globally
-        run: npm install -g pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.6.2
 
-      - name: Verify PNPM installation
+      - name: Verify pnpm installation
         run: pnpm --version
 
       - name: Install dependencies
