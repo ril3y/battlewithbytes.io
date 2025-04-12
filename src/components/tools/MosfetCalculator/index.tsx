@@ -19,6 +19,9 @@ interface InputValues {
 interface MosfetDetails {
   vth: string;
   rds_on: string;
+  vgs_th?: string;
+  type?: string;
+  [key: string]: string | undefined;
 }
 
 export default function MosfetCalculator() {

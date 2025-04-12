@@ -112,7 +112,7 @@ const Tooltip: React.FC<TooltipProps> = ({
         activeTooltipId = null;
       }
     };
-  }, [tooltipId]);
+  }, [tooltipId, handleHideTooltip]);
 
   // Position-specific classes
   const positionClasses = {
