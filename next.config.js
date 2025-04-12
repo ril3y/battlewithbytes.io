@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'export',
   images: {
+    unoptimized: true,
     domains: ['localhost', '127.0.0.1'],
     remotePatterns: [
       {
@@ -18,6 +20,7 @@ const nextConfig = {
       },
     ],
   },
+  basePath: process.env.NODE_ENV === 'production' ? '/battlewithbytes.io' : '',
   // Disable webpack cache in development to prevent the errors
   webpack: (config, { dev }) => {
     if (dev) {
