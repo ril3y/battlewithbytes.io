@@ -17,6 +17,8 @@ interface DescriptionProps {
     type?: string;
     [key: string]: string | undefined;
   } | null;
+  mosfetType: string;
+  loadResistance: number | null;
 }
 
 export default function Description({
@@ -28,7 +30,9 @@ export default function Description({
   vgs,
   id,
   vd,
-  mosfetDetails
+  mosfetDetails,
+  mosfetType,
+  loadResistance
 }: DescriptionProps) {
   const [showMath, setShowMath] = useState(false);
 
@@ -65,23 +69,33 @@ export default function Description({
           <>
             <div className="mb-3">
               <div className="text-gray-400">Current through circuit (Id):</div>
-              <div className="text-white">Id = Vcc / (Rds_on + Rload) = {idNum.toFixed(4)} A</div>
+              {mosfetType === 'n-channel' ? (
+                <div className="text-white">Id = Vcc / (Rds_on + {loadResistance?.toFixed(2) ?? '?'}) = {idNum.toFixed(4)} A</div>
+              ) : (
+                <div className="text-white">Id = Vs / (Rds_on + {loadResistance?.toFixed(2) ?? '?'}) = {idNum.toFixed(4)} A</div>
+              )}
             </div>
             
             <div className="mb-3">
               <div className="text-gray-400">Voltage across load:</div>
-              <div className="text-white">Vload = Id × Rload = {voltageAcrossLoadNum.toFixed(4)} V</div>
+              <div className="text-white">Vload = Id × Rload ({loadResistance?.toFixed(2) ?? '?'}) = {voltageAcrossLoadNum.toFixed(4)} V</div>
             </div>
             
             <div className="mb-3">
               <div className="text-gray-400">Voltage at drain (Vd):</div>
-              <div className="text-white">Vd = Id × Rds_on + Vs = {vdNum.toFixed(4)} V</div>
+              {/* Conditional Vd formula based on type */}
+              {mosfetType === 'n-channel' ? (
+                <div className="text-white">Vd (N-Ch) = Vcc - Vload = {vdNum.toFixed(4)} V</div> 
+              ) : (
+                <div className="text-white">Vd = Vload = {vdNum.toFixed(4)} V</div> 
+                // Alternate display: Vd = Vs - (Id * Rds_on) = {vdNum.toFixed(4)} V
+              )}
             </div>
             
             <div className="mb-3">
               <div className="text-gray-400">Power dissipated by MOSFET:</div>
               <div className="text-white">
-                P = Id² × Rds_on = ({idNum.toFixed(4)} A)² × Rds_on = {(idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0')).toFixed(6)} W 
+                P = Id² × Rds_on ({parseFloat(mosfetDetails?.rds_on || '0').toFixed(2)}Ω) = ({idNum.toFixed(4)} A)² × Rds_on = {(idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0')).toFixed(6)} W 
                 {(idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0')) < 0.001 && ` (${((idNum * idNum * parseFloat(mosfetDetails?.rds_on || '0')) * 1000).toFixed(2)} mW)`}
               </div>
             </div>

@@ -1,5 +1,47 @@
 'use client';
 
+// SI Prefix parsing function
+export const parseSiPrefixedValue = (value: string): number => {
+  if (!value || typeof value !== 'string') {
+    return NaN;
+  }
+
+  const trimmedValue = value.trim();
+  const lastChar = trimmedValue.slice(-1);
+  const numericPartStr = trimmedValue.slice(0, -1);
+
+  const siPrefixes: { [key: string]: number } = {
+    k: 1e3,
+    M: 1e6,
+    G: 1e9,
+    m: 1e-3,
+    u: 1e-6, // Micro
+    n: 1e-9, // Nano
+    p: 1e-12, // Pico
+  };
+
+  let multiplier = 1;
+  let numericStrToParse = trimmedValue;
+
+  // Check if the last character is a known SI prefix (case-insensitive)
+  if (siPrefixes[lastChar.toLowerCase()]) {
+    multiplier = siPrefixes[lastChar.toLowerCase()];
+    numericStrToParse = numericPartStr;
+  } else if (siPrefixes[lastChar]) { // Handle case-sensitive if needed (e.g., 'm' vs 'M') - though typically we treat k/M/G case-insensitively
+      multiplier = siPrefixes[lastChar]; 
+      numericStrToParse = numericPartStr;
+  }
+
+  const numericValue = parseFloat(numericStrToParse);
+
+  if (isNaN(numericValue)) {
+    return NaN; // Not a valid number
+  }
+
+  return numericValue * multiplier;
+};
+
+
 // N-Channel MOSFET calculations
 export const calculateNChannelConduction = (
   vth: number,
@@ -95,7 +137,6 @@ export const calculatePChannelConduction = (
   vth: number, // Expected to be negative for P-channel
   vg: number,
   vs: number, // Source terminal voltage (often Vcc for high-side)
-  vcc: number, // Supply voltage (often connected to Vs for high-side) - parameter retained for consistency, but Vs drives current.
   loadResistance: number,
   rds_on: number
 ) => {

@@ -32,8 +32,6 @@ interface PChannelMosfetConfigurationProps {
   mosfetDetails: { vth: string; rds_on: string };
   inputValues: {
     vg: string;
-    vcc: string;
-    // vd: string; // vd seems unused as input
     vs: string;     // Vs is crucial for P-channel calculation
     loadResistance: string;
   };
@@ -82,7 +80,7 @@ export default function PChannelMosfetConfiguration({
     if (value !== '') {
         if (name === 'loadResistance') {
             // isValid = isValidResistance(value); // Optional strict check
-        } else if (['vg', 'vcc', 'vs'].includes(name)) {
+        } else if (['vg', 'vs'].includes(name)) {
              isValid = isValidVoltage(value);
         }
     }
@@ -186,34 +184,19 @@ export default function PChannelMosfetConfiguration({
               {warnings.vg && <div className="text-yellow-400 text-sm mt-1">{warnings.vg}</div>}
             </div>
 
-            {/* Vcc Input */}
-             <div>
-              <label className="mosfet-label">Supply Voltage (Vcc)</label>
-              <input
-                type="text"
-                name="vcc"
-                className="mosfet-input"
-                value={inputValues.vcc}
-                onChange={handleInputChange}
-                placeholder="Enter supply voltage"
-                title={getParameterTooltip('vcc')}
-              />
-              {warnings.vcc && <div className="text-yellow-400 text-sm mt-1">{warnings.vcc}</div>}
-            </div>
-
             {/* Vs Input - Crucial for P-Channel */}
              <div>
-              <label className="mosfet-label">Source Voltage (Vs)</label>
+              <label className="mosfet-label">Source Voltage (Vs - Connects to Supply)</label>
               <input
                 type="text"
                 name="vs"
                 className="mosfet-input"
                 value={inputValues.vs}
                 onChange={handleInputChange}
-                placeholder="Usually same as Vcc for high-side switch"
+                placeholder="Enter voltage at Source (usually Vcc)"
                 title={getParameterTooltip('vs')}
               />
-               <small className="text-gray-400 block mt-1">Typically connected to Vcc.</small>
+              <small className="text-gray-400 block mt-1">For high-side switching, Vs is typically connected to the positive supply (Vcc).</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
 
@@ -259,7 +242,7 @@ export default function PChannelMosfetConfiguration({
               />
             </div>
 
-            {/* Editable Vg, Vcc, Vs, LoadResistance */}
+            {/* Editable Vg, Vs, LoadResistance */}
              <div>
               <label className="mosfet-label">Gate Voltage (Vg)</label>
               <input
@@ -275,31 +258,17 @@ export default function PChannelMosfetConfiguration({
             </div>
 
              <div>
-              <label className="mosfet-label">Supply Voltage (Vcc)</label>
-              <input
-                type="text"
-                name="vcc"
-                className="mosfet-input"
-                value={inputValues.vcc}
-                onChange={handleInputChange}
-                placeholder="Enter supply voltage"
-                title={getParameterTooltip('vcc')}
-              />
-              {warnings.vcc && <div className="text-yellow-400 text-sm mt-1">{warnings.vcc}</div>}
-            </div>
-
-             <div>
-              <label className="mosfet-label">Source Voltage (Vs)</label>
+              <label className="mosfet-label">Source Voltage (Vs - Connects to Supply)</label>
               <input
                 type="text"
                 name="vs"
                 className="mosfet-input"
                 value={inputValues.vs}
                 onChange={handleInputChange}
-                placeholder="Usually same as Vcc for high-side switch"
+                placeholder="Enter voltage at Source (usually Vcc)"
                 title={getParameterTooltip('vs')}
               />
-               <small className="text-gray-400 block mt-1">Typically connected to Vcc.</small>
+              <small className="text-gray-400 block mt-1">For high-side switching, Vs is typically connected to the positive supply (Vcc).</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
 
