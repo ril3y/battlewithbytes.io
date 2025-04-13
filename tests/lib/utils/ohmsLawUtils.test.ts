@@ -7,7 +7,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Current and resistance provided
       expect(validateInputs({
         voltage: '',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '10',
         power: ''
       }, 'voltage')).toBe(true);
@@ -23,9 +23,9 @@ describe('Ohm\'s Law Utilities', () => {
       // Power and current provided
       expect(validateInputs({
         voltage: '',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '',
-        power: '40000', // 40000mW = 40W
+        power: '40', // 40W
       }, 'voltage')).toBe(true);
       
       // Insufficient data
@@ -51,7 +51,7 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '',
         current: '',
         resistance: '10',
-        power: '40000', // 40000mW = 40W
+        power: '40', // 40W
       }, 'current')).toBe(true);
       
       // Power and voltage provided
@@ -59,7 +59,7 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '20',
         current: '',
         resistance: '',
-        power: '40000', // 40000mW = 40W
+        power: '40', // 40W
       }, 'current')).toBe(true);
       
       // Insufficient data
@@ -75,7 +75,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Voltage and current provided
       expect(validateInputs({
         voltage: '20',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '',
         power: ''
       }, 'resistance')).toBe(true);
@@ -85,15 +85,15 @@ describe('Ohm\'s Law Utilities', () => {
         voltage: '20',
         current: '',
         resistance: '',
-        power: '40000', // 40000mW = 40W
+        power: '40', // 40W
       }, 'resistance')).toBe(true);
       
       // Power and current provided
       expect(validateInputs({
         voltage: '',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '',
-        power: '40000', // 40000mW = 40W
+        power: '40', // 40W
       }, 'resistance')).toBe(true);
       
       // Insufficient data
@@ -109,7 +109,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Voltage and current provided
       expect(validateInputs({
         voltage: '20',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '',
         power: ''
       }, 'power')).toBe(true);
@@ -117,7 +117,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Current and resistance provided
       expect(validateInputs({
         voltage: '',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // 2A
         resistance: '10',
         power: ''
       }, 'power')).toBe(true);
@@ -145,7 +145,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using current and resistance (V = I × R)
       const values: OhmsLawValues = {
         voltage: '',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // Changed from '2000' to '2A' to match intent (2 Amps)
         resistance: '10',
         power: ''
       };
@@ -177,7 +177,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using voltage and current (R = V / I)
       const values: OhmsLawValues = {
         voltage: '20',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // Changed from '2000' to '2A' to match intent (2 Amps)
         resistance: '',
         power: ''
       };
@@ -192,7 +192,7 @@ describe('Ohm\'s Law Utilities', () => {
       // Using voltage and current (P = V × I)
       const values: OhmsLawValues = {
         voltage: '20',
-        current: '2000', // 2000mA = 2A
+        current: '2A', // Changed from '2000' to '2A' to match intent (2 Amps)
         resistance: '',
         power: ''
       };
