@@ -5,8 +5,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: process.env.NODE_ENV === 'production' ? '/battlewithbytes.io' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/battlewithbytes.io/' : '',
+  // Remove basePath and assetPrefix if using a custom domain root
+  basePath: '', // Set to empty string
+  assetPrefix: '', // Set to empty string
   trailingSlash: true, // Helps with static export path handling
   // Disable webpack cache in development to prevent the errors
   webpack: (config, { dev }) => {
