@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-// import Tooltip from '../../../lib/utils/Tooltip'; // Assuming Tooltip is correctly imported
+import Tooltip from '../../../lib/utils/Tooltip';
 import {
   parseValueWithSuffix,
   formatValueWithSuffix,
@@ -114,7 +114,7 @@ export default function PChannelMosfetConfiguration({
     // Calculation triggers via useEffect
   }, [mosfetDetails, onDetailsChange]);
 
-  // --- JSX Rendering (Using standard HTML title for tooltips) ---
+  // --- JSX Rendering (Using Tooltip component) ---
   return (
     <div>
       <h3 className="text-xl font-bold mb-3">P-Channel Configuration</h3>
@@ -140,15 +140,16 @@ export default function PChannelMosfetConfiguration({
             {/* Vth Input */}
             <div className="mt-4">
               <label className="mosfet-label">Threshold Voltage (Vth)</label>
-              <input
-                type="text"
-                name="vth"
-                className="mosfet-input"
-                value={mosfetDetails.vth}
-                onChange={handleCustomParamChange}
-                placeholder="e.g., -2 (MUST be negative)"
-                title={getParameterTooltip('vth')} // Standard HTML title attribute
-              />
+              <Tooltip text={getParameterTooltip('vth')}>
+                <input
+                  type="text"
+                  name="vth"
+                  className="mosfet-input"
+                  value={mosfetDetails.vth}
+                  onChange={handleCustomParamChange}
+                  placeholder="e.g., -2 (MUST be negative)"
+                />
+              </Tooltip>
               <small className="text-gray-400 block mt-1">For P-Channel MOSFETs, Vth should be negative.</small>
               {warnings.vth && <div className="text-yellow-400 text-sm mt-1">{warnings.vth}</div>}
             </div>
@@ -156,15 +157,16 @@ export default function PChannelMosfetConfiguration({
             {/* Rds_on Input */}
              <div>
               <label className="mosfet-label">On Resistance (Rds_on)</label>
-              <input
-                type="text"
-                name="rds_on"
-                className="mosfet-input"
-                value={mosfetDetails.rds_on}
-                onChange={handleCustomParamChange}
-                placeholder="Enter on resistance (e.g., 22m)"
-                title={getParameterTooltip('rds_on')}
-              />
+              <Tooltip text={getParameterTooltip('rds_on')}>
+                <input
+                  type="text"
+                  name="rds_on"
+                  className="mosfet-input"
+                  value={mosfetDetails.rds_on}
+                  onChange={handleCustomParamChange}
+                  placeholder="Enter on resistance (e.g., 22m)"
+                />
+              </Tooltip>
                <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.rds_on && <div className="text-yellow-400 text-sm mt-1">{warnings.rds_on}</div>}
             </div>
@@ -172,30 +174,32 @@ export default function PChannelMosfetConfiguration({
             {/* Vg Input */}
              <div>
               <label className="mosfet-label">Gate Voltage (Vg)</label>
-              <input
-                type="text"
-                name="vg"
-                className="mosfet-input"
-                value={inputValues.vg}
-                onChange={handleInputChange}
-                placeholder="Enter gate voltage"
-                 title={getParameterTooltip('vg')}
-              />
+              <Tooltip text={getParameterTooltip('vg')}>
+                <input
+                  type="text"
+                  name="vg"
+                  className="mosfet-input"
+                  value={inputValues.vg}
+                  onChange={handleInputChange}
+                  placeholder="Enter gate voltage"
+                />
+              </Tooltip>
               {warnings.vg && <div className="text-yellow-400 text-sm mt-1">{warnings.vg}</div>}
             </div>
 
             {/* Vs Input - Crucial for P-Channel */}
              <div>
               <label className="mosfet-label">Source Voltage (Vs - Connects to Supply)</label>
-              <input
-                type="text"
-                name="vs"
-                className="mosfet-input"
-                value={inputValues.vs}
-                onChange={handleInputChange}
-                placeholder="Enter voltage at Source (usually Vcc)"
-                title={getParameterTooltip('vs')}
-              />
+              <Tooltip text={getParameterTooltip('vs')}>
+                <input
+                  type="text"
+                  name="vs"
+                  className="mosfet-input"
+                  value={inputValues.vs}
+                  onChange={handleInputChange}
+                  placeholder="Enter voltage at Source (usually Vcc)"
+                />
+              </Tooltip>
               <small className="text-gray-400 block mt-1">For high-side switching, Vs is typically connected to the positive supply (Vcc).</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
@@ -203,15 +207,16 @@ export default function PChannelMosfetConfiguration({
             {/* Load Resistance Input */}
              <div>
               <label className="mosfet-label">Load Resistance</label>
-              <input
-                type="text"
-                name="loadResistance"
-                className="mosfet-input"
-                value={inputValues.loadResistance}
-                onChange={handleInputChange}
-                placeholder="Enter load resistance"
-                title={getParameterTooltip('loadResistance')}
-              />
+              <Tooltip text={getParameterTooltip('loadResistance')}>
+                <input
+                  type="text"
+                  name="loadResistance"
+                  className="mosfet-input"
+                  value={inputValues.loadResistance}
+                  onChange={handleInputChange}
+                  placeholder="Enter load resistance"
+                />
+              </Tooltip>
               <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.loadResistance && <div className="text-yellow-400 text-sm mt-1">{warnings.loadResistance}</div>}
             </div>
@@ -221,68 +226,73 @@ export default function PChannelMosfetConfiguration({
             {/* Read-only Vth */}
             <div className="mt-4">
               <label className="mosfet-label">Threshold Voltage (Vth)</label>
-              <input
-                type="text"
-                className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
-                value={formatValueWithSuffix(parseFloat(mosfetDetails.vth || 'NaN'), 'V')} // Format value
-                readOnly
-                title={getParameterTooltip('vth')}
-              />
+              <Tooltip text={getParameterTooltip('vth')}>
+                <input
+                  type="text"
+                  className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
+                  value={formatValueWithSuffix(parseFloat(mosfetDetails.vth || 'NaN'), 'V')} // Format value
+                  readOnly
+                />
+              </Tooltip>
             </div>
 
             {/* Read-only Rds_on */}
             <div>
               <label className="mosfet-label">On Resistance (Rds_on)</label>
-              <input
-                type="text"
-                className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
-                value={formatValueWithSuffix(parseValueWithSuffix(mosfetDetails.rds_on || '0'), 'Ω')} // Format value
-                readOnly
-                title={getParameterTooltip('rds_on')}
-              />
+              <Tooltip text={getParameterTooltip('rds_on')}>
+                <input
+                  type="text"
+                  className="mosfet-input bg-opacity-50 bg-gray-800 cursor-not-allowed"
+                  value={formatValueWithSuffix(parseValueWithSuffix(mosfetDetails.rds_on || '0'), 'Ω')} // Format value
+                  readOnly
+                />
+              </Tooltip>
             </div>
 
             {/* Editable Vg, Vs, LoadResistance */}
              <div>
               <label className="mosfet-label">Gate Voltage (Vg)</label>
-              <input
-                type="text"
-                name="vg"
-                className="mosfet-input"
-                value={inputValues.vg}
-                onChange={handleInputChange}
-                placeholder="Enter gate voltage"
-                 title={getParameterTooltip('vg')}
-              />
+              <Tooltip text={getParameterTooltip('vg')}>
+                <input
+                  type="text"
+                  name="vg"
+                  className="mosfet-input"
+                  value={inputValues.vg}
+                  onChange={handleInputChange}
+                  placeholder="Enter gate voltage"
+                />
+              </Tooltip>
               {warnings.vg && <div className="text-yellow-400 text-sm mt-1">{warnings.vg}</div>}
             </div>
 
              <div>
-              <label className="mosfet-label">Source Voltage (Vs - Connects to Supply)</label>
-              <input
-                type="text"
-                name="vs"
-                className="mosfet-input"
-                value={inputValues.vs}
-                onChange={handleInputChange}
-                placeholder="Enter voltage at Source (usually Vcc)"
-                title={getParameterTooltip('vs')}
-              />
+              <label className="mosfet-label">Source Voltage (Vs)</label>
+              <Tooltip text={getParameterTooltip('vs')}>
+                <input
+                  type="text"
+                  name="vs"
+                  className="mosfet-input"
+                  value={inputValues.vs}
+                  onChange={handleInputChange}
+                  placeholder="Enter voltage at Source (usually Vcc)"
+                />
+              </Tooltip>
               <small className="text-gray-400 block mt-1">For high-side switching, Vs is typically connected to the positive supply (Vcc).</small>
               {warnings.vs && <div className="text-yellow-400 text-sm mt-1">{warnings.vs}</div>}
             </div>
 
              <div>
               <label className="mosfet-label">Load Resistance</label>
-              <input
-                type="text"
-                name="loadResistance"
-                className="mosfet-input"
-                value={inputValues.loadResistance}
-                onChange={handleInputChange}
-                placeholder="Enter load resistance"
-                title={getParameterTooltip('loadResistance')}
-              />
+              <Tooltip text={getParameterTooltip('loadResistance')}>
+                <input
+                  type="text"
+                  name="loadResistance"
+                  className="mosfet-input"
+                  value={inputValues.loadResistance}
+                  onChange={handleInputChange}
+                  placeholder="Enter load resistance"
+                />
+              </Tooltip>
               <small className="text-gray-400 block mt-1">Use k, M, m, u/µ</small>
               {warnings.loadResistance && <div className="text-yellow-400 text-sm mt-1">{warnings.loadResistance}</div>}
             </div>
