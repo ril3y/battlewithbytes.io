@@ -3,21 +3,27 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { notFound } from 'next/navigation';
-import { getAllProjects, ProjectMetadata } from '@/lib/utils/projects';
+import { ProjectMetadata } from '@/lib/utils/projects';
 import { Metadata } from 'next';
-import { generateSEO, SEOProps } from '@/lib/utils/seo'; 
+import { generateSEO } from '@/lib/utils/seo'; 
 import Image from 'next/image';
 import ProjectContent from '@/components/projects/ProjectContent';
 
 const projectsDirectory = path.join(process.cwd(), 'src/content/projects');
 
+// Define the params type
+type Params = {
+  slug: string;
+};
+
+// Define the page props type - aligning with Next.js 15
 interface ProjectPageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<Params>; // Params is now a Promise
+  searchParams: Promise<Record<string, string | string[] | undefined>>; // searchParams is also a Promise
 }
 
-async function getProjectData(slug: string): Promise<{ metadata: ProjectMetadata; content: string } | null> {
+// Function to get project data (metadata and content)
+async function getProjectData(slug: string): Promise<{ metadata: ProjectMetadata; content: string | null } | null> {
   const indexPath = path.join(projectsDirectory, slug, 'index.mdx');
   let contentFilePath = '';
   let indexData: matter.GrayMatterFile<string>;
@@ -65,57 +71,73 @@ async function getProjectData(slug: string): Promise<{ metadata: ProjectMetadata
   }
 }
 
-export async function generateStaticParams() {
-  const projects = getAllProjects();
-  return projects.map((project) => ({
-    slug: project.slug,
-  }));
+// Static paths generation
+export async function generateStaticParams(): Promise<Params[]> {
+  const projectFiles = await fs.readdir(projectsDirectory);
+  return projectFiles.map(projectDir => ({ slug: projectDir }));
 }
 
-export async function generateMetadata({ params: { slug } }: ProjectPageProps): Promise<Metadata> { 
-    const projectData = await getProjectData(slug);
-    if (!projectData) {
-        const seoNotFound = generateSEO({ title: 'Project Not Found' });
-        return {
-            title: seoNotFound.title,
-            description: seoNotFound.description,
-        };
-    }
+// Metadata generation
+export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
+  // Await the params Promise
+  const resolvedParams = await params;
+  const projectData = await getProjectData(resolvedParams.slug);
 
-    const seoProps: SEOProps = generateSEO({
-        title: projectData.metadata.title,
-        description: projectData.metadata.description,
-        ogImage: projectData.metadata.coverImage, 
-        type: 'article', 
-        canonical: `/projects/${slug}`, 
+  if (!projectData) {
+    // Return metadata for a 404 page if project not found
+    return generateSEO({
+      title: 'Project Not Found',
+      description: 'The requested project could not be found.',
+      // Add other relevant SEO props for 404 if needed
     });
+  }
 
-    return {
+  const { metadata } = projectData;
+
+  // Use the centralized SEO utility
+  const seoProps = generateSEO({
+    title: metadata.title,
+    description: metadata.description,
+    // Assuming the slug is the basis for the canonical URL path
+    canonical: `/projects/${resolvedParams.slug}`,
+    ogImage: metadata.coverImage, // Use cover image for OG
+    // Add specific type if needed, e.g., 'article' for projects
+    // type: 'article', 
+  });
+
+  // Map SEOProps to Next.js Metadata type
+  return {
+    title: seoProps.title,
+    description: seoProps.description,
+    keywords: seoProps.keywords, // Assuming generateSEO provides keywords
+    openGraph: {
         title: seoProps.title,
         description: seoProps.description,
-        keywords: seoProps.keywords,
-        openGraph: {
-            title: seoProps.title,
-            description: seoProps.description,
-            url: seoProps.canonical,
-            type: 'article', // Explicitly set to 'article' for project pages
-            images: seoProps.ogImage ? [{ url: seoProps.ogImage }] : [],
-            siteName: 'Battle With Bytes', 
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title: seoProps.title,
-            description: seoProps.description,
-            images: seoProps.ogImage ? [seoProps.ogImage] : [],
-        },
-        alternates: {
-            canonical: seoProps.canonical,
-        },
-    };
+        url: seoProps.canonical,
+        type: 'article', // Explicitly set to 'article' for project pages
+        images: seoProps.ogImage ? [{ url: seoProps.ogImage }] : [],
+        siteName: 'Battle With Bytes',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: seoProps.title,
+        description: seoProps.description,
+        images: seoProps.ogImage ? [seoProps.ogImage] : [],
+    },
+    alternates: {
+        canonical: seoProps.canonical,
+    },
+    // Add structured data if generateSEO supports it or define it here
+    // other: { ...seoProps.other },
+  };
 }
 
-
-export default async function ProjectPage({ params: { slug } }: ProjectPageProps) { 
+// The actual page component - corrected
+export default async function ProjectPage({ params }: ProjectPageProps) { // Accept the props object
+  // Await the params Promise before accessing slug
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
+  
   const projectData = await getProjectData(slug);
 
   if (!projectData) {
@@ -144,7 +166,7 @@ export default async function ProjectPage({ params: { slug } }: ProjectPageProps
         
         <div className="mt-8 bg-gray-900/30 backdrop-blur-sm border border-green-500/30 rounded-lg shadow-lg p-6">
           {content ? (
-            <ProjectContent content={content} metadata={metadata} />
+            <ProjectContent content={content} />
           ) : (
             <p className="text-gray-400 italic">Content coming soon...</p>
           )}

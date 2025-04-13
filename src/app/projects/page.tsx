@@ -20,7 +20,7 @@ const ProjectsPage = () => {
         PROJECTS
       </h1>
       <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto font-mono">
-        Exploring the intersections of hardware, software, and security. Here are some of the things I'm currently working on or have built.
+        Exploring the intersections of hardware, software, and security. Here are some of the things I&apos;m currently working on or have built.
       </p>
 
       {projects.length > 0 ? (

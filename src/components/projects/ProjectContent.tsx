@@ -6,7 +6,6 @@ import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ProjectMetadata } from '@/lib/utils/projects';
 
 // Define types for component props
 type ComponentProps = {
@@ -79,7 +78,6 @@ const components = {
 
 interface ProjectContentProps {
   content: string;
-  metadata: ProjectMetadata;
 }
 
 // Function to manually process tables in MDX content
@@ -141,7 +139,7 @@ const preprocessMdxContent = (content: string): string => {
   return processedLines.join('\n');
 };
 
-export default function ProjectContent({ content, metadata }: ProjectContentProps) {
+export default function ProjectContent({ content }: ProjectContentProps) {
   const [mdxSource, setMdxSource] = useState<MDXRemoteSerializeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
