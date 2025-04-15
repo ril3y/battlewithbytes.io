@@ -1,0 +1,76 @@
+---
+title: "Introducing PicoTag: Your Pocket-Sized Hardware Hacking Assistant"
+slug: "introducing-picotag"
+date: "2024-07-23" 
+excerpt: "Meet PicoTag, a modular CircuitPython firmware for the RP2040, designed for hardware interaction, testing, and exploration."
+tags: ["circuitpython", "rp2040", "picotag", "firmware", "hacking", "hardware", "cli", "modular"]
+author: "Riley Porter" # Assuming Riley Porter based on the prompt, adjust if needed
+coverImage: "./images/cover.png" # Placeholder - ensure this image exists or update path
+---
+
+
+# Introducing PicoTag: Your Pocket-Sized Hardware Hacking Assistant
+
+Ever found yourself needing a quick and easy way to poke at hardware, read GPIO states, interact with SPI or I2C devices, or maybe even dump firmware, without setting up a complex JTAG/SWD debugger or writing throwaway scripts from scratch? Enter **PicoTag**.
+
+![PicoTag Concept Image](/images/blog/introducing-picotag/concept.png)
+
+## What is PicoTag?
+
+PicoTag is a firmware project built entirely in **CircuitPython**, designed to run on the versatile and affordable **Raspberry Pi Pico (RP2040)**. At its core, PicoTag transforms your Pico into an interactive hardware multitool, accessible via a simple Command-Line Interface (CLI) over USB Serial.
+
+Think of it as a Swiss Army knife for hardware interaction. Need to check if a pin is high or low? Send some SPI commands? Sniff I2C traffic? PicoTag aims to provide a flexible, extensible platform to do just that, leveraging the ease of Python for development and interaction.
+
+## Why PicoTag?
+
+Many hardware interaction tools exist, but they often require specific desktop software, complex setups, or low-level C/C++ programming. PicoTag aims to bridge the gap by:
+
+1.  **Leveraging CircuitPython:** Making hardware interaction accessible through high-level Python code. Easy to understand, modify, and extend.
+2.  **Modularity:** Building functionality through self-contained modules that can be easily added or removed from the Pico's filesystem.
+3.  **Interactivity:** Providing an immediate CLI for running commands and getting feedback.
+4.  **Portability:** The RP2040 Pico is small, cheap, and readily available.
+
+## Current Progress: The Foundation is Laid
+
+Looking at the current codebase (`boot_out.txt` confirms CircuitPython 9.1.1 on a Pico), the foundational elements of PicoTag are already in place:
+
+*   **Modular Architecture:** A robust `ModuleManager` dynamically loads Python modules from the `/modules` directory on the Pico's flash filesystem. Each module encapsulates specific functionality (e.g., interacting with a specific chip, protocol, or interface).
+*   **Command-Line Interface (CLI):** A `CLI` class (`cli.py`) provides the user interface over `usb_cdc` (Serial). It handles input, command parsing, backspace, and executes commands registered by the loaded modules. The prompt `(⚡)Pico>` gives it a distinct identity.
+*   **Command Handling:** A base `Command` class (`command.py`) allows modules to define their own specific commands with descriptions and execution logic. These commands are registered globally by the `ModuleManager`.
+*   **Resource Management:** A `ResourceManager` (`resource_manager.py`) handles shared hardware resources like SPI peripherals (`SPICoreModule`) or LEDs (`LEDsCoreModule`), ensuring modules don't conflict.
+*   **Dependency Management:** Modules can declare dependencies (like needing access to the 'spi' resource), and the `ModuleManager` ensures these are met before loading.
+*   **Core Services:** Essential services like a configurable Logger (`logger.py`) with color support (`colors.py`) are integrated.
+*   **Example Code:** The presence of a `GPIOTester` class (even if commented out in the main execution flow) demonstrates the intended use case – interacting directly with GPIO pins.
+
+Currently, the system boots, initializes core resources (SPI, LEDs), loads any modules found in `/modules`, and presents the user with the CLI, ready to accept commands.
+
+## Future Ideas and Potential Uses
+
+The modular foundation opens up a world of possibilities for PicoTag. Here are just a few ideas:
+
+*   **Protocol Modules:**
+    *   **I2C:** Scan buses, read/write from devices, interact with sensors.
+    *   **UART:** Bridge UART interfaces, send/receive data.
+    *   **1-Wire:** Communicate with devices like DS18B20 temperature sensors.
+    *   **CAN Bus:** Interface with CAN networks (requires appropriate transceiver hardware).
+    *   **JTAG/SWD:** Basic boundary scan or interaction using the RP2040's PIO for bit-banging (challenging but possible).
+*   **Device Interaction Modules:**
+    *   **Flash Memory:** Read/write SPI NOR flash chips (like BIOS chips).
+    *   **EEPROM:** Interact with I2C or SPI EEPROMs.
+    *   **NFC/RFID:** Modules for common NFC/RFID reader ICs (e.g., PN532).
+    *   **Display Drivers:** Control small OLED or LCD screens via I2C/SPI.
+*   **Testing & Analysis Modules:**
+    *   **Logic Analyzer:** Basic logic analysis using PIO and buffering.
+    *   **Signal Generator:** Simple PWM or pattern generation.
+    *   **GPIO Tester:** An enhanced version of the example, allowing configuration of pull-ups/downs and direction.
+*   **Enhanced Framework:**
+    *   **Scripting:** Allow sequences of commands to be run from a file.
+    *   **SD Card Support:** Load modules or log data to an SD card (the code hints at `sdcard_modules`).
+    *   **API Integration:** Develop the `apis.py` concept for inter-module communication or external control.
+    *   **Data Sinks:** Utilize the `sink.py` abstraction for flexible output (e.g., logging to file, sending over network via Pico W).
+
+## Conclusion
+
+PicoTag is shaping up to be a promising tool for hardware enthusiasts, developers, and security researchers. By combining the power and flexibility of the RP2040 with the ease of CircuitPython, it lowers the barrier to entry for many common hardware interaction tasks. Its modular design ensures that it can grow and adapt to new challenges and hardware interfaces.
+
+While still in development, the core framework is solid. Keep an eye on this project – your trusty Raspberry Pi Pico might just become your go-to device for your next hardware adventure!

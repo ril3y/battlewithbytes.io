@@ -1,12 +1,34 @@
 [
   {
-    "slug": "dumping-my-coffee-makers-spi-flash",
+    "slug": "introducing-picotag",
+    "metadata": {
+      "title": "Introducing PicoTag",
+      "date": "2025-04-15",
+      "excerpt": "A modern circuit python firmware hacking tool.",
+      "tags": [
+        "circuit python",
+        "rp2040",
+        "picotag",
+        "firmware",
+        "hacking"
+      ],
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/introducing-picotag/cover.png"
+    }
+  },
+  {
+    "slug": "whats-hiding-in-my-coffee-maker",
     "metadata": {
       "title": "What's Hiding In My Coffee Maker?",
       "date": "2025-04-15",
       "excerpt": "Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside.",
-      "tags": [],
-      "author": "Riley Porter"
+      "tags": [
+        "firmware",
+        "reverse engineering",
+        "spi"
+      ],
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/whats-hiding-in-my-coffee-maker/cover.png"
     }
   },
   {
@@ -21,7 +43,8 @@
         "Radio",
         "RAK3172"
       ],
-      "author": "Riley Porter"
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/lora-without-lorawan/cover.png"
     }
   }
 ]

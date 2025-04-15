@@ -1,6 +1,0 @@
-title: "LoRa without LoRaWAN"
-date: "2025-04-12"
-excerpt: "How to use LoRa Layer 2 wireless protocol."
-tags: ["firmware", "lora", "wireless"]
-author: "Battle With Bytes"
-coverImage: "./images/cover.png"

@@ -2,7 +2,7 @@ A 2D digital graphic design featuring a minimal, retro-tech aesthetic. The image
 
 Focus on clean lines, futuristic tech iconography, and embedded systems themes. Include elements like circuit traces, radio waves, microcontrollers, UART interfaces, or LoRa communication symbols.
 
-Text is allowed only for short technical labels or schematic annotations (such as "UART", "TX", "RX", "LoRa", "SPI") — but do not include the blog title or marketing slogans. Avoid background grids (already handled by CSS).
+Text is allowed only for short technical labels or schematic annotations — but do not include the blog title or marketing slogans. Avoid background grids (already handled by CSS).
 
 <<ENTER TITLE HERE>>
 

@@ -1,6 +1,0 @@
-title: "What's Hiding In My Coffee Maker?"
-date: "2025-04-15"
-excerpt: "Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside."
-tags: ["spi", "reverse engineering", "firmware", "hacking", "picotag"]
-author: "Battle With Bytes"
-coverImage: "/images/blog/dumping-my-coffee-makers-spi-flash/cover.png"
