@@ -65,27 +65,30 @@ export default async function TagPage({ params }: PageProps) {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => {
-            const formattedDate = format(new Date(post.metadata.date), 'MMMM d, yyyy');
+            const formattedDate = format(new Date(post.date), 'MMMM d, yyyy');
             
             return (
               <article 
                 key={post.slug}
                 className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1"
               >
-                {post.metadata.coverImage && (
-                  <Link href={`/blog/${post.slug}`} className="block relative w-full h-48">
-                    <Image
-                      src={post.metadata.coverImage}
-                      alt={post.metadata.title}
-                      fill
-                      className="object-cover"
-                    />
+                {post.coverImage && (
+                  <Link href={`/blog/${post.slug}`} className="block">
+                    <div className="relative w-full h-56 md:h-64 overflow-hidden border-b border-gray-800">
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title || "Blog post"}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
                   </Link>
                 )}
                 
                 <div className="p-6">
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {post.metadata.tags.map((t: string) => (
+                    {post.tags.map((t: string) => (
                       <Link 
                         href={`/blog/tag/${t}`} 
                         key={t}
@@ -102,17 +105,17 @@ export default async function TagPage({ params }: PageProps) {
                   
                   <h2 className="text-xl font-bold mb-3">
                     <Link href={`/blog/${post.slug}`} className="hover:text-green-400 transition-colors">
-                      {post.metadata.title}
+                      {post.title}
                     </Link>
                   </h2>
                   
                   <p className="text-gray-400 mb-4 text-sm line-clamp-3">
-                    {post.metadata.excerpt}
+                    {post.excerpt}
                   </p>
                   
                   <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{post.metadata.author}</span>
-                    <time dateTime={post.metadata.date}>{formattedDate}</time>
+                    <span>{post.author}</span>
+                    <time dateTime={post.date}>{formattedDate}</time>
                   </div>
                 </div>
               </article>

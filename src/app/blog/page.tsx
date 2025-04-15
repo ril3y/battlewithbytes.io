@@ -64,16 +64,17 @@ export default function BlogPage() {
               >
                 <Link href={`/blog/${post.slug}`} className="block">
                   {post.coverImage ? (
-                    <div className="relative w-full h-48">
+                    <div className="relative w-full h-56 md:h-64 overflow-hidden border-b border-gray-800">
                       <Image
                         src={post.coverImage}
                         alt={post.title || "Blog post"}
                         fill
-                        className="object-cover"
+                        className="object-cover hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     </div>
                   ) : (
-                    <div className="w-full h-48 bg-gray-900 flex items-center justify-center">
+                    <div className="w-full h-56 md:h-64 bg-gray-900 flex items-center justify-center border-b border-gray-800">
                       <span className="text-green-400 font-mono text-xl">&lt;/&gt;</span>
                     </div>
                   )}

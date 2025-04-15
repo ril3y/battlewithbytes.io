@@ -1,15 +1,15 @@
 ---
-title: "LoRa without LoRaWAN"
-slug: "lora-without-lorawan"
-date: "2024-01-15"
-excerpt: "Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network."
-tags: ["LoRa", "Hardware", "Radio", "RAK3172"]
+title: "Custom protocol bruh?"
+slug: "custom-protocol-bruh"
+date: "2025-04-15"
+excerpt: "Creating a custom protocol decoder for the Salea logic analyzer."
+tags: ["saleae", "firmware"]
 author: "Riley Porter"
 coverImage: "./images/cover.png"
 ---
+## Creating a custom protocol decoder for the Salea logic analyzer.
 
-
-## Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network.
+## Introduction
 
 LoRa (Long Range) technology is often paired with LoRaWAN, but LoRa itself is simply a radio modulation technique. LoRaWAN adds network management, security layers, and other protocol overhead. For many embedded applications, especially those requiring minimal latency, low power, and straightforward point-to-point (P2P) communication, direct LoRa programming is preferable.
 
@@ -28,98 +28,11 @@ Direct LoRa programming allows developers to:
 
 The RAK3172 integrates an STM32WLE5 microcontroller with an SX1262 radio chip, providing a compact and highly capable platform for custom LoRa solutions.
 
-## Understanding the LoRa Protocol: Preamble, Sync Word, and More
-
-LoRa isn’t just a modulation scheme—it’s a protocol stack with several tunable parameters that impact reliability, range, and interoperability. Here are some of the most important:
-
-### Preamble
-
-The preamble is a sequence of symbols sent at the beginning of every LoRa packet. It allows the receiver to detect the presence of a signal and synchronize to the incoming data stream.
-
-- **Typical value:** 8–12 symbols (but can be longer for low-power wakeup scenarios)
-- **Configuration example (STM32 HAL):**
-```c
-Radio.SetTxConfig(MODEM_LORA, ... , preambleLen, ...);
-```
-
-### Sync Word
-
-The sync word distinguishes between different LoRa networks operating on the same frequency. Only packets with the matching sync word are accepted.
-
-- **Default LoRaWAN sync word:** `0x34`
-- **Private network sync word:** `0x12`
-- **Setting the sync word (RAK3172 AT command):**
-```bash
-at+syncword=18
-```
-- **Setting in code:**
-```c
-SX126xSetSyncWord(&SX126x, 0x12);
-```
-
-### Spreading Factor (SF)
-
-Controls how much the signal is spread in time. Higher SF increases range but lowers data rate.
-
-- **Range:** 7 (fastest, shortest range) to 12 (slowest, longest range)
-- **Example:**
-```c
-Radio.SetTxConfig(MODEM_LORA, ..., SF12, ...);
-```
-
-### Bandwidth
-
-Wider bandwidth allows higher data rates but reduces sensitivity.
-
-- **Typical values:** 125kHz (most common), 250kHz, 500kHz
-
-### Coding Rate
-
-Adds redundancy for error correction.
-
-- **Range:** 4/5 to 4/8
-
-### Example: LoRa Radio Configuration (STM32 HAL)
-
-```c
-Radio.SetTxConfig(
-  MODEM_LORA,
-  14,         // Power (dBm)
-  0,          // Frequency deviation (not used in LoRa)
-  0,          // Bandwidth (set later)
-  7,          // Spreading Factor
-  1,          // Coding Rate (4/5)
-  8,          // Preamble length
-  false,      // Fixed length
-  true,       // CRC enabled
-  0,          // Frequency hopping
-  0,          // Hop period
-  false,      // IQ inversion
-  3000        // Timeout
-);
-```
-
-### Practical Example: Setting Parameters on RAK3172
-
-For the RAK3172, you can configure these parameters via AT commands or directly in firmware. Here’s how to set the sync word and preamble via AT commands:
-
-```bash
-at+syncword=18
-at+preamble=8
-```
-
-Or, in STM32 code (using the HAL or LL drivers):
-
-```c
-SX126xSetSyncWord(&SX126x, 0x12);
-SX126xSetPreambleLength(&SX126x, 8);
-```
-
-## Erasing Default Firmware
+### Erasing Default Firmware
 
 Before loading custom firmware, erase the default AT-command-based firmware to free up memory and remove unnecessary functionalities.
 
-## Firmware Development with STM32CubeMX
+### Firmware Development with STM32CubeMX
 
 Use STM32CubeMX to configure the firmware:
 
@@ -183,3 +96,4 @@ An intriguing future application of this direct LoRa firmware involves fuzz test
 ## Conclusion
 
 Direct programming of LoRa modules, such as the RAK3172, offers developers a powerful and efficient alternative to LoRaWAN. By directly interfacing with the LoRa radio, developers gain significant advantages in simplicity, power consumption, and system responsiveness, making it ideal for highly optimized embedded solutions.
+

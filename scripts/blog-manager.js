@@ -126,16 +126,14 @@ async function createBlogPost() {
 
 
   // Create directories
-  const imagesDir = path.join(postDir, IMAGES_DIR_NAME);
   const publicImagesDir = path.join(process.cwd(), 'public', 'images', 'blog', slug);
   
   fs.mkdirSync(postDir, { recursive: true });
-  fs.mkdirSync(imagesDir); // Create images subdirectory in content folder
   fs.mkdirSync(publicImagesDir, { recursive: true }); // Create corresponding public images directory
   
   console.log(chalk.green(`\nDirectories created:`));
-  console.log(`  Content: ${imagesDir}`);
-  console.log(`  Public: ${publicImagesDir}`);
+  console.log(`  Blog: ${postDir}`);
+  console.log(`  Images: ${publicImagesDir}`);
 
   // Create frontmatter string
   const frontmatter = `---
@@ -145,7 +143,7 @@ date: "${date}"
 excerpt: "${excerpt.replace(/"/g, '\\"')}"
 tags: [${tags.map(tag => `"${tag.replace(/"/g, '\\"')}"`).join(', ')}]
 author: "${author.replace(/"/g, '\\"')}"
-coverImage: "./images/cover.png"
+coverImage: "/images/blog/${slug}/cover.png"
 ---
 
 # ${title}
@@ -153,9 +151,9 @@ coverImage: "./images/cover.png"
 Start writing your blog post content here...
 
 <!-- Example image: -->
-<!-- ![Alt text](./images/your-image.png) -->
+<!-- ![Alt text](/images/blog/${slug}/your-image.png) -->
 
-<!-- Remember to add your cover image to the images directory and update the coverImage field in the frontmatter above. -->
+<!-- Remember to add your cover image to the public images directory and update the coverImage field in the frontmatter above. -->
 `;
 
   // Create index.mdx file
@@ -165,7 +163,7 @@ Start writing your blog post content here...
   console.log(chalk.green(`\nBlog post created successfully!`));
   console.log(`  Directory: ${postDir}`);
   console.log(`  MDX File: ${mdxPath}`);
-  console.log(`  Images Dir: ${imagesDir}`);
+  console.log(`  Images Dir: ${publicImagesDir}`);
 
   await updateBlogData(); // Update blog data after creating post
 }
