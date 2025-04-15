@@ -1,12 +1,10 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
-import { serialize } from 'next-mdx-remote/serialize';
-import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
 
 // Define types for component props
 type ComponentProps = {
@@ -78,7 +76,7 @@ const components = {
 };
 
 interface BlogPostProps {
-  content: string;
+  content: MDXRemoteSerializeResult;
   metadata: {
     title: string;
     date: string;
@@ -89,96 +87,15 @@ interface BlogPostProps {
   };
 }
 
-// Function to manually process tables in MDX content
-const preprocessMdxContent = (content: string): string => {
-  // If the content doesn't contain any tables, return it as is
-  if (!content.includes('|')) return content;
-  
-  // Replace any table content with HTML table elements
-  // This is a simple approach - for complex tables, a more robust parser would be needed
-  const lines = content.split('\n');
-  let inTable = false;
-  let tableContent = '';
-  const processedLines: string[] = [];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    
-    // Check if this is a table line
-    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-      if (!inTable) {
-        inTable = true;
-        tableContent = '<table className="min-w-full bg-black/30 border border-gray-700 rounded-md">\n<tbody>\n';
-      }
-      
-      // Process header separator line (e.g., |---|---|)
-      if (line.includes('---')) {
-        continue; // Skip the separator line
-      }
-      
-      // Process table row
-      const cells = line.split('|').filter(cell => cell.trim() !== '');
-      const isHeader = i > 0 && lines[i-1].includes('|') && lines[i+1] && lines[i+1].includes('---');
-      
-      tableContent += '<tr>\n';
-      cells.forEach(cell => {
-        if (isHeader) {
-          tableContent += `  <th className="border border-gray-700 px-4 py-2 text-left font-mono text-green-400 bg-black/50">${cell.trim()}</th>\n`;
-        } else {
-          tableContent += `  <td className="border border-gray-700 px-4 py-2">${cell.trim()}</td>\n`;
-        }
-      });
-      tableContent += '</tr>\n';
-    } else {
-      if (inTable) {
-        inTable = false;
-        tableContent += '</tbody>\n</table>';
-        processedLines.push(tableContent);
-        tableContent = '';
-      }
-      processedLines.push(line);
-    }
-  }
-  
-  // If we ended while still in a table
-  if (inTable) {
-    tableContent += '</tbody>\n</table>';
-    processedLines.push(tableContent);
-  }
-  
-  return processedLines.join('\n');
-};
-
 export default function BlogPost({ content, metadata }: BlogPostProps) {
-  const [mdxSource, setMdxSource] = useState<MDXRemoteSerializeResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const formattedDate = format(new Date(metadata.date), 'MMMM d, yyyy');
-  
+
+  // Use useEffect to ensure the MDX content only renders on the client side
   useEffect(() => {
-    const processMdx = async () => {
-      try {
-        // Preprocess content to handle tables
-        const processedContent = preprocessMdxContent(content);
-        
-        const mdxSource = await serialize(processedContent, {
-          mdxOptions: {
-            remarkPlugins: [remarkGfm],
-            development: process.env.NODE_ENV === 'development',
-          },
-          parseFrontmatter: false,
-        });
-        setMdxSource(mdxSource);
-        setError(null);
-      } catch (err: unknown) {
-        console.error('Error processing MDX:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Error processing MDX content';
-        setError(errorMessage);
-      }
-    };
-    
-    processMdx();
-  }, [content]);
-  
+    setIsClient(true);
+  }, []);
+
   return (
     <article className="max-w-4xl mx-auto px-4 py-8">
       {/* Header section outside of MDX content */}
@@ -224,17 +141,14 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
       
       {/* MDX Content */}
       <div className="prose prose-invert prose-green max-w-none bg-black/20 p-6 md:p-8 rounded-lg border border-gray-800/50 shadow-lg">
-        {error ? (
-          <div className="bg-red-900/30 border border-red-500 p-4 rounded-md text-red-300">
-            <h3 className="text-xl font-bold mb-2">Error rendering content</h3>
-            <p>{error}</p>
-            <pre className="mt-4 p-2 bg-black/50 overflow-x-auto text-sm">{content.slice(0, 200)}...</pre>
-          </div>
-        ) : mdxSource ? (
-          <MDXRemote {...mdxSource} components={components} />
+        {isClient ? (
+          <MDXRemote {...content} components={components} />
         ) : (
-          <div className="flex justify-center py-8">
-            <div className="animate-pulse text-green-400">Loading content...</div>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-700 rounded w-5/6 mb-4"></div>
+            <div className="h-4 bg-gray-700 rounded w-2/3 mb-4"></div>
           </div>
         )}
       </div>

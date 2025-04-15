@@ -1,6 +1,7 @@
-import { getBlogPostBySlug, getBlogSlugs } from '@/lib/blog';
+import { getBlogPostBySlug, getBlogSlugs, getBlogPostMetadata } from '@/lib/blog';
 import BlogPost from '@/components/BlogPost';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 // Define the params type
 type Params = {
@@ -16,11 +17,20 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   // Await the params before using them
   const resolvedParams = await params;
-  const post = getBlogPostBySlug(resolvedParams.slug);
+  // Fetch only metadata using the dedicated function
+  const postMetadata = getBlogPostMetadata(resolvedParams.slug);
+  
+  // Handle case where post is not found
+  if (!postMetadata) {
+    return {
+      title: 'Post Not Found | Battle With Bytes',
+      description: 'The requested blog post could not be found.',
+    };
+  }
   
   return {
-    title: `${post.metadata.title} | Battle With Bytes`,
-    description: post.metadata.excerpt,
+    title: `${postMetadata.title} | Battle With Bytes`,
+    description: postMetadata.excerpt,
   };
 }
 
@@ -32,10 +42,17 @@ export function generateStaticParams(): Array<Params> {
 export default async function BlogPostPage({ params }: PageProps) {
   // Await the params before using them
   const resolvedParams = await params;
-  const post = getBlogPostBySlug(resolvedParams.slug);
+  // Fetch the full post with serialized content, awaiting the promise
+  const post = await getBlogPostBySlug(resolvedParams.slug);
+  
+  // If post is not found, render 404 page
+  if (!post) {
+    notFound();
+  }
   
   return (
     <main className="min-h-screen py-16 px-4">
+      {/* Pass the serialized content and metadata */}
       <BlogPost content={post.content} metadata={post.metadata} />
     </main>
   );

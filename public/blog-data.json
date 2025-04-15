@@ -5,30 +5,23 @@
       "title": "What's Hiding In My Coffee Maker?",
       "date": "2025-04-15",
       "excerpt": "Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside.",
-      "tags": [
-        "spi",
-        "reverse engineering",
-        "firmware",
-        "hacking",
-        "picotag"
-      ],
-      "author": "Battle With Bytes",
-      "coverImage": "/images/blog/dumping-my-coffee-makers-spi-flash/cover.png"
+      "tags": [],
+      "author": "Riley Porter"
     }
   },
   {
     "slug": "lora-without-lorawan",
     "metadata": {
       "title": "LoRa without LoRaWAN",
-      "date": "2025-04-12",
-      "excerpt": "How to use LoRa Layer 2 wireless protocol.",
+      "date": "2024-01-15",
+      "excerpt": "Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network.",
       "tags": [
-        "firmware",
-        "lora",
-        "wireless"
+        "LoRa",
+        "Hardware",
+        "Radio",
+        "RAK3172"
       ],
-      "author": "Battle With Bytes",
-      "coverImage": "/images/blog/lora-without-lorawan/images/cover.png"
+      "author": "Riley Porter"
     }
   }
 ]

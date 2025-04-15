@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllBlogPosts } from '@/lib/blog';
+import { getBlogPostsMetadata } from '@/lib/blog';
 import { format } from 'date-fns';
 
 export const metadata = {
@@ -9,13 +9,13 @@ export const metadata = {
 };
 
 export default function BlogPage() {
-  const posts = getAllBlogPosts();
+  const posts = getBlogPostsMetadata();
   
   // Debug: Log posts received by the page component
   console.log('[DEBUG PAGE] Posts received:', posts.map(p => ({
     slug: p.slug, 
-    title: p.metadata.title,
-    titleExists: Boolean(p.metadata.title)
+    title: p.title,
+    titleExists: Boolean(p.title)
   })));
   
   return (
@@ -38,9 +38,9 @@ export default function BlogPage() {
             <ul className="list-disc pl-5 space-y-1">
               {posts.map(post => (
                 <li key={post.slug}>
-                  Slug: {post.slug} | Title: "{post.metadata.title}" | 
-                  Title type: {typeof post.metadata.title} | 
-                  Title empty: {String(!post.metadata.title)}
+                  Slug: {post.slug} | Title: "{post.title}" | 
+                  Title type: {typeof post.title} | 
+                  Title empty: {String(!post.title)}
                 </li>
               ))}
             </ul>
@@ -52,7 +52,7 @@ export default function BlogPage() {
             // Safely format the date, using a fallback if the date is invalid
             let formattedDate = "No date";
             try {
-              formattedDate = format(new Date(post.metadata.date || new Date()), 'MMMM d, yyyy');
+              formattedDate = format(new Date(post.date || new Date()), 'MMMM d, yyyy');
             } catch (e) {
               console.error("Error formatting date:", e);
             }
@@ -63,11 +63,11 @@ export default function BlogPage() {
                 className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1"
               >
                 <Link href={`/blog/${post.slug}`} className="block">
-                  {post.metadata.coverImage ? (
+                  {post.coverImage ? (
                     <div className="relative w-full h-48">
                       <Image
-                        src={post.metadata.coverImage}
-                        alt={post.metadata.title || "Blog post"}
+                        src={post.coverImage}
+                        alt={post.title || "Blog post"}
                         fill
                         className="object-cover"
                       />
@@ -81,9 +81,9 @@ export default function BlogPage() {
                 
                 <div className="p-6">
                   {/* Tags section */}
-                  {Array.isArray(post.metadata.tags) && post.metadata.tags.length > 0 && (
+                  {Array.isArray(post.tags) && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {post.metadata.tags.slice(0, 3).map((tag, index) => (
+                      {post.tags.slice(0, 3).map((tag, index) => (
                         <Link 
                           href={`/blog/tag/${tag}`} 
                           key={`${tag}-${index}`}
@@ -98,21 +98,21 @@ export default function BlogPage() {
                   {/* Title section */}
                   <h2 className="text-xl font-bold mb-3">
                     <Link href={`/blog/${post.slug}`} className="hover:text-green-400 transition-colors">
-                      {post.metadata.title || "Untitled Post"}
+                      {post.title || "Untitled Post"}
                     </Link>
                   </h2>
                   
                   {/* Excerpt section */}
-                  {post.metadata.excerpt && (
+                  {post.excerpt && (
                     <p className="text-gray-400 mb-4 line-clamp-3">
-                      {post.metadata.excerpt}
+                      {post.excerpt}
                     </p>
                   )}
                   
                   {/* Author and date section */}
                   <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{post.metadata.author || "Anonymous"}</span>
-                    <time dateTime={post.metadata.date || ""}>{formattedDate}</time>
+                    <span>{post.author || "Anonymous"}</span>
+                    <time dateTime={post.date || ""}>{formattedDate}</time>
                   </div>
                 </div>
               </article>
