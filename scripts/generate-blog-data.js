@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const matter = require('gray-matter');
 
 // Path to blog content directory
 const BLOG_DIR = path.join(process.cwd(), 'src/content/blog');
@@ -25,76 +26,49 @@ function generateBlogData() {
       return;
     }
     
-    // Get all valid blog posts (directories with index.mdx and meta.txt)
-    const posts = dirs
-      .filter(dir => {
-        const fullPath = path.join(BLOG_DIR, dir);
-        return fs.statSync(fullPath).isDirectory() && 
-               fs.existsSync(path.join(fullPath, 'index.mdx')) &&
-               fs.existsSync(path.join(fullPath, 'meta.txt'));
-      })
-      .map(slug => {
-        // Read metadata from meta.txt
-        const metaPath = path.join(BLOG_DIR, slug, 'meta.txt');
-        const metaContent = fs.readFileSync(metaPath, 'utf8');
-        
-        // Parse metadata
-        const metadata = {};
-        metaContent.split('\n').forEach(line => {
-          if (line.trim() === '') return;
-          
-          const colonIndex = line.indexOf(':');
-          if (colonIndex > 0) {
-            const key = line.substring(0, colonIndex).trim();
-            let value = line.substring(colonIndex + 1).trim();
-            
-            // Handle arrays (tags)
-            if (key === 'tags') {
-              // Handle different tag formats: [tag1, tag2] or ["tag1", "tag2"]
-              if (value.startsWith('[') && value.endsWith(']')) {
-                value = value.slice(1, -1)
-                  .split(',')
-                  .map(item => item.trim().replace(/^["']|["']$/g, ''))
-                  .filter(item => item !== '');
-              } else {
-                // Handle comma-separated tags without brackets
-                value = value.split(',').map(item => item.trim()).filter(item => item !== '');
-              }
-            } else if (key === 'coverImage' && value.startsWith('"./') && value.endsWith('"')) {
-              // Process relative image paths
-              const relativePath = value.slice(3, -1); // Remove "./ and "
-              value = `/images/blog/${slug}/${relativePath}`; // Point directly to public path
-            } else if (value.startsWith('"') && value.endsWith('"')) {
-              // Handle quoted strings
-              value = value.slice(1, -1);
+    const blogData = [];
+
+    dirs.forEach(dir => {
+      const fullPath = path.join(BLOG_DIR, dir);
+      if (fs.statSync(fullPath).isDirectory()) {
+        const mdxPath = path.join(fullPath, 'index.mdx');
+
+        if (fs.existsSync(mdxPath)) {
+          try {
+            const fileContent = fs.readFileSync(mdxPath, 'utf-8');
+            const { data: frontmatter } = matter(fileContent);
+
+            // Basic validation
+            if (!frontmatter.title || !frontmatter.date || !frontmatter.excerpt) {
+              console.warn(`Skipping ${dir}: Missing required frontmatter (title, date, excerpt).`);
+              return;
             }
-            
-            metadata[key] = value;
+
+            // Construct post data from frontmatter
+            const post = {
+              slug: dir, // Use directory name as slug
+              metadata: {
+                title: frontmatter.title,
+                date: frontmatter.date,
+                excerpt: frontmatter.excerpt,
+                tags: frontmatter.tags || [], // Default to empty array if no tags
+                author: frontmatter.author || 'Riley Porter', // Default author
+              },
+            };
+            blogData.push(post);
+          } catch (readError) {
+            console.error(`Error reading or parsing ${mdxPath}:`, readError);
           }
-        });
-        
-        // Ensure tags is always an array
-        if (!metadata.tags) {
-          metadata.tags = [];
-        } else if (!Array.isArray(metadata.tags)) {
-          metadata.tags = [metadata.tags];
         }
-        
-        return {
-          slug,
-          metadata
-        };
-      })
-      .sort((a, b) => {
-        // Sort by date, newest first
-        const dateA = new Date(a.metadata.date);
-        const dateB = new Date(b.metadata.date);
-        return dateB - dateA;
-      });
-    
+      }
+    });
+
+    // Sort posts by date, newest first
+    blogData.sort((a, b) => new Date(b.metadata.date) - new Date(a.metadata.date));
+
     // Write the blog data to a JSON file
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(posts, null, 2));
-    console.log(`Blog data generated successfully: ${posts.length} posts`);
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(blogData, null, 2));
+    console.log(`Blog data generated successfully: ${blogData.length} posts`);
   } catch (error) {
     console.error(`Error generating blog data: ${error.message}`);
     console.error(error.stack);

@@ -1,4 +1,3 @@
-import withMDX from '@next/mdx'
 import type { NextConfig } from 'next'
 import remarkGfm from 'remark-gfm'
 
@@ -21,7 +20,7 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  webpack: (config, options) => {
+  webpack: (config, { dev, isServer }) => { 
     // Transpile react-console-emulator package
     config.module.rules.push({
       test: /\.js$/,
@@ -33,13 +32,14 @@ const nextConfig: NextConfig = {
         },
       },
     })
+    
+    // Disable webpack cache in development (merged from next.config.js)
+    if (dev) {
+      config.cache = false;
+    }
+
     return config
   },
 }
 
-export default withMDX({
-  options: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [],
-  }
-})(nextConfig)
+export default nextConfig
