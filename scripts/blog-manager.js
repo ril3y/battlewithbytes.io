@@ -122,14 +122,20 @@ async function createBlogPost() {
   const excerpt = await question(chalk.yellow(`Enter excerpt (short summary): `));
   const tagsInput = await question(chalk.yellow(`Enter tags (comma-separated, optional): `));
   const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
-  const author = await question(chalk.yellow(`Enter author (default: Riley Flynn): `)) || 'Riley Flynn';
+  const author = await question(chalk.yellow(`Enter author (default: Riley Porter): `)) || 'Riley Porter';
 
 
   // Create directories
   const imagesDir = path.join(postDir, IMAGES_DIR_NAME);
+  const publicImagesDir = path.join(process.cwd(), 'public', 'images', 'blog', slug);
+  
   fs.mkdirSync(postDir, { recursive: true });
-  fs.mkdirSync(imagesDir); // Create images subdirectory
-
+  fs.mkdirSync(imagesDir); // Create images subdirectory in content folder
+  fs.mkdirSync(publicImagesDir, { recursive: true }); // Create corresponding public images directory
+  
+  console.log(chalk.green(`\nDirectories created:`));
+  console.log(`  Content: ${imagesDir}`);
+  console.log(`  Public: ${publicImagesDir}`);
 
   // Create frontmatter string
   const frontmatter = `---
@@ -139,6 +145,7 @@ date: "${date}"
 excerpt: "${excerpt.replace(/"/g, '\\"')}"
 tags: [${tags.map(tag => `"${tag.replace(/"/g, '\\"')}"`).join(', ')}]
 author: "${author.replace(/"/g, '\\"')}"
+coverImage: "./images/cover.png"
 ---
 
 # ${title}
@@ -147,6 +154,8 @@ Start writing your blog post content here...
 
 <!-- Example image: -->
 <!-- ![Alt text](./images/your-image.png) -->
+
+<!-- Remember to add your cover image to the images directory and update the coverImage field in the frontmatter above. -->
 `;
 
   // Create index.mdx file
