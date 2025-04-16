@@ -27,3 +27,4 @@
 
 
 - Remember: The goal is to augment a human developer workflow — not overwrite decisions or force major structural changes without discussion.
+- This is a client side github pages project do not use serverside code.
