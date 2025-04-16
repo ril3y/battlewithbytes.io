@@ -2,98 +2,147 @@
 title: "Custom protocol bruh?"
 slug: "custom-protocol-bruh"
 date: "2025-04-15"
-excerpt: "Creating a custom protocol decoder for the Salea logic analyzer."
+excerpt: "Creating a custom protocol decoder for the Saleae logic analyzer."
 tags: ["saleae", "firmware"]
 author: "Riley Porter"
 coverImage: "./images/cover.png"
 ---
-## Creating a custom protocol decoder for the Salea logic analyzer.
 
-## Introduction
+import RadixTabs from '../../../components/RadixTabs'
+import DropCap from '../../../components/DropCap'
+import CodeBlock from '../../../components/CodeBlock'
 
-LoRa (Long Range) technology is often paired with LoRaWAN, but LoRa itself is simply a radio modulation technique. LoRaWAN adds network management, security layers, and other protocol overhead. For many embedded applications, especially those requiring minimal latency, low power, and straightforward point-to-point (P2P) communication, direct LoRa programming is preferable.
+<DropCap>
+Saleae protocol analyzers (custom protocol decoders) must be written in <strong>C++</strong>. Currently, Saleae Logic only supports native analyzers written in C++ as DLLs—there is no official Python or JavaScript API for custom analyzers. In this post, we’ll walk through setting up Visual Studio Code on Windows for developing these DLLs, building a bare-bones C++ decoder for a simple custom protocol, and testing/integration in Saleae Logic.
+</DropCap>
 
-This guide explores programming the RAK3172 module directly, bypassing LoRaWAN completely.
+## Overview: Custom Protocol Decoder for Saleae
 
-## Overview: Direct LoRa Programming
+The goal of this project is to create a simple protocol decoder DLL in <strong>C++</strong> that:
+- Parses a custom protocol frame.
+- Checks for a start byte, a length byte, a payload, and a checksum.
+- Integrates with the Saleae logic analyzer via the Saleae C++ SDK.
 
-Direct LoRa programming allows developers to:
+<RadixTabs
+  tabs={[
+    {
+      label: 'Environment Setup',
+      value: 'tab-setup',
+      content: (
+        <>
+          <h3>Setting up Visual Studio Code</h3>
+          <p>To build the DLL on Windows:</p>
+          <ol>
+            <li>
+              <strong>Install Visual Studio Code:</strong>  
+              Download and install <a href="https://code.visualstudio.com/">VS Code</a> for Windows.
+            </li>
+            <li>
+              <strong>Install Extensions:</strong>  
+              Add the official <em>C/C++</em> extension and optionally the <em>CMake Tools</em> extension if you use CMake.
+            </li>
+            <li>
+              <strong>Install Build Tools:</strong>  
+              Make sure you have the <a href="https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022">Visual Studio Build Tools</a> installed with the MSVC compiler and Windows SDK.
+            </li>
+            <li>
+              <strong>Workspace Setup:</strong>  
+              Create a project folder, open it in VS Code, and configure your build system (using CMake or an MSVC project) to build a DLL.
+            </li>
+          </ol>
+          <p>
+            <strong>Placeholder Image:</strong><br />
+            <img src="./images/vscode-setup.png" alt="Visual Studio Code Setup" />
+          </p>
+        </>
+      ),
+    },
+    {
+      label: 'Decoder Development',
+      value: 'tab-decoder',
+      content: (
+        <>
+          <h3>Building a Bare Bones Custom Protocol Decoder</h3>
+          <p>The simple custom protocol format for our decoder is defined as follows:</p>
+          <ul>
+            <li><strong>Start Byte:</strong> <code>0xAA</code></li>
+            <li><strong>Length Byte:</strong> Indicates the number of payload bytes.</li>
+            <li><strong>Payload:</strong> Contains the raw data.</li>
+            <li><strong>Checksum:</strong> A basic checksum computed over the payload.</li>
+          </ul>
+          <p>Below is a bare-bones C++ example for the protocol decoder DLL. Saleae's SDK will call this function with captured data:</p>
+          <CodeBlock language="cpp" code={`#include <windows.h>
+#include <cstdint>
+#include <vector>
 
-- Send and receive raw LoRa packets.
-- Precisely manage radio states and transitions.
-- Achieve deterministic timing and low latency.
-- Minimize firmware complexity and reduce power consumption.
+// Exported function to decode the custom protocol.
+extern "C" __declspec(dllexport) int decodeCustomProtocol(const uint8_t* data, int dataSize, std::vector<uint8_t>& output) {
+    if (dataSize < 3 || data[0] != 0xAA) {
+        return -1; // Invalid frame
+    }
 
-## RAK3172 Module
+    uint8_t length = data[1];
+    if (dataSize < (length + 3)) {
+        return -2; // Not enough data
+    }
 
-The RAK3172 integrates an STM32WLE5 microcontroller with an SX1262 radio chip, providing a compact and highly capable platform for custom LoRa solutions.
+    int sum = 0;
+    for (int i = 0; i < length; i++) {
+        output.push_back(data[2 + i]);
+        sum += data[2 + i];
+    }
+    
+    uint8_t expectedChecksum = static_cast<uint8_t>(sum & 0xFF);
+    uint8_t receivedChecksum = data[2 + length];
+    if (expectedChecksum != receivedChecksum) {
+        return -3; // Checksum error
+    }
+    return 0; // Success
+}
 
-### Erasing Default Firmware
-
-Before loading custom firmware, erase the default AT-command-based firmware to free up memory and remove unnecessary functionalities.
-
-### Firmware Development with STM32CubeMX
-
-Use STM32CubeMX to configure the firmware:
-
-- **Disable unused peripherals** to conserve resources.
-- Enable only the required interfaces, typically:
-  - UART for command-line interactions and debugging.
-  - GPIO for sensor interfacing and control signals.
-  - RTC for scheduled wake-ups and precise timing.
-- Activate the SX1262 radio driver for direct radio control.
-
-A detailed setup guide is available on [STM32World's RAK3172 page](https://stm32world.com/wiki/RAK3172#Setting_up_the_IOC_file).
-
-## Direct LoRa Radio Usage
-
-Direct control of the SX1262 radio enables straightforward, clear, and efficient communication:
-
-```c
-// Set radio transmission parameters
-Radio.SetTxConfig(MODEM_LORA, power, bandwidth, datarate, codingRate,
-                  preambleLength, fixLen, crcOn, freqHopOn, hopPeriod,
-                  iqInverted, timeout);
-
-// Send data buffer via LoRa
-Radio.Send(buffer, length);
-```
-
-No middleware or network stacks are required, simplifying development and debugging significantly.
-
-## Advantages of Direct LoRa Programming
-
-- **Efficiency**: Lower power consumption and longer battery life.
-- **Smaller Firmware Size**: Essential for memory-constrained embedded systems.
-- **Simpler Debugging**: Clear packet-level visibility simplifies troubleshooting.
-- **Customization**: Complete control over radio settings, including:
-  - Frequency
-  - Bandwidth
-  - Spreading factor
-  - Transmission power
-
-## Application Examples
-
-Direct LoRa is suitable for:
-
-- Remote sensors with critical power requirements.
-- Simple telemetry systems.
-- Local area communication without internet dependency.
-- Custom security implementations with specialized encryption and packet framing.
-
-## Potential Enhancements
-
-Future capabilities achievable with direct LoRa programming:
-
-- **Custom Encryption**: Tailored security measures directly embedded within packets.
-- **Advanced Power Management**: Wake-on-radio and selective listening for minimal power draw.
-- **OTA Firmware Updates**: Secure and efficient updates transmitted directly via LoRa.
-
-## Future Exploration: LoRa Fuzzing
-
-An intriguing future application of this direct LoRa firmware involves fuzz testing for security and robustness. By using UART communication to interact with the firmware, developers can drive test scenarios from external devices such as a Pico-based tool (e.g., PicoTag). This setup would allow comprehensive testing of LoRa or potentially even LoRaWAN protocols, enabling the discovery of vulnerabilities or unexpected behaviors in radio implementations. Detailed insights into creating such a fuzz-testing system will be explored in an upcoming blog.
+// DLL main entry point.
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    return TRUE;
+}`} />
+          <p>
+            <strong>Placeholder Image:</strong><br />
+            <img src="./images/decoder-code-placeholder.png" alt="Decoder Code Placeholder" />
+          </p>
+        </>
+      ),
+    },
+    {
+      label: 'Testing & Integration',
+      value: 'tab-testing',
+      content: (
+        <>
+          <h3>Testing and Integration</h3>
+          <ol>
+            <li>
+              <strong>Build the DLL:</strong>  
+              Configure your build system to compile the DLL and ensure the output is placed where Saleae's software can load it.
+            </li>
+            <li>
+              <strong>Integrate with Saleae:</strong>  
+              Follow Saleae’s <a href="https://support.saleae.com/hc/en-us/articles/360020540494-Protocol-Decoder-API">protocol decoder documentation</a> to load and test your DLL.
+            </li>
+            <li>
+              <strong>Debug:</strong>  
+              Use VS Code’s debugging capabilities by attaching to the Saleae process or adding logging to capture the decoder’s behavior.
+            </li>
+          </ol>
+          <p>
+            <strong>Placeholder Image:</strong><br />
+            <img src="./images/setup-diagram-placeholder.png" alt="Setup Diagram Placeholder" />
+          </p>
+        </>
+      ),
+    },
+  ]}
+/>
 
 ## Conclusion
 
-Direct programming of LoRa modules, such as the RAK3172, offers developers a powerful and efficient alternative to LoRaWAN. By directly interfacing with the LoRa radio, developers gain significant advantages in simplicity, power consumption, and system responsiveness, making it ideal for highly optimized embedded solutions.
+Using Visual Studio Code to develop a custom protocol decoder DLL for Saleae's logic analyzer streamlines the development and debugging process. This guide provided an overview of setting up your environment, a basic implementation of a custom protocol decoder, and steps for integrating and testing the DLL with Saleae’s software.
 
+Happy coding!

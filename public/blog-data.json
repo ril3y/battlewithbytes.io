@@ -4,7 +4,7 @@
     "metadata": {
       "title": "Custom protocol bruh?",
       "date": "2025-04-15",
-      "excerpt": "Creating a custom protocol decoder for the Salea logic analyzer.",
+      "excerpt": "Creating a custom protocol decoder for the Saleae logic analyzer.",
       "tags": [
         "saleae",
         "firmware"

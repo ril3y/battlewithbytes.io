@@ -39,18 +39,6 @@ export default function QuakeTerminal() {
   // Handle closing the terminal
   const handleExit = () => {
     setOpen(false)
-    const input = document.querySelector(
-      'input[name="react-console-emulator__input"]'
-    ) as HTMLInputElement | null
-    if (input) {
-      input.value = ""
-    }
-    const output = document.querySelector(
-      '[name="react-console-emulator__content"]'
-    )
-    if (output) {
-      output.innerHTML = ""
-    }
   }
 
   useEffect(() => {
@@ -80,6 +68,20 @@ export default function QuakeTerminal() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(event: MouseEvent) {
+      const terminalRoot = document.getElementById('quake-terminal-root');
+      if (terminalRoot && !terminalRoot.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
   // Focus the terminal input when the terminal is opened.
   useEffect(() => {
     if (open) {
@@ -94,6 +96,7 @@ export default function QuakeTerminal() {
 
   return (
     <div
+      id="quake-terminal-root"
       className={`
         fixed top-0 left-0 w-full bg-black/95 text-green-400 z-50 
         shadow-[0_0_15px_rgba(0,255,157,0.3)] border-b border-green-400/30

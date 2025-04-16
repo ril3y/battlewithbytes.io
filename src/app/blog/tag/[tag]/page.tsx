@@ -27,21 +27,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export function generateStaticParams() {
   const tags = getAllTags();
-  return tags.map(({ tag }) => ({ tag }));
+  return tags.map(({ tag }) => ({ tag: encodeURIComponent(tag) }));
 }
 
 export default async function TagPage({ params }: PageProps) {
   // Await the params before using them
   const resolvedParams = await params;
   const { tag } = resolvedParams;
-  const posts = getBlogPostsByTag(tag);
+  const decodedTag = decodeURIComponent(tag);
+  const posts = getBlogPostsByTag(decodedTag);
   
   if (posts.length === 0) {
     return (
       <div className="min-h-screen py-16 px-4 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">No posts found</h1>
-          <p className="mb-8">No posts were found with the tag &quot;{tag}&quot;.</p>
+          <p className="mb-8">No posts were found with the tag &quot;{decodedTag}&quot;.</p>
           <Link href="/blog" className="button">Back to Blog</Link>
         </div>
       </div>
@@ -53,10 +54,10 @@ export default async function TagPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto">
         <header className="mb-12 text-center">
           <div className="inline-block bg-gray-800 text-green-400 px-4 py-2 rounded-full text-lg font-mono mb-4">
-            #{tag}
+            #{decodedTag}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold font-mono mb-4">
-            Posts Tagged with &quot;{tag}&quot;
+            Posts Tagged with &quot;{decodedTag}&quot;
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             {posts.length} {posts.length === 1 ? 'post' : 'posts'} found
@@ -93,7 +94,7 @@ export default async function TagPage({ params }: PageProps) {
                         href={`/blog/tag/${t}`} 
                         key={t}
                         className={`bg-gray-800 px-2 py-1 rounded-full text-xs font-mono ${
-                          t.toLowerCase() === tag.toLowerCase() 
+                          t.toLowerCase() === decodedTag.toLowerCase() 
                             ? 'text-white border border-green-400' 
                             : 'text-green-400'
                         }`}

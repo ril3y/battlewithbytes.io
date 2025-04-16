@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getBlogPostsMetadata } from '@/lib/blog';
 import { format } from 'date-fns';
+import BlogCard from '@/components/BlogCard';
 
 export const metadata = {
   title: 'Blog | Battle With Bytes',
@@ -49,74 +50,14 @@ export default function BlogPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts && posts.length > 0 ? posts.map((post) => {
-            // Safely format the date, using a fallback if the date is invalid
             let formattedDate = "No date";
             try {
               formattedDate = format(new Date(post.date || new Date()), 'MMMM d, yyyy');
             } catch (e) {
               console.error("Error formatting date:", e);
             }
-            
             return (
-              <article 
-                key={post.slug}
-                className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <Link href={`/blog/${post.slug}`} className="block">
-                  {post.coverImage ? (
-                    <div className="relative w-full h-56 md:h-64 overflow-hidden border-b border-gray-800">
-                      <Image
-                        src={post.coverImage}
-                        alt={post.title || "Blog post"}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-56 md:h-64 bg-gray-900 flex items-center justify-center border-b border-gray-800">
-                      <span className="text-green-400 font-mono text-xl">&lt;/&gt;</span>
-                    </div>
-                  )}
-                </Link>
-                
-                <div className="p-6">
-                  {/* Tags section */}
-                  {Array.isArray(post.tags) && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {post.tags.slice(0, 3).map((tag, index) => (
-                        <Link 
-                          href={`/blog/tag/${tag}`} 
-                          key={`${tag}-${index}`}
-                          className="bg-gray-800 text-green-400 px-2 py-1 rounded-full text-xs font-mono hover:bg-gray-700 transition-colors"
-                        >
-                          #{tag}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Title section */}
-                  <h2 className="text-xl font-bold mb-3">
-                    <Link href={`/blog/${post.slug}`} className="hover:text-green-400 transition-colors">
-                      {post.title || "Untitled Post"}
-                    </Link>
-                  </h2>
-                  
-                  {/* Excerpt section */}
-                  {post.excerpt && (
-                    <p className="text-gray-400 mb-4 line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  )}
-                  
-                  {/* Author and date section */}
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{post.author || "Anonymous"}</span>
-                    <time dateTime={post.date || ""}>{formattedDate}</time>
-                  </div>
-                </div>
-              </article>
+              <BlogCard key={post.slug} post={post} formattedDate={formattedDate} />
             );
           }) : (
             <div className="col-span-3 text-center py-12">

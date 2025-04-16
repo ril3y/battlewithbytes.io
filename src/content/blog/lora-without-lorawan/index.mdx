@@ -8,10 +8,12 @@ author: "Riley Porter"
 coverImage: "./images/cover.png"
 ---
 
+import RadixTabs from '../../../components/RadixTabs'
+import DropCap from '../../../components/DropCap'
 
-## Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network.
-
+<DropCap>
 LoRa (Long Range) technology is often paired with LoRaWAN, but LoRa itself is simply a radio modulation technique. LoRaWAN adds network management, security layers, and other protocol overhead. For many embedded applications, especially those requiring minimal latency, low power, and straightforward point-to-point (P2P) communication, direct LoRa programming is preferable.
+</DropCap>
 
 This guide explores programming the RAK3172 module directly, bypassing LoRaWAN completely.
 
@@ -28,92 +30,113 @@ Direct LoRa programming allows developers to:
 
 The RAK3172 integrates an STM32WLE5 microcontroller with an SX1262 radio chip, providing a compact and highly capable platform for custom LoRa solutions.
 
-## Understanding the LoRa Protocol: Preamble, Sync Word, and More
-
-LoRa isn’t just a modulation scheme—it’s a protocol stack with several tunable parameters that impact reliability, range, and interoperability. Here are some of the most important:
-
-### Preamble
-
-The preamble is a sequence of symbols sent at the beginning of every LoRa packet. It allows the receiver to detect the presence of a signal and synchronize to the incoming data stream.
-
-- **Typical value:** 8–12 symbols (but can be longer for low-power wakeup scenarios)
-- **Configuration example (STM32 HAL):**
-```c
-Radio.SetTxConfig(MODEM_LORA, ... , preambleLen, ...);
-```
-
-### Sync Word
-
-The sync word distinguishes between different LoRa networks operating on the same frequency. Only packets with the matching sync word are accepted.
-
-- **Default LoRaWAN sync word:** `0x34`
-- **Private network sync word:** `0x12`
-- **Setting the sync word (RAK3172 AT command):**
-```bash
-at+syncword=18
-```
-- **Setting in code:**
-```c
-SX126xSetSyncWord(&SX126x, 0x12);
-```
-
-### Spreading Factor (SF)
-
-Controls how much the signal is spread in time. Higher SF increases range but lowers data rate.
-
-- **Range:** 7 (fastest, shortest range) to 12 (slowest, longest range)
-- **Example:**
-```c
-Radio.SetTxConfig(MODEM_LORA, ..., SF12, ...);
-```
-
-### Bandwidth
-
-Wider bandwidth allows higher data rates but reduces sensitivity.
-
-- **Typical values:** 125kHz (most common), 250kHz, 500kHz
-
-### Coding Rate
-
-Adds redundancy for error correction.
-
-- **Range:** 4/5 to 4/8
-
-### Example: LoRa Radio Configuration (STM32 HAL)
-
-```c
-Radio.SetTxConfig(
-  MODEM_LORA,
-  14,         // Power (dBm)
-  0,          // Frequency deviation (not used in LoRa)
-  0,          // Bandwidth (set later)
-  7,          // Spreading Factor
-  1,          // Coding Rate (4/5)
-  8,          // Preamble length
-  false,      // Fixed length
-  true,       // CRC enabled
-  0,          // Frequency hopping
-  0,          // Hop period
-  false,      // IQ inversion
-  3000        // Timeout
-);
-```
-
-### Practical Example: Setting Parameters on RAK3172
-
-For the RAK3172, you can configure these parameters via AT commands or directly in firmware. Here’s how to set the sync word and preamble via AT commands:
-
-```bash
-at+syncword=18
-at+preamble=8
-```
-
-Or, in STM32 code (using the HAL or LL drivers):
-
-```c
-SX126xSetSyncWord(&SX126x, 0x12);
-SX126xSetPreambleLength(&SX126x, 8);
-```
+<RadixTabs
+  tabs={[
+    {
+      label: 'Preamble',
+      value: 'tab-preamble',
+      content: (
+        <>
+          <h3>Preamble</h3>
+          <p>The preamble is a sequence of symbols sent at the beginning of every LoRa packet. It allows the receiver to detect the presence of a signal and synchronize to the incoming data stream.</p>
+          <ul>
+            <li><strong>Typical value:</strong> 8–12 symbols (but can be longer for low-power wakeup scenarios)</li>
+            <li><strong>Configuration example:</strong></li>
+          </ul>
+          <CodeBlock code={`// Set the preamble length to 8 symbols\nSX126xSetPreambleLength(&SX126x, 8);`} language="c" />
+          <div className="info-box">
+            <strong>How does the preamble length affect the signal?</strong><br />
+            Setting the preamble length controls how many up-chirp symbols are sent at the start of each LoRa packet. Each up-chirp is a full symbol, and the total number defines how long the receiver has to detect and synchronize to the signal before actual data is sent. More up-chirps = longer preamble = easier synchronization (but longer airtime).
+          </div>
+          <h4 className="mt-1_5em-placeholder">What does the LoRa preamble look like?</h4>
+          <p>The preamble in a LoRa packet is a series of identical up-chirps, which help the receiver synchronize to the incoming signal.</p>
+          <div className="packet-diagram">
+            <div className="packet-segment preamble">
+              <div className="packet-value">REPEATED<br />UP-CHIRPS</div>
+              <div className="packet-label">(Preamble, 8 symbols)</div>
+            </div>
+            <div className="packet-segment sync-word">
+              <div className="packet-value">0x12</div>
+              <div className="packet-label">SYNC WORD</div>
+            </div>
+            <div className="packet-segment payload">
+              <div className="packet-value">DATA</div>
+              <div className="packet-label">PAYLOAD</div>
+            </div>
+          </div>
+          <p className="packet-note">
+            <strong>Note:</strong> The LoRa preamble is a series of identical up-chirp symbols, <em>not</em> a bit or byte pattern.
+          </p>
+          <h4>What is an Up-Chirp in LoRa?</h4>
+          <p>In LoRa, an up-chirp is a frequency sweep from the lowest to the highest frequency in the channel. Digitally, for SF7 (spreading factor 7), the baseband up-chirp can be represented as an array of 128 complex samples, each with a specific phase increment:</p>
+          <CodeBlock code={`// Pseudo-representation for SF7 (128 samples)\nfor (int i = 0; i < 128; i++) {\n    // upchirp[i] = complex value based on exp(j * 2 * PI * (i*i) / 256)\n    upchirp[i] = calculate_complex_sample(i);\n}`} language="c" />
+          <p>This is not a simple binary or hex constant, but a mathematical sequence. The receiver looks for this "chirp" pattern to synchronize.</p>
+        </>
+      ),
+    },
+    {
+      label: 'Sync Word',
+      value: 'tab-sync-word',
+      content: (
+        <>
+          <h3>Sync Word</h3>
+          <p>The sync word is a value that follows the preamble in a LoRa packet. It allows the receiver to differentiate between networks operating on the same frequency.</p>
+          <ul>
+            <li><strong>Typical values:</strong> 0x12 (private networks), 0x34 (public LoRaWAN)</li>
+            <li><strong>Configuration example:</strong></li>
+          </ul>
+          <CodeBlock code={`// Set the sync word for a private network\nSX126xSetSyncWord(&SX126x, 0x12);`} language="c" />
+        </>
+      ),
+    },
+    {
+      label: 'Spreading Factor',
+      value: 'tab-sf',
+      content: (
+        <>
+          <h3>Spreading Factor (SF)</h3>
+          <p>The spreading factor determines how many chips represent each bit of data. It's a key parameter that affects range, data rate, and airtime.</p>
+          <ul>
+            <li><strong>Range:</strong> SF7 (shortest range, highest data rate) to SF12 (longest range, lowest data rate)</li>
+            <li><strong>Configuration example:</strong></li>
+          </ul>
+          <CodeBlock code={`// Set spreading factor to SF9\nSX126xSetSpreadingFactor(&SX126x, 9);`} language="c" />
+          <p>For SF7, each symbol contains 2^7 = 128 chips. For SF12, each symbol contains 2^12 = 4096 chips.</p>
+        </>
+      ),
+    },
+    {
+      label: 'Bandwidth',
+      value: 'tab-bw',
+      content: (
+        <>
+          <h3>Bandwidth (BW)</h3>
+          <p>Bandwidth is the size of the frequency range used for transmission. It directly affects the data rate and noise immunity.</p>
+          <ul>
+            <li><strong>Common values:</strong> 125 kHz, 250 kHz, 500 kHz</li>
+            <li><strong>Configuration example:</strong></li>
+          </ul>
+          <CodeBlock code={`// Set bandwidth to 125 kHz\nSX126xSetBandwidth(&SX126x, LORA_BW_125);`} language="c" />
+        </>
+      ),
+    },
+    {
+      label: 'Coding Rate',
+      value: 'tab-cr',
+      content: (
+        <>
+          <h3>Coding Rate (CR)</h3>
+          <p>The coding rate adds redundancy to your data to improve error correction capabilities. It's expressed as a fraction like 4/5, 4/6, 4/7, or 4/8.</p>
+          <ul>
+            <li><strong>Range:</strong> 4/5 (lowest redundancy) to 4/8 (highest redundancy)</li>
+            <li><strong>Configuration example:</strong></li>
+          </ul>
+          <CodeBlock code={`// Set coding rate to 4/6\nSX126xSetCodingRate(&SX126x, LORA_CR_4_6);`} language="c" />
+        </>
+      ),
+    },
+  ]}
+/>
 
 ## Erasing Default Firmware
 
@@ -136,50 +159,7 @@ A detailed setup guide is available on [STM32World's RAK3172 page](https://stm32
 
 Direct control of the SX1262 radio enables straightforward, clear, and efficient communication:
 
-```c
-// Set radio transmission parameters
-Radio.SetTxConfig(MODEM_LORA, power, bandwidth, datarate, codingRate,
-                  preambleLength, fixLen, crcOn, freqHopOn, hopPeriod,
-                  iqInverted, timeout);
-
-// Send data buffer via LoRa
-Radio.Send(buffer, length);
-```
-
-No middleware or network stacks are required, simplifying development and debugging significantly.
-
-## Advantages of Direct LoRa Programming
-
-- **Efficiency**: Lower power consumption and longer battery life.
-- **Smaller Firmware Size**: Essential for memory-constrained embedded systems.
-- **Simpler Debugging**: Clear packet-level visibility simplifies troubleshooting.
-- **Customization**: Complete control over radio settings, including:
-  - Frequency
-  - Bandwidth
-  - Spreading factor
-  - Transmission power
-
-## Application Examples
-
-Direct LoRa is suitable for:
-
-- Remote sensors with critical power requirements.
-- Simple telemetry systems.
-- Local area communication without internet dependency.
-- Custom security implementations with specialized encryption and packet framing.
-
-## Potential Enhancements
-
-Future capabilities achievable with direct LoRa programming:
-
-- **Custom Encryption**: Tailored security measures directly embedded within packets.
-- **Advanced Power Management**: Wake-on-radio and selective listening for minimal power draw.
-- **OTA Firmware Updates**: Secure and efficient updates transmitted directly via LoRa.
-
-## Future Exploration: LoRa Fuzzing
-
-An intriguing future application of this direct LoRa firmware involves fuzz testing for security and robustness. By using UART communication to interact with the firmware, developers can drive test scenarios from external devices such as a Pico-based tool (e.g., PicoTag). This setup would allow comprehensive testing of LoRa or potentially even LoRaWAN protocols, enabling the discovery of vulnerabilities or unexpected behaviors in radio implementations. Detailed insights into creating such a fuzz-testing system will be explored in an upcoming blog.
-
-## Conclusion
-
-Direct programming of LoRa modules, such as the RAK3172, offers developers a powerful and efficient alternative to LoRaWAN. By directly interfacing with the LoRa radio, developers gain significant advantages in simplicity, power consumption, and system responsiveness, making it ideal for highly optimized embedded solutions.
+<CodeBlock
+  code={`// Set radio transmission parameters\nRadio.SetTxConfig(MODEM_LORA, power, bandwidth, datarate, codingRate,\n                  preambleLength, fixLen, crcOn, freqHopOn, hopPeriod,\n                  iqInverted, timeout);\n\n// Send data buffer via LoRa\nRadio.Send(buffer, length);`}
+  language="c"
+/>

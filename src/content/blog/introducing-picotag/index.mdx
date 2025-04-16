@@ -8,10 +8,13 @@ author: "Riley Porter" # Assuming Riley Porter based on the prompt, adjust if ne
 coverImage: "./images/concept.png" # Placeholder - ensure this image exists or update path
 ---
 
+import DropCap from '../../../components/DropCap'
 
-## Meet PicoTag, a modular CircuitPython firmware for the RP2040, designed for hardware interaction, testing, and exploration:
 
+
+<DropCap>
 Ever found yourself needing a quick and easy way to poke at hardware, read GPIO states, interact with SPI or I2C devices, or maybe even dump firmware, without setting up a complex JTAG/SWD debugger or writing throwaway scripts from scratch? Enter **PicoTag**.
+</DropCap>
 
 ![PicoTag Concept Image](/images/blog/introducing-picotag/concept.png)
 
@@ -70,6 +73,10 @@ The modular foundation opens up a world of possibilities for PicoTag. Here are j
     *   **Data Sinks:** Utilize the `sink.py` abstraction for flexible output (e.g., logging to file, sending over network via Pico W).
 
 ## Conclusion
+
+PicoTag is shaping up to be a promising tool for hardware enthusiasts, developers, and security researchers. By combining the power and flexibility of the RP2040 with the ease of CircuitPython, it lowers the barrier to entry for many common hardware interaction tasks. Its modular design ensures that it can grow and adapt to new challenges and hardware interfaces.
+
+While still in development, the core framework is solid. Keep an eye on this project – your trusty Raspberry Pi Pico might just become your go-to device for your next hardware adventure!
 
 PicoTag is shaping up to be a promising tool for hardware enthusiasts, developers, and security researchers. By combining the power and flexibility of the RP2040 with the ease of CircuitPython, it lowers the barrier to entry for many common hardware interaction tasks. Its modular design ensures that it can grow and adapt to new challenges and hardware interfaces.
 

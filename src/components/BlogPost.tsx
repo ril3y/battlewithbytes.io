@@ -5,6 +5,27 @@ import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import Prism from 'prismjs';
+import * as Tabs from '@radix-ui/react-tabs';
+import RadixTabs from './RadixTabs';
+import DropCap from './DropCap';
+import CodeBlock from './CodeBlock';
+
+// Import Prism core styles
+import 'prismjs/themes/prism-tomorrow.css';
+
+// Import Prism language components and styles
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
 
 // Define types for component props
 type ComponentProps = {
@@ -44,21 +65,36 @@ const components = {
     <blockquote className="border-l-4 border-green-400 pl-4 my-4 italic bg-black/30 p-3" {...props} />
   ),
   code: (props: { children?: React.ReactNode; className?: string }) => {
-    const { className } = props;
+    const { className, children, ...rest } = props;
     // If it's an inline code block (no language specified)
     if (!className) {
       return (
-        <code className="bg-gray-800 text-green-300 px-1 py-0.5 rounded font-mono text-sm" {...props} />
+        <code className="bg-gray-800 text-green-300 px-1 py-0.5 rounded font-mono text-sm" {...rest}>
+          {children}
+        </code>
       );
     }
-    // For code blocks with language
+    
+    // For code blocks with language specified by ```language
+    const language = className.replace('language-', '');
     return (
-      <code className={`${className} block overflow-x-auto`} {...props} />
+      <code className={`${className} block overflow-x-auto`} {...rest}>
+        {children}
+      </code>
     );
   },
-  pre: (props: ComponentProps) => (
-    <pre className="bg-gray-900 p-4 rounded-md my-6 overflow-x-auto font-mono text-sm" {...props} />
-  ),
+  pre: (props: ComponentProps & { children?: any }) => {
+    // Extract the language from the className of the code element
+    const language = props.children?.props?.className
+      ? props.children.props.className.replace('language-', '')
+      : '';
+      
+    return (
+      <pre className={`prism-code language-${language} bg-gray-900 p-4 rounded-md my-6 overflow-x-auto font-mono text-sm`}>
+        {props.children}
+      </pre>
+    );
+  },
   table: (props: ComponentProps) => (
     <div className="overflow-x-auto my-6">
       <table className="min-w-full bg-black/30 border border-gray-700 rounded-md" {...props} />
@@ -73,6 +109,13 @@ const components = {
   // Custom components
   Image,
   Link,
+  'Tabs.Root': Tabs.Root,
+  'Tabs.List': Tabs.List,
+  'Tabs.Trigger': Tabs.Trigger,
+  'Tabs.Content': Tabs.Content,
+  RadixTabs,
+  DropCap,
+  CodeBlock,
 };
 
 interface BlogPostProps {
@@ -92,14 +135,21 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
   const formattedDate = format(new Date(metadata.date), 'MMMM d, yyyy');
 
   // Use useEffect to ensure the MDX content only renders on the client side
+  // and to initialize Prism.js highlighting
   useEffect(() => {
     setIsClient(true);
+    // Use setTimeout to ensure DOM has been populated with code blocks
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        Prism.highlightAll();
+      }
+    }, 0);
   }, []);
 
   return (
     <article className="max-w-4xl mx-auto px-4 py-8">
       {/* Header section outside of MDX content */}
-      <div className="mb-12">
+      <div className="mb-6">
         {/* Cover image */}
         {metadata.coverImage && (
           <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden">
@@ -127,15 +177,13 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
         </div>
         
         {/* Title and metadata */}
-        <header className="mb-8">
+        <header className="mb-4">
           <h1 className="text-3xl md:text-5xl font-bold font-mono mb-4 text-white glow-text">
             {metadata.title}
           </h1>
-          <div className="flex items-center text-gray-400 text-sm">
-            <span>{metadata.author}</span>
-            <span className="mx-2">•</span>
-            <time dateTime={metadata.date}>{formattedDate}</time>
-          </div>
+          {metadata.excerpt && (
+            <p className="text-green-300 text-xl font-mono mb-4">{metadata.excerpt}</p>
+          )}
         </header>
       </div>
       
@@ -151,6 +199,12 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
             <div className="h-4 bg-gray-700 rounded w-2/3 mb-4"></div>
           </div>
         )}
+      </div>
+      {/* Byline below content */}
+      <div className="flex items-center justify-end text-gray-500 text-xs mt-4 font-mono">
+        <span>{metadata.author}</span>
+        <span className="mx-2">•</span>
+        <time dateTime={metadata.date}>{formattedDate}</time>
       </div>
     </article>
   );
