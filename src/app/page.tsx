@@ -19,14 +19,14 @@ export default function Home() {
                 alt="Battle With Bytes Logo"
                 width={700}
                 height={380}
-                className="drop-shadow-2xl rounded-2xl border border-gray-800 bg-black"
-                style={{ maxWidth: '100%', height: 'auto' }}
+                className="drop-shadow-2xl rounded-2xl border border-[3px] border-[var(--accent-purple)] bg-black"
+                style={{ maxWidth: '100%', height: 'auto', boxShadow: '0 0 32px 0 var(--accent-purple), 0 0 0 8px #18102b' }}
               />
             </div>
             <div className="flex-1 text-center md:text-left max-w-xl">
               <div className="h-16 md:h-24" aria-hidden="true"></div>
               <p className="text-xl md:text-2xl text-gray-300 mb-4 font-mono">
-                <span className="text-green-400">$</span> Ask me about little data.
+                <span className="text-[var(--accent-purple)] drop-shadow-[0_0_8px_var(--accent-purple)]">$</span> Ask me about little data.
               </p>
               <p className="text-md md:text-lg text-gray-400 mb-8 font-mono">
                 A personal hub for sharing insights on cybersecurity, embedded hardware,<br />
@@ -48,7 +48,7 @@ export default function Home() {
       {/* Featured Content Section */}
       <section className="py-16 px-4 bg-gray-900/50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-mono font-bold mb-12 text-center">
+          <h2 className="text-2xl md:text-3xl font-mono font-bold mb-12 text-center section-heading-purple">
             <span className="text-green-400">&lt;</span> Featured Content <span className="text-green-400">/&gt;</span>
           </h2>
           

@@ -46,8 +46,8 @@
 
 /* Fix dropdown background color */
 .ohms-law-form select {
-  background-color: rgba(0, 0, 0, 0.3);
-  color: #ededed;
+  background-color: var(--accent-purple);
+  color: #18102b;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -60,14 +60,14 @@
 
 /* Fix dropdown options */
 .ohms-law-form select option {
-  background-color: #111;
+  background-color: #18102b;
   color: #ededed;
 }
 
 .ohms-law-form input:focus,
 .ohms-law-form select:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.2);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 2px var(--accent-purple);
   outline: none;
 }
 

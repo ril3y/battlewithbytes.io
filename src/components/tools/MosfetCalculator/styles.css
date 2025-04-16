@@ -82,8 +82,8 @@
 
 /* Fix dropdown background color */
 .mosfet-calculator select {
-  background-color: rgba(0, 0, 0, 0.3);
-  color: var(--foreground);
+  background-color: var(--accent-purple);
+  color: #18102b;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -96,15 +96,15 @@
 
 /* Fix dropdown options */
 .mosfet-calculator select option {
-  background-color: #111;
-  color: var(--foreground);
+  background-color: #18102b;
+  color: #ededed;
 }
 
 .mosfet-calculator .mosfet-input:focus,
 .mosfet-calculator .mosfet-select:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-purple);
   outline: none;
-  box-shadow: 0 0 0 1px var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-purple);
 }
 
 .mosfet-calculator .mosfet-button {
