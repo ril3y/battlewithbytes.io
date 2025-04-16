@@ -3,6 +3,10 @@ import { HelpCommand } from  './commands/HelpCommand'
 import { ExitCommand } from './commands/ExitCommand'
 import { LsCommand } from './commands/LsCommand'
 import { Command } from './commands/Command'
+import { BannerCommand } from './commands/BannerCommand'
+import { SudoCommand } from './commands/SudoCommand'
+import { FortuneCommand } from './commands/FortuneCommand'
+import { ClearCommand } from './commands/ClearCommand'
 
 export const loadCommands = (): Record<string, Command> => {
   const commands: Command[] = [
@@ -10,6 +14,10 @@ export const loadCommands = (): Record<string, Command> => {
     new PowerCommand(), 
     new ExitCommand(),
     new LsCommand(),
+    new BannerCommand(),
+    new SudoCommand(),
+    new FortuneCommand(),
+    new ClearCommand(),
   ]
 
   const commandMap: Record<string, Command> = {}

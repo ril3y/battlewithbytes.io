@@ -25,49 +25,38 @@ interface ProjectPageProps {
 // Function to get project data (metadata and content)
 async function getProjectData(slug: string): Promise<{ metadata: ProjectMetadata; content: string | null } | null> {
   const indexPath = path.join(projectsDirectory, slug, 'index.mdx');
-  let contentFilePath = '';
   let indexData: matter.GrayMatterFile<string>;
   try {
     const indexFileContents = await fs.readFile(indexPath, 'utf8');
     indexData = matter(indexFileContents);
-    const contentFileName = indexData.data.contentFile || 'content.mdx';
-    contentFilePath = path.join(projectsDirectory, slug, contentFileName);
   } catch (error) {
-      console.error(`Error reading index file for slug "${slug}":`, error);
-      return null;
+    console.error(`Error reading index file for slug "${slug}":`, error);
+    return null;
   }
 
   try {
-    const contentFileContents = await fs.readFile(contentFilePath, 'utf8');
-    const { content } = matter(contentFileContents);
-
+    // Always use index.mdx for content
+    const { content } = indexData;
     return {
       metadata: {
         slug,
         title: indexData.data.title || 'Untitled Project',
         description: indexData.data.description || 'No description',
         coverImage: indexData.data.coverImage || undefined,
-        contentFile: indexData.data.contentFile || 'content.mdx',
       },
       content: content,
     };
   } catch (error) {
-    console.error(`Error reading content file "${contentFilePath}" for slug "${slug}":`, error);
-     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        console.warn(`Content file not found for slug "${slug}", returning empty content.`);
-        return {
-            metadata: {
-                slug,
-                title: indexData.data.title || 'Untitled Project',
-                description: indexData.data.description || 'No description',
-                coverImage: indexData.data.coverImage || undefined,
-                contentFile: indexData.data.contentFile || 'content.mdx',
-            },
-            content: '', 
-        };
-    } else {
-        return null;
-    }
+    console.error(`Error processing index.mdx for slug "${slug}":`, error);
+    return {
+      metadata: {
+        slug,
+        title: indexData.data.title || 'Untitled Project',
+        description: indexData.data.description || 'No description',
+        coverImage: indexData.data.coverImage || undefined,
+      },
+      content: '',
+    };
   }
 }
 

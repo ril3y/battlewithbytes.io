@@ -24,6 +24,11 @@ export function getAllProjects(): ProjectMetadata[] {
       const fileContents = fs.readFileSync(fullPath, 'utf8');
       const { data } = matter(fileContents);
 
+      // Only include if enabled is not explicitly false
+      if (typeof data.enabled !== 'undefined' && data.enabled === false) {
+        return null;
+      }
+
       return {
         slug,
         title: data.title || 'Untitled Project',

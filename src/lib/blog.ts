@@ -53,6 +53,11 @@ export function getBlogPostMetadata(slug: string): BlogMetadata | null {
     const fileContent = fs.readFileSync(contentPath, 'utf8');
     const { data } = matter(fileContent);
 
+    // If enabled is explicitly false, skip this post
+    if (typeof data.enabled !== 'undefined' && data.enabled === false) {
+      return null;
+    }
+
     // Process cover image path
     let coverImage = data.coverImage;
     if (coverImage && coverImage.startsWith('./')) {
@@ -109,6 +114,11 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
   try {
     const fileContent = fs.readFileSync(contentPath, 'utf8');
     const { data, content } = matter(fileContent); // Get both data and content
+
+    // If enabled is explicitly false, skip this post
+    if (typeof data.enabled !== 'undefined' && data.enabled === false) {
+      return null;
+    }
 
     // Serialize the MDX content
     const mdxSource = await serialize(content, {

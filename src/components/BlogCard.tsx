@@ -50,17 +50,7 @@ export default function BlogCard({ post, formattedDate }: BlogCardProps) {
         {Array.isArray(post.tags) && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {post.tags.slice(0, 3).map((tag, index) => (
-              <Link
-                href={`/blog/tag/${tag}`}
-                key={`${tag}-${index}`}
-                className="no-underline hover:no-underline text-decoration-none decoration-none bg-gray-800 text-green-400 px-2 py-1 rounded-full text-xs font-mono hover:bg-gray-700 transition-colors"
-                style={{ textDecoration: 'none' }}
-                onClick={handleTagClick}
-                onMouseDown={handleTagClick}
-                tabIndex={0}
-              >
-                #{tag}
-              </Link>
+              <TagButton tag={tag} key={`${tag}-${index}`} />
             ))}
           </div>
         )}
@@ -81,5 +71,24 @@ export default function BlogCard({ post, formattedDate }: BlogCardProps) {
         </div>
       </div>
     </Link>
+  );
+}
+
+function TagButton({ tag }: { tag: string }) {
+  const router = require('next/navigation').useRouter();
+  return (
+    <button
+      type="button"
+      className="no-underline hover:no-underline text-decoration-none decoration-none bg-gray-800 text-green-400 px-2 py-1 rounded-full text-xs font-mono hover:bg-gray-700 transition-colors"
+      style={{ textDecoration: 'none' }}
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/blog/tag/${tag}`);
+      }}
+      tabIndex={0}
+      aria-label={`View posts tagged ${tag}`}
+    >
+      #{tag}
+    </button>
   );
 }

@@ -42,6 +42,27 @@ export default function AboutPage() {
           Driven by curiosity, I&apos;m always looking to deepen my understanding of advanced topics such as machine learning and firmware fuzzing. I&apos;m currently exploring the application of AI-driven automation for firmware security analysis and the use of machine learning techniques for practical, everyday problem-solving.
         </p>
 
+        <h2 className="text-2xl font-semibold text-[var(--accent-primary)] mt-6 mb-3">Connect & Explore</h2>
+        <p className="text-[var(--foreground)] mb-4">
+          You can also explore my open-source hardware workspace on Flux:
+        </p>
+        <a
+          href="https://www.flux.ai/ril3y"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block px-5 py-2 rounded bg-[#11191f] text-[var(--accent-primary)] font-semibold shadow hover:bg-[var(--accent-primary)] hover:text-black transition-colors border border-[var(--accent-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:ring-offset-2 flex items-center mt-4 mb-2"
+          style={{ textDecoration: 'none' }}
+        >
+          <img
+            src="https://www.flux.ai/static/media/flux_icon.eca0a11ea2f721d680d9.svg"
+            alt="Flux logo"
+            width={24}
+            height={24}
+            style={{ display: 'inline-block', verticalAlign: 'middle' }}
+          />
+          <span className="ml-4">View my Flux workspace</span>
+        </a>
+
         <h2 className="text-2xl font-semibold text-[var(--accent-primary)] mt-6 mb-3">Connect With Me</h2>
         <p className="text-[var(--foreground)] mb-4">
           I&apos;m always interested in discussing new projects, innovative ideas, or tackling challenging problems. Feel free to reach out if you&apos;d like to collaborate, share insights, or simply chat about tech over a cup of coffee!

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Console from "react-console-emulator"
 import { loadCommands } from "@/components/terminal/CommandRegistry"
 
@@ -35,6 +35,7 @@ const TerminalWelcome = () => (
 
 export default function QuakeTerminal() {
   const [open, setOpen] = useState(false)
+  const consoleRef = useRef<any>(null)
 
   // Handle closing the terminal
   const handleExit = () => {
@@ -81,6 +82,19 @@ export default function QuakeTerminal() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [open]);
+
+  useEffect(() => {
+    const handleClear = () => {
+      // Use the Console ref to clear the terminal history
+      if (consoleRef.current && typeof consoleRef.current.clearConsole === 'function') {
+        consoleRef.current.clearConsole();
+      }
+    };
+    window.addEventListener('quake-clear', handleClear as EventListener);
+    return () => {
+      window.removeEventListener('quake-clear', handleClear as EventListener);
+    };
+  }, []);
 
   // Focus the terminal input when the terminal is opened.
   useEffect(() => {
@@ -158,6 +172,7 @@ export default function QuakeTerminal() {
       `}</style>
       
       <Console
+        ref={consoleRef}
         autoFocus={true}
         commands={commands}
         welcomeMessage={<TerminalWelcome />}

@@ -12,26 +12,34 @@ export default function Home() {
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center md:text-left">
-            <h1 className="text-4xl md:text-6xl font-bold font-mono mb-6 glow-text">
-              <span className="text-white">Battle</span>
-              <span className="text-green-400">With</span>
-              <span className="text-white">Bytes</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 font-mono max-w-2xl mx-auto md:mx-0">
-              <span className="text-green-400">$</span> Ask me about little data.
-            </p>
-            <p className="text-md md:text-lg text-gray-400 mb-12 max-w-2xl mx-auto md:mx-0">
-              A personal hub for sharing insights on cybersecurity, embedded hardware, 
-              and software engineering through a diverse mix of content.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link href="/blog" className="button">
-                Read the Blog
-              </Link>
-              <Link href="/tools" className="button">
-                Explore Tools
-              </Link>
+          <div className="flex flex-col md:flex-row items-center justify-between py-8 gap-8 md:gap-16">
+            <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
+              <img
+                src="/images/site_logo.png"
+                alt="Battle With Bytes Logo"
+                width={700}
+                height={380}
+                className="drop-shadow-2xl rounded-2xl border border-gray-800 bg-black"
+                style={{ maxWidth: '100%', height: 'auto' }}
+              />
+            </div>
+            <div className="flex-1 text-center md:text-left max-w-xl">
+              <div className="h-16 md:h-24" aria-hidden="true"></div>
+              <p className="text-xl md:text-2xl text-gray-300 mb-4 font-mono">
+                <span className="text-green-400">$</span> Ask me about little data.
+              </p>
+              <p className="text-md md:text-lg text-gray-400 mb-8 font-mono">
+                A personal hub for sharing insights on cybersecurity, embedded hardware,<br />
+                and software engineering through a diverse mix of content.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <Link href="/blog" className="button">
+                  Read the Blog
+                </Link>
+                <Link href="/tools" className="button">
+                  Explore Tools
+                </Link>
+              </div>
             </div>
           </div>
         </div>
