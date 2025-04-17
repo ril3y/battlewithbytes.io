@@ -12,6 +12,7 @@
     "predeploy": "pnpm run build:static",
     "deploy": "gh-pages -d out",
     "blog": "node scripts/blog-manager.js",
+    "project": "node scripts/project-manager.js",
     "test": "jest"
   },
   "dependencies": {
