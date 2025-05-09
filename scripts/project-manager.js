@@ -67,6 +67,10 @@ async function createProject() {
   const author = await question('Author (default: "Battle With Bytes"): ') || 'Battle With Bytes';
   const github = await question('GitHub URL (optional): ');
   const demo = await question('Live Demo URL (optional): ');
+  const defaultCoverImage = `/images/projects/${slug}/cover.png`;
+  const coverImage = await question(`Cover Image URL (default: ${defaultCoverImage}): `) || defaultCoverImage;
+  const enabledInput = await question('Enable this project? (yes/no, default: yes): ');
+  const enabled = enabledInput.toLowerCase() === 'no' ? false : true;
 
   const projectDir = path.join(PROJECTS_DIR, slug);
   const imageDir = path.join(IMAGES_DIR, slug);
@@ -79,7 +83,20 @@ async function createProject() {
   fs.mkdirSync(imageDir, { recursive: true });
 
   const today = new Date().toISOString().split('T')[0];
-  const mdxContent = `---\ntitle: "${title}"\ndate: "${today}"\nexcerpt: "${excerpt}"\ntags: [${tags.map(t => `"${t}"`).join(', ')}]\nauthor: "${author}"\ngithub: "${github}"\ndemo: "${demo}"\n---\n\n// Write your project content here\n`;
+  const mdxContent = `---
+title: "${title}"
+date: "${today}"
+excerpt: "${excerpt}"
+tags: [${tags.map(t => `"${t}"`).join(', ')}]
+author: "${author}"
+github: "${github}"
+demo: "${demo}"
+coverImage: "${coverImage}"
+enabled: ${enabled}
+---
+
+// Write your project content here
+`;
   fs.writeFileSync(path.join(projectDir, 'index.mdx'), mdxContent);
   console.log(chalk.green(`\nProject "${title}" created at ${projectDir}`));
 }
@@ -112,8 +129,21 @@ async function updateProject() {
   const author = await question(`Author (${frontmatter.author}): `) || frontmatter.author;
   const github = await question(`GitHub URL (${frontmatter.github || ''}): `) || frontmatter.github || '';
   const demo = await question(`Live Demo URL (${frontmatter.demo || ''}): `) || frontmatter.demo || '';
-  const today = frontmatter.date || new Date().toISOString().split('T')[0];
-  const newFrontmatter = { title, date: today, excerpt, tags, author, github, demo };
+  const coverImage = await question(`Cover Image URL (${frontmatter.coverImage || ''}): `) || frontmatter.coverImage || '';
+  // Preserve existing date if available, otherwise use today. 'enabled' status is handled by toggleProjectEnabled or preserved here.
+  const date = frontmatter.date || new Date().toISOString().split('T')[0];
+  
+  const newFrontmatter = {
+    ...frontmatter, // Preserve existing fields like 'enabled'
+    title,
+    date,
+    excerpt,
+    tags,
+    author,
+    github,
+    demo,
+    coverImage
+  };
   const newContent = matter.stringify(content, newFrontmatter);
   fs.writeFileSync(mdxPath, newContent);
   console.log(chalk.green('Project updated.'));
