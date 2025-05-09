@@ -1,0 +1,12 @@
+<InteractiveCodeBlock 
+  githubUrl="https://github.com/rockowitz/ddcutil/blob/master/src/public/ddcutil_types.h#L339-L357"
+  language="c"
+  showLineNumbers={true}
+  highlights={[
+    { text: "DDCA_INPUT_SOURCE", color: "#00ff9d", tooltip: "VCP code 60h - Input Source Selection" },
+    { text: "DDCA_IMAGE_ORIENTATION", color: "#ff851b", tooltip: "VCP code AAh - Image Rotation" }
+  ]}
+/>
+
+
+how you do the code blocks
