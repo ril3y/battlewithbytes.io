@@ -1,0 +1,192 @@
+1:"$Sreact.fragment"
+2:I[8826,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+3:I[5565,[],""]
+4:I[2905,[],""]
+5:I[6493,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+6:I[3445,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+8:I[6368,[],"MetadataBoundary"]
+a:I[6368,[],"OutletBoundary"]
+d:I[9769,[],"AsyncMetadataOutlet"]
+f:I[6368,[],"ViewportBoundary"]
+11:I[4324,[],""]
+:HL["/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","style"]
+:HL["/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","style"]
+0:{"P":null,"b":"dkFbLA22yedimNuCE4OHD","p":"/battlewithbytes.io","c":["","blog","whats-hiding-in-my-coffee-maker"],"i":false,"f":[[["",{"children":["blog",{"children":[["slug","whats-hiding-in-my-coffee-maker","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":[["$","link",null,{"rel":"icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"any"}],["$","link",null,{"rel":"apple-touch-icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"180x180"}],["$","link",null,{"rel":"shortcut icon","type":"image/x-icon","href":"/images/favicon.ico"}]]}],["$","body",null,{"className":"__variable_9eca1a __variable_c4c34c antialiased min-h-screen flex flex-col","children":[["$","$L2",null,{}],["$","div",null,{"className":"pt-16 flex-grow","children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L5",null,{}],["$","$L6",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["slug","whats-hiding-in-my-coffee-maker","d"],["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L7",["$","$L8",null,{"children":"$L9"}],[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$La",null,{"children":["$Lb","$Lc",["$","$Ld",null,{"promise":"$@e"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","fqmcPRFSFCStoDXFG_apH",{"children":[["$","$Lf",null,{"children":"$L10"}],null]}],null]}],false]],"m":"$undefined","G":["$11","$undefined"],"s":false,"S":true}
+12:"$Sreact.suspense"
+13:I[9769,[],"AsyncMetadata"]
+9:["$","$12",null,{"fallback":null,"children":["$","$L13",null,{"promise":"$@14"}]}]
+c:null
+15:I[6064,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","64","static/chunks/64-c44a3e63270ab371.js","953","static/chunks/app/blog/%5Bslug%5D/page-c1bf50394cd47596.js"],"default",1]
+16:T1a8e,"use strict";
+const {Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs} = arguments[0];
+const {useMDXComponents: _provideComponents} = arguments[0];
+function _createMdxContent(props) {
+  const _components = {
+    a: "a",
+    blockquote: "blockquote",
+    br: "br",
+    code: "code",
+    h2: "h2",
+    h3: "h3",
+    hr: "hr",
+    li: "li",
+    p: "p",
+    pre: "pre",
+    strong: "strong",
+    ul: "ul",
+    ..._provideComponents(),
+    ...props.components
+  }, {DropCap} = _components;
+  if (!DropCap) _missingMdxReference("DropCap", true);
+  return _jsxs(_Fragment, {
+    children: [_jsx(DropCap, {
+      children: _jsxs(_components.p, {
+        children: ["Ever wondered what your coffee maker might be hiding? With the rise of smart appliances, even a humble brew machine could be running embedded firmware — and that means there's something to hack.\nIn this post, I used my ", _jsx(_components.a, {
+          href: "https://github.com/ril3y/picotag",
+          children: "PicoTag project"
+        }), " to dump the SPI flash memory from my coffee maker and dig into what kind of system it's running."]
+      })
+    }), "\n", _jsx(_components.hr, {}), "\n", _jsx(_components.h2, {
+      id: "hardware-overview",
+      children: _jsx(_components.a, {
+        href: "#hardware-overview",
+        children: "Hardware Overview"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["The flash chip inside the coffee maker is a Winbond ", _jsx(_components.strong, {
+        children: "W25Q128JVSQ"
+      }), ", a common 128Mbit (16MB) SPI NOR flash chip."]
+    }), "\n", _jsx(_components.hr, {}), "\n", _jsx(_components.h2, {
+      id: "step-1-identifying-the-flash-chip",
+      children: _jsx(_components.a, {
+        href: "#step-1-identifying-the-flash-chip",
+        children: "Step 1: Identifying the Flash Chip"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "To begin, I opened up the unit and visually identified the flash as:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Manufacturer:"
+        }), " Winbond"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Model:"
+        }), " W25Q128JVSQ"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Package:"
+        }), " SOIC-8"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Interface:"
+        }), " SPI"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Capacity:"
+        }), " 128Mbit (16MB)"]
+      }), "\n"]
+    }), "\n", _jsxs(_components.p, {
+      children: ["I verified the part by searching for the ", _jsx(_components.a, {
+        href: "https://www.mouser.com/datasheet/2/949/w25q128jv_revf_03272018_plus-1489608.pdf",
+        children: "datasheet"
+      }), " and checking the pinout and features."]
+    }), "\n", _jsx(_components.hr, {}), "\n", _jsx(_components.h2, {
+      id: "step-2-dumping-the-firmware",
+      children: _jsx(_components.a, {
+        href: "#step-2-dumping-the-firmware",
+        children: "Step 2: Dumping the Firmware"
+      })
+    }), "\n", _jsx(_components.h3, {
+      id: "option-1-in-circuit-dump",
+      children: _jsx(_components.a, {
+        href: "#option-1-in-circuit-dump",
+        children: "Option 1: In-Circuit Dump"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "First attempt was an in-circuit read using the PicoTag tool, powered via USB:"
+    }), "\n", _jsxs(_components.blockquote, {
+      children: ["\n", _jsxs(_components.p, {
+        children: [_jsx(_components.strong, {
+          children: "TODO:"
+        }), " Add photo of clip-on connection to flash chip", _jsx(_components.br, {}), "\n", _jsx(_components.code, {
+          children: "<Insert Image Here>"
+        })]
+      }), "\n"]
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "Connected PicoTag to SPI lines using a SOIC-8 test clip"
+      }), "\n", _jsx(_components.li, {
+        children: "Powered the flash externally (3.3V)"
+      }), "\n", _jsx(_components.li, {
+        children: "Verified signal integrity with a logic analyzer"
+      }), "\n"]
+    }), "\n", _jsx(_components.p, {
+      children: "This sometimes works — if the MCU isn’t holding the bus or interfering."
+    }), "\n", _jsx(_components.h3, {
+      id: "option-2-desolder-and-dump",
+      children: _jsx(_components.a, {
+        href: "#option-2-desolder-and-dump",
+        children: "Option 2: Desolder and Dump"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "If in-circuit read fails:"
+    }), "\n", _jsxs(_components.blockquote, {
+      children: ["\n", _jsxs(_components.p, {
+        children: [_jsx(_components.strong, {
+          children: "TODO:"
+        }), " Add photo of desoldered chip and breadboard adapter", _jsx(_components.br, {}), "\n", _jsx(_components.code, {
+          children: "<Insert Image Here>"
+        })]
+      }), "\n"]
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "Carefully desoldered the chip using hot air"
+      }), "\n", _jsx(_components.li, {
+        children: "Mounted on a breakout board or directly into a ZIF socket"
+      }), "\n", _jsx(_components.li, {
+        children: "Used PicoTag to read and dump the contents"
+      }), "\n"]
+    }), "\n", _jsx(_components.hr, {}), "\n", _jsx(_components.h2, {
+      id: "step-3-parsing-the-dump",
+      children: _jsx(_components.a, {
+        href: "#step-3-parsing-the-dump",
+        children: "Step 3: Parsing the Dump"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["After dumping, I saved the binary as ", _jsx(_components.code, {
+        children: "coffeemaker_dump.bin"
+      }), "."]
+    }), "\n", _jsx(_components.p, {
+      children: "First inspection steps:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-bash",
+        children: "xxd coffeemaker_dump.bin | less\nbinwalk coffeemaker_dump.bin\nstrings coffeemaker_dump.bin | less\n"
+      })
+    })]
+  });
+}
+function MDXContent(props = {}) {
+  const {wrapper: MDXLayout} = {
+    ..._provideComponents(),
+    ...props.components
+  };
+  return MDXLayout ? _jsx(MDXLayout, {
+    ...props,
+    children: _jsx(_createMdxContent, {
+      ...props
+    })
+  }) : _createMdxContent(props);
+}
+return {
+  default: MDXContent
+};
+function _missingMdxReference(id, component) {
+  throw new Error("Expected " + (component ? "component" : "object") + " `" + id + "` to be defined: you likely forgot to import, pass, or provide it.");
+}
+7:["$","main",null,{"className":"min-h-screen py-16 px-4","children":["$","$L15",null,{"content":{"compiledSource":"$16","frontmatter":{},"scope":{}},"metadata":{"slug":"whats-hiding-in-my-coffee-maker","title":"What's Hiding In My Coffee Maker?","date":"2025-04-15","excerpt":"Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside.","tags":["firmware","reverse engineering","spi"],"author":"Riley Porter","coverImage":"/images/blog/whats-hiding-in-my-coffee-maker/concept.png"}}]}]
+10:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+b:null
+14:{"metadata":[["$","title","0",{"children":"What's Hiding In My Coffee Maker? | Battle With Bytes"}],["$","meta","1",{"name":"description","content":"Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside."}],["$","link","2",{"rel":"icon","href":"/battlewithbytes.io/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+e:{"metadata":"$14:metadata","error":null,"digest":"$undefined"}

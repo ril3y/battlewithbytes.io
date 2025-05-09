@@ -1,0 +1,95 @@
+name: Deploy Next.js site to Pages
+
+on:
+  push:
+    branches: ["master"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 1: Setup Node.js (without pnpm caching specified here)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.10.0"
+          # REMOVED cache: "pnpm" - Let pnpm/action-setup handle pnpm specifics
+
+      # Step 2: Setup pnpm (this installs pnpm and sets up caching)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2 # Consider updating to v3 or v4 if needed
+        with:
+          version: 8.6.2
+          run_install: false # We will run install manually later
+
+      # Optional but recommended: Verify pnpm installation
+      - name: Verify pnpm installation and get path
+        run: |
+          which pnpm
+          pnpm --version
+
+      # Step 3: Install dependencies (now pnpm is guaranteed to be available)
+      # Enable corepack explicitly for pnpm caching to work reliably with pnpm/action-setup
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Downgrade @mdx-js/loader to a compatible version
+      - name: Fix MDX loader compatibility
+        run: |
+          pnpm remove @mdx-js/loader @mdx-js/react
+          pnpm add @mdx-js/loader@2.3.0 @mdx-js/react@2.3.0
+
+      # Step 4: Build and Export with environment variables
+      - name: Build Next.js site
+        run: pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      # Step 5: Upload artifact
+      - name: Upload artifact for deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Path to the output directory from next build with output: 'export'
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Output the deployment URL
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment # Add an ID to reference outputs
+        uses: actions/deploy-pages@v4
+        # No 'with' section needed, it automatically uses the artifact from the 'build' job

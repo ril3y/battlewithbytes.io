@@ -1,0 +1,311 @@
+1:"$Sreact.fragment"
+2:I[8826,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+3:I[5565,[],""]
+4:I[2905,[],""]
+5:I[6493,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+6:I[3445,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+8:I[6368,[],"MetadataBoundary"]
+a:I[6368,[],"OutletBoundary"]
+d:I[9769,[],"AsyncMetadataOutlet"]
+f:I[6368,[],"ViewportBoundary"]
+11:I[4324,[],""]
+:HL["/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","style"]
+:HL["/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","style"]
+0:{"P":null,"b":"dkFbLA22yedimNuCE4OHD","p":"/battlewithbytes.io","c":["","blog","introducing-picotag"],"i":false,"f":[[["",{"children":["blog",{"children":[["slug","introducing-picotag","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":[["$","link",null,{"rel":"icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"any"}],["$","link",null,{"rel":"apple-touch-icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"180x180"}],["$","link",null,{"rel":"shortcut icon","type":"image/x-icon","href":"/images/favicon.ico"}]]}],["$","body",null,{"className":"__variable_9eca1a __variable_c4c34c antialiased min-h-screen flex flex-col","children":[["$","$L2",null,{}],["$","div",null,{"className":"pt-16 flex-grow","children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L5",null,{}],["$","$L6",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["slug","introducing-picotag","d"],["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L7",["$","$L8",null,{"children":"$L9"}],[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$La",null,{"children":["$Lb","$Lc",["$","$Ld",null,{"promise":"$@e"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","xhFtZCBSbX92Ool5X1_Iw",{"children":[["$","$Lf",null,{"children":"$L10"}],null]}],null]}],false]],"m":"$undefined","G":["$11","$undefined"],"s":false,"S":true}
+12:"$Sreact.suspense"
+13:I[9769,[],"AsyncMetadata"]
+9:["$","$12",null,{"fallback":null,"children":["$","$L13",null,{"promise":"$@14"}]}]
+c:null
+15:I[6064,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","64","static/chunks/64-c44a3e63270ab371.js","953","static/chunks/app/blog/%5Bslug%5D/page-c1bf50394cd47596.js"],"default",1]
+16:T393d,"use strict";
+const {Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs} = arguments[0];
+const {useMDXComponents: _provideComponents} = arguments[0];
+function _createMdxContent(props) {
+  const _components = {
+    a: "a",
+    code: "code",
+    h2: "h2",
+    img: "img",
+    li: "li",
+    ol: "ol",
+    p: "p",
+    strong: "strong",
+    ul: "ul",
+    ..._provideComponents(),
+    ...props.components
+  }, {DropCap} = _components;
+  if (!DropCap) _missingMdxReference("DropCap", true);
+  return _jsxs(_Fragment, {
+    children: [_jsx(DropCap, {
+      children: _jsxs(_components.p, {
+        children: ["Ever found yourself needing a quick and easy way to poke at hardware, read GPIO states, interact with SPI or I2C devices, or maybe even dump firmware, without setting up a complex JTAG/SWD debugger or writing throwaway scripts from scratch? Enter ", _jsx(_components.strong, {
+          children: "PicoTag"
+        }), "."]
+      })
+    }), "\n", _jsx(_components.p, {
+      children: _jsx(_components.img, {
+        src: "/images/blog/introducing-picotag/concept.png",
+        alt: "PicoTag Concept Image"
+      })
+    }), "\n", _jsx(_components.h2, {
+      id: "what-is-picotag",
+      children: _jsx(_components.a, {
+        href: "#what-is-picotag",
+        children: "What is PicoTag?"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["PicoTag is a firmware project built entirely in ", _jsx(_components.strong, {
+        children: "CircuitPython"
+      }), ", designed to run on the versatile and affordable ", _jsx(_components.strong, {
+        children: "Raspberry Pi Pico (RP2040)"
+      }), ". At its core, PicoTag transforms your Pico into an interactive hardware multitool, accessible via a simple Command-Line Interface (CLI) over USB Serial."]
+    }), "\n", _jsx(_components.p, {
+      children: "Think of it as a Swiss Army knife for hardware interaction. Need to check if a pin is high or low? Send some SPI commands? Sniff I2C traffic? PicoTag aims to provide a flexible, extensible platform to do just that, leveraging the ease of Python for development and interaction."
+    }), "\n", _jsx(_components.h2, {
+      id: "why-picotag",
+      children: _jsx(_components.a, {
+        href: "#why-picotag",
+        children: "Why PicoTag?"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Many hardware interaction tools exist, but they often require specific desktop software, complex setups, or low-level C/C++ programming. PicoTag aims to bridge the gap by:"
+    }), "\n", _jsxs(_components.ol, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Leveraging CircuitPython:"
+        }), " Making hardware interaction accessible through high-level Python code. Easy to understand, modify, and extend."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Modularity:"
+        }), " Building functionality through self-contained modules that can be easily added or removed from the Pico's filesystem."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Interactivity:"
+        }), " Providing an immediate CLI for running commands and getting feedback."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Portability:"
+        }), " The RP2040 Pico is small, cheap, and readily available."]
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "current-progress-the-foundation-is-laid",
+      children: _jsx(_components.a, {
+        href: "#current-progress-the-foundation-is-laid",
+        children: "Current Progress: The Foundation is Laid"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["Looking at the current codebase (", _jsx(_components.code, {
+        children: "boot_out.txt"
+      }), " confirms CircuitPython 9.1.1 on a Pico), the foundational elements of PicoTag are already in place:"]
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Modular Architecture:"
+        }), " A robust ", _jsx(_components.code, {
+          children: "ModuleManager"
+        }), " dynamically loads Python modules from the ", _jsx(_components.code, {
+          children: "/modules"
+        }), " directory on the Pico's flash filesystem. Each module encapsulates specific functionality (e.g., interacting with a specific chip, protocol, or interface)."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Command-Line Interface (CLI):"
+        }), " A ", _jsx(_components.code, {
+          children: "CLI"
+        }), " class (", _jsx(_components.code, {
+          children: "cli.py"
+        }), ") provides the user interface over ", _jsx(_components.code, {
+          children: "usb_cdc"
+        }), " (Serial). It handles input, command parsing, backspace, and executes commands registered by the loaded modules. The prompt ", _jsx(_components.code, {
+          children: "(⚡)Pico>"
+        }), " gives it a distinct identity."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Command Handling:"
+        }), " A base ", _jsx(_components.code, {
+          children: "Command"
+        }), " class (", _jsx(_components.code, {
+          children: "command.py"
+        }), ") allows modules to define their own specific commands with descriptions and execution logic. These commands are registered globally by the ", _jsx(_components.code, {
+          children: "ModuleManager"
+        }), "."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Resource Management:"
+        }), " A ", _jsx(_components.code, {
+          children: "ResourceManager"
+        }), " (", _jsx(_components.code, {
+          children: "resource_manager.py"
+        }), ") handles shared hardware resources like SPI peripherals (", _jsx(_components.code, {
+          children: "SPICoreModule"
+        }), ") or LEDs (", _jsx(_components.code, {
+          children: "LEDsCoreModule"
+        }), "), ensuring modules don't conflict."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Dependency Management:"
+        }), " Modules can declare dependencies (like needing access to the 'spi' resource), and the ", _jsx(_components.code, {
+          children: "ModuleManager"
+        }), " ensures these are met before loading."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Core Services:"
+        }), " Essential services like a configurable Logger (", _jsx(_components.code, {
+          children: "logger.py"
+        }), ") with color support (", _jsx(_components.code, {
+          children: "colors.py"
+        }), ") are integrated."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Example Code:"
+        }), " The presence of a ", _jsx(_components.code, {
+          children: "GPIOTester"
+        }), " class (even if commented out in the main execution flow) demonstrates the intended use case – interacting directly with GPIO pins."]
+      }), "\n"]
+    }), "\n", _jsxs(_components.p, {
+      children: ["Currently, the system boots, initializes core resources (SPI, LEDs), loads any modules found in ", _jsx(_components.code, {
+        children: "/modules"
+      }), ", and presents the user with the CLI, ready to accept commands."]
+    }), "\n", _jsx(_components.h2, {
+      id: "future-ideas-and-potential-uses",
+      children: _jsx(_components.a, {
+        href: "#future-ideas-and-potential-uses",
+        children: "Future Ideas and Potential Uses"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "The modular foundation opens up a world of possibilities for PicoTag. Here are just a few ideas:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Protocol Modules:"
+        }), "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "I2C:"
+            }), " Scan buses, read/write from devices, interact with sensors."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "UART:"
+            }), " Bridge UART interfaces, send/receive data."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "1-Wire:"
+            }), " Communicate with devices like DS18B20 temperature sensors."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "CAN Bus:"
+            }), " Interface with CAN networks (requires appropriate transceiver hardware)."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "JTAG/SWD:"
+            }), " Basic boundary scan or interaction using the RP2040's PIO for bit-banging (challenging but possible)."]
+          }), "\n"]
+        }), "\n"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Device Interaction Modules:"
+        }), "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Flash Memory:"
+            }), " Read/write SPI NOR flash chips (like BIOS chips)."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "EEPROM:"
+            }), " Interact with I2C or SPI EEPROMs."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "NFC/RFID:"
+            }), " Modules for common NFC/RFID reader ICs (e.g., PN532)."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Display Drivers:"
+            }), " Control small OLED or LCD screens via I2C/SPI."]
+          }), "\n"]
+        }), "\n"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Testing & Analysis Modules:"
+        }), "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Logic Analyzer:"
+            }), " Basic logic analysis using PIO and buffering."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Signal Generator:"
+            }), " Simple PWM or pattern generation."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "GPIO Tester:"
+            }), " An enhanced version of the example, allowing configuration of pull-ups/downs and direction."]
+          }), "\n"]
+        }), "\n"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Enhanced Framework:"
+        }), "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Scripting:"
+            }), " Allow sequences of commands to be run from a file."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "SD Card Support:"
+            }), " Load modules or log data to an SD card (the code hints at ", _jsx(_components.code, {
+              children: "sdcard_modules"
+            }), ")."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "API Integration:"
+            }), " Develop the ", _jsx(_components.code, {
+              children: "apis.py"
+            }), " concept for inter-module communication or external control."]
+          }), "\n", _jsxs(_components.li, {
+            children: [_jsx(_components.strong, {
+              children: "Data Sinks:"
+            }), " Utilize the ", _jsx(_components.code, {
+              children: "sink.py"
+            }), " abstraction for flexible output (e.g., logging to file, sending over network via Pico W)."]
+          }), "\n"]
+        }), "\n"]
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "conclusion",
+      children: _jsx(_components.a, {
+        href: "#conclusion",
+        children: "Conclusion"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "PicoTag is shaping up to be a promising tool for hardware enthusiasts, developers, and security researchers. By combining the power and flexibility of the RP2040 with the ease of CircuitPython, it lowers the barrier to entry for many common hardware interaction tasks. Its modular design ensures that it can grow and adapt to new challenges and hardware interfaces."
+    }), "\n", _jsx(_components.p, {
+      children: "While still in development, the core framework is solid. Keep an eye on this project – your trusty Raspberry Pi Pico might just become your go-to device for your next hardware adventure!"
+    }), "\n", _jsx(_components.p, {
+      children: "PicoTag is shaping up to be a promising tool for hardware enthusiasts, developers, and security researchers. By combining the power and flexibility of the RP2040 with the ease of CircuitPython, it lowers the barrier to entry for many common hardware interaction tasks. Its modular design ensures that it can grow and adapt to new challenges and hardware interfaces."
+    }), "\n", _jsx(_components.p, {
+      children: "While still in development, the core framework is solid. Keep an eye on this project – your trusty Raspberry Pi Pico might just become your go-to device for your next hardware adventure!"
+    })]
+  });
+}
+function MDXContent(props = {}) {
+  const {wrapper: MDXLayout} = {
+    ..._provideComponents(),
+    ...props.components
+  };
+  return MDXLayout ? _jsx(MDXLayout, {
+    ...props,
+    children: _jsx(_createMdxContent, {
+      ...props
+    })
+  }) : _createMdxContent(props);
+}
+return {
+  default: MDXContent
+};
+function _missingMdxReference(id, component) {
+  throw new Error("Expected " + (component ? "component" : "object") + " `" + id + "` to be defined: you likely forgot to import, pass, or provide it.");
+}
+7:["$","main",null,{"className":"min-h-screen py-16 px-4","children":["$","$L15",null,{"content":{"compiledSource":"$16","frontmatter":{},"scope":{}},"metadata":{"slug":"introducing-picotag","title":"Introducing PicoTag: Your Pocket-Sized Hardware Hacking Assistant","date":"2024-07-23","excerpt":"Meet PicoTag, a modular CircuitPython firmware for the RP2040, designed for hardware interaction, testing, and exploration.","tags":["circuitpython","rp2040","picotag","firmware","hacking","hardware","cli","modular"],"author":"Riley Porter","coverImage":"/images/blog/introducing-picotag/concept.png"}}]}]
+10:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+b:null
+14:{"metadata":[["$","title","0",{"children":"Introducing PicoTag: Your Pocket-Sized Hardware Hacking Assistant | Battle With Bytes"}],["$","meta","1",{"name":"description","content":"Meet PicoTag, a modular CircuitPython firmware for the RP2040, designed for hardware interaction, testing, and exploration."}],["$","link","2",{"rel":"icon","href":"/battlewithbytes.io/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+e:{"metadata":"$14:metadata","error":null,"digest":"$undefined"}

@@ -1,0 +1,489 @@
+1:"$Sreact.fragment"
+2:I[8826,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+3:I[5565,[],""]
+4:I[2905,[],""]
+5:I[6493,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+6:I[3445,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+8:I[6368,[],"MetadataBoundary"]
+a:I[6368,[],"OutletBoundary"]
+d:I[9769,[],"AsyncMetadataOutlet"]
+f:I[6368,[],"ViewportBoundary"]
+11:I[4324,[],""]
+:HL["/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","style"]
+:HL["/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","style"]
+0:{"P":null,"b":"dkFbLA22yedimNuCE4OHD","p":"/battlewithbytes.io","c":["","blog","i2c-hdmi-hacks"],"i":false,"f":[[["",{"children":["blog",{"children":[["slug","i2c-hdmi-hacks","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":[["$","link",null,{"rel":"icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"any"}],["$","link",null,{"rel":"apple-touch-icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"180x180"}],["$","link",null,{"rel":"shortcut icon","type":"image/x-icon","href":"/images/favicon.ico"}]]}],["$","body",null,{"className":"__variable_9eca1a __variable_c4c34c antialiased min-h-screen flex flex-col","children":[["$","$L2",null,{}],["$","div",null,{"className":"pt-16 flex-grow","children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L5",null,{}],["$","$L6",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["slug","i2c-hdmi-hacks","d"],["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L7",["$","$L8",null,{"children":"$L9"}],[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$La",null,{"children":["$Lb","$Lc",["$","$Ld",null,{"promise":"$@e"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","3lgOFpkK_357Z_cq1viGK",{"children":[["$","$Lf",null,{"children":"$L10"}],null]}],null]}],false]],"m":"$undefined","G":["$11","$undefined"],"s":false,"S":true}
+12:"$Sreact.suspense"
+13:I[9769,[],"AsyncMetadata"]
+9:["$","$12",null,{"fallback":null,"children":["$","$L13",null,{"promise":"$@14"}]}]
+c:null
+15:I[6064,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","64","static/chunks/64-c44a3e63270ab371.js","953","static/chunks/app/blog/%5Bslug%5D/page-c1bf50394cd47596.js"],"default",1]
+16:T57b3,"use strict";
+const {Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs} = arguments[0];
+const {useMDXComponents: _provideComponents} = arguments[0];
+function _createMdxContent(props) {
+  const _components = {
+    a: "a",
+    blockquote: "blockquote",
+    code: "code",
+    h2: "h2",
+    h3: "h3",
+    h4: "h4",
+    li: "li",
+    p: "p",
+    pre: "pre",
+    strong: "strong",
+    table: "table",
+    tbody: "tbody",
+    td: "td",
+    th: "th",
+    thead: "thead",
+    tr: "tr",
+    ul: "ul",
+    ..._provideComponents(),
+    ...props.components
+  }, {DropCap, HDMIPinout, I2CDetectOutput, TooltipText} = _components;
+  if (!DropCap) _missingMdxReference("DropCap", true);
+  if (!HDMIPinout) _missingMdxReference("HDMIPinout", true);
+  if (!I2CDetectOutput) _missingMdxReference("I2CDetectOutput", true);
+  if (!TooltipText) _missingMdxReference("TooltipText", true);
+  return _jsxs(_Fragment, {
+    children: [_jsx(DropCap, {
+      children: _jsx(_components.p, {
+        children: "Most people think of HDMI as just a video and audio interface, but it also includes a little-known I2C bus (the DDC/CEC channel). By tapping into this interface, you can control HDMI devices in unexpected ways. In this guide, we'll explore how to use Python and I2C to switch HDMI inputs programmatically—turning your Raspberry Pi or Linux device into a powerful remote control for your AV setup."
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "This post will walk through the basics of HDMI I2C, hardware considerations, and Python code to automate input switching."
+    }), "\n", _jsx(_components.h2, {
+      id: "overview-hdmi-and-i2c",
+      children: _jsx(_components.a, {
+        href: "#overview-hdmi-and-i2c",
+        children: "Overview: HDMI and I2C"
+      })
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "What is the DDC/CEC channel?"
+      }), "\n", _jsx(_components.li, {
+        children: "Why HDMI includes I2C"
+      }), "\n", _jsx(_components.li, {
+        children: "Practical uses for hackers and tinkerers"
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "hdmi-pinout-and-i2c-interface",
+      children: _jsx(_components.a, {
+        href: "#hdmi-pinout-and-i2c-interface",
+        children: "HDMI Pinout and I2C Interface"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "The HDMI connector contains 19 pins, with pins 15 (SCL) and 16 (SDA) carrying the I2C signals we're interested in. These pins form what's known as the DDC (Display Data Channel) bus."
+    }), "\n", _jsx(HDMIPinout, {}), "\n", _jsx(_components.p, {
+      children: "The highlighted pins are what we'll be tapping into for our I2C communication. The SCL pin (15) carries the clock signal, while the SDA pin (16) carries the bidirectional data. These pins normally allow the display to communicate its capabilities (like supported resolutions) to the source device, but we can hijack this channel for our own purposes."
+    }), "\n", _jsx(_components.h2, {
+      id: "hardware-setup",
+      children: _jsx(_components.a, {
+        href: "#hardware-setup",
+        children: "Hardware Setup"
+      })
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "Required cables/adapters"
+      }), "\n", _jsx(_components.li, {
+        children: "Raspberry Pi"
+      }), "\n", _jsx(_components.li, {
+        children: "HDMI Monitor (that supports DDC/CI)"
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "finding-the-i2c-address-on-raspberry-pi",
+      children: _jsx(_components.a, {
+        href: "#finding-the-i2c-address-on-raspberry-pi",
+        children: "Finding the I2C Address on Raspberry Pi"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["Once your Raspberry Pi is physically connected to the HDMI DDC lines (pins 15/16), you can use the built-in I2C tools to discover which addresses are present on the bus. The ", _jsx(_components.code, {
+        children: "i2cdetect"
+      }), " utility is perfect for this job."]
+    }), "\n", _jsx(_components.p, {
+      children: "First, list the available I2C buses:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-bash",
+        children: "$ i2cdetect -l\ni2c-2   i2c             bcm2835 (i2c@7e805000)                  I2C adapter\n"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["Here, ", _jsx(_components.code, {
+        children: "i2c-2"
+      }), " is the bus connected to the HDMI port on the Pi. Now scan the bus for devices:"]
+    }), "\n", _jsx(I2CDetectOutput, {
+      highlights: [{
+        address: "37",
+        color: "#ff3333",
+        content: "0x37: Common address for HDMI CEC bridges or control ICs. This is the chip we'll interact with for input switching."
+      }, {
+        address: "50",
+        color: "#00ff9d",
+        content: "0x50: Standard EDID EEPROM address. Contains display capabilities like supported resolutions."
+      }]
+    }), "\n", _jsx(_components.p, {
+      children: "This output shows several addresses in use. Most notably:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x37"
+        }), ": This is a common address for HDMI CEC (Consumer Electronics Control) bridges and sometimes for HDMI switches or other control ICs. If you're hacking input switching, this is often the chip you'll want to communicate with!"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x50"
+        }), ": This is the standard EDID EEPROM address, where the monitor stores its capabilities. Reading from here gives you the display's supported resolutions and features."]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Other addresses"
+        }), ": Depending on your monitor or switch, you may see other devices. Addresses like 0x3A, 0x4A, 0x4B, and 0x54 could correspond to additional control chips or features."]
+      }), "\n"]
+    }), "\n", _jsxs(_components.blockquote, {
+      children: ["\n", _jsxs(_components.p, {
+        children: [_jsx(_components.strong, {
+          children: "Tip:"
+        }), " If you're not sure which address to poke, start with 0x37 for control and 0x50 for EDID. Use ", _jsx(_components.code, {
+          children: "i2cdump"
+        }), " or custom Python scripts to probe further!"]
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "python-implementation",
+      children: _jsx(_components.a, {
+        href: "#python-implementation",
+        children: "Python Implementation"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Now that we've identified the I2C addresses on our monitor, we can write Python code to programmatically switch inputs. Here's a minimalist implementation that works reliably:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-python",
+        children: "#!/usr/bin/env python3\nimport os, fcntl, sys, time\n\nBUS_DEV   = \"/dev/i2c-2\"    # Your I2C bus device\nMON_ADDR  = 0x37           # Monitor's DDC/CI address\nVCP_CODE  = 0x60           # Input Source VCP code\nNEW_INPUT = int(sys.argv[1], 0) if len(sys.argv)>1 else 0x12  # Default: HDMI-2\nI2C_SLAVE = 0x0703         # from <linux/i2c-dev.h>\n\ndef build_packet(vcp, value):\n    pkt = bytearray([0x51, 0x84, 0x03, vcp, 0x00, value])\n    pkt.append((-sum(pkt)) & 0xFF)\n    return pkt\n\ndef switch_input(value):\n    pkt = build_packet(VCP_CODE, value)\n    print(\"Raw packet:\", [hex(b) for b in pkt])\n    fd = os.open(BUS_DEV, os.O_RDWR)\n    try:\n        fcntl.ioctl(fd, I2C_SLAVE, MON_ADDR)\n        os.write(fd, pkt)\n    finally:\n        os.close(fd)\n\nif __name__==\"__main__\":\n    if os.geteuid()!=0:\n        print(\"Run as root\"); sys.exit(1)\n    print(f\"Switching to 0x{NEW_INPUT:02X}…\")\n    switch_input(NEW_INPUT)\n    if NEW_INPUT==0x12:\n        time.sleep(15)\n        switch_input(0x11)\n        print(\"Switched back to 0x11\")\n"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Here's how it works in action:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-bash",
+        children: "$ sudo python switch_input.py 0x12\nSwitching to 0x12…\nRaw packet: ['0x51', '0x84', '0x3', '0x60', '0x0', '0x12', '0xb6']\nRaw packet: ['0x51', '0x84', '0x3', '0x60', '0x0', '0x11', '0xb7']\nSwitched back to 0x11\n"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "This works perfectly!  At least for me.  Meaning, there verywell could be issues."
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "Make sure you ran it as root."
+      }), "\n", _jsx(_components.li, {
+        children: "Make sure you are using the right i2c address."
+      }), "\n"]
+    }), "\n", _jsx(_components.h3, {
+      id: "understanding-the-ddcci-packet-structure",
+      children: _jsx(_components.a, {
+        href: "#understanding-the-ddcci-packet-structure",
+        children: "Understanding the DDC/CI Packet Structure"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Let's break down exactly what our code is sending over the I2C bus. Each byte in the packet has a specific purpose in the DDC/CI protocol:"
+    }), "\n", _jsx(TooltipText, {
+      content: "Packet bytes: 0x51 0x84 0x03 0x60 0x00 0x12 0xB6",
+      tooltips: [{
+        text: "0x51",
+        color: "#ff3333",
+        tooltip: "Sub‑address (or “offset”) for DDC/CI messages. Every write packet to the monitor begins with this byte to indicate you’re talking MCCS/DDC‐CI. —Jean‑Bernard Boichat"
+      }, {
+        text: "0x84",
+        color: "#00ff9d",
+        tooltip: "Top bit (0x80) marks this as a “Set” request. The low 7 bits (0x04) give the number of payload bytes that follow (here, 4 bytes before the checksum). —Jean‑Bernard Boichat"
+      }, {
+        text: "0x03",
+        color: "#7fdbff",
+        tooltip: "MCCS opcode 0x03 = “Set VCP Feature.” This tells the monitor you’re changing a Virtual Control Panel parameter."
+      }, {
+        text: "0x60",
+        color: "#ff851b",
+        tooltip: "The VCP code (0x60) identifying which feature to change—in this case, Input Source (DDC/CI VCP X60)."
+      }, {
+        text: "0x00",
+        color: "#ffffff",
+        tooltip: "High byte of the new value. For VCP values 0–254, the MSB is always zero."
+      }, {
+        text: "0x12",
+        color: "#ffdc00",
+        tooltip: "Low byte of the new value: 0x12 = HDMI‑2."
+      }, {
+        text: "0x11",
+        color: "#ffdc00",
+        tooltip: "Low byte of the new value: 0x11 = HDMI‑1."
+      }, {
+        text: "0xB6",
+        color: "#b10dc9",
+        tooltip: "Checksum: a two’s‑complement sum so that all bytes (including this checksum) add to zero mod 256. For example, sum(0x51+0x84+0x03+0x60+0x00+0x12)=0x4A, and (–0x4A)&0xFF=0xB6."
+      }, {
+        text: "0xB7",
+        color: "#b10dc9",
+        tooltip: "Checksum: a two’s‑complement sum so that all bytes (including this checksum) add to zero mod 256 for the packet ending in 0x11."
+      }]
+    }), "\n", _jsx(_components.p, {
+      children: _jsx(_components.strong, {
+        children: "1st Packet Breakdown:"
+      })
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x51"
+        }), ": Source Address - Indicates message is coming from the host device (PC) to the display"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x84"
+        }), ": Packet Type - Indicates this is a message with a dedicated length byte"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x03"
+        }), ": Data Length - There are 3 data bytes following this byte"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x60"
+        }), ": VCP Feature Code - Code for 'Input Source Selection' according to the MCCS specification"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x00"
+        }), ": MSB - Most significant byte of the 16-bit value (zero in this case)"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x12"
+        }), ": LSB - Least significant byte of the 16-bit value (0x12 = HDMI-2)"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0xB6"
+        }), ": Checksum - Two's complement of the sum of all previous bytes"]
+      }), "\n"]
+    }), "\n", _jsxs(_components.p, {
+      children: ["When switching back to HDMI-1, only the input value changes to ", _jsx(_components.code, {
+        children: "0x11"
+      }), ", which updates the checksum to ", _jsx(_components.code, {
+        children: "0xB7"
+      }), ":"]
+    }), "\n", _jsx(TooltipText, {
+      content: "Packet bytes: 0x51 0x84 0x03 0x60 0x00 0x11 0xB7",
+      tooltips: [{
+        text: "0x11",
+        color: "#ffdc00",
+        tooltip: "LSB - Least significant byte containing the input source value for HDMI-1"
+      }, {
+        text: "0xB7",
+        color: "#b10dc9",
+        tooltip: "Checksum - Recalculated based on the new input value 0x11"
+      }]
+    }), "\n", _jsxs(_components.p, {
+      children: [_jsx(_components.strong, {
+        children: "Second Packet:"
+      }), " Same structure with only two bytes changed:"]
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0x11"
+        }), ": LSB - The input source value for HDMI-1 (changed from 0x12)"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "0xB7"
+        }), ": Checksum - Updated for the new packet values"]
+      }), "\n"]
+    }), "\n", _jsx(_components.p, {
+      children: "The checksum is calculated as the two's complement of the sum of all previous bytes:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-python",
+        children: "def calculate_checksum(packet_bytes):\n    # Sum all bytes\n    byte_sum = sum(packet_bytes)\n    # Take two's complement (negate and add 1), then take lowest byte\n    checksum = (-byte_sum) & 0xFF\n    return checksum\n\n# For HDMI-2 packet\npacket = [0x51, 0x84, 0x03, 0x60, 0x00, 0x12]\nchecksum = calculate_checksum(packet)  # Returns 0xB6\n\n# For HDMI-1 packet\npacket = [0x51, 0x84, 0x03, 0x60, 0x00, 0x11]\nchecksum = calculate_checksum(packet)  # Returns 0xB7\n"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Understanding this packet structure allows you to send commands to any monitor supporting the DDC/CI standard."
+    }), "\n", _jsx(_components.h3, {
+      id: "understanding-input-source-codes",
+      children: _jsx(_components.a, {
+        href: "#understanding-input-source-codes",
+        children: "Understanding Input Source Codes"
+      })
+    }), "\n", _jsxs(_components.p, {
+      children: ["We know to use ", _jsx(_components.code, {
+        children: "0x11"
+      }), " (HDMI-1) and ", _jsx(_components.code, {
+        children: "0x12"
+      }), " (HDMI-2) based on the MCCS (Monitor Control Command Set) specification, specifically the definition of VCP feature code 0x60, which controls the \"Input Source\" of the monitor."]
+    }), "\n", _jsx(_components.h4, {
+      id: "official-input-source-values-vcp-code-0x60",
+      children: _jsx(_components.a, {
+        href: "#official-input-source-values-vcp-code-0x60",
+        children: "Official Input Source Values (VCP Code 0x60)"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "According to the VESA MCCS 2.2 spec — page 57+ — the standard values for input sources are:"
+    }), "\n", _jsxs(_components.table, {
+      children: [_jsx(_components.thead, {
+        children: _jsxs(_components.tr, {
+          children: [_jsx(_components.th, {
+            children: "Value"
+          }), _jsx(_components.th, {
+            children: "Input Source"
+          })]
+        })
+      }), _jsxs(_components.tbody, {
+        children: [_jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x01"
+          }), _jsx(_components.td, {
+            children: "VGA-1"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x03"
+          }), _jsx(_components.td, {
+            children: "DVI-1"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x04"
+          }), _jsx(_components.td, {
+            children: "DVI-2"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x0F"
+          }), _jsx(_components.td, {
+            children: "DisplayPort-1"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x10"
+          }), _jsx(_components.td, {
+            children: "DisplayPort-2"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: _jsx(_components.strong, {
+              children: "0x11"
+            })
+          }), _jsx(_components.td, {
+            children: _jsx(_components.strong, {
+              children: "HDMI-1"
+            })
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: _jsx(_components.strong, {
+              children: "0x12"
+            })
+          }), _jsx(_components.td, {
+            children: _jsx(_components.strong, {
+              children: "HDMI-2"
+            })
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x1C"
+          }), _jsx(_components.td, {
+            children: "USB-C"
+          })]
+        }), _jsxs(_components.tr, {
+          children: [_jsx(_components.td, {
+            children: "0x1E"
+          }), _jsx(_components.td, {
+            children: "Wireless Display"
+          })]
+        })]
+      })]
+    }), "\n", _jsx(_components.h4, {
+      id: "discovering-your-monitors-values",
+      children: _jsx(_components.a, {
+        href: "#discovering-your-monitors-values",
+        children: "Discovering Your Monitor's Values"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "You can query your monitor to see what input source codes it supports:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        className: "language-bash",
+        children: "sudo ddcutil getvcp 0x60\n"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "It will return something like:"
+    }), "\n", _jsx(_components.pre, {
+      children: _jsx(_components.code, {
+        children: "VCP code 0x60 (Input Source):\n  current value = 0x11, max value = 0x12\n"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "This confirms that:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "0x11 is HDMI-1 (currently selected)"
+      }), "\n", _jsx(_components.li, {
+        children: "0x12 is HDMI-2 (supported)"
+      }), "\n"]
+    }), "\n", _jsx(_components.p, {
+      children: "If your monitor had DisplayPort or DVI inputs, you'd likely see those too."
+    }), "\n", _jsx(_components.h2, {
+      id: "conclusion",
+      children: _jsx(_components.a, {
+        href: "#conclusion",
+        children: "Conclusion"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Unlocking the I2C channel on HDMI opens up a world of possibilities for automation and control. With just a bit of hardware and some Python, you can take command of your devices in ways manufacturers never intended.\nWhat we are doing with it is just to change HDMI inputs.  This project was all to help me understand how I can Control\nmy custom pc case's front facing LCD.  I also wanted to see if I could make a simple tool to switch HDMI inputs.  This scripts\nis a good starting point for anyone that might want to hack on DDC and I2C on monitors directly from Python."
+    }), "\n", _jsx(_components.h2, {
+      id: "related-resources",
+      children: _jsx(_components.a, {
+        href: "#related-resources",
+        children: "Related Resources"
+      })
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "ddcutil"
+        }), ":", "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsx(_components.li, {
+            children: _jsx(_components.a, {
+              href: "http://www.ddcutil.com/",
+              children: "Official Documentation"
+            })
+          }), "\n", _jsx(_components.li, {
+            children: _jsx(_components.a, {
+              href: "https://github.com/rockowitz/ddcutil",
+              children: "GitHub Repository"
+            })
+          }), "\n"]
+        }), "\n"]
+      }), "\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "DDCI"
+        }), ":", "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsx(_components.li, {
+            children: _jsx(_components.a, {
+              href: "https://boichat.ch/nicolas/ddcci/specs.html",
+              children: "Official Documentation"
+            })
+          }), "\n"]
+        }), "\n"]
+      }), "\n"]
+    })]
+  });
+}
+function MDXContent(props = {}) {
+  const {wrapper: MDXLayout} = {
+    ..._provideComponents(),
+    ...props.components
+  };
+  return MDXLayout ? _jsx(MDXLayout, {
+    ...props,
+    children: _jsx(_createMdxContent, {
+      ...props
+    })
+  }) : _createMdxContent(props);
+}
+return {
+  default: MDXContent
+};
+function _missingMdxReference(id, component) {
+  throw new Error("Expected " + (component ? "component" : "object") + " `" + id + "` to be defined: you likely forgot to import, pass, or provide it.");
+}
+7:["$","main",null,{"className":"min-h-screen py-16 px-4","children":["$","$L15",null,{"content":{"compiledSource":"$16","frontmatter":{},"scope":{}},"metadata":{"slug":"i2c-hdmi-hacks","title":"I2C HDMI Hacks","date":"2025-05-08","excerpt":"Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required.","tags":["i2c","hacking","linux","raspberrypi","python","hdmi","ddc"],"author":"ril3y","coverImage":"/images/blog/i2c-hdmi-hacks/cover.png"}}]}]
+10:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+b:null
+14:{"metadata":[["$","title","0",{"children":"I2C HDMI Hacks | Battle With Bytes"}],["$","meta","1",{"name":"description","content":"Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required."}],["$","link","2",{"rel":"icon","href":"/battlewithbytes.io/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+e:{"metadata":"$14:metadata","error":null,"digest":"$undefined"}

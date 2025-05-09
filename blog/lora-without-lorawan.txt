@@ -1,0 +1,325 @@
+1:"$Sreact.fragment"
+2:I[8826,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+3:I[5565,[],""]
+4:I[2905,[],""]
+5:I[6493,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+6:I[3445,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+8:I[6368,[],"MetadataBoundary"]
+a:I[6368,[],"OutletBoundary"]
+d:I[9769,[],"AsyncMetadataOutlet"]
+f:I[6368,[],"ViewportBoundary"]
+11:I[4324,[],""]
+:HL["/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","style"]
+:HL["/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","style"]
+0:{"P":null,"b":"dkFbLA22yedimNuCE4OHD","p":"/battlewithbytes.io","c":["","blog","lora-without-lorawan"],"i":false,"f":[[["",{"children":["blog",{"children":[["slug","lora-without-lorawan","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":[["$","link",null,{"rel":"icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"any"}],["$","link",null,{"rel":"apple-touch-icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"180x180"}],["$","link",null,{"rel":"shortcut icon","type":"image/x-icon","href":"/images/favicon.ico"}]]}],["$","body",null,{"className":"__variable_9eca1a __variable_c4c34c antialiased min-h-screen flex flex-col","children":[["$","$L2",null,{}],["$","div",null,{"className":"pt-16 flex-grow","children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L5",null,{}],["$","$L6",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["slug","lora-without-lorawan","d"],["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L7",["$","$L8",null,{"children":"$L9"}],[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b867d9e053a67aea.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$La",null,{"children":["$Lb","$Lc",["$","$Ld",null,{"promise":"$@e"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","jN9gouxos9poP9Ecs4Iup",{"children":[["$","$Lf",null,{"children":"$L10"}],null]}],null]}],false]],"m":"$undefined","G":["$11","$undefined"],"s":false,"S":true}
+12:"$Sreact.suspense"
+13:I[9769,[],"AsyncMetadata"]
+9:["$","$12",null,{"fallback":null,"children":["$","$L13",null,{"promise":"$@14"}]}]
+c:null
+15:I[6064,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","64","static/chunks/64-c44a3e63270ab371.js","953","static/chunks/app/blog/%5Bslug%5D/page-c1bf50394cd47596.js"],"default",1]
+16:T3776,"use strict";
+const {Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs} = arguments[0];
+const {useMDXComponents: _provideComponents} = arguments[0];
+function _createMdxContent(props) {
+  const _components = {
+    a: "a",
+    br: "br",
+    div: "div",
+    em: "em",
+    h2: "h2",
+    h3: "h3",
+    h4: "h4",
+    li: "li",
+    p: "p",
+    strong: "strong",
+    ul: "ul",
+    ..._provideComponents(),
+    ...props.components
+  }, {CodeBlock, DropCap, RadixTabs} = _components;
+  if (!CodeBlock) _missingMdxReference("CodeBlock", true);
+  if (!DropCap) _missingMdxReference("DropCap", true);
+  if (!RadixTabs) _missingMdxReference("RadixTabs", true);
+  return _jsxs(_Fragment, {
+    children: [_jsx(DropCap, {
+      children: _jsx(_components.p, {
+        children: "LoRa (Long Range) technology is often paired with LoRaWAN, but LoRa itself is simply a radio modulation technique. LoRaWAN adds network management, security layers, and other protocol overhead. For many embedded applications, especially those requiring minimal latency, low power, and straightforward point-to-point (P2P) communication, direct LoRa programming is preferable."
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "This guide explores programming the RAK3172 module directly, bypassing LoRaWAN completely."
+    }), "\n", _jsx(_components.h2, {
+      id: "overview-direct-lora-programming",
+      children: _jsx(_components.a, {
+        href: "#overview-direct-lora-programming",
+        children: "Overview: Direct LoRa Programming"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Direct LoRa programming allows developers to:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsx(_components.li, {
+        children: "Send and receive raw LoRa packets."
+      }), "\n", _jsx(_components.li, {
+        children: "Precisely manage radio states and transitions."
+      }), "\n", _jsx(_components.li, {
+        children: "Achieve deterministic timing and low latency."
+      }), "\n", _jsx(_components.li, {
+        children: "Minimize firmware complexity and reduce power consumption."
+      }), "\n"]
+    }), "\n", _jsx(_components.h2, {
+      id: "rak3172-module",
+      children: _jsx(_components.a, {
+        href: "#rak3172-module",
+        children: "RAK3172 Module"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "The RAK3172 integrates an STM32WLE5 microcontroller with an SX1262 radio chip, providing a compact and highly capable platform for custom LoRa solutions."
+    }), "\n", _jsx(RadixTabs, {
+      tabs: [{
+        label: 'Preamble',
+        value: 'tab-preamble',
+        content: _jsxs(_Fragment, {
+          children: [_jsx(_components.h3, {
+            children: "Preamble"
+          }), _jsx(_components.p, {
+            children: "The preamble is a sequence of symbols sent at the beginning of every LoRa packet. It allows the receiver to detect the presence of a signal and synchronize to the incoming data stream."
+          }), _jsxs(_components.ul, {
+            children: [_jsxs(_components.li, {
+              children: [_jsx(_components.strong, {
+                children: "Typical value:"
+              }), " 8–12 symbols (but can be longer for low-power wakeup scenarios)"]
+            }), _jsx(_components.li, {
+              children: _jsx(_components.strong, {
+                children: "Configuration example:"
+              })
+            })]
+          }), _jsx(CodeBlock, {
+            code: `// Set the preamble length to 8 symbols\nSX126xSetPreambleLength(&SX126x, 8);`,
+            language: "c"
+          }), _jsxs(_components.div, {
+            className: "info-box",
+            children: [_jsx(_components.strong, {
+              children: "How does the preamble length affect the signal?"
+            }), _jsx(_components.br, {}), "Setting the preamble length controls how many up-chirp symbols are sent at the start of each LoRa packet. Each up-chirp is a full symbol, and the total number defines how long the receiver has to detect and synchronize to the signal before actual data is sent. More up-chirps = longer preamble = easier synchronization (but longer airtime)."]
+          }), _jsx(_components.h4, {
+            className: "mt-1_5em-placeholder",
+            children: "What does the LoRa preamble look like?"
+          }), _jsx(_components.p, {
+            children: "The preamble in a LoRa packet is a series of identical up-chirps, which help the receiver synchronize to the incoming signal."
+          }), _jsxs(_components.div, {
+            className: "packet-diagram",
+            children: [_jsxs(_components.div, {
+              className: "packet-segment preamble",
+              children: [_jsxs(_components.div, {
+                className: "packet-value",
+                children: ["REPEATED", _jsx(_components.br, {}), "UP-CHIRPS"]
+              }), _jsx(_components.div, {
+                className: "packet-label",
+                children: "(Preamble, 8 symbols)"
+              })]
+            }), _jsxs(_components.div, {
+              className: "packet-segment sync-word",
+              children: [_jsx(_components.div, {
+                className: "packet-value",
+                children: "0x12"
+              }), _jsx(_components.div, {
+                className: "packet-label",
+                children: "SYNC WORD"
+              })]
+            }), _jsxs(_components.div, {
+              className: "packet-segment payload",
+              children: [_jsx(_components.div, {
+                className: "packet-value",
+                children: "DATA"
+              }), _jsx(_components.div, {
+                className: "packet-label",
+                children: "PAYLOAD"
+              })]
+            })]
+          }), _jsxs(_components.p, {
+            className: "packet-note",
+            children: [_jsx(_components.strong, {
+              children: "Note:"
+            }), " The LoRa preamble is a series of identical up-chirp symbols, ", _jsx(_components.em, {
+              children: "not"
+            }), " a bit or byte pattern."]
+          }), _jsx(_components.h4, {
+            children: "What is an Up-Chirp in LoRa?"
+          }), _jsx(_components.p, {
+            children: "In LoRa, an up-chirp is a frequency sweep from the lowest to the highest frequency in the channel. Digitally, for SF7 (spreading factor 7), the baseband up-chirp can be represented as an array of 128 complex samples, each with a specific phase increment:"
+          }), _jsx(CodeBlock, {
+            code: `// Pseudo-representation for SF7 (128 samples)\nfor (int i = 0; i < 128; i++) {\n    // upchirp[i] = complex value based on exp(j * 2 * PI * (i*i) / 256)\n    upchirp[i] = calculate_complex_sample(i);\n}`,
+            language: "c"
+          }), _jsx(_components.p, {
+            children: "This is not a simple binary or hex constant, but a mathematical sequence. The receiver looks for this \"chirp\" pattern to synchronize."
+          })]
+        })
+      }, {
+        label: 'Sync Word',
+        value: 'tab-sync-word',
+        content: _jsxs(_Fragment, {
+          children: [_jsx(_components.h3, {
+            children: "Sync Word"
+          }), _jsx(_components.p, {
+            children: "The sync word is a value that follows the preamble in a LoRa packet. It allows the receiver to differentiate between networks operating on the same frequency."
+          }), _jsxs(_components.ul, {
+            children: [_jsxs(_components.li, {
+              children: [_jsx(_components.strong, {
+                children: "Typical values:"
+              }), " 0x12 (private networks), 0x34 (public LoRaWAN)"]
+            }), _jsx(_components.li, {
+              children: _jsx(_components.strong, {
+                children: "Configuration example:"
+              })
+            })]
+          }), _jsx(CodeBlock, {
+            code: `// Set the sync word for a private network\nSX126xSetSyncWord(&SX126x, 0x12);`,
+            language: "c"
+          })]
+        })
+      }, {
+        label: 'Spreading Factor',
+        value: 'tab-sf',
+        content: _jsxs(_Fragment, {
+          children: [_jsx(_components.h3, {
+            children: "Spreading Factor (SF)"
+          }), _jsx(_components.p, {
+            children: "The spreading factor determines how many chips represent each bit of data. It's a key parameter that affects range, data rate, and airtime."
+          }), _jsxs(_components.ul, {
+            children: [_jsxs(_components.li, {
+              children: [_jsx(_components.strong, {
+                children: "Range:"
+              }), " SF7 (shortest range, highest data rate) to SF12 (longest range, lowest data rate)"]
+            }), _jsx(_components.li, {
+              children: _jsx(_components.strong, {
+                children: "Configuration example:"
+              })
+            })]
+          }), _jsx(CodeBlock, {
+            code: `// Set spreading factor to SF9\nSX126xSetSpreadingFactor(&SX126x, 9);`,
+            language: "c"
+          }), _jsx(_components.p, {
+            children: "For SF7, each symbol contains 2^7 = 128 chips. For SF12, each symbol contains 2^12 = 4096 chips."
+          })]
+        })
+      }, {
+        label: 'Bandwidth',
+        value: 'tab-bw',
+        content: _jsxs(_Fragment, {
+          children: [_jsx(_components.h3, {
+            children: "Bandwidth (BW)"
+          }), _jsx(_components.p, {
+            children: "Bandwidth is the size of the frequency range used for transmission. It directly affects the data rate and noise immunity."
+          }), _jsxs(_components.ul, {
+            children: [_jsxs(_components.li, {
+              children: [_jsx(_components.strong, {
+                children: "Common values:"
+              }), " 125 kHz, 250 kHz, 500 kHz"]
+            }), _jsx(_components.li, {
+              children: _jsx(_components.strong, {
+                children: "Configuration example:"
+              })
+            })]
+          }), _jsx(CodeBlock, {
+            code: `// Set bandwidth to 125 kHz\nSX126xSetBandwidth(&SX126x, LORA_BW_125);`,
+            language: "c"
+          })]
+        })
+      }, {
+        label: 'Coding Rate',
+        value: 'tab-cr',
+        content: _jsxs(_Fragment, {
+          children: [_jsx(_components.h3, {
+            children: "Coding Rate (CR)"
+          }), _jsx(_components.p, {
+            children: "The coding rate adds redundancy to your data to improve error correction capabilities. It's expressed as a fraction like 4/5, 4/6, 4/7, or 4/8."
+          }), _jsxs(_components.ul, {
+            children: [_jsxs(_components.li, {
+              children: [_jsx(_components.strong, {
+                children: "Range:"
+              }), " 4/5 (lowest redundancy) to 4/8 (highest redundancy)"]
+            }), _jsx(_components.li, {
+              children: _jsx(_components.strong, {
+                children: "Configuration example:"
+              })
+            })]
+          }), _jsx(CodeBlock, {
+            code: `// Set coding rate to 4/6\nSX126xSetCodingRate(&SX126x, LORA_CR_4_6);`,
+            language: "c"
+          })]
+        })
+      }]
+    }), "\n", _jsx(_components.h2, {
+      id: "erasing-default-firmware",
+      children: _jsx(_components.a, {
+        href: "#erasing-default-firmware",
+        children: "Erasing Default Firmware"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Before loading custom firmware, erase the default AT-command-based firmware to free up memory and remove unnecessary functionalities."
+    }), "\n", _jsx(_components.h2, {
+      id: "firmware-development-with-stm32cubemx",
+      children: _jsx(_components.a, {
+        href: "#firmware-development-with-stm32cubemx",
+        children: "Firmware Development with STM32CubeMX"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Use STM32CubeMX to configure the firmware:"
+    }), "\n", _jsxs(_components.ul, {
+      children: ["\n", _jsxs(_components.li, {
+        children: [_jsx(_components.strong, {
+          children: "Disable unused peripherals"
+        }), " to conserve resources."]
+      }), "\n", _jsxs(_components.li, {
+        children: ["Enable only the required interfaces, typically:", "\n", _jsxs(_components.ul, {
+          children: ["\n", _jsx(_components.li, {
+            children: "UART for command-line interactions and debugging."
+          }), "\n", _jsx(_components.li, {
+            children: "GPIO for sensor interfacing and control signals."
+          }), "\n", _jsx(_components.li, {
+            children: "RTC for scheduled wake-ups and precise timing."
+          }), "\n"]
+        }), "\n"]
+      }), "\n", _jsx(_components.li, {
+        children: "Activate the SX1262 radio driver for direct radio control."
+      }), "\n"]
+    }), "\n", _jsxs(_components.p, {
+      children: ["A detailed setup guide is available on ", _jsx(_components.a, {
+        href: "https://stm32world.com/wiki/RAK3172#Setting_up_the_IOC_file",
+        children: "STM32World's RAK3172 page"
+      }), "."]
+    }), "\n", _jsx(_components.h2, {
+      id: "direct-lora-radio-usage",
+      children: _jsx(_components.a, {
+        href: "#direct-lora-radio-usage",
+        children: "Direct LoRa Radio Usage"
+      })
+    }), "\n", _jsx(_components.p, {
+      children: "Direct control of the SX1262 radio enables straightforward, clear, and efficient communication:"
+    }), "\n", _jsx(CodeBlock, {
+      code: `// Set radio transmission parameters\nRadio.SetTxConfig(MODEM_LORA, power, bandwidth, datarate, codingRate,\n                  preambleLength, fixLen, crcOn, freqHopOn, hopPeriod,\n                  iqInverted, timeout);\n\n// Send data buffer via LoRa\nRadio.Send(buffer, length);`,
+      language: "c"
+    })]
+  });
+}
+function MDXContent(props = {}) {
+  const {wrapper: MDXLayout} = {
+    ..._provideComponents(),
+    ...props.components
+  };
+  return MDXLayout ? _jsx(MDXLayout, {
+    ...props,
+    children: _jsx(_createMdxContent, {
+      ...props
+    })
+  }) : _createMdxContent(props);
+}
+return {
+  default: MDXContent
+};
+function _missingMdxReference(id, component) {
+  throw new Error("Expected " + (component ? "component" : "object") + " `" + id + "` to be defined: you likely forgot to import, pass, or provide it.");
+}
+7:["$","main",null,{"className":"min-h-screen py-16 px-4","children":["$","$L15",null,{"content":{"compiledSource":"$16","frontmatter":{},"scope":{}},"metadata":{"slug":"lora-without-lorawan","title":"LoRa without LoRaWAN","date":"2024-01-15","excerpt":"Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network.","tags":["LoRa","Hardware","Radio","RAK3172"],"author":"Riley Porter","coverImage":"/images/blog/lora-without-lorawan/cover.png"}}]}]
+10:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+b:null
+14:{"metadata":[["$","title","0",{"children":"LoRa without LoRaWAN | Battle With Bytes"}],["$","meta","1",{"name":"description","content":"Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network."}],["$","link","2",{"rel":"icon","href":"/battlewithbytes.io/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+e:{"metadata":"$14:metadata","error":null,"digest":"$undefined"}

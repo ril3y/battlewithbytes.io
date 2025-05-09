@@ -1,0 +1,25 @@
+1:"$Sreact.fragment"
+2:I[8826,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+3:I[5565,[],""]
+4:I[2905,[],""]
+5:I[6493,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+6:I[3445,["865","static/chunks/865-7ff2210bb17df8ef.js","408","static/chunks/408-b9055c8a9c24b30d.js","749","static/chunks/749-b5263dd68aac398d.js","177","static/chunks/app/layout-4c186d8a9c368cce.js"],"default"]
+7:I[2068,[],"ClientPageRoot"]
+8:I[2927,["977","static/chunks/app/contact/page-0d6d3e9b5b1d4e4f.js"],"default"]
+b:I[6368,[],"MetadataBoundary"]
+d:I[6368,[],"OutletBoundary"]
+10:I[9769,[],"AsyncMetadataOutlet"]
+12:I[6368,[],"ViewportBoundary"]
+14:I[4324,[],""]
+:HL["/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","style"]
+0:{"P":null,"b":"dkFbLA22yedimNuCE4OHD","p":"/battlewithbytes.io","c":["","contact"],"i":false,"f":[[["",{"children":["contact",{"children":["__PAGE__",{}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/battlewithbytes.io/_next/static/css/b9db9220d5fd4210.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":[["$","link",null,{"rel":"icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"any"}],["$","link",null,{"rel":"apple-touch-icon","type":"image/x-icon","href":"/images/favicon.ico","sizes":"180x180"}],["$","link",null,{"rel":"shortcut icon","type":"image/x-icon","href":"/images/favicon.ico"}]]}],["$","body",null,{"className":"__variable_9eca1a __variable_c4c34c antialiased min-h-screen flex flex-col","children":[["$","$L2",null,{}],["$","div",null,{"className":"pt-16 flex-grow","children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L5",null,{}],["$","$L6",null,{}]]}]]}]]}],{"children":["contact",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$L7",null,{"Component":"$8","searchParams":{},"params":{},"promises":["$@9","$@a"]}],["$","$Lb",null,{"children":"$Lc"}],null,["$","$Ld",null,{"children":["$Le","$Lf",["$","$L10",null,{"promise":"$@11"}]]}]]}],{},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","M2FR2Lmqt7Nukr8pbqb9i",{"children":[["$","$L12",null,{"children":"$L13"}],null]}],null]}],false]],"m":"$undefined","G":["$14","$undefined"],"s":false,"S":true}
+15:"$Sreact.suspense"
+16:I[9769,[],"AsyncMetadata"]
+9:{}
+a:{}
+c:["$","$15",null,{"fallback":null,"children":["$","$L16",null,{"promise":"$@17"}]}]
+f:null
+13:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+e:null
+17:{"metadata":[["$","title","0",{"children":"Battle With Bytes | Cybersecurity, Embedded Hardware & Software Engineering"}],["$","meta","1",{"name":"description","content":"A personal hub for sharing insights on cybersecurity, embedded hardware, and software engineering. Ask me about little data."}],["$","link","2",{"rel":"icon","href":"/battlewithbytes.io/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+11:{"metadata":"$17:metadata","error":null,"digest":"$undefined"}
