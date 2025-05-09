@@ -26,6 +26,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             objectFit="cover"
             className="opacity-80 group-hover:opacity-100 transition-opacity duration-300"
           />
+          {/* Optional theme overlay - uses green color from the theme */}
+          {project.useThemeOverlay !== false && (
+            <div 
+              className="absolute inset-0 bg-gradient-to-br from-green-900/40 to-gray-900/60 mix-blend-multiply"
+              aria-hidden="true"
+            />
+          )}
         </div>
       )}
       <div className="p-6 flex-grow relative"> 

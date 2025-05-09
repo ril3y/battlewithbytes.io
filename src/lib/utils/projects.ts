@@ -16,6 +16,7 @@ export interface ProjectMetadata {
   github?: string;
   demo?: string;
   enabled?: boolean;
+  useThemeOverlay?: boolean; // Controls whether to apply a color overlay to project image
 }
 
 export function getAllProjects(): ProjectMetadata[] {
@@ -45,7 +46,8 @@ export function getAllProjects(): ProjectMetadata[] {
         author: data.author || undefined,
         github: data.github || undefined,
         demo: data.demo || undefined,
-        enabled: typeof data.enabled !== 'undefined' ? data.enabled : true, 
+        enabled: typeof data.enabled !== 'undefined' ? data.enabled : true,
+        useThemeOverlay: typeof data.useThemeOverlay !== 'undefined' ? data.useThemeOverlay : true, // Default to true
       } as ProjectMetadata;
     })
     .filter((project): project is ProjectMetadata => project !== null)

@@ -72,7 +72,6 @@ jobs:
         run: pnpm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          NEXT_PUBLIC_CUSTOM_DOMAIN: "true"  # ← Added this line for custom domain
 
       # Step 5: Upload artifact
       - name: Upload artifact for deployment
