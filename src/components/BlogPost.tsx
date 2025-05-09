@@ -14,6 +14,7 @@ import HDMIPinout from './HDMIPinout/HDMIPinout';
 import InteractiveCodeBlock from './InteractiveCodeBlock';
 import TooltipText from './TooltipText';
 import I2CDetectOutput from './I2CDetectOutput';
+import { useMDXComponents } from '../../mdx-components';
 
 // Import Prism core styles
 import 'prismjs/themes/prism-tomorrow.css';
@@ -39,7 +40,7 @@ type ComponentProps = {
 };
 
 // Custom components that can be used in MDX
-const components = {
+const localComponents = {
   // Override default elements with custom styling
   h1: (props: ComponentProps) => (
     <h1 className="text-3xl md:text-4xl font-bold font-mono mb-6 text-white glow-text" {...props} />
@@ -142,6 +143,9 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
   const [isClient, setIsClient] = useState(false);
   const formattedDate = format(new Date(metadata.date), 'MMMM d, yyyy');
 
+  // Combine global MDX components with local ones
+  const mdxComponents = useMDXComponents(localComponents);
+
   // Use useEffect to ensure the MDX content only renders on the client side
   // and to initialize Prism.js highlighting
   useEffect(() => {
@@ -198,7 +202,7 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
       {/* MDX Content */}
       <div className="prose prose-invert prose-green max-w-none bg-black/20 p-6 md:p-8 rounded-lg border border-gray-800/50 shadow-lg">
         {isClient ? (
-          <MDXRemote {...content} components={components} />
+          <MDXRemote {...content} components={mdxComponents} />
         ) : (
           <div className="animate-pulse">
             <div className="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>
