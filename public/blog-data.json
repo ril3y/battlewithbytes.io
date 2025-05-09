@@ -1,5 +1,22 @@
 [
   {
+    "slug": "i2c-hdmi-hacks",
+    "metadata": {
+      "title": "I2C HDMI Hacks",
+      "date": "2025-05-08",
+      "excerpt": "Using the hidden i2c interface",
+      "tags": [
+        "i2c",
+        "hacking",
+        "linux",
+        "raspberrypi",
+        "python"
+      ],
+      "author": "ril3y",
+      "coverImage": "/images/blog/i2c-hdmi-hacks/cover.png"
+    }
+  },
+  {
     "slug": "custom-protocol-bruh",
     "metadata": {
       "title": "Custom protocol bruh?",

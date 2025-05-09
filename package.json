@@ -33,6 +33,7 @@
     "react": "^19.0.0",
     "react-console-emulator": "^5.0.2",
     "react-dom": "^19.0.0",
+    "react-embed-gist": "^1.0.29",
     "recharts": "^2.15.2",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-prism-plus": "^2.0.1",

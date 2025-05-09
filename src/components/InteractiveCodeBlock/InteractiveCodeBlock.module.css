@@ -1,0 +1,182 @@
+.container {
+  position: relative;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 1.5rem 0;
+}
+
+.codeBlock {
+  background-color: #0a0d11;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 1rem;
+  color: #e0e0e0;
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  tab-size: 4;
+  position: relative;
+}
+
+/* Line numbers styling */
+.codeBlock.line-numbers {
+  padding-left: 3.8rem; /* Make room for line numbers */
+  counter-reset: linenumber;
+}
+
+.codeBlock.line-numbers > code {
+  position: relative;
+  white-space: pre;
+}
+
+.codeBlock.line-numbers .line-numbers-rows {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  font-size: 100%;
+  left: -3.8rem;
+  width: 3rem;
+  /* Border separating line numbers from code */
+  border-right: 1px solid #444;
+  user-select: none;
+}
+
+.codeBlock.line-numbers .line-numbers-rows > span {
+  display: block;
+  counter-increment: linenumber;
+  pointer-events: none;
+}
+
+.codeBlock.line-numbers .line-numbers-rows > span:before {
+  content: counter(linenumber);
+  color: #666; /* Muted color for line numbers */
+  display: block;
+  padding-right: 0.8rem;
+  text-align: right;
+}
+
+.codeBlock code {
+  font-family: 'JetBrains Mono', monospace;
+  display: block;
+  white-space: pre-wrap;
+  word-spacing: normal;
+  word-break: normal;
+  letter-spacing: 0;
+  counter-reset: line;
+}
+
+.lineNumber {
+  display: inline-block;
+  width: 2.5rem;
+  color: #666;
+  text-align: right;
+  margin-right: 1rem;
+  user-select: none;
+  border-right: 1px solid #333;
+  padding-right: 0.5rem;
+}
+
+.fileInfo {
+  display: block;
+  color: #00ff9d;
+  font-style: italic;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed #444;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.codeWrapper {
+  position: relative;
+}
+
+.highlight {
+  cursor: pointer;
+  position: relative;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.highlight:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0d11;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 1.5rem;
+  color: #e0e0e0;
+  min-height: 100px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.loading {
+  color: #00ff9d;
+}
+
+.error {
+  color: #ff3333;
+}
+
+.copyButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid #333;
+  color: #00ff9d;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.copyButton:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-color: #00ff9d;
+}
+
+.copySuccess {
+  background-color: rgba(0, 255, 157, 0.2) !important;
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #00ff9d;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  max-width: 280px;
+  box-shadow: 0 2px 10px rgba(0, 255, 157, 0.3);
+  z-index: 10;
+  transform: translateX(-50%);
+  white-space: normal;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tooltipArrow {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  margin-left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #00ff9d;
+}

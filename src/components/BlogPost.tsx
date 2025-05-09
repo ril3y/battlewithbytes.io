@@ -10,6 +10,10 @@ import * as Tabs from '@radix-ui/react-tabs';
 import RadixTabs from './RadixTabs';
 import DropCap from './DropCap';
 import CodeBlock from './CodeBlock';
+import HDMIPinout from './HDMIPinout/HDMIPinout';
+import InteractiveCodeBlock from './InteractiveCodeBlock';
+import TooltipText from './TooltipText';
+import I2CDetectOutput from './I2CDetectOutput';
 
 // Import Prism core styles
 import 'prismjs/themes/prism-tomorrow.css';
@@ -116,6 +120,10 @@ const components = {
   RadixTabs,
   DropCap,
   CodeBlock,
+  HDMIPinout,
+  InteractiveCodeBlock,
+  TooltipText,
+  I2CDetectOutput,
 };
 
 interface BlogPostProps {
