@@ -2,8 +2,8 @@
 title: "I2C HDMI Hacks"
 slug: "i2c-hdmi-hacks"
 date: "2025-05-08"
-excerpt: "Using the hidden i2c interface"
-tags: ["i2c", "hacking", "linux", "raspberrypi", "python"]
+excerpt: "Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required."
+tags: ["i2c", "hacking", "linux", "raspberrypi", "python", "hdmi", "ddc"]
 author: "ril3y"
 coverImage: "/images/blog/i2c-hdmi-hacks/cover.png"
 ---
@@ -123,7 +123,10 @@ Raw packet: ['0x51', '0x84', '0x3', '0x60', '0x0', '0x12', '0xb6']
 Raw packet: ['0x51', '0x84', '0x3', '0x60', '0x0', '0x11', '0xb7']
 Switched back to 0x11
 ```
-
+This works perfectly!  At least for me.  Meaning, there verywell could be issues. 
+- Make sure you ran it as root.
+- Make sure you are using the right i2c address.
+ 
 ### Understanding the DDC/CI Packet Structure
 
 Let's break down exactly what our code is sending over the I2C bus. Each byte in the packet has a specific purpose in the DDC/CI protocol:
@@ -131,43 +134,54 @@ Let's break down exactly what our code is sending over the I2C bus. Each byte in
 <TooltipText
   content="Packet bytes: 0x51 0x84 0x03 0x60 0x00 0x12 0xB6"
   tooltips={[
-    { 
-      text: "0x51", 
-      color: "#ff3333", 
-      tooltip: "Source Address - Indicates message is coming from the host device (PC) to the display"
+    {
+      text: "0x51",
+      color: "#ff3333",
+      tooltip: "Sub‑address (or “offset”) for DDC/CI messages. Every write packet to the monitor begins with this byte to indicate you’re talking MCCS/DDC‐CI. —Jean‑Bernard Boichat"
     },
-    { 
-      text: "0x84", 
-      color: "#00ff9d", 
-      tooltip: "Packet Type - Indicates this is a message with a dedicated length byte"
+    {
+      text: "0x84",
+      color: "#00ff9d",
+      tooltip: "Top bit (0x80) marks this as a “Set” request. The low 7 bits (0x04) give the number of payload bytes that follow (here, 4 bytes before the checksum). —Jean‑Bernard Boichat"
     },
-    { 
-      text: "0x03", 
-      color: "#7fdbff", 
-      tooltip: "Data Length - There are 3 data bytes following this byte"
+    {
+      text: "0x03",
+      color: "#7fdbff",
+      tooltip: "MCCS opcode 0x03 = “Set VCP Feature.” This tells the monitor you’re changing a Virtual Control Panel parameter."
     },
-    { 
-      text: "0x60", 
-      color: "#ff851b", 
-      tooltip: "VCP Feature Code - Code for 'Input Source Selection' according to the MCCS specification"
+    {
+      text: "0x60",
+      color: "#ff851b",
+      tooltip: "The VCP code (0x60) identifying which feature to change—in this case, Input Source (DDC/CI VCP X60)."
     },
-    { 
-      text: "0x00", 
-      color: "#ffffff", 
-      tooltip: "MSB - Most significant byte of the 16-bit value (zero in this case)"
+    {
+      text: "0x00",
+      color: "#ffffff",
+      tooltip: "High byte of the new value. For VCP values 0–254, the MSB is always zero."
     },
-    { 
-      text: "0x12", 
-      color: "#ffdc00", 
-      tooltip: "LSB - Least significant byte of the 16-bit value (0x12 = HDMI-2)"
+    {
+      text: "0x12",
+      color: "#ffdc00",
+      tooltip: "Low byte of the new value: 0x12 = HDMI‑2."
     },
-    { 
-      text: "0xB6", 
-      color: "#b10dc9", 
-      tooltip: "Checksum - Two's complement of the sum of all previous bytes"
+    {
+      text: "0x11",
+      color: "#ffdc00",
+      tooltip: "Low byte of the new value: 0x11 = HDMI‑1."
+    },
+    {
+      text: "0xB6",
+      color: "#b10dc9",
+      tooltip: "Checksum: a two’s‑complement sum so that all bytes (including this checksum) add to zero mod 256. For example, sum(0x51+0x84+0x03+0x60+0x00+0x12)=0x4A, and (–0x4A)&0xFF=0xB6."
+    },
+    {
+      text: "0xB7",
+      color: "#b10dc9",
+      tooltip: "Checksum: a two’s‑complement sum so that all bytes (including this checksum) add to zero mod 256 for the packet ending in 0x11."
     }
   ]}
 />
+
 
 **1st Packet Breakdown:**
 
@@ -258,38 +272,20 @@ This confirms that:
 
 If your monitor had DisplayPort or DVI inputs, you'd likely see those too.
 
-## Real-World Use Cases
 
-- Automating AV setups
-- Integrating with home automation
 
 ## Conclusion
 
 Unlocking the I2C channel on HDMI opens up a world of possibilities for automation and control. With just a bit of hardware and some Python, you can take command of your devices in ways manufacturers never intended.
 What we are doing with it is just to change HDMI inputs.  This project was all to help me understand how I can Control
 my custom pc case's front facing LCD.  I also wanted to see if I could make a simple tool to switch HDMI inputs.  This scripts 
-is a good starting point for anyone that might want to hack on DDC and ic2 on monitors directly from python.
+is a good starting point for anyone that might want to hack on DDC and I2C on monitors directly from Python.  
 
 ## Related Resources
 
-If you want to explore more about DDC/CI protocols and how they work, here's an example from the ddcutil project showing some of the feature codes:
+- **ddcutil**: 
+  - [Official Documentation](http://www.ddcutil.com/)
+  - [GitHub Repository](https://github.com/rockowitz/ddcutil)
+- **DDCI**: 
+  - [Official Documentation](https://boichat.ch/nicolas/ddcci/specs.html)
 
-<InteractiveCodeBlock 
-  githubUrl="https://github.com/rockowitz/ddcutil/blob/master/src/public/ddcutil_types.h#L339-L357"
-  language="c"
-  showLineNumbers={true}
-  highlights={[
-    { text: "DDCA_INPUT_SOURCE", color: "#00ff9d", tooltip: "VCP code 60h - Input Source Selection" },
-    { text: "DDCA_IMAGE_ORIENTATION", color: "#ff851b", tooltip: "VCP code AAh - Image Rotation" }
-  ]}
-/>
-
-## Future Enhancements
-
-Some ideas for extending this project:
-
-1. **Automatic Input Detection**: Monitor which devices are active and switch to them automatically
-
-2. **Integration with Home Automation**: Connect this system to home automation platforms like Home Assistant
-
-3. **Remote Control**: Build a web interface or mobile app to control your monitor remotely

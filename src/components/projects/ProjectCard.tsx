@@ -11,7 +11,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   return (
     <Link
       href={`/projects/${project.slug}`}
-      className="bg-gray-900/50 border border-green-500/30 rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-[1.02] hover:shadow-green-500/20 flex flex-col focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+      className="bg-gray-900/90 border border-green-500/30 rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-[1.02] hover:shadow-green-500/20 flex flex-col focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
       style={{ textDecoration: 'none' }}
       aria-label={`View project: ${project.title}`}
     >
