@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
+// When using custom domain, we don't need basePath or assetPrefix
+// If this is a GitHub Pages deployment without custom domain, we need them
+const isCustomDomain = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN === 'true';
 
 const nextConfig = {
   output: 'export',
-  basePath: isProd ? '/battlewithbytes.io' : undefined, // Changed to undefined for dev
-  assetPrefix: isProd ? '/battlewithbytes.io/' : undefined, // Changed to undefined for dev
+  basePath: isProd && !isCustomDomain ? '/battlewithbytes.io' : '',
+  assetPrefix: isProd && !isCustomDomain ? '/battlewithbytes.io/' : '',
   reactStrictMode: false,
   images: {
     unoptimized: true, // Stays true for static export compatibility
