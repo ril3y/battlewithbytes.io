@@ -188,9 +188,6 @@ Let's break down exactly what our code is sending over the I2C bus. Each byte in
 - **0x51**: Source Address - Indicates message is coming from the host device (PC) to the display
 - **0x84**: Packet Type - Indicates this is a message with a dedicated length byte
 - **0x03**: Data Length - There are 3 data bytes following this byte
-
-
-**2nd Packet Breakdown:**
 - **0x60**: VCP Feature Code - Code for 'Input Source Selection' according to the MCCS specification
 - **0x00**: MSB - Most significant byte of the 16-bit value (zero in this case)
 - **0x12**: LSB - Least significant byte of the 16-bit value (0x12 = HDMI-2)

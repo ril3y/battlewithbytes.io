@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
-  output: 'export', // Added for static site generation
-  basePath: '/battlewithbytes.io', // Added for GitHub Pages deployment
-  assetPrefix: '/battlewithbytes.io/', // Often used with basePath for assets
+  output: 'export',
+  basePath: isProd ? '/battlewithbytes.io' : undefined, // Changed to undefined for dev
+  assetPrefix: isProd ? '/battlewithbytes.io/' : undefined, // Changed to undefined for dev
   reactStrictMode: false,
   images: {
-    unoptimized: true, // Added for static export compatibility
+    unoptimized: true, // Stays true for static export compatibility
     remotePatterns: [
       {
         protocol: 'https',
