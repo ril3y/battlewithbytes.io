@@ -80,14 +80,14 @@ const components = {
     }
     
     // For code blocks with language specified by ```language
-    const language = className.replace('language-', '');
+    const language = className.replace('language-', ''); // eslint-disable-line @typescript-eslint/no-unused-vars -- This specific variable is unused in this component's return
     return (
       <code className={`${className} block overflow-x-auto`} {...rest}>
         {children}
       </code>
     );
   },
-  pre: (props: ComponentProps & { children?: any }) => {
+  pre: (props: ComponentProps & { children?: React.ReactElement<{ className?: string }> }) => {
     // Extract the language from the className of the code element
     const language = props.children?.props?.className
       ? props.children.props.className.replace('language-', '')
@@ -111,8 +111,8 @@ const components = {
     <td className="border border-gray-700 px-4 py-2" {...props} />
   ),
   // Custom components
-  Image,
-  Link,
+  Image, // This refers to the imported 'Image' from 'next/image'
+  Link,  // This refers to the imported 'Link' from 'next/link'
   'Tabs.Root': Tabs.Root,
   'Tabs.List': Tabs.List,
   'Tabs.Trigger': Tabs.Trigger,

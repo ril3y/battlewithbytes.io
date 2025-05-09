@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
+import { useRouter } from 'next/navigation';
 
 interface BlogCardProps {
   post: {
@@ -17,11 +18,6 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, formattedDate }: BlogCardProps) {
-  // Prevent card navigation when clicking a tag
-  const handleTagClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
     <Link
       href={`/blog/${post.slug}`}
@@ -75,7 +71,7 @@ export default function BlogCard({ post, formattedDate }: BlogCardProps) {
 }
 
 function TagButton({ tag }: { tag: string }) {
-  const router = require('next/navigation').useRouter();
+  const router = useRouter();
   return (
     <button
       type="button"

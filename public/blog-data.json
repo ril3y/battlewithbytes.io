@@ -4,13 +4,15 @@
     "metadata": {
       "title": "I2C HDMI Hacks",
       "date": "2025-05-08",
-      "excerpt": "Using the hidden i2c interface",
+      "excerpt": "Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required.",
       "tags": [
         "i2c",
         "hacking",
         "linux",
         "raspberrypi",
-        "python"
+        "python",
+        "hdmi",
+        "ddc"
       ],
       "author": "ril3y",
       "coverImage": "/images/blog/i2c-hdmi-hacks/cover.png"

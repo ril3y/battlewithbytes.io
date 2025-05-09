@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'About Riley Porter | Battle With Bytes',
@@ -53,7 +54,7 @@ export default function AboutPage() {
           className="inline-block px-5 py-2 rounded bg-[#11191f] text-[var(--accent-primary)] font-semibold shadow hover:bg-[var(--accent-primary)] hover:text-black transition-colors border border-[var(--accent-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:ring-offset-2 flex items-center mt-4 mb-2"
           style={{ textDecoration: 'none' }}
         >
-          <img
+          <Image
             src="https://www.flux.ai/static/media/flux_icon.eca0a11ea2f721d680d9.svg"
             alt="Flux logo"
             width={24}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from 'next/image';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -79,7 +80,13 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-green-400 transition-colors flex items-center gap-2"
                 >
-                  <img src="https://www.flux.ai/static/media/flux_icon.eca0a11ea2f721d680d9.svg" alt="Flux" width={20} height={20} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+                  <Image 
+                    src="https://www.flux.ai/static/media/flux_icon.eca0a11ea2f721d680d9.svg" 
+                    alt="Flux" 
+                    width={20} 
+                    height={20} 
+                    style={{ display: 'inline-block', verticalAlign: 'middle' }} 
+                  />
                   Flux
                 </a>
               </li>

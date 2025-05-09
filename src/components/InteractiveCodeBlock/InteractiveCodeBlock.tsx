@@ -76,7 +76,7 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
       const match = url.match(githubRegex);
       
       if (match) {
-        const [_, owner, repo, branch, path] = match;
+        const [/* _ */, owner, repo, branch, path] = match;
         return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
       }
       
@@ -199,19 +199,20 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
   };
   
   // Process highlights
+  /*
   const processHighlights = (text: string) => {
     if (!highlights?.length) return text;
     
-    let processedText = text;
+    const processedText = text;
     highlights
       .filter(h => h && h.value)
       .sort((a, b) => b.value.length - a.value.length)
       .forEach(highlight => {
-        const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
         const value = escapeRegExp(highlight.value);
         
         // Match the value with surrounding non-word characters or at line boundaries
-        const regex = new RegExp(`(^|[^\\w])(${value})([^\\w]|$)`, 'g');
+        // const regex = new RegExp(`(^|[^\\w])(${value})([^\\w]|$)`, 'g');
         
         // This is simplified - we would need more complex logic to actually highlight in React
         // Instead, we'll rely on Prism.js for syntax highlighting and just add our own custom
@@ -220,8 +221,10 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
     
     return processedText;
   };
+  */
 
   // Handle showing tooltip when a highlighted word is hovered or focused
+  /*
   const handleMouseOver = (e: React.MouseEvent<HTMLPreElement>) => {
     const target = e.target as HTMLElement;
     if (target.hasAttribute('data-highlight')) {
@@ -234,28 +237,26 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
         
         // Calculate position to show tooltip much higher above the highlighted text
         // Move it up approximately 2 rows (using line-height estimate)
-        const lineHeight = 24; // Estimated line height
+        // const lineHeight = 24; // Estimated line height
         setTooltipPosition({
           top: rect.top - containerRect.top - 120, // Position 2 rows higher (80 + 2*20)
           left: rect.left - containerRect.left + (rect.width / 2)
         });
-        
         setActiveTooltip(highlight.tooltip);
+      } else {
+        setActiveTooltip(null);
+      }
+    } else {
+      // If not hovering over a highlight, check if we're hovering over the code block itself
+      // and clear tooltip if needed, or keep it if it's a child of a highlight span
+      let parentWithHighlight = target.closest('[data-highlight]');
+      if (!parentWithHighlight) {
+        setActiveTooltip(null);
       }
     }
   };
+  */
   
-  // Get filtered code and line range info
-  const filteredCode = !isLoading && !error ? getFilteredContent() : '';
-  const lineRangeInfo = getLineRangeInfo();
-  
-  // Trigger syntax highlighting after render
-  useEffect(() => {
-    if (codeRef.current && filteredCode) {
-      Prism.highlightElement(codeRef.current);
-    }
-  }, [filteredCode]);
-
   // Handle highlighting when hovering over specific code elements
   const handleHighlightHover = (e: React.MouseEvent<HTMLElement>) => {
     const target = e.target as HTMLElement;
@@ -289,6 +290,17 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
     }
   };
   
+  // Get filtered code and line range info
+  const filteredCode = !isLoading && !error ? getFilteredContent() : '';
+  const lineRangeInfo = getLineRangeInfo();
+  
+  // Trigger syntax highlighting after render
+  useEffect(() => {
+    if (codeRef.current && filteredCode) {
+      Prism.highlightElement(codeRef.current);
+    }
+  }, [filteredCode]);
+
   return (
     <div className={styles.container}>
       {isLoading && (
@@ -308,7 +320,7 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
           {/* Line range info banner */}
           {lineRangeInfo && (
             <div className={styles.fileInfo}>
-              // Showing lines {lineRangeInfo.start}-{lineRangeInfo.end} of {lineRangeInfo.total} total lines
+              {/* Showing lines {lineRangeInfo.start}-{lineRangeInfo.end} of {lineRangeInfo.total} total lines */}
             </div>
           )}
           

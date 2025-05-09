@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -14,13 +15,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between py-8 gap-8 md:gap-16">
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
-              <img
+              <Image
                 src="/images/site_logo.png"
                 alt="Battle With Bytes Logo"
                 width={700}
                 height={380}
                 className="drop-shadow-2xl rounded-2xl border border-[3px] border-[var(--accent-purple)] bg-black"
                 style={{ maxWidth: '100%', height: 'auto', boxShadow: '0 0 32px 0 var(--accent-purple), 0 0 0 8px #18102b' }}
+                priority
               />
             </div>
             <div className="flex-1 text-center md:text-left max-w-xl">

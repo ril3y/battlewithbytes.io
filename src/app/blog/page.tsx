@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import Image from 'next/image';
 import { getBlogPostsMetadata } from '@/lib/blog';
 import { format } from 'date-fns';
 import BlogCard from '@/components/BlogCard';

@@ -35,7 +35,7 @@ const TerminalWelcome = () => (
 
 export default function QuakeTerminal() {
   const [open, setOpen] = useState(false)
-  const consoleRef = useRef<any>(null)
+  const consoleRef = useRef<InstanceType<typeof Console> | null>(null)
 
   // Handle closing the terminal
   const handleExit = () => {
