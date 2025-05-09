@@ -262,16 +262,20 @@ const InteractiveCodeBlock: React.FC<InteractiveCodeBlockProps> = ({
     if (!target) return;
     
     // Check if we're hovering over an element that matches one of our highlights
-    if (highlights) {
+    if (highlights && highlights.length > 0) {
       // Get the text content of the element we're hovering over
       const textContent = target.textContent || '';
       
       // Find if any of our highlights match this text
-      const matchingHighlight = highlights.find(h => 
-        textContent.includes(h.value) || h.value.includes(textContent)
-      );
+      const matchingHighlight = highlights.find(h => {
+        // Make sure the highlight and its value property exist
+        if (!h || typeof h.value !== 'string') return false;
+        
+        // Now it's safe to do the includes checks
+        return textContent.includes(h.value) || h.value.includes(textContent);
+      });
       
-      if (matchingHighlight) {
+      if (matchingHighlight && matchingHighlight.tooltip) {
         const rect = target.getBoundingClientRect();
         const containerRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         

@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import '../styles/dropcap.css';
 import "../styles/prism-theme.css"; 
-import QuakeTerminal from '@/components/QuakeTerminal';
+import ClientQuakeTerminalWrapper from '@/components/ClientQuakeTerminalWrapper';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -43,7 +43,7 @@ export default function RootLayout({
           {children}
         </div>
         <Footer />
-        <QuakeTerminal />
+        <ClientQuakeTerminalWrapper />
       </body>
     </html>
   );
