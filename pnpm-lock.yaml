@@ -59,6 +59,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
+      react-embed-gist:
+        specifier: ^1.0.29
+        version: 1.0.29
       recharts:
         specifier: ^2.15.2
         version: 2.15.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -3219,6 +3222,9 @@ packages:
     peerDependencies:
       react: ^19.1.0
 
+  react-embed-gist@1.0.29:
+    resolution: {integrity: sha512-3gAj621d9R1gsRkO3cQc24Z5X8H48fzkJU41td6wx/Je5BRn0kcwhO6J2oVa5H2KIkK8vxhDp6jlTPHcXTjy2g==}
+
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
 
@@ -3780,6 +3786,10 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
 
   v8-to-istanbul@9.3.0:
     resolution: {integrity: sha512-kiGUalWN+rgBJ/1OHZsBtU4rXZOfj/7rKQxULKlIzwzQSvMJUUNgPwJEEh7gU6xEVxC0ahoOBvN2YI8GH6FNgA==}
@@ -7774,6 +7784,11 @@ snapshots:
       react: 19.1.0
       scheduler: 0.26.0
 
+  react-embed-gist@1.0.29:
+    dependencies:
+      react: 19.1.0
+      uuid: 11.1.0
+
   react-fast-compare@3.2.2: {}
 
   react-inner-html@1.0.1: {}
@@ -8524,6 +8539,8 @@ snapshots:
       punycode: 2.3.1
 
   util-deprecate@1.0.2: {}
+
+  uuid@11.1.0: {}
 
   v8-to-istanbul@9.3.0:
     dependencies:
