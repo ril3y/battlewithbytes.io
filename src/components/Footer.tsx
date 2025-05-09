@@ -92,6 +92,22 @@ export default function Footer() {
               </li>
               <li>
                 <a
+                  href="/rss.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-green-400 transition-colors flex items-center gap-2"
+                >
+                  <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                    <rect width="256" height="256" fill="none"></rect>
+                    <circle cx="68" cy="188" r="28" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="20"></circle>
+                    <path d="M40,80a144,144,0,0,1,144,144" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="20"></path>
+                    <path d="M40,136a88,88,0,0,1,88,88" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="20"></path>
+                  </svg>
+                  RSS Feed
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://www.linkedin.com/in/rileycporter/"
                   target="_blank"
                   rel="noopener noreferrer"

@@ -28,7 +28,6 @@ This post will walk through the basics of HDMI I2C, hardware considerations, and
 ## HDMI Pinout and I2C Interface
 
 The HDMI connector contains 19 pins, with pins 15 (SCL) and 16 (SDA) carrying the I2C signals we're interested in. These pins form what's known as the DDC (Display Data Channel) bus.
-<ImageWidget src="/images/picotag2.jpg" alt="I2C HDMI Hacks" width={800} height={600} /> 
 <HDMIPinout />
 
 The highlighted pins are what we'll be tapping into for our I2C communication. The SCL pin (15) carries the clock signal, while the SDA pin (16) carries the bidirectional data. These pins normally allow the display to communicate its capabilities (like supported resolutions) to the source device, but we can hijack this channel for our own purposes.
@@ -190,9 +189,6 @@ Let's break down exactly what our code is sending over the I2C bus. Each byte in
 - **0x51**: Source Address - Indicates message is coming from the host device (PC) to the display
 - **0x84**: Packet Type - Indicates this is a message with a dedicated length byte
 - **0x03**: Data Length - There are 3 data bytes following this byte
-
-
-**2nd Packet Breakdown:**
 - **0x60**: VCP Feature Code - Code for 'Input Source Selection' according to the MCCS specification
 - **0x00**: MSB - Most significant byte of the 16-bit value (zero in this case)
 - **0x12**: LSB - Least significant byte of the 16-bit value (0x12 = HDMI-2)

@@ -9,7 +9,13 @@ export interface ProjectMetadata {
   title: string;
   description: string;
   coverImage?: string;
-  contentFile?: string;
+  contentFile?: string; 
+  date?: string;
+  tags?: string[];
+  author?: string;
+  github?: string;
+  demo?: string;
+  enabled?: boolean;
 }
 
 export function getAllProjects(): ProjectMetadata[] {
@@ -19,12 +25,11 @@ export function getAllProjects(): ProjectMetadata[] {
     .map((slug) => {
       const fullPath = path.join(projectsDirectory, slug, 'index.mdx');
       if (!fs.existsSync(fullPath)) {
-        return null; // Skip if index.mdx doesn't exist
+        return null; 
       }
       const fileContents = fs.readFileSync(fullPath, 'utf8');
       const { data } = matter(fileContents);
 
-      // Only include if enabled is not explicitly false
       if (typeof data.enabled !== 'undefined' && data.enabled === false) {
         return null;
       }
@@ -32,9 +37,15 @@ export function getAllProjects(): ProjectMetadata[] {
       return {
         slug,
         title: data.title || 'Untitled Project',
-        description: data.description || 'No description available.',
+        description: data.description || data.excerpt || 'No description available.', 
         coverImage: data.coverImage || undefined,
-        contentFile: data.contentFile || undefined,
+        contentFile: data.contentFile || undefined, 
+        date: data.date || undefined,
+        tags: data.tags || [],
+        author: data.author || undefined,
+        github: data.github || undefined,
+        demo: data.demo || undefined,
+        enabled: typeof data.enabled !== 'undefined' ? data.enabled : true, 
       } as ProjectMetadata;
     })
     .filter((project): project is ProjectMetadata => project !== null)

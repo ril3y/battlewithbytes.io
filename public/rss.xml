@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title><![CDATA[Battle With Bytes | Cybersecurity, Hardware & Software Engineering]]></title>
+        <description><![CDATA[Explore cybersecurity concepts, hardware projects, and software engineering tools with interactive calculators and in-depth tutorials.]]></description>
+        <link>https://battlewithbytes.io</link>
+        <image>
+            <url>https://battlewithbytes.io/images/logo.png</url>
+            <title>Battle With Bytes | Cybersecurity, Hardware &amp; Software Engineering</title>
+            <link>https://battlewithbytes.io</link>
+        </image>
+        <generator>RSS for Node</generator>
+        <lastBuildDate>Fri, 09 May 2025 13:08:59 GMT</lastBuildDate>
+        <atom:link href="https://battlewithbytes.io/rss.xml" rel="self" type="application/rss+xml"/>
+        <pubDate>Fri, 09 May 2025 13:08:59 GMT</pubDate>
+        <copyright><![CDATA[2025 Riley Porter]]></copyright>
+        <language><![CDATA[en]]></language>
+        <managingEditor><![CDATA[Riley Porter]]></managingEditor>
+        <webMaster><![CDATA[Riley Porter]]></webMaster>
+        <ttl>60</ttl>
+        <category><![CDATA[Cybersecurity]]></category>
+        <category><![CDATA[Hardware]]></category>
+        <category><![CDATA[Software Engineering]]></category>
+        <category><![CDATA[Technology]]></category>
+        <item>
+            <title><![CDATA[I2C HDMI Hacks]]></title>
+            <description><![CDATA[Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required.]]></description>
+            <link>https://battlewithbytes.io/blog/i2c-hdmi-hacks</link>
+            <guid isPermaLink="false">https://battlewithbytes.io/blog/i2c-hdmi-hacks</guid>
+            <category><![CDATA[i2c]]></category>
+            <category><![CDATA[hacking]]></category>
+            <category><![CDATA[linux]]></category>
+            <category><![CDATA[raspberrypi]]></category>
+            <category><![CDATA[python]]></category>
+            <category><![CDATA[hdmi]]></category>
+            <category><![CDATA[ddc]]></category>
+            <dc:creator><![CDATA[ril3y]]></dc:creator>
+            <pubDate>Thu, 08 May 2025 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Custom protocol bruh?]]></title>
+            <description><![CDATA[Creating a custom protocol decoder for the Saleae logic analyzer.]]></description>
+            <link>https://battlewithbytes.io/blog/custom-protocol-bruh</link>
+            <guid isPermaLink="false">https://battlewithbytes.io/blog/custom-protocol-bruh</guid>
+            <category><![CDATA[saleae]]></category>
+            <category><![CDATA[firmware]]></category>
+            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <pubDate>Tue, 15 Apr 2025 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[What's Hiding In My Coffee Maker?]]></title>
+            <description><![CDATA[Using the PicoTag project to dump SPI flash firmware from a coffee maker and explore what's hidden inside.]]></description>
+            <link>https://battlewithbytes.io/blog/whats-hiding-in-my-coffee-maker</link>
+            <guid isPermaLink="false">https://battlewithbytes.io/blog/whats-hiding-in-my-coffee-maker</guid>
+            <category><![CDATA[firmware]]></category>
+            <category><![CDATA[reverse engineering]]></category>
+            <category><![CDATA[spi]]></category>
+            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <pubDate>Tue, 15 Apr 2025 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Introducing PicoTag: Your Pocket-Sized Hardware Hacking Assistant]]></title>
+            <description><![CDATA[Meet PicoTag, a modular CircuitPython firmware for the RP2040, designed for hardware interaction, testing, and exploration.]]></description>
+            <link>https://battlewithbytes.io/blog/introducing-picotag</link>
+            <guid isPermaLink="false">https://battlewithbytes.io/blog/introducing-picotag</guid>
+            <category><![CDATA[circuitpython]]></category>
+            <category><![CDATA[rp2040]]></category>
+            <category><![CDATA[picotag]]></category>
+            <category><![CDATA[firmware]]></category>
+            <category><![CDATA[hacking]]></category>
+            <category><![CDATA[hardware]]></category>
+            <category><![CDATA[cli]]></category>
+            <category><![CDATA[modular]]></category>
+            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <pubDate>Tue, 23 Jul 2024 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[LoRa without LoRaWAN]]></title>
+            <description><![CDATA[Exploring the use of LoRa technology for direct P2P communication, bypassing the LoRaWAN network.]]></description>
+            <link>https://battlewithbytes.io/blog/lora-without-lorawan</link>
+            <guid isPermaLink="false">https://battlewithbytes.io/blog/lora-without-lorawan</guid>
+            <category><![CDATA[LoRa]]></category>
+            <category><![CDATA[Hardware]]></category>
+            <category><![CDATA[Radio]]></category>
+            <category><![CDATA[RAK3172]]></category>
+            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>
