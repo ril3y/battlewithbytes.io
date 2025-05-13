@@ -116,6 +116,7 @@ export interface Connector {
   config: ConnectorConfig; // Holds dynamic configuration values
   // REMOVED pinNumberingMode - It's now fully within config
   gender?: ConnectorGender; // Use the exported type
+  rotation?: number; // Optional: for connector rotation in degrees
   metadata?: Record<string, any>; // For extra info like datasheet link, part number etc.
 }
 

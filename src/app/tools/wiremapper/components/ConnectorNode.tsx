@@ -8,7 +8,7 @@ import '../wiremapper.css'; // Import the CSS file
 
 const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) => {
   // Use default rows/cols from data, but calculate dimensions based on them
-  const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type } = data;
+  const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type, rotation = 0 } = data;
   const selectedPin = useWireMapperStore(state => state.selectedPin);
   const [hoveredPin, setHoveredPin] = useState<number | null>(null);
   const centerPins = config.centerPinsHorizontally ?? false; // Default to false if not set
@@ -67,6 +67,7 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
       style={{
         width: `${calculatedWidth}px`,
         height: `${calculatedHeight}px`,
+        transform: `rotate(${rotation}deg)`,
       }}
     >
       {name && (

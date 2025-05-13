@@ -177,7 +177,7 @@ interface WireMapperState {
   removeConnector: (id: string) => void;
   setSelectedConnector: (connectorId: string | null) => void;
   updateConnectorPosition: (id: string, x: number, y: number) => void;
-  rotateConnector: (id: string, rotation: number) => void;
+  rotateConnector: (id: string) => void;
   
   // Pin actions
   updatePin: (connectorId: string, pinPos: number, updates: Partial<Pin>) => void;
@@ -505,11 +505,17 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
       )
     })),
     
-    rotateConnector: (id: string, rotation: number) => set((state: WireMapperState) => ({
-      connectors: state.connectors.map((c: Connector) => 
-        c.id === id ? { ...c, rotation } : c
-      )
-    })),
+    rotateConnector: (id: string) => set((state) => {
+      const connectors = state.connectors.map((connector) => {
+        if (connector.id === id) {
+          const currentRotation = connector.rotation || 0;
+          const newRotation = (currentRotation + 90) % 360;
+          return { ...connector, rotation: newRotation };
+        }
+        return connector;
+      });
+      return { connectors };
+    }),
     
     // Pin actions
     updatePin: (connectorId: string, pinPos: number, updates: Partial<Pin>) => set((state: WireMapperState) => ({

@@ -232,8 +232,8 @@ html.dark .react-flow__edge.selected .react-flow__edge-path {
 
 /* Ultra-minimal zoom controls */
 .wire-mapper-flow .react-flow__controls {
-  left: 25px !important;
-  bottom: 55px !important;
+  left: 5px !important;
+  bottom: 5px !important;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
