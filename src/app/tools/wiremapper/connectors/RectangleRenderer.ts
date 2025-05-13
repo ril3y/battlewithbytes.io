@@ -105,7 +105,7 @@ export class RectangleRenderer implements IConnectorRenderer {
         description: 'Define exact pin counts for each row, comma-separated (e.g., 8,6,6,7). Overrides Rows and Columns inputs for pin layout.',
       },
       {
-        key: 'centerPins',
+        key: 'centerPinsHorizontally',
         label: 'Center pins horizontally',
         type: 'boolean',
         defaultValue: true, // Default to true for better look
