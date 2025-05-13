@@ -4,7 +4,7 @@ export const PIN_SIZE = 24; // Diameter of the pin visual
 export const PIN_MARGIN = 4; // Margin around the pin visual
 export const PIN_AREA_SIZE = PIN_SIZE + PIN_MARGIN * 2; // Total area including margin
 
-export const CONNECTOR_PADDING = 5; // Internal padding of the connector node
+export const CONNECTOR_PADDING = 15; // Internal padding of the connector node
 export const CONNECTOR_BORDER_WIDTH = 2;
 
 // Define and export default values for connector rendering

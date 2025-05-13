@@ -62,10 +62,10 @@ const ConnectorCanvas: React.FC = () => {
   useEffect(() => {
     const rfEdges: Edge[] = mappings.map((mapping) => ({
       id: mapping.id,
-      source: mapping.startConnectorId,
-      sourceHandle: `${mapping.startPinPos}-handle`, // Use NEW handle ID format again
-      target: mapping.endConnectorId,
-      targetHandle: `${mapping.endPinPos}-handle`, // Use NEW handle ID format again
+      source: mapping.source.connectorId,
+      sourceHandle: `${mapping.source.pinPos}-handle`,
+      target: mapping.target.connectorId,
+      targetHandle: `${mapping.target.pinPos}-handle`,
       animated: settings.simplifyConnections ? false : true,
       style: { 
         stroke: mapping.color || '#9ca3af', 
@@ -118,17 +118,20 @@ const ConnectorCanvas: React.FC = () => {
       const sourcePin = connection.sourceHandle ? parseInt(connection.sourceHandle.split('-')[0], 10) : null;
       const targetPin = connection.targetHandle ? parseInt(connection.targetHandle.split('-')[0], 10) : null;
 
-      // Check if pins were successfully parsed (should always be true if isValidConnection passed, but good for type safety)
       if (connection.source && connection.target && sourcePin !== null && targetPin !== null) {
-        // The self-connection check is now handled by isValidConnectionCheck
-        // If we are here, it's a valid connection according to that function.
-        console.log(`[Canvas] Calling addMapping: source=${connection.source}, sourcePin=${sourcePin}, target=${connection.target}, targetPin=${targetPin}`);
-        addMapping(
-          connection.source,
-          sourcePin, // Type is now number
-          connection.target,
-          targetPin  // Type is now number
-        );
+        const newMapping: Omit<Mapping, 'id' | 'wireId'> = {
+          source: {
+            connectorId: connection.source,
+            pinPos: sourcePin,
+          },
+          target: {
+            connectorId: connection.target,
+            pinPos: targetPin,
+          }
+          // Add color or other properties if needed later
+        };
+        console.log('[Canvas] Calling addMapping with structured object:', newMapping);
+        addMapping(newMapping); // Pass the single structured object
       } else {
         // This case should ideally not be reached if isValidConnection worked correctly
         console.error('[Canvas] onConnect failed: Invalid connection data received after isValidConnection check.', connection);

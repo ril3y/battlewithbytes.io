@@ -4,9 +4,10 @@ import { Connector, Pin } from '../types';
 import { useWireMapperStore } from '../store/useWireMapperStore'; 
 import { PIN_SIZE, PIN_MARGIN, CONNECTOR_PADDING } from '../constants';
 import { PinDisplay } from './PinDisplay'; 
-
+ 
 const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) => {
-  const { name, rows = 1, cols = 1, width, height, pins: allPins = [], config = {}, shape, gender, type } = data;
+  // Use default rows/cols from data, but calculate dimensions based on them
+  const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type } = data;
   const selectedPin = useWireMapperStore(state => state.selectedPin);
   const [hoveredPin, setHoveredPin] = useState<number | null>(null);
   const centerPins = config.centerPinsHorizontally ?? false; // Default to false if not set
@@ -41,15 +42,29 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
     });
     console.log(`ConnectorNode: ${id} visiblePins (grouped by row):`, grouped);
     return grouped;
-  }, [visiblePins, data.id]);
+  }, [visiblePins, id]);
 
-  console.log(`ConnectorNode [${data.id}]: centerPinsHorizontally config = ${config.centerPinsHorizontally}, resolved centerPins = ${centerPins}`);
+  // --- Calculate Dynamic Dimensions --- 
+  const calculatedWidth = useMemo(() => {
+    const gridWidth = (cols * PIN_SIZE) + Math.max(0, cols - 1) * (PIN_MARGIN * 2);
+    return gridWidth + (CONNECTOR_PADDING * 2); 
+  }, [cols]);
+
+  const calculatedHeight = useMemo(() => {
+    const gridHeight = (rows * PIN_SIZE) + Math.max(0, rows - 1) * (PIN_MARGIN * 2);
+    const nameHeight = name ? 30 : 0; // Estimate space for the name label + its padding
+    return gridHeight + (CONNECTOR_PADDING * 2) + nameHeight; 
+  }, [rows, name]);
+  // ---------------------------------
+
+  // Debug log for dimensions
+  console.log(`[ConnectorNode ${id}] data.rows=${data.rows}, data.cols=${data.cols}, calcWidth=${calculatedWidth}, calcHeight=${calculatedHeight}`);
 
   return (
     <div
       style={{
-        width: `${width}px`,
-        height: `${height}px`,
+        width: `${calculatedWidth}px`,
+        height: `${calculatedHeight}px`,
         border: `2px solid ${selected ? (settings.darkMode ? '#00ff9d' : '#059669') : (settings.darkMode ? '#374151' : '#d1d5db')}`,
         borderRadius: '12px', 
         background: settings.darkMode ? '#1e293b' : '#f8fafc', 
@@ -82,8 +97,8 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
         gridTemplateColumns: `repeat(${cols}, ${PIN_SIZE}px)`,
         gridTemplateRows: `repeat(${rows}, ${PIN_SIZE}px)`,
         gap: `${PIN_MARGIN * 2}px`, 
-        alignContent: 'center', 
-        justifyContent: 'center', 
+        alignContent: 'center', // Center grid vertically if space allows
+        justifyContent: 'center', // Center grid horizontally if space allows
         flexGrow: 1, 
         padding: `${CONNECTOR_PADDING}px`,
         boxSizing: 'border-box',

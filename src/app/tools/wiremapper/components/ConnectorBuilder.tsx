@@ -193,11 +193,17 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
       return;
     }
 
+    // Extract rows/cols from config for top-level properties, default to 1 if not set
+    const rows = connectorState.config?.rows ?? 1;
+    const cols = connectorState.config?.cols ?? 1;
+
     const finalConnector: Omit<Connector, 'id'> & { id?: string } = {
       name: connectorState.name || 'Unnamed Connector',
       type: connectorState.type,
       gender: connectorState.gender || 'Unknown',
       shape: connectorState.shape,
+      rows: rows, // Add top-level rows
+      cols: cols, // Add top-level cols
       config: connectorState.config || {},
       pins: pins, // Use the latest generated pins state
       width: connectorState.width || CONNECTOR_DEFAULTS.width,

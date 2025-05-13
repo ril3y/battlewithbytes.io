@@ -129,6 +129,14 @@ export const WireMapper: React.FC = () => {
               >
                 Add Connector
               </button>
+              {/* TODO: Reimplement this button for Show/Hide Wires */}
+              <button 
+                // onClick={...} // Needs new handler
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded shadow-md transition-colors disabled:opacity-50"
+                disabled // Disable until functionality is added
+              >
+                Show / Hide Wires
+              </button>
             </div>
           ) : (
             <ConnectorCanvas />

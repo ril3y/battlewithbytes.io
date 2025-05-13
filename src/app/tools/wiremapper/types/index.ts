@@ -13,6 +13,10 @@ export interface Pin {
   visible?: boolean;   // Optional: whether the pin should be rendered (defaults to true)
   row?: number;       // Row index (0-based) within the connector grid (optional)
   col?: number;       // Column index (0-based) within the connector grid (optional)
+  netName?: string;    // Optional: Name of the electrical net this pin belongs to
+  desc?: string;       // Optional: User-defined description for the pin
+  voltage?: string | number; // Optional: Voltage level (e.g., 5, 3.3, '5V')
+  signalType?: string; // Optional: Type of signal (e.g., 'Analog', 'Digital', 'PWM')
 }
 
 // Configuration for a single pin (can be expanded)

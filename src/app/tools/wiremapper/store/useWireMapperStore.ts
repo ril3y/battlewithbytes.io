@@ -100,7 +100,7 @@ interface WireMapperState {
   setSelectedConnectorId: (id: string | null) => void;
   
   // Mapping actions
-  addMapping: (newMapping: Omit<Mapping, 'wireId'>) => void;
+  addMapping: (newMapping: Omit<Mapping, 'id' | 'wireId'>) => void;
   updateMapping: (id: string, updates: Partial<Omit<Mapping, 'id' | 'wireId'>>) => void;
   removeMapping: (id: string) => void;
 }
@@ -335,7 +335,7 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => ({
   setSelectedConnectorId: (id) => set({ selectedConnectorId: id, selectedPin: null }),
   
   // Mapping actions
-  addMapping: (newMapping: Omit<Mapping, 'wireId'>) => set(produce((draft: WireMapperState) => {
+  addMapping: (newMapping: Omit<Mapping, 'id' | 'wireId'>) => set(produce((draft: WireMapperState) => {
     const wireId = nanoid(); // Generate a unique ID for the wire and mapping
     
     // Find involved pins
@@ -361,15 +361,15 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => ({
     targetPin.connectedWireId = wireId;
     
     // Add the mapping
-    const mappingToAdd: Mapping = {
-      ...newMapping,
-      wireId: wireId,
-      // netName will come from newMapping, not the pin
-    };
-    draft.mappings.push(mappingToAdd);
+    draft.mappings.push({
+      id: wireId, // Add the missing 'id' property
+      ...newMapping, // Spread the incoming properties (source, target, optional color)
+      wireId, // Ensure this generated ID is used
+      color: newMapping.color || getRandomHexColor(), // Use provided color or generate one
+    });
     
     // Create and add the corresponding wire
-    const wire = _createWireFromMapping(mappingToAdd, sourcePin, targetPin);
+    const wire = _createWireFromMapping(draft.mappings[draft.mappings.length - 1], sourcePin, targetPin);
     if (wire) {
       draft.wires.push(wire);
     }
