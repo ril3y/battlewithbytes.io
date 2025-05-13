@@ -244,7 +244,7 @@ export class RectangleRenderer implements IConnectorRenderer {
           col: currentCol, // Add the col property
           x: xPos,
           y: yPos,
-          connectedWireId: null,
+          connectedWireIds: [], // Update connectedWireId to connectedWireIds
           config: {},
           active: true,
         };

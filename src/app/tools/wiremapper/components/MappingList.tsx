@@ -11,17 +11,29 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
   const { connectors, mappings, updateMapping, removeMapping } = useWireMapperStore();
 
   const filteredMappings = filterConnectorId
-    ? mappings.filter(m => m.startConnectorId === filterConnectorId || m.endConnectorId === filterConnectorId)
+    ? mappings.filter(m => m.source.connectorId === filterConnectorId || m.target.connectorId === filterConnectorId)
     : mappings; // Show all if no filter ID is provided
 
   // Utility function to get pin name by connector ID and pin position
-  const getPinLabel = (connectorId: string, pinPos: number) => {
+  const getPinLabel = (connectorId: string, pinPos: number): string => {
+    // Check if pinPos is valid
+    if (typeof pinPos !== 'number' || isNaN(pinPos)) {
+      return 'Invalid Pin Pos';
+    }
     const connector = connectors.find(c => c.id === connectorId);
-    if (!connector) return `Unknown (${pinPos})`;
-    
+    if (!connector) {
+      // Shorten connectorId for display if not found
+      const shortId = connectorId?.substring(0, 6) ?? 'N/A';
+      return `Conn ${shortId}? Pin ${pinPos}`;
+    }
+
     const pin = connector.pins.find(p => p.pos === pinPos);
-    if (!pin) return `Pin ${pinPos}`;
-    
+    if (!pin) {
+      // Pin position not found within this connector
+      return `Pin ${pinPos} (Not Found)`;
+    }
+
+    // Pin found, return its name or default label
     return pin.name || `Pin ${pinPos}`;
   };
 
@@ -60,15 +72,15 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
                     style={{ backgroundColor: mapping.color || 'transparent' }} // Ensure color has a fallback
                   />
                   <div>
-                    <div className="font-mono text-xs">{getConnectorName(mapping.startConnectorId)}</div>
-                    <div className="text-gray-500 text-xs">{getPinLabel(mapping.startConnectorId, mapping.startPinPos)}</div>
+                    <div className="font-mono text-xs">{getConnectorName(mapping.source.connectorId)}</div>
+                    <div className="text-gray-500 text-xs">{getPinLabel(mapping.source.connectorId, mapping.source.pinPos)}</div>
                   </div>
                 </div>
               </td>
               <td className="px-3 py-2">
                 <div>
-                  <div className="font-mono text-xs">{getConnectorName(mapping.endConnectorId)}</div>
-                  <div className="text-gray-500 text-xs">{getPinLabel(mapping.endConnectorId, mapping.endPinPos)}</div>
+                  <div className="font-mono text-xs">{getConnectorName(mapping.target.connectorId)}</div>
+                  <div className="text-gray-500 text-xs">{getPinLabel(mapping.target.connectorId, mapping.target.pinPos)}</div>
                 </div>
               </td>
               <td className="px-3 py-2">

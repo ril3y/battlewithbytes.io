@@ -1,0 +1,299 @@
+/* === Wiremapper Specific Styles === */
+
+/* --- Connector Node --- */
+.connector-node {
+  border: 2px solid #d1d5db; /* Default light border */
+  border-radius: 12px;
+  background: #f8fafc; /* Default light background */
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* Direct dark theme application using our class-based approach */
+.connector-node.dark-theme {
+  background: #111827; /* Darker blue-gray for connectors */
+  border-color: rgba(0, 255, 157, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 0 5px rgba(0, 255, 157, 0.1);
+  color: var(--foreground);
+}
+
+/* Dark mode styling for react flow nodes */
+html.dark .react-flow__node {
+  background: #101520; /* Slightly darker blue for the node container */
+  border-color: rgba(0, 255, 157, 0.25);
+  box-shadow: 0 0 5px rgba(0, 255, 157, 0.1);
+  color: var(--foreground);
+}
+
+/* Selected state for connector nodes in dark mode */
+.connector-node.dark-theme.selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary);
+}
+
+/* Selected state for React Flow nodes in dark mode */
+html.dark .react-flow__node.selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary);
+}
+
+/* Prevent double borders with transparent inner node when inside ReactFlow */
+html.dark .react-flow__node .connector-node.dark-theme {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.connector-node.selected {
+  border-color: var(--accent-primary); /* Use !important to override base */
+  box-shadow: 0 0 10px var(--accent-primary);
+}
+
+/* Connector Name/Drag Handle */
+.connector-drag-handle {
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: grab;
+}
+
+/* Dark mode styles for Drag Handle */
+html.dark .react-flow .connector-drag-handle {
+  color: var(--accent-foreground); /* Brighter text for dark mode */
+}
+
+/* Pin Grid Container inside Connector Node */
+.connector-pin-grid {
+  align-content: center; /* Center grid vertically if space allows */
+  justify-content: center; /* Center grid horizontally if space allows */
+  flex-grow: 1;
+  box-sizing: border-box;
+}
+
+/* --- Pin Display --- */
+.connector-pin-display {
+  border: 2px solid #9ca3af; /* Default light border */
+  border-radius: 50%;
+  background-color: #e5e7eb; /* Default light background */
+  color: #1f2937; /* Default light text */
+  box-shadow: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: crosshair;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Dark theme for pins using our class-based approach */
+.connector-pin-display.dark-theme {
+  border-color: rgba(0, 255, 157, 0.25); /* Subtle accent border */
+  background-color: #1a1a1a; /* Dark background */
+  color: var(--foreground); /* Dark theme text */
+}
+
+/* Pin Gender */
+.connector-pin-display.female {
+  /* Light mode female - keep as is or adjust if needed */
+  background-color: #f0f0f0;
+  border-color: #059669;
+}
+
+/* Dark theme for female pins */
+.connector-pin-display.dark-theme.female {
+  background-color: #222; /* Slightly lighter dark background for female pins */
+  border-color: var(--accent-primary);
+}
+
+/* For backward compatibility with existing html.dark approach */
+html.dark .react-flow .connector-pin-display {
+  border-color: rgba(0, 255, 157, 0.25);
+  background-color: #1a1a1a;
+  color: var(--foreground);
+}
+
+html.dark .react-flow .connector-pin-display.female {
+  background-color: #222;
+  border-color: var(--accent-primary);
+}
+
+/* Pin States (Hover, Selected, Connected) */
+.connector-pin-display:hover /* Added generic hover for light mode */
+{
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 4px var(--accent-secondary);
+}
+
+/* Dark theme hover state using class-based approach */
+.connector-pin-display.dark-theme:hover,
+.connector-pin-display.dark-theme.hovered
+{
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 4px var(--accent-secondary);
+}
+
+/* Selected and connected states for light mode */
+.connector-pin-display.selected {
+  border-color: #059669;
+  box-shadow: 0 0 8px #059669;
+}
+
+.connector-pin-display.connected {
+ border-color: #10b981;
+ box-shadow: 0 0 5px #10b981;
+}
+
+/* Dark theme for selected and connected states */
+.connector-pin-display.dark-theme.selected,
+.connector-pin-display.dark-theme.connected
+{
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 5px var(--accent-primary);
+}
+
+/* For backward compatibility with existing html.dark approach */
+html.dark .react-flow .connector-pin-display:hover,
+html.dark .react-flow .connector-pin-display.hovered
+{
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 4px var(--accent-secondary);
+}
+
+html.dark .react-flow .connector-pin-display.selected,
+html.dark .react-flow .connector-pin-display.connected
+{
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 5px var(--accent-primary);
+}
+
+/* Pin Color Override (Applied via inline style still) */
+/* This allows pin.config.color to override the background */
+
+/* --- Edge/Connection Styling --- */
+
+/* Default edge styles in light mode */
+.react-flow__edge {
+  z-index: 10;
+}
+
+.react-flow__edge-path {
+  stroke: #9ca3af;
+  stroke-width: 2;
+}
+
+/* Dark mode edge styling */
+html.dark .react-flow__edge-path {
+  stroke: var(--accent-primary);
+  opacity: 0.6;
+  stroke-width: 2;
+}
+
+/* Animated edges */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+}
+
+/* Selected edges in dark mode */
+html.dark .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent-secondary);
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* Animated connections */
+.wire-mapper-flow .react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: flowAnimation 2s linear infinite;
+}
+
+@keyframes flowAnimation {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Ultra-minimal zoom controls */
+.wire-mapper-flow .react-flow__controls {
+  left: 25px !important;
+  bottom: 55px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.wire-mapper-flow .react-flow__controls button {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  border-radius: 2px !important;
+  background: rgba(20, 20, 25, 0.65) !important;
+  border: none !important;
+  color: #aaa !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  margin-bottom: 1px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.wire-mapper-flow .react-flow__controls button:hover {
+  background: rgba(40, 40, 50, 0.9) !important;
+  color: white !important;
+}
+
+/* --- Connection Handle Improvements --- */
+/* Make handles easier to interact with */
+.react-flow__handle {
+  width: 16px !important;
+  height: 16px !important;
+  background: transparent;
+  border: none;
+  cursor: crosshair;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  transform: translate(-50%, -50%);
+}
+
+/* Hover effect for better visibility */
+.react-flow__handle:hover {
+  opacity: 1;
+}
+
+/* Visual indicator when hovering on pins to show they can be connected */
+.connector-pin-display:hover::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  pointer-events: none;
+}

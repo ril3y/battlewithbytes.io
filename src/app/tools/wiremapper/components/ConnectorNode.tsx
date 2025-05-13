@@ -4,7 +4,8 @@ import { Connector, Pin } from '../types';
 import { useWireMapperStore } from '../store/useWireMapperStore'; 
 import { PIN_SIZE, PIN_MARGIN, CONNECTOR_PADDING } from '../constants';
 import { PinDisplay } from './PinDisplay'; 
- 
+import '../wiremapper.css'; // Import the CSS file
+
 const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) => {
   // Use default rows/cols from data, but calculate dimensions based on them
   const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type } = data;
@@ -62,47 +63,33 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
 
   return (
     <div
+      className={`connector-node ${selected ? 'selected' : ''} dark-theme`}
       style={{
         width: `${calculatedWidth}px`,
         height: `${calculatedHeight}px`,
-        border: `2px solid ${selected ? (settings.darkMode ? '#00ff9d' : '#059669') : (settings.darkMode ? '#374151' : '#d1d5db')}`,
-        borderRadius: '12px', 
-        background: settings.darkMode ? '#1e293b' : '#f8fafc', 
-        boxShadow: selected ? `0 0 10px ${settings.darkMode ? '#00ff9d' : '#059669'}` : (settings.darkMode ? '0 1px 3px 0 rgba(0,0,0,0.7), 0 1px 2px 0 rgba(0,0,0,0.5)' : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)'),
-        position: 'relative',
-        display: 'flex', 
-        flexDirection: 'column', 
       }}
-      className={`connector-node ${settings.darkMode ? 'dark-theme-connector' : 'light-theme-connector'}`}
     >
       {name && (
         <div
           className="connector-drag-handle" 
-          style={{
-            padding: `${CONNECTOR_PADDING / 2}px ${CONNECTOR_PADDING}px 0 ${CONNECTOR_PADDING}px`, 
-            color: settings.darkMode ? '#cbd5e1' : '#334155', 
-            fontSize: '12px', 
-            textAlign: 'center',
-            flexShrink: 0, 
-            fontWeight: '600', 
-          }}
+          style={{ padding: `${CONNECTOR_PADDING / 2}px ${CONNECTOR_PADDING}px 0 ${CONNECTOR_PADDING}px` }} // Only keep dynamic padding
         >
           {name}
         </div>
       )}
 
       {/* Pin Grid Container */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${cols}, ${PIN_SIZE}px)`,
-        gridTemplateRows: `repeat(${rows}, ${PIN_SIZE}px)`,
-        gap: `${PIN_MARGIN * 2}px`, 
-        alignContent: 'center', // Center grid vertically if space allows
-        justifyContent: 'center', // Center grid horizontally if space allows
-        flexGrow: 1, 
-        padding: `${CONNECTOR_PADDING}px`,
-        boxSizing: 'border-box',
-      }}>
+      <div 
+        className="connector-pin-grid"
+        style={{
+          display: 'grid', // Keep layout styles
+          gridTemplateColumns: `repeat(${cols}, ${PIN_SIZE}px)`, // Dynamic
+          gridTemplateRows: `repeat(${rows}, ${PIN_SIZE}px)`,   // Dynamic
+          gap: `${PIN_MARGIN * 2}px`,                         // Dynamic
+          padding: `${CONNECTOR_PADDING}px`,                   // Dynamic
+          // Removed: alignContent, justifyContent, flexGrow, boxSizing (moved to CSS)
+        }}
+      >
         {centerPins
           ? // --- Method 1: Center pins using flexbox within each row --- 
             Object.entries(pinsByRow).map(([rowIndex, pinsInRow]) => (

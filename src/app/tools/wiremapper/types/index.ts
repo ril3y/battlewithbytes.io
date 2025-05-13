@@ -7,7 +7,7 @@ export interface Pin {
   name: string;       // User-defined name (e.g., 'VCC', 'GND', 'Data0')
   x: number;          // X coordinate relative to connector origin
   y: number;          // Y coordinate relative to connector origin
-  connectedWireId: string | null; // ID of the wire connected to this pin, or null
+  connectedWireIds: string[]; // Array of wire IDs connected to this pin
   config: PinConfig; // Specific configuration for the pin (e.g., color, type)
   active: boolean;    // Whether the pin is currently enabled/used
   visible?: boolean;   // Optional: whether the pin should be rendered (defaults to true)
@@ -183,6 +183,8 @@ export interface WireMapperSettings {
   namePosition: 'inside' | 'above'; // Add back for compatibility
   simplifyConnections: boolean;
   darkMode: boolean;
+  defaultWireColor?: string; // Added default color setting
+  showWires: boolean; // Controls visibility of connection wires
 }
 
 export type PinIdentifier = {

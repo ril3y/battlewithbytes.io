@@ -15,9 +15,12 @@ import ReactFlow, {
   BackgroundVariant,
   ConnectionMode, // <-- Import ConnectionMode
 } from 'reactflow';
-import 'reactflow/dist/style.css'; 
+// Import ReactFlow styles first, then our custom styles will override them
+import 'reactflow/dist/style.css';
 
 import { useWireMapperStore } from '../store/useWireMapperStore';
+// Import our WireMapper CSS explicitly (even though it may be imported elsewhere)
+import '../wiremapper.css';
 import { Connector as ConnectorType, Pin, Mapping, WireMapperSettings } from '../types'; // Use Mapping
 import type { PinIdentifier } from '../types';
 import ConnectorNode from './ConnectorNode'; 
@@ -67,12 +70,12 @@ const ConnectorCanvas: React.FC = () => {
       target: mapping.target.connectorId,
       targetHandle: `${mapping.target.pinPos}-handle`,
       animated: settings.simplifyConnections ? false : true,
-      style: { 
-        stroke: mapping.color || '#9ca3af', 
-        strokeWidth: 2, 
-        zIndex: 10 // Add zIndex style for edges
-      },
-      zIndex: 10 // Also try setting zIndex directly on edge object
+      // Let CSS handle the styling - only add custom color if specified in the mapping
+      // This allows dark mode styles from wiremapper.css to take effect
+      style: mapping.color ? { stroke: mapping.color } : undefined,
+      // Add animated class for proper animation in dark mode
+      className: settings.simplifyConnections ? '' : 'animated',
+      zIndex: 10 // Set zIndex for edge layering
     }));
     console.log('[Canvas] Mappings changed, attempting to set edges:', rfEdges);
     setEdges(rfEdges);
@@ -159,27 +162,52 @@ const ConnectorCanvas: React.FC = () => {
     [setSelectedConnectorId, setSelectedPin]
   );
 
+  // Define connection line style for when dragging to create a connection
+  const connectionLineStyle = {
+    stroke: 'var(--accent-primary)',
+    strokeWidth: 2,
+    opacity: 0.7
+  };
+
+  // Filter edges based on showWires setting
+  const visibleEdges = settings.showWires ? edges : [];
+
   return (
-    <div className="relative w-full h-full bg-gray-800 overflow-hidden cursor-default rounded-md">
+    <div className="relative w-full h-full bg-gray-800 overflow-hidden cursor-default rounded-md wire-mapper-flow-container">
        {/* Use w-full h-full to make ReactFlow fill the container */}
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={visibleEdges} /* Only show edges when showWires is true */
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        isValidConnection={isValidConnectionCheck} // Added prop
+        isValidConnection={isValidConnectionCheck}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes} 
-        connectionMode={ConnectionMode.Loose} // <-- Set ConnectionMode to Loose
-        fitView 
-        // Pro Options Provider is needed for fitView and other features
-        proOptions={{ hideAttribution: true }} 
-        className="bg-gray-800" 
+        nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        connectionLineStyle={connectionLineStyle}
+        fitView
+        snapToGrid={settings.snapToGrid}
+        snapGrid={[settings.gridSize || 20, settings.gridSize || 20]}
+        proOptions={{ hideAttribution: true }}
+        className="bg-gray-800 wire-mapper-flow"
       >
-        <Controls />
-        <Background variant={BackgroundVariant.Dots} gap={settings.gridSize || 20} size={1} color="#4b5563" />
+        <Controls 
+          position="bottom-left"
+          showZoom={true}
+          showFitView={true}
+          showInteractive={false}
+          className="minimal-controls"
+        />
+        {settings.showGrid && (
+          <Background 
+            variant={BackgroundVariant.Dots} 
+            gap={settings.gridSize || 20} 
+            size={1.5} 
+            color="#627287" 
+          />
+        )}
       </ReactFlow>
     </div>
   );

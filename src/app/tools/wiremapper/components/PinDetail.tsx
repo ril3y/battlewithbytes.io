@@ -77,8 +77,8 @@ export const PinDetail: React.FC = () => {
       if (!prev) return null;
       const updatedPin = { ...prev, config: { ...prev.config, color: value } };
       if (selectedPin.connectorId && selectedPin.pinPos !== null) {
-        // Update immediately for color picker, no debounce
-        updatePinDetailsAndNet(selectedPin.connectorId, selectedPin.pinPos, { config: { color: value } });
+        // Use debounced update for consistency with other fields
+        debouncedUpdatePin(selectedPin.connectorId, selectedPin.pinPos, { config: { color: value } });
       }
       return updatedPin;
     });
@@ -184,18 +184,6 @@ export const PinDetail: React.FC = () => {
         className="w-full mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded shadow-md transition-colors"
       >
         Clear Selection
-      </button>
-      <button
-        onClick={() => {
-          // Guard against null selectedPin
-          if (!selectedPin) return;
-          if (pinData && selectedPin.connectorId && selectedPin.pinPos !== null) {
-            updatePinDetailsAndNet(selectedPin.connectorId, selectedPin.pinPos, pinData);
-          }
-        }}
-        className="w-full mt-4 px-4 py-2 bg-green-900 hover:bg-green-800 text-green-300 rounded shadow-md transition-colors"
-      >
-        Save Changes
       </button>
     </div>
   );

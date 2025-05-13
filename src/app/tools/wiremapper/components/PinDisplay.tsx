@@ -1,58 +1,7 @@
 import React from 'react';
+import classNames from 'classnames';
 import { Pin } from '../types';
 import { PIN_SIZE } from '../constants'; // Assuming PIN_SIZE might be needed
-
-// --- Style Calculation Logic (Extracted from ConnectorNode) ---
-const getPinStyle = (
-  pin: Pin, 
-  isSelected: boolean, 
-  isHovered: boolean, 
-  isConnected: boolean, 
-  darkMode: boolean, 
-  size: number, 
-  gender: 'male' | 'female'
-): React.CSSProperties => {
-  let borderColor = (darkMode ? '#6b7280' : '#9ca3af');
-  let boxShadow = 'none';
-  let pinBackgroundColor = (darkMode ? '#374151' : '#e5e7eb'); 
-  let borderRadius = '50%'; 
-
-  if (gender === 'female') {
-    pinBackgroundColor = darkMode ? '#111827' : '#f0f0f0'; 
-    borderColor = (darkMode ? '#00ff9d' : '#059669'); 
-    // borderRadius = '2px'; // Optional: make female sockets square
-  }
-
-  if (isSelected) {
-    borderColor = darkMode ? '#00ff9d' : '#059669'; 
-    boxShadow = `0 0 8px ${borderColor}`;
-  } else if (isConnected) {
-    borderColor = darkMode ? '#34d399' : '#10b981'; 
-    boxShadow = `0 0 5px ${borderColor}`;
-  } else if (isHovered) {
-    borderColor = darkMode ? '#60a5fa' : '#3b82f6'; 
-    boxShadow = `0 0 4px ${borderColor}`;
-  }
-
-  return {
-    width: `${size}px`,
-    height: `${size}px`,
-    backgroundColor: pinBackgroundColor,
-    border: `2px solid ${borderColor}`,
-    borderRadius: borderRadius, 
-    boxShadow: boxShadow,
-    transition: 'all 0.2s ease',
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    fontSize: `${size * 0.45}px`, // Scale font size with pin size
-    fontWeight: 'bold',
-    color: darkMode ? '#e5e7eb' : '#1f2937', 
-    cursor: 'crosshair', 
-    boxSizing: 'border-box', 
-    position: 'relative', // Added for potential absolute children (like Handle)
-  };
-};
 
 // --- PinDisplay Component ---
 export interface PinDisplayProps {
@@ -82,8 +31,32 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
   onMouseLeave,
   children,
 }) => {
-  const style = getPinStyle(pin, isSelected, isHovered, isConnected, darkMode, size, gender);
+  // --- Dynamic Class Calculation ---
+  const pinClasses = classNames(
+    'connector-pin-display',
+    {
+      'female': gender === 'female',
+      'selected': isSelected,
+      'connected': isConnected,
+      'hovered': isHovered, // Add hovered class
+      'dark-theme': darkMode, // Add dark-theme class when darkMode is true
+    }
+  );
 
+  // --- Inline Styles (Only for dynamic values or overrides) ---
+  const inlineStyle: React.CSSProperties = {
+    width: `${size}px`,
+    height: `${size}px`,
+    fontSize: `${size * 0.45}px`,
+  };
+
+  // Apply pin-specific color override *only* if it exists
+  // Restore original check: Apply config color if it exists
+  if (pin.config?.color) { 
+    inlineStyle.backgroundColor = pin.config.color;
+  }
+
+  // --- Event Handlers ---
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.(pin.pos);
@@ -99,12 +72,12 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
 
   return (
     <div
-      style={style}
+      className={pinClasses} // Apply dynamic classes
+      style={inlineStyle} // Apply necessary inline styles
       onClick={onClick ? handleClick : undefined}
       onMouseEnter={onMouseEnter ? handleMouseEnter : undefined}
       onMouseLeave={onMouseLeave ? handleMouseLeave : undefined}
       title={`Pin ${pin.pos}${pin.name ? ': ' + pin.name : ''}`}
-      className="connector-pin-display"
     >
       {pin.pos} {/* Display pin number/position */}
       {children} {/* Render children, e.g., React Flow Handle */}

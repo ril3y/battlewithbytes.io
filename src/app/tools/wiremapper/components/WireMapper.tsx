@@ -111,15 +111,47 @@ export const WireMapper: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Canvas area - Main workspace */}
-        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 h-[700px] overflow-auto">
-          <div className="mb-2 flex items-center space-x-2">
-            <button 
-              onClick={() => setMode(settings.connectionMode === 'normal' ? 'connectionMode' : 'normal')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${settings.connectionMode === 'connectionMode' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}`}
-            >
-              {settings.connectionMode === 'normal' ? 'Start Connection' : 'End Connection Mode'}
-            </button>
-          </div>
+        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 h-[850px] overflow-hidden">
+          {/* Control toolbar */}
+          {connectors.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3 border-b border-gray-800 pb-3">
+              {/* Wire Visibility Toggle */}
+              <button
+                onClick={() => updateSettings({ showWires: !settings.showWires })}
+                className={`px-3 py-1 rounded text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                title="Toggle wire visibility"
+              >
+                {settings.showWires ? 'Hide Wires' : 'Show Wires'}
+              </button>
+              
+              {/* Grid Toggle */}
+              <button
+                onClick={() => updateSettings({ showGrid: !settings.showGrid })}
+                className={`px-3 py-1 rounded text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                title="Toggle grid visibility"
+              >
+                {settings.showGrid ? 'Hide Grid' : 'Show Grid'}
+              </button>
+              
+              {/* Snap to Grid Toggle */}
+              <button
+                onClick={() => updateSettings({ snapToGrid: !settings.snapToGrid })}
+                className={`px-3 py-1 rounded text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                title="Toggle snap to grid"
+              >
+                {settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}
+              </button>
+              
+              {/* Simplify Connections Toggle */}
+              <button
+                onClick={() => updateSettings({ simplifyConnections: !settings.simplifyConnections })}
+                className={`px-3 py-1 rounded text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                title="Toggle animated connections"
+              >
+                {settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}
+              </button>
+            </div>
+          )}
           {connectors.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full">
               <p className="text-gray-500 mb-4">No connectors added yet</p>
