@@ -202,6 +202,26 @@ html.dark .react-flow__edge-path {
   animation: dashdraw 0.5s linear infinite;
 }
 
+/* Handle container styling for better context menu interaction */
+.react-flow__handle {
+  /* Don't prevent propagation of events to parent elements */
+  pointer-events: all !important;
+  z-index: 30;
+}
+
+/* Keep edges as non-interactive */
+.react-flow__edge {
+  pointer-events: none !important;
+}
+
+.react-flow__edge-path {
+  pointer-events: none !important;
+}
+
+.react-flow__connection-path {
+  pointer-events: none !important;
+}
+
 @keyframes dashdraw {
   from {
     stroke-dashoffset: 10;

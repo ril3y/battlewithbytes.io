@@ -1,9 +1,10 @@
-import React, { memo, useState, useMemo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
-import { Connector, Pin } from '../types';
+import React, { memo, useState, useMemo, useCallback, useRef } from 'react';
+import { Handle, Position, NodeProps, useReactFlow, Node } from 'reactflow';
+import { Connector, Pin, ContextMenuOption } from '../types';
 import { useWireMapperStore } from '../store/useWireMapperStore'; 
 import { PIN_SIZE, PIN_MARGIN, CONNECTOR_PADDING } from '../constants';
 import { PinDisplay } from './PinDisplay'; 
+import { ContextMenu } from './ContextMenu';
 import '../wiremapper.css'; // Import the CSS file
 
 const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) => {
@@ -12,6 +13,18 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
   const selectedPin = useWireMapperStore(state => state.selectedPin);
   const [hoveredPin, setHoveredPin] = useState<number | null>(null);
   const centerPins = config.centerPinsHorizontally ?? false; // Default to false if not set
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const reactFlow = useReactFlow();
+
+  // Store actions and state for pin context menu
+  const { 
+    copyNetFromPin: storeCopyNetFromPin,
+    pasteNetToPin: storePasteNetToPin,
+    resetPin: storeResetPin,
+    copiedNet 
+  } = useWireMapperStore();
+
+  const [pinContextMenuState, setPinContextMenuState] = useState<{ x: number; y: number; pinPos: number; options: ContextMenuOption[] } | null>(null);
 
   const isPinConnected = useWireMapperStore(state => state.isPinConnected);
   const settings = useWireMapperStore(state => state.settings);
@@ -22,6 +35,43 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
     console.log(`[Node ${id}] Pin ${pinPos} clicked`);
     setSelectedPin(id, pinPos); 
   };
+  
+  const handlePinContextMenu = useCallback((e: React.MouseEvent, pinPos: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Since we're using createPortal to render to document.body, we need client coordinates
+    // These are already relative to the viewport/document
+    const menuX = e.clientX;
+    const menuY = e.clientY;
+    
+    console.log(`[Node:${id}] Pin ${pinPos} context menu opening at (${menuX}, ${menuY})`);
+
+    const options: ContextMenuOption[] = [
+      {
+        label: 'Copy Net',
+        action: () => {
+          storeCopyNetFromPin(id, pinPos);
+          closePinContextMenu();
+        },
+      },
+      {
+        label: `Paste Net ${copiedNet ? `(${copiedNet.netName || 'Unnamed Net'})` : ''}`,
+        action: () => {
+          storePasteNetToPin(id, pinPos);
+          closePinContextMenu();
+        },
+        disabled: !copiedNet,
+      },
+      { label: 'Reset Pin', action: () => { storeResetPin(id, pinPos); closePinContextMenu(); }, danger: true },
+    ];
+
+    setPinContextMenuState({ x: menuX, y: menuY, pinPos, options });
+  }, [id, storeCopyNetFromPin, storePasteNetToPin, storeResetPin, copiedNet]);
+
+  const closePinContextMenu = useCallback(() => {
+    setPinContextMenuState(null);
+  }, []);
 
   const handleConnectorClick = (e: React.MouseEvent) => {
     // Stop event from propagating to prevent double-handling
@@ -72,14 +122,24 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
   console.log(`[ConnectorNode ${id}] data.rows=${data.rows}, data.cols=${data.cols}, calcWidth=${calculatedWidth}, calcHeight=${calculatedHeight}`);
 
   return (
-    <div
-      className={`connector-node ${selected ? 'selected' : ''} dark-theme`}
-      style={{
-        width: `${calculatedWidth}px`,
-        height: `${calculatedHeight}px`,
-      }}
-      onClick={handleConnectorClick} // Add direct click handler
-    >
+    <>
+      {pinContextMenuState && (
+        <ContextMenu
+          x={pinContextMenuState.x}
+          y={pinContextMenuState.y}
+          options={pinContextMenuState.options}
+          onClose={closePinContextMenu}
+          // We might need to pass a containerRef here if sub-menus are inside ReactFlow pane
+        />
+      )}
+      <div
+        className={`connector-node ${selected ? 'selected' : ''} dark-theme`}
+        style={{
+          width: `${calculatedWidth}px`,
+          height: `${calculatedHeight}px`,
+        }}
+        onClick={handleConnectorClick} // Add direct click handler
+      >
       {name && (
         <div
           className="connector-drag-handle" 
@@ -121,12 +181,13 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
                     key={pin.id}
                     pin={pin}
                     isSelected={selectedPin?.connectorId === id && selectedPin?.pinPos === pin.pos}
-                    isHovered={hoveredPin === pin.pos}
+                    isHovered={hoveredPin === pin.pos} // Pass hoveredPin state
                     isConnected={isPinConnected(pin.pos, id)}
-                    darkMode={settings.darkMode}
-                    gender={gender?.toLowerCase() === 'female' ? 'female' : 'male'}
-                    onClick={handlePinClick}
-                    onMouseEnter={setHoveredPin}
+                    darkMode={settings.darkMode ?? true}
+                    gender={gender as 'male' | 'female'}
+                    onClick={() => handlePinClick(pin.pos)}
+                    onContextMenu={(e) => handlePinContextMenu(e, pin.pos)} // Passed to PinDisplay
+                    onMouseEnter={() => setHoveredPin(pin.pos)}
                     onMouseLeave={() => setHoveredPin(null)}
                   >
                     <Handle
@@ -176,6 +237,7 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
                     darkMode={settings.darkMode}
                     gender={gender?.toLowerCase() === 'female' ? 'female' : 'male'}
                     onClick={handlePinClick}
+                    onContextMenu={(e) => handlePinContextMenu(e, pin.pos)} // Passed to PinDisplay
                     onMouseEnter={setHoveredPin}
                     onMouseLeave={() => setHoveredPin(null)}
                   >
@@ -202,6 +264,7 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
             })}
       </div>
     </div>
+    </>
   );
 };
 

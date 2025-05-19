@@ -152,13 +152,23 @@ const _createWireFromMapping = (mapping: Mapping, sourcePin: Pin, targetPin: Pin
   return wire;
 };
 
+// Define a type for the copied net info
+type CopiedNetInfo = {
+  netName?: string;
+  netColor?: string;
+  voltage?: string;
+  signalType?: string;
+};
+
 interface WireMapperState {
   projectName: string;
   connectors: Connector[];
   mappings: Mapping[];
-  wires: Wire[]; // Add wires array to the state
+  wires: Wire[];
   selectedPin: PinIdentifier | null;
   selectedConnectorId: string | null;
+  focusedWireId: string | null; // Add focused wire state
+  copiedNet: CopiedNetInfo | null; // For copy/paste net functionality
   settings: WireMapperSettings;
   
   // Project actions
@@ -192,6 +202,11 @@ interface WireMapperState {
   addMapping: (newMapping: Omit<Mapping, 'id' | 'wireId'>) => void;
   updateMapping: (id: string, updates: Partial<Omit<Mapping, 'id' | 'wireId'>>) => void;
   removeMapping: (id: string) => void;
+  setFocusedWireId: (id: string | null) => void; // Add setFocusedWireId action
+  setCopiedNet: (copiedNet: CopiedNetInfo | null) => void; // Add setCopiedNet action
+  copyNetFromPin: (connectorId: string, pinPos: number) => void;
+  pasteNetToPin: (connectorId: string, pinPos: number) => void;
+  resetPin: (connectorId: string, pinPos: number) => void; // Add resetPin action
 }
 
 export const useWireMapperStore = create<WireMapperState>((set, get) => {
@@ -351,6 +366,8 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
      wires: [], // Initialize wires array
      selectedPin: null,
      selectedConnectorId: null,
+     focusedWireId: null, // Initialize focused wire as null
+     copiedNet: null, // Initialize copied net as null
      settings: {
        connectionMode: 'normal', // Renamed from mode for clarity
        namePosition: 'above',
@@ -526,13 +543,28 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
         config: originalConnector.config ? JSON.parse(JSON.stringify(originalConnector.config)) : {},
 
         pins: originalConnector.pins.map(originalPin => {
-          // Deep copy the original pin's properties first.
-          const newPinContents = JSON.parse(JSON.stringify(originalPin));
+          // Deep copy only the core properties of the pin
+          // Don't copy anything connection-related
           return {
-            ...newPinContents, // Spreads originalPin.row, .col, .name, .desc, .config, etc.
-            id: nanoid(),      // CRITICAL: New unique ID for the new pin.
-            connectedWireIds: [], // Duplicated pins start with no connections.
-            netName: undefined,   // Clear net-specific data for the new pin.
+            id: nanoid(),                  // CRITICAL: New unique ID for the new pin
+            pos: originalPin.pos,         // Keep position index
+            name: originalPin.name,       // Keep name
+            desc: originalPin.desc,       // Keep description if any
+            visible: originalPin.visible, // Keep visibility
+            
+            // Deep copy the pin configuration (color, type, etc.)
+            config: originalPin.config ? JSON.parse(JSON.stringify(originalPin.config)) : {},
+            
+            // Reset all connection-related properties
+            connectedWireIds: [],         // No connections
+            netName: undefined,           // No net name
+            netColor: undefined,          // No net color
+            voltage: undefined,           // No voltage info
+            signalType: undefined,        // No signal type
+            
+            // Copy other non-connection properties if needed
+            x: originalPin.x,
+            y: originalPin.y,
           };
         }),
       };
@@ -661,18 +693,127 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
        const mappings = get().mappings;
        return mappings.some(
          m =>
-           (m.source.connectorId === connectorId && m.source.pinPos === pinPos) ||
-           (m.target.connectorId === connectorId && m.target.pinPos === pinPos)
+          (m.source.connectorId === connectorId && m.source.pinPos === pinPos) ||
+          (m.target.connectorId === connectorId && m.target.pinPos === pinPos)
        );
-     },
+    },
     
     setSelectedConnectorId: (id: string | null) => set({ selectedConnectorId: id, selectedPin: null }), // Added type
+
+    // Set the focused wire - when set, only this wire/net will be displayed
+    setFocusedWireId: (id: string | null) => set((state) => {
+      return {
+        focusedWireId: id,
+        // Deselect connector and pin when setting focused wire
+        selectedConnectorId: null,
+        selectedPin: null,
+      };
+    }),
+
+    // For copy/paste net functionality
+    setCopiedNet: (netInfo: CopiedNetInfo | null) => set({
+      copiedNet: netInfo
+    }),
+    
+    // Copy net info from a specific pin
+    copyNetFromPin: (connectorId: string, pinPos: number) => {
+      const state = get();
+      const connector = state.connectors.find(c => c.id === connectorId);
+      if (!connector) return;
+      
+      const pin = connector.pins.find(p => p.pos === pinPos);
+      if (!pin) return;
+      
+      // Extract net-related info from the pin
+      const copiedNet: CopiedNetInfo = {
+        netName: pin.netName,
+        netColor: typeof pin.config?.color === 'string' ? pin.config.color : undefined, // Ensure color is a string
+        voltage: typeof pin.voltage === 'string' ? pin.voltage : pin.voltage?.toString(), // Convert to string if it's a number
+        signalType: pin.signalType
+      };
+      
+      console.log("Copied net info:", copiedNet);
+      set({ copiedNet });
+    },
+    
+    // Paste copied net info to a specific pin
+    pasteNetToPin: (connectorId: string, pinPos: number) => {
+      const state = get();
+      if (!state.copiedNet) return; // Nothing to paste
+      
+      // Create an update object that properly synchronizes netColor with config.color
+      const updates = {
+        ...state.copiedNet,
+        // Ensure the pin.config.color is also updated with the netColor if available
+        config: {
+          color: state.copiedNet.netColor // Use netColor for the pin color
+        }
+      };
+      
+      console.log('Pasting net to pin with updates:', updates);
+      
+      // Update the pin with the copied net info
+      const { updatePin } = get();
+      updatePin(connectorId, pinPos, updates);
+      
+      // Clear the copiedNet after pasting to exit paste mode
+      // This ensures the paste mode visual indicators are cleared
+      setTimeout(() => {
+        const { setCopiedNet } = get();
+        setCopiedNet(null);
+      }, 100); // Small delay to ensure the update completes first
+    },
+    
+    // Reset a pin to its default state (clear net information and remove connections)
+    resetPin: (connectorId: string, pinPos: number) => {
+      console.log(`Resetting pin ${connectorId}-${pinPos}`);
+      
+      const state = get();
+      
+      // Find the connector and pin
+      const connector = state.connectors.find(c => c.id === connectorId);
+      if (!connector) return;
+      
+      const pin = connector.pins.find(p => p.pos === pinPos);
+      if (!pin) return;
+      
+      // First, check if the pin has any connections
+      if (pin.connectedWireIds && pin.connectedWireIds.length > 0) {
+        // Store wire IDs that need to be removed
+        const wireIdsToRemove = [...pin.connectedWireIds];
+        
+        // For each wire, find and remove the corresponding mapping
+        wireIdsToRemove.forEach(wireId => {
+          const mapping = state.mappings.find(m => m.wireId === wireId);
+          if (mapping) {
+            // Remove the mapping using the existing removeMapping action
+            state.removeMapping(mapping.id);
+          }
+        });
+      }
+      
+      // Create an update object that clears all net-related information
+      const resetUpdates = {
+        netName: undefined,
+        netColor: undefined,
+        voltage: undefined,
+        signalType: undefined,
+        config: {
+          color: undefined // Clear the pin color
+        },
+        connectedWireIds: [] // Clear connections
+      };
+      
+      // Update the pin with the reset values
+      const { updatePin } = get();
+      updatePin(connectorId, pinPos, resetUpdates);
+    },
 
     // Mapping actions
     addMapping: (newMapping: Omit<Mapping, 'id' | 'wireId'>) => set(produce((draft: WireMapperState) => {
       console.log(`[addMapping] Start: Source=${newMapping.source.connectorId}-${newMapping.source.pinPos}, Target=${newMapping.target.connectorId}-${newMapping.target.pinPos}`);
 
-       // --- Net Merging/Creation Logic --- 
+// ... (rest of the code remains the same)
        // 1. Disconnect existing connections if pins are already mapped // <-- REMOVING THIS BEHAVIOR
        /*
         if (newMapping.source.connectorId && newMapping.source.pinPos) {

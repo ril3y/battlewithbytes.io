@@ -8,7 +8,7 @@ interface MappingListProps {
 }
 
 export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) => {
-  const { connectors, mappings, updateMapping, removeMapping } = useWireMapperStore();
+  const { connectors, mappings, updateMapping, removeMapping, focusedWireId, setFocusedWireId } = useWireMapperStore();
 
   const filteredMappings = filterConnectorId
     ? mappings.filter(m => m.source.connectorId === filterConnectorId || m.target.connectorId === filterConnectorId)
@@ -54,6 +54,7 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
   return (
     <div className="overflow-auto max-h-[300px]">
       <table className="w-full text-sm text-left text-gray-300">
+        <caption className="sr-only">Wire Mappings - Click a row to highlight that connection</caption>
         <thead className="text-xs uppercase bg-gray-800">
           <tr>
             <th className="px-3 py-2">From</th>
@@ -64,7 +65,18 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
         </thead>
         <tbody>
           {filteredMappings.map((mapping) => (
-            <tr key={mapping.id} className="border-b border-gray-800">
+            <tr 
+              key={mapping.id} 
+              className={`border-b border-gray-800 cursor-pointer ${mapping.wireId === focusedWireId ? 'bg-gray-700' : ''}`}
+              onClick={() => {
+                // Toggle focus: if already focused, clear focus; otherwise set focus
+                if (mapping.wireId === focusedWireId) {
+                  setFocusedWireId(null);
+                } else {
+                  setFocusedWireId(mapping.wireId);
+                }
+              }}
+            >
               <td className="px-3 py-2">
                 <div className="flex items-center">
                   <div 
@@ -92,12 +104,28 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
                 />
               </td>
               <td className="px-3 py-2">
-                <button
-                  onClick={() => removeMapping(mapping.id)}
-                  className="text-red-400 hover:text-red-300 text-xs"
-                >
-                  Remove
-                </button>
+                <div className="flex gap-2">
+                  {mapping.wireId === focusedWireId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent row click
+                        setFocusedWireId(null);
+                      }}
+                      className="text-green-400 hover:text-green-300 text-xs"
+                    >
+                      Show All
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent row click
+                      removeMapping(mapping.id);
+                    }}
+                    className="text-red-400 hover:text-red-300 text-xs"
+                  >
+                    Remove
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

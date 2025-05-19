@@ -1,21 +1,26 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { ContextMenuOption } from '../types';
+import './context-menu.css';
 
 interface ContextMenuProps {
   x: number;
   y: number;
-  options: { label: string; action: () => void; danger?: boolean }[];
+  options: ContextMenuOption[];
   onClose: () => void;
+  // Optional: To adjust menu position if it overflows viewport
+  // We can add more sophisticated viewport collision detection later if needed
+  containerRef?: React.RefObject<HTMLElement | null>; 
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose, containerRef }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Close menu when clicking outside
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
@@ -26,33 +31,70 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose
     };
   }, [onClose]);
 
-  // Adjust position if menu would overflow viewport
-  const position = {
-    left: Math.min(x, window.innerWidth - 180), // 180px = approximate menu width
-    top: Math.min(y, window.innerHeight - options.length * 40) // 40px per option
-  };
+  let adjustedX = x;
+  let adjustedY = y;
 
-  return (
+  // Basic viewport collision adjustment
+  if (menuRef.current) {
+    const menuRect = menuRef.current.getBoundingClientRect();
+    const container = containerRef?.current ?? document.documentElement; // Use documentElement as fallback
+    const containerRect = container.getBoundingClientRect();
+
+    // Adjust X if menu overflows right edge of container
+    if (x + menuRect.width > containerRect.right) {
+      adjustedX = containerRect.right - menuRect.width - 5; // 5px buffer
+    }
+    // Adjust X if menu overflows left edge of container (less common for context menus)
+    if (x < containerRect.left) {
+      adjustedX = containerRect.left + 5; // 5px buffer
+    }
+
+    // Adjust Y if menu overflows bottom edge of container
+    if (y + menuRect.height > containerRect.bottom) {
+      adjustedY = containerRect.bottom - menuRect.height - 5; // 5px buffer
+    }
+    // Adjust Y if menu overflows top edge of container
+    if (y < containerRect.top) {
+      adjustedY = containerRect.top + 5; // 5px buffer
+    }
+  }
+
+  const menuContent = (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-gray-950 border border-gray-800 shadow-lg rounded overflow-hidden"
-      style={{ ...position }}
+      className="context-menu-container"
+      style={{
+        top: `${adjustedY}px`,
+        left: `${adjustedX}px`,
+      }}
+      // Prevent context menu from triggering another context menu if right-clicked on itself
+      onContextMenu={(e) => e.preventDefault()} 
     >
-      <div className="py-1">
-        {options.map((option, i) => (
-          <div
-            key={i}
-            className={`px-4 py-2 font-mono text-sm cursor-pointer hover:bg-gray-800 
-              ${option.danger ? 'text-red-500' : 'text-green-400'}`}
-            onClick={() => {
-              option.action();
-              onClose();
-            }}
-          >
-            {option.label}
-          </div>
+      <ul className="context-menu-list">
+        {options.map((option, index) => (
+          <li key={index}>
+            <button
+              type="button"
+              className={`context-menu-option ${
+                option.danger ? 'danger' : ''
+              } ${option.disabled ? 'disabled' : ''}`}
+              onClick={() => {
+                if (!option.disabled) {
+                  option.action();
+                  onClose(); // Close menu after action
+                }
+              }}
+              disabled={option.disabled}
+            >
+              {option.label}
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
+  
+  // Use createPortal to render the menu directly to document.body
+  // This prevents any positioning or z-index issues within the React Flow canvas
+  return createPortal(menuContent, document.body);
 };

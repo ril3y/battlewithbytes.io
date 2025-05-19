@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { ReactFlowProvider } from 'reactflow';
 import { useWireMapperStore } from '../store/useWireMapperStore';
 import { WireMapperProject, Connector } from '../types';
 
@@ -167,7 +168,9 @@ export const WireMapper: React.FC = () => {
               </button>
             </div>
           ) : (
-            <ConnectorCanvas />
+            <ReactFlowProvider>
+              <ConnectorCanvas />
+            </ReactFlowProvider>
           )}
         </div>
 

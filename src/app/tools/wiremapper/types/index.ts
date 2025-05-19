@@ -14,6 +14,7 @@ export interface Pin {
   row?: number;       // Row index (0-based) within the connector grid (optional)
   col?: number;       // Column index (0-based) within the connector grid (optional)
   netName?: string;    // Optional: Name of the electrical net this pin belongs to
+  netColor?: string;   // Optional: Color associated with the net
   desc?: string;       // Optional: User-defined description for the pin
   voltage?: string | number; // Optional: Voltage level (e.g., 5, 3.3, '5V')
   signalType?: string; // Optional: Type of signal (e.g., 'Analog', 'Digital', 'PWM')
@@ -191,3 +192,15 @@ export type PinIdentifier = {
   connectorId: string;
   pinPos: number;
 };
+
+export interface ContextMenuOption {
+  label: string;
+  action: () => void;
+  danger?: boolean;
+  disabled?: boolean; // Added for enabling/disabling options
+}
+
+export interface Net {
+  id: string; // Unique identifier for the net
+  // Add other net properties here
+}
