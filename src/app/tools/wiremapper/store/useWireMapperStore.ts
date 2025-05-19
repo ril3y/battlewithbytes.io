@@ -542,31 +542,34 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
         // Deep copy config, ensuring it's an object even if originalConnector.config was undefined.
         config: originalConnector.config ? JSON.parse(JSON.stringify(originalConnector.config)) : {},
 
+        // Create new pins based on original pins, but with new IDs and preserving all data properties
         pins: originalConnector.pins.map(originalPin => {
-          // Deep copy only the core properties of the pin
-          // Don't copy anything connection-related
           return {
-            id: nanoid(),                  // CRITICAL: New unique ID for the new pin
-            pos: originalPin.pos,         // Keep position index
-            name: originalPin.name,       // Keep name
-            desc: originalPin.desc,       // Keep description if any
-            visible: originalPin.visible, // Keep visibility
+            // Required properties
+            id: nanoid(),                  // New unique ID for the new pin
+            index: originalPin.index,     // Copy original index
+            pos: originalPin.pos,         // Copy position index
+            name: originalPin.name,       // Copy name
+            x: originalPin.x,             // Copy x position
+            y: originalPin.y,             // Copy y position
+            connectedWireIds: [],         // Reset connections (don't copy) 
+            config: originalPin.config ? JSON.parse(JSON.stringify(originalPin.config)) : {}, // Deep clone config
+            active: originalPin.active,   // Copy active state
             
-            // Deep copy the pin configuration (color, type, etc.)
-            config: originalPin.config ? JSON.parse(JSON.stringify(originalPin.config)) : {},
+            // Copy optional properties if they exist
+            ...(originalPin.number !== undefined && { number: originalPin.number }),
+            ...(originalPin.visible !== undefined && { visible: originalPin.visible }),
+            ...(originalPin.row !== undefined && { row: originalPin.row }),
+            ...(originalPin.col !== undefined && { col: originalPin.col }),
             
-            // Reset all connection-related properties
-            connectedWireIds: [],         // No connections
-            netName: undefined,           // No net name
-            netColor: undefined,          // No net color
-            voltage: undefined,           // No voltage info
-            signalType: undefined,        // No signal type
-            
-            // Copy other non-connection properties if needed
-            x: originalPin.x,
-            y: originalPin.y,
+            // Copy net-related properties
+            ...(originalPin.netName !== undefined && { netName: originalPin.netName }),
+            ...(originalPin.netColor !== undefined && { netColor: originalPin.netColor }),
+            ...(originalPin.desc !== undefined && { desc: originalPin.desc }),
+            ...(originalPin.voltage !== undefined && { voltage: originalPin.voltage }),
+            ...(originalPin.signalType !== undefined && { signalType: originalPin.signalType })
           };
-        }),
+        })
       };
 
       return {

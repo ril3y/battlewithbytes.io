@@ -9,6 +9,14 @@
         "Vds_max": "55V",
         "Vgs_max": "20V"
       },
+      "BSS138": {
+        "vth": 0.8,
+        "rds_on": 3.5,
+        "Id": "220mA",
+        "P_max": "360mW",
+        "Vds_max": "50V",
+        "Vgs_max": "20V"
+      },
       "2N7002K": {
         "vth": 0.8,
         "rds_on": 3.5,

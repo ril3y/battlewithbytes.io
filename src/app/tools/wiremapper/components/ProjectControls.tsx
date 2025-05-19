@@ -3,13 +3,14 @@
 import React from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
 import { WireMapperProject } from '../types';
+import { openPrintView } from '../utils/printUtils';
 
 interface ProjectControlsProps {
   onNewConnector: () => void;
 }
 
 export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector }) => {
-  const { projectName, setProjectName, saveProject, loadProject, clearProject } = useWireMapperStore();
+  const { projectName, setProjectName, saveProject, loadProject, clearProject, connectors, mappings } = useWireMapperStore();
 
   const handleExport = () => {
     const projectData = saveProject();
@@ -95,6 +96,13 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
             className="hidden"
           />
         </label>
+        
+        <button
+          onClick={() => openPrintView(connectors, mappings)}
+          className="px-3 py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition"
+        >
+          Print
+        </button>
         
         <button
           onClick={handleClearProject}

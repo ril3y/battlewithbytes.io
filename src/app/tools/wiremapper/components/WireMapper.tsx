@@ -14,10 +14,16 @@ import { MappingList } from './MappingList';
 import { ProjectControls } from './ProjectControls';
 import { PinDetail } from './PinDetail';
 import { Modal } from './Modal';
+import { WiringDiagramPreview } from './WiringDiagramPreview';
+import { TableView } from './TableView';
+
+// View mode types
+type ViewMode = 'canvas' | 'diagram' | 'table';
 
 export const WireMapper: React.FC = () => {
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingConnector, setEditingConnector] = useState<Connector | null>(null); // State for connector being edited
+  const [viewMode, setViewMode] = useState<ViewMode>('canvas'); // Default to canvas view
 
   const { 
     projectName, 
@@ -116,45 +122,75 @@ export const WireMapper: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Canvas area - Main workspace */}
-        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 h-[850px] overflow-hidden">
+        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 h-[850px] overflow-hidden flex flex-col">
           {/* Control toolbar */}
           {connectors.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3 border-b border-gray-800 pb-3">
-              {/* Wire Visibility Toggle */}
-              <button
-                onClick={() => updateSettings({ showWires: !settings.showWires })}
-                className={`px-3 py-1 rounded text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
-                title="Toggle wire visibility"
-              >
-                {settings.showWires ? 'Hide Wires' : 'Show Wires'}
-              </button>
+              {/* View Mode Toggles - Always show first */}
+              <div className="flex mr-4 border-r border-gray-700 pr-3">
+                <button
+                  onClick={() => setViewMode('canvas')}
+                  className={`px-3 py-1 rounded-l text-sm ${viewMode === 'canvas' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  title="Interactive Canvas View"
+                >
+                  Canvas View
+                </button>
+                <button
+                  onClick={() => setViewMode('diagram')}
+                  className={`px-3 py-1 text-sm ${viewMode === 'diagram' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  title="Documentation-style Wiring Diagram"
+                >
+                  Wiring Diagram
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1 rounded-r text-sm ${viewMode === 'table' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  title="Table View of Connections"
+                >
+                  Table View
+                </button>
+              </div>
               
-              {/* Grid Toggle */}
-              <button
-                onClick={() => updateSettings({ showGrid: !settings.showGrid })}
-                className={`px-3 py-1 rounded text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
-                title="Toggle grid visibility"
-              >
-                {settings.showGrid ? 'Hide Grid' : 'Show Grid'}
-              </button>
-              
-              {/* Snap to Grid Toggle */}
-              <button
-                onClick={() => updateSettings({ snapToGrid: !settings.snapToGrid })}
-                className={`px-3 py-1 rounded text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
-                title="Toggle snap to grid"
-              >
-                {settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}
-              </button>
-              
-              {/* Simplify Connections Toggle */}
-              <button
-                onClick={() => updateSettings({ simplifyConnections: !settings.simplifyConnections })}
-                className={`px-3 py-1 rounded text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
-                title="Toggle animated connections"
-              >
-                {settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}
-              </button>
+              {/* Only show these controls in canvas view */}
+              {viewMode === 'canvas' && (
+                <>
+                  {/* Wire Visibility Toggle */}
+                  <button
+                    onClick={() => updateSettings({ showWires: !settings.showWires })}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    title="Toggle wire visibility"
+                  >
+                    {settings.showWires ? 'Hide Wires' : 'Show Wires'}
+                  </button>
+                  
+                  {/* Grid Toggle */}
+                  <button
+                    onClick={() => updateSettings({ showGrid: !settings.showGrid })}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    title="Toggle grid visibility"
+                  >
+                    {settings.showGrid ? 'Hide Grid' : 'Show Grid'}
+                  </button>
+                  
+                  {/* Snap to Grid Toggle */}
+                  <button
+                    onClick={() => updateSettings({ snapToGrid: !settings.snapToGrid })}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    title="Toggle snap to grid"
+                  >
+                    {settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}
+                  </button>
+                  
+                  {/* Simplify Connections Toggle */}
+                  <button
+                    onClick={() => updateSettings({ simplifyConnections: !settings.simplifyConnections })}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    title="Toggle animated connections"
+                  >
+                    {settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}
+                  </button>
+                </>
+              )}
             </div>
           )}
           {connectors.length === 0 ? (
@@ -167,61 +203,47 @@ export const WireMapper: React.FC = () => {
                 Add Connector
               </button>
             </div>
-          ) : (
-            <ReactFlowProvider>
-              <ConnectorCanvas />
-            </ReactFlowProvider>
-          )}
+          ) : viewMode === 'canvas' ? (
+            <div className="flex-grow min-h-0">
+              <ReactFlowProvider>
+                <ConnectorCanvas />
+              </ReactFlowProvider>
+            </div>
+          ) : viewMode === 'diagram' ? (
+            <div className="flex-grow min-h-0"> 
+              <WiringDiagramPreview /> 
+            </div>
+          ) : viewMode === 'table' ? (
+            <div className="flex-grow min-h-0"> 
+              <TableView /> 
+            </div>
+          ) : null}
         </div>
 
-        {/* Details panel */}
-        <div className="bg-gray-950 border border-gray-800 rounded-lg p-4 h-[700px] overflow-auto">
-          {selectedPin ? (
-            // Show Pin Detail if a pin is selected
-            <div className="mb-6">
-              <h3 className="text-green-400 font-mono text-lg mb-2">
-                Pin Detail
-              </h3>
-              <PinDetail />
-            </div>
-          ) : selectedConnector ? (
-            // Show Connector Detail if a connector is selected (and no pin is)
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-green-400 font-mono text-lg">
-                  Connector Detail
-                </h3>
-                <button
-                  onClick={() => handleEditConnector(selectedConnector)} // Call edit handler
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors"
-                >
-                  Edit
-                </button>
-              </div>
-              <ConnectorDetail 
-                connector={selectedConnector} 
-                onEdit={() => handleEditConnector(selectedConnector)} 
-              />
-            </div>
-          ) : (
-            // Show placeholder if nothing is selected
-             <div className="mb-6">
-               <h3 className="text-green-400 font-mono text-lg mb-2">
-                 Details
-               </h3>
-               <p className="text-gray-500">
-                 Select a connector or pin to view details
-               </p>
-             </div>
-          )}
+        {/* Right sidebar - Details and Mappings */}
+        <div className="md:col-span-1 bg-gray-950 border border-gray-800 rounded-lg flex flex-col overflow-hidden h-[850px]"> {/* Ensure this is a flex column and manages overflow, matches canvas height */}
+          {/* Details Section */}
+          <div className="p-4"> {/* Add padding here for Details content */}
+            <h3 className="text-lg font-semibold text-green-400 mb-3">Details</h3>
+            {selectedPin ? (
+              <PinDetail /> // Reverted: PinDetail likely gets selectedPin from store
+            ) : selectedConnector ? (
+              <ConnectorDetail connector={selectedConnector} onEdit={() => handleEditConnector(selectedConnector!)} /> // Pass callback correctly
+            ) : (
+              <p className="text-gray-500 text-sm">Select a connector or pin to view details</p>
+            )}
+          </div>
 
-          {/* Mappings list - always show if mappings exist */} 
-          {mappings.length > 0 && (
-            <div>
-              <h3 className="text-green-400 font-mono text-lg mb-2">Wire Mappings</h3>
-              <MappingList filterConnectorId={selectedConnectorId} />
+          {/* Separator Line - Optional visual cue */}
+          <hr className="border-gray-700 mx-4" />
+
+          {/* Wire Mappings Section - Takes remaining space and handles its own scrolling via MappingList */}
+          <div className="flex flex-col flex-grow min-h-0"> {/* This container will grow */}
+            <h3 className="text-lg font-semibold text-green-400 pt-4 px-4 mb-3">Wire Mappings</h3> {/* Padding for title */}
+            <div className="flex-grow min-h-0 px-4 pb-4"> {/* This div contains MappingList and allows it to take full height and scroll */}
+              <MappingList filterConnectorId={selectedConnectorId} /> 
             </div>
-          )}
+          </div>
         </div>
       </div>
 
