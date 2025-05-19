@@ -8,7 +8,7 @@ import '../wiremapper.css'; // Import the CSS file
 
 const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) => {
   // Use default rows/cols from data, but calculate dimensions based on them
-  const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type, rotation = 0 } = data;
+  const { name, rows = 1, cols = 1, pins: allPins = [], config = {}, shape, gender, type } = data;
   const selectedPin = useWireMapperStore(state => state.selectedPin);
   const [hoveredPin, setHoveredPin] = useState<number | null>(null);
   const centerPins = config.centerPinsHorizontally ?? false; // Default to false if not set
@@ -16,10 +16,20 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
   const isPinConnected = useWireMapperStore(state => state.isPinConnected);
   const settings = useWireMapperStore(state => state.settings);
   const setSelectedPin = useWireMapperStore((state) => state.setSelectedPin);
+  const setSelectedConnectorId = useWireMapperStore((state) => state.setSelectedConnectorId);
 
   const handlePinClick = (pinPos: number) => {
     console.log(`[Node ${id}] Pin ${pinPos} clicked`);
     setSelectedPin(id, pinPos); 
+  };
+
+  const handleConnectorClick = (e: React.MouseEvent) => {
+    // Stop event from propagating to prevent double-handling
+    e.stopPropagation();
+    
+    // Set the selected connector ID in the store
+    console.log('ConnectorNode direct click handler fired for:', id);
+    setSelectedConnectorId(id);
   };
 
   console.log('ConnectorNode:', id, 'data props -> rows:', rows, 'cols:', cols, 'name:', name);
@@ -67,8 +77,8 @@ const ConnectorNode: React.FC<NodeProps<Connector>> = ({ data, id, selected }) =
       style={{
         width: `${calculatedWidth}px`,
         height: `${calculatedHeight}px`,
-        transform: `rotate(${rotation}deg)`,
       }}
+      onClick={handleConnectorClick} // Add direct click handler
     >
       {name && (
         <div

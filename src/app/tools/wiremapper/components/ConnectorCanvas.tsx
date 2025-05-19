@@ -19,22 +19,22 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import ContextMenu from './ContextMenu'; // Use default import
+import { ContextMenu } from './ContextMenu';
 // Import our WireMapper CSS explicitly (even though it may be imported elsewhere)
 import '../wiremapper.css';
 import { Connector as ConnectorType, Pin, Mapping, WireMapperSettings } from '../types';
 import type { PinIdentifier } from '../types';
 import ConnectorNode from './ConnectorNode';
 
-// Define the shape of context menu options for clarity (Restored)
+// Define the node types for React Flow
+const nodeTypes = { connectorNode: ConnectorNode };
+
+// Define the shape of context menu options for clarity
 interface ContextMenuOption {
   label: string;
   action: () => void;
   danger?: boolean;
 }
-
-// Define the node types for React Flow
-const nodeTypes = { connectorNode: ConnectorNode };
 
 const ConnectorCanvas: React.FC = () => {
   const {
@@ -42,19 +42,14 @@ const ConnectorCanvas: React.FC = () => {
     mappings,
     addMapping,
     updateConnectorPosition,
-    rotateConnector, // Add rotateConnector here
     settings,
     setSelectedConnectorId,
     setSelectedPin,
     removeConnector,
-    selectedConnectorId, // Add selectedConnectorId here
   } = useWireMapperStore();
 
   // Ref for the flow container
   const flowContainerRef = useRef<HTMLDivElement>(null);
-
-  // Ref for the ContextMenu component
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // React Flow state hooks
   const [nodes, setNodes, onNodesChange] = useNodesState<ConnectorType>([]);
@@ -63,50 +58,6 @@ const ConnectorCanvas: React.FC = () => {
   // State for context menu
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; options: ContextMenuOption[]; nodeId?: string } | null>(null);
 
-  // Effect to handle clicks outside the context menu
-  useEffect(() => {
-    // Only add listener if menu is open
-    if (!contextMenu) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // If the menu exists and the click is outside the menu element
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        closeContextMenu();
-      }
-    };
-
-    // Add listener on mount
-    document.addEventListener('mousedown', handleClickOutside);
-
-    // Cleanup listener on unmount or when menu closes
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [contextMenu]); // Re-run effect when contextMenu state changes
-
-  // Effect for 'R' key to rotate selected node
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const targetElement = event.target as HTMLElement;
-      // Ignore if typing in an input, textarea, or select
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(targetElement.tagName)) {
-        return;
-      }
-
-      if ((event.key === 'r' || event.key === 'R') && selectedConnectorId) {
-        event.preventDefault(); // Prevent default browser action if any
-        rotateConnector(selectedConnectorId);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [rotateConnector, selectedConnectorId]); // Add dependencies
-
   // Effect to transform store connectors into React Flow nodes
   useEffect(() => {
     const rfNodes: ReactFlowNode<ConnectorType>[] = connectors.map((connector) => ({
@@ -114,7 +65,8 @@ const ConnectorCanvas: React.FC = () => {
       type: 'connectorNode',
       position: { x: connector.x || 0, y: connector.y || 0 },
       data: connector,
-      dragHandle: '.connector-drag-handle',
+      // dragHandle: '.connector-drag-handle', // Removed for testing
+      // style: { zIndex: 10 } // Reverted zIndex change
     }));
     setNodes(rfNodes);
   }, [connectors, setNodes]);
@@ -192,7 +144,7 @@ const ConnectorCanvas: React.FC = () => {
   // Callback when a node is clicked
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode<ConnectorType>) => {
-      console.log('[Canvas] Node clicked:', node.id);
+      console.log('!!!!!! [Canvas] Node clicked EVENT FIRED:', node.id);
       setSelectedConnectorId(node.id);
       setSelectedPin(null, null);
     },
@@ -202,37 +154,8 @@ const ConnectorCanvas: React.FC = () => {
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: ReactFlowNode<ConnectorType>) => {
       event.preventDefault(); // Ensure this is first
-      event.stopPropagation();
-      setSelectedConnectorId(node.id); // Select the node on right-click
-
-      const options: ContextMenuOption[] = [
-        {
-          label: 'Properties',
-          action: () => {
-            console.log('Properties for:', node.data.name);
-            // TODO: Implement properties panel or modal
-            closeContextMenu();
-          },
-        },
-        {
-          label: 'Rotate [R]',
-          action: () => {
-            rotateConnector(node.id);
-            closeContextMenu();
-          },
-        },
-        {
-          label: 'Delete',
-          action: () => {
-            removeConnector(node.id);
-            closeContextMenu();
-          },
-          danger: true,
-        },
-      ];
-
-      // Calculate menu position
       if (!flowContainerRef.current) return;
+      const { duplicateConnector, removeConnector } = useWireMapperStore.getState(); // Get duplicateConnector
       const containerRect = flowContainerRef.current.getBoundingClientRect();
       const menuX = event.clientX - containerRect.left;
       const menuY = event.clientY - containerRect.top;
@@ -242,16 +165,28 @@ const ConnectorCanvas: React.FC = () => {
         x: menuX,
         y: menuY,
         nodeId: node.id,
-        options,
+        options: [
+          { label: `Duplicate '${node.data.name || node.id}'`, action: () => { duplicateConnector(node.id); closeContextMenu(); } },
+          { label: `Delete '${node.data.name || node.id}'`, action: () => { console.log(`Attempting to delete node: ${node.id}`); removeConnector(node.id); closeContextMenu(); }, danger: true },
+          { label: 'Properties', action: () => { console.log(`Properties for node: ${node.id}`); closeContextMenu(); } },
+        ],
       });
     },
-    [removeConnector, rotateConnector]
+    [removeConnector] // Added removeConnector to dependencies, duplicateConnector is stable from getState
   );
 
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault(); // Ensure this is first
     console.log('[Canvas] handlePaneContextMenu Fired! Attempting to prevent default.'); // Adjusted log
   }, []); // Empty dependencies for now
+
+  const handlePaneClick = useCallback((event: React.MouseEvent) => {
+    console.log('!!!!!! [Canvas] PANE CLICKED EVENT FIRED', event);
+    // Optionally, you might want to clear selections here if that's desired UX
+    // setSelectedConnectorId(null);
+    // setSelectedPin(null, null);
+    closeContextMenu(); // Close context menu if open
+  }, []);
 
   const closeContextMenu = () => {
     setContextMenu(null);
@@ -275,8 +210,10 @@ const ConnectorCanvas: React.FC = () => {
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onNodeContextMenu={handleNodeContextMenu} // Still needed for node-specific menu
+        onPaneClick={handlePaneClick} // Added for testing pane clicks
         onPaneContextMenu={handlePaneContextMenu} // Kept, to see if React Flow calls it
         nodeTypes={nodeTypes}
+        elementsSelectable={true} // Explicitly set
         connectionMode={ConnectionMode.Loose}
         connectionLineStyle={{
           stroke: 'var(--accent-primary)',
@@ -307,7 +244,6 @@ const ConnectorCanvas: React.FC = () => {
       </ReactFlow>
       {contextMenu && (
         <ContextMenu
-          ref={menuRef} // Attach the ref here
           x={contextMenu.x}
           y={contextMenu.y}
           options={contextMenu.options}

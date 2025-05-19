@@ -31,6 +31,16 @@ export const WireMapper: React.FC = () => {
     setMode, // Add setMode action
   } = useWireMapperStore();
 
+  const selectedConnector = useMemo(() => 
+    connectors.find(c => c.id === selectedConnectorId), 
+    [connectors, selectedConnectorId]
+  );
+
+  // Log state values on re-render
+  console.log('[WireMapper] Rendering. selectedConnectorId:', selectedConnectorId);
+  console.log('[WireMapper] Rendering. selectedPin (object):', JSON.stringify(selectedPin));
+  console.log('[WireMapper] Rendering. derived selectedConnector (object):', selectedConnector ? selectedConnector.id : null, selectedConnector);
+
   // Load from localStorage on mount if available
   useEffect(() => {
     try {
@@ -73,12 +83,6 @@ export const WireMapper: React.FC = () => {
       console.error('Failed to save settings to localStorage:', error);
     }
   }, [settings]);
-
-  // Find the selected connector object
-  const selectedConnector = useMemo(() => 
-    connectors.find(c => c.id === selectedConnectorId), 
-    [connectors, selectedConnectorId]
-  );
 
   // Callback for ProjectControls to open builder for NEW connector
   const handleNewConnector = () => {
@@ -160,14 +164,6 @@ export const WireMapper: React.FC = () => {
                 className="bg-gray-800 text-green-400 px-4 py-2 rounded hover:bg-gray-700 transition"
               >
                 Add Connector
-              </button>
-              {/* TODO: Reimplement this button for Show/Hide Wires */}
-              <button 
-                // onClick={...} // Needs new handler
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded shadow-md transition-colors disabled:opacity-50"
-                disabled // Disable until functionality is added
-              >
-                Show / Hide Wires
               </button>
             </div>
           ) : (

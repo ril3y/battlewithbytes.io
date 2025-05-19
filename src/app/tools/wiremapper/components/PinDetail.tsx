@@ -5,29 +5,83 @@ import { useWireMapperStore } from '../store/useWireMapperStore';
 import { Pin } from '../types';
 import debounce from 'lodash.debounce';
 
+interface LocalPinData extends Pin {
+  connectorId: string;
+  originalPos: number; // To track if the viewed pin identity changes
+}
+
 export const PinDetail: React.FC = () => {
   const { connectors, selectedPin, updatePinDetailsAndNet, setSelectedPin } = useWireMapperStore();
-  const [pinData, setPinData] = useState<Pin | null>(null);
+  const [pinData, setPinData] = useState<LocalPinData | null>(null);
 
   useEffect(() => {
-    // Guard against null selectedPin first
-    if (!selectedPin) {
+    if (!selectedPin || !selectedPin.connectorId || selectedPin.pinPos === null) {
       setPinData(null);
       return;
     }
-    // Perform null check first
-    if (!selectedPin.connectorId || selectedPin.pinPos === null) {
-      setPinData(null);
+
+    const storeConnector = connectors.find(c => c.id === selectedPin.connectorId);
+    const storePin = storeConnector?.pins.find(p => p.pos === selectedPin.pinPos);
+
+    if (!storePin) {
+      setPinData(null); 
       return;
     }
-    const connector = connectors.find(c => c.id === selectedPin.connectorId);
-    const pin = connector?.pins.find(p => p.pos === selectedPin.pinPos);
-    if (pin) {
-      setPinData({ ...pin, config: pin.config ?? {} });
+
+    // If selectedPin identity changes, or if pinData is null (initial load for current selection)
+    if (!pinData || pinData.connectorId !== selectedPin.connectorId || pinData.originalPos !== selectedPin.pinPos) {
+      setPinData({
+        ...storePin,
+        connectorId: selectedPin.connectorId,
+        originalPos: selectedPin.pinPos,
+        config: storePin.config ?? {},
+      });
     } else {
-      setPinData(null);
+      // Pin identity is the same, pinData is populated. Compare and merge carefully.
+      const activeElement = document.activeElement as HTMLElement;
+      const focusedInputName = (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) 
+                              ? (activeElement as HTMLInputElement).name 
+                              : null;
+
+      let newPinData = { ...pinData }; // Start with current local state
+      let needsUpdate = false;
+
+      // Fields to check for updates from storePin
+      const fieldsToSync: (keyof Pin)[] = ['name', 'netName', 'desc', 'voltage', 'signalType'];
+
+      fieldsToSync.forEach(field => {
+        const storeValue = storePin[field];
+        const localValue = pinData[field];
+        // Use a more robust check for undefined/null vs empty string if needed
+        const normalizedStoreValue = storeValue === undefined || storeValue === null ? "" : storeValue;
+        const normalizedLocalValue = localValue === undefined || localValue === null ? "" : localValue;
+
+        if (normalizedStoreValue !== normalizedLocalValue) {
+          if (focusedInputName !== field) { // Only update if this specific field is NOT focused
+            newPinData = { ...newPinData, [field]: storeValue };
+            needsUpdate = true;
+          }
+        }
+      });
+
+      // Sync color (from config)
+      const storeColor = storePin.config?.color;
+      const localColor = pinData.config?.color;
+      if (storeColor !== localColor) {
+        if (focusedInputName !== 'color') { // Assuming color input is named 'color'
+          newPinData.config = { ...newPinData.config, color: storeColor };
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        setPinData(newPinData);
+      }
     }
-  }, [selectedPin, connectors]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPin, connectors]); // pinData is intentionally omitted from deps here to prevent potential update loops 
+                                 // and to give local typing precedence. The logic above handles merging from `connectors` 
+                                 // when `selectedPin` itself hasn't changed identity.
 
   const debouncedUpdatePin = useCallback(
     debounce((connectorId: string, pinPos: number, updates: Partial<Pin>) => {
@@ -43,43 +97,33 @@ export const PinDetail: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    // Guard against null selectedPin
-    if (!selectedPin) return;
+    if (!pinData || !selectedPin) return; 
     setPinData(prev => {
       if (!prev) return null;
       const updatedPin = { ...prev, [name]: value };
-      if (selectedPin.connectorId && selectedPin.pinPos !== null) {
-        debouncedUpdatePin(selectedPin.connectorId, selectedPin.pinPos, { [name]: value });
-      }
+      debouncedUpdatePin(prev.connectorId, prev.originalPos, { [name]: value });
       return updatedPin;
     });
   };
 
   const handleColorTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    // Guard against null selectedPin
-    if (!selectedPin) return;
+    if (!pinData || !selectedPin) return;
     setPinData(prev => {
       if (!prev) return null;
       const updatedPin = { ...prev, config: { ...prev.config, color: value } };
-      if (selectedPin.connectorId && selectedPin.pinPos !== null) {
-        debouncedUpdatePin(selectedPin.connectorId, selectedPin.pinPos, { config: { color: value } });
-      }
+      debouncedUpdatePin(prev.connectorId, prev.originalPos, { config: { color: value } });
       return updatedPin;
     });
   };
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    // Guard against null selectedPin
-    if (!selectedPin) return;
+    if (!pinData || !selectedPin) return;
     setPinData(prev => {
       if (!prev) return null;
       const updatedPin = { ...prev, config: { ...prev.config, color: value } };
-      if (selectedPin.connectorId && selectedPin.pinPos !== null) {
-        // Use debounced update for consistency with other fields
-        debouncedUpdatePin(selectedPin.connectorId, selectedPin.pinPos, { config: { color: value } });
-      }
+      debouncedUpdatePin(prev.connectorId, prev.originalPos, { config: { color: value } });
       return updatedPin;
     });
   };

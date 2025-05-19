@@ -175,9 +175,10 @@ interface WireMapperState {
   addConnector: (connectorData: Omit<Connector, 'id'>) => string;
   updateConnector: (id: string, updates: Partial<Connector>) => void;
   removeConnector: (id: string) => void;
+  duplicateConnector: (connectorId: string) => void; // Added duplicateConnector
   setSelectedConnector: (connectorId: string | null) => void;
   updateConnectorPosition: (id: string, x: number, y: number) => void;
-  rotateConnector: (id: string) => void;
+  rotateConnector: (id: string, rotation: number) => void;
   
   // Pin actions
   updatePin: (connectorId: string, pinPos: number, updates: Partial<Pin>) => void;
@@ -489,9 +490,63 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
       };
     }),
     
-    setSelectedConnector: (connectorId: string | null) => set({
-      selectedConnectorId: connectorId,
-      selectedPin: null, // Deselect pin when selecting a connector
+    duplicateConnector: (connectorId: string) => set((state: WireMapperState) => {
+      const originalConnector = state.connectors.find(c => c.id === connectorId);
+      if (!originalConnector) {
+        console.error(`[Store] Connector not found for duplication: ${connectorId}`);
+        return state; // Return current state if connector not found
+      }
+
+      // Generate a new name for the duplicated connector
+      let newName = `${originalConnector.name}-copy`;
+      let counter = 2;
+      const existingNames = state.connectors.map(c => c.name);
+      while (existingNames.includes(newName)) {
+        newName = `${originalConnector.name}-copy-${counter}`;
+        counter++;
+      }
+
+      const newConnector: Connector = {
+        // Deep copy all properties from the original connector as a base.
+        // This includes width, height, shape, type, gender, metadata, etc.
+        ...(JSON.parse(JSON.stringify(originalConnector))),
+        
+        // Override specific properties for the new duplicated connector
+        id: nanoid(), // New unique ID for the connector itself
+        name: newName,
+        x: (originalConnector.x ?? 0) + 30, // Ensure x/y are numbers before adding offset, default to 0 if undefined
+        y: (originalConnector.y ?? 0) + 30,
+        
+        // Explicitly ensure rows and cols are carried over or defaulted to 1.
+        // ConnectorNode.tsx also defaults these to 1 if undefined.
+        rows: originalConnector.rows ?? 1,
+        cols: originalConnector.cols ?? 1,
+
+        // Deep copy config, ensuring it's an object even if originalConnector.config was undefined.
+        config: originalConnector.config ? JSON.parse(JSON.stringify(originalConnector.config)) : {},
+
+        pins: originalConnector.pins.map(originalPin => {
+          // Deep copy the original pin's properties first.
+          const newPinContents = JSON.parse(JSON.stringify(originalPin));
+          return {
+            ...newPinContents, // Spreads originalPin.row, .col, .name, .desc, .config, etc.
+            id: nanoid(),      // CRITICAL: New unique ID for the new pin.
+            connectedWireIds: [], // Duplicated pins start with no connections.
+            netName: undefined,   // Clear net-specific data for the new pin.
+          };
+        }),
+      };
+
+      return {
+        connectors: [...state.connectors, newConnector],
+      };
+    }),
+    
+    setSelectedConnector: (connectorId: string | null) => set((state) => {
+      return {
+        selectedConnectorId: connectorId,
+        selectedPin: null, // Deselect pin when selecting a connector
+      };
     }),
     
     updateConnectorPosition: (id: string, x: number, y: number) => set((state: WireMapperState) => ({
@@ -505,17 +560,11 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
       )
     })),
     
-    rotateConnector: (id: string) => set((state) => {
-      const connectors = state.connectors.map((connector) => {
-        if (connector.id === id) {
-          const currentRotation = connector.rotation || 0;
-          const newRotation = (currentRotation + 90) % 360;
-          return { ...connector, rotation: newRotation };
-        }
-        return connector;
-      });
-      return { connectors };
-    }),
+    rotateConnector: (id: string, rotation: number) => set((state: WireMapperState) => ({
+      connectors: state.connectors.map((c: Connector) => 
+        c.id === id ? { ...c, rotation } : c
+      )
+    })),
     
     // Pin actions
     updatePin: (connectorId: string, pinPos: number, updates: Partial<Pin>) => set((state: WireMapperState) => ({
