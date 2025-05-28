@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 
 // Basic form components with proper TypeScript types
 
@@ -70,7 +70,7 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
     const initialSchema = initialRenderer?.getConfigurationSchema() ?? {};
     const initialConfig = getDefaultConfigFromSchema(initialSchema);
     return {
-      id: uuidv4(),
+      id: nanoid(),
       name: '',
       type: '',
       gender: 'Unknown',
