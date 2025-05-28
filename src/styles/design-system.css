@@ -1,0 +1,115 @@
+/* Battle With Bytes Design System */
+
+:root {
+  /* Colors */
+  --color-primary: #00ff9d;
+  --color-primary-dark: #00cc7d;
+  --color-primary-light: #33ffa8;
+  
+  --color-secondary: #8b5cf6;
+  --color-secondary-dark: #7c3aed;
+  --color-secondary-light: #a78bfa;
+  
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
+  --color-info: #3b82f6;
+  
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  
+  /* Background colors */
+  --bg-primary: #000000;
+  --bg-secondary: rgba(0, 0, 0, 0.8);
+  --bg-tertiary: rgba(0, 0, 0, 0.5);
+  --bg-card: rgba(0, 0, 0, 0.5);
+  --bg-input: rgba(0, 0, 0, 0.3);
+  
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --text-muted: #9ca3af;
+  --text-accent: var(--color-primary);
+  
+  /* Border colors */
+  --border-primary: #374151;
+  --border-secondary: #1f2937;
+  --border-accent: var(--color-primary);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 10px rgba(0, 255, 157, 0.5);
+  
+  /* Typography */
+  --font-family-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  
+  /* Font sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+}
+
+/* Component base classes */
+.btn-base {
+  @apply inline-flex items-center justify-center rounded-md font-medium transition-colors;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2;
+  @apply disabled:pointer-events-none disabled:opacity-50;
+}
+
+.input-base {
+  @apply w-full px-4 py-3 bg-gray-900/70 border border-gray-700;
+  @apply focus:border-green-400 focus:ring-1 focus:ring-green-400;
+  @apply rounded-md shadow-sm font-mono text-white placeholder:text-gray-500;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.card-base {
+  @apply bg-black/50 border border-gray-800 rounded-lg shadow-lg backdrop-blur-sm;
+}
+
+.text-cyber {
+  @apply font-mono text-green-400;
+}
+
+.bg-cyber {
+  @apply bg-green-600/20 border-green-600/30;
+}
+
+.glow-cyber {
+  box-shadow: var(--shadow-glow);
+}

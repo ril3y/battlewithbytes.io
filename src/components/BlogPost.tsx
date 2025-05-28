@@ -10,10 +10,10 @@ import * as Tabs from '@radix-ui/react-tabs';
 import RadixTabs from './RadixTabs';
 import DropCap from './DropCap';
 import CodeBlock from './CodeBlock';
-import HDMIPinout from './HDMIPinout/HDMIPinout';
-import InteractiveCodeBlock from './InteractiveCodeBlock';
+import HDMIPinout from './interactive/HDMIPinout/HDMIPinout';
+import InteractiveCodeBlock from './interactive/InteractiveCodeBlock';
 import TooltipText from './TooltipText';
-import I2CDetectOutput from './I2CDetectOutput';
+import I2CDetectOutput from './interactive/I2CDetectOutput';
 import { useMDXComponents } from '../../mdx-components';
 
 // Import Prism core styles

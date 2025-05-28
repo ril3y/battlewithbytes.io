@@ -1,0 +1,1 @@
+- always make sure we check the linter for this project on new and modified code  so it will build eventually

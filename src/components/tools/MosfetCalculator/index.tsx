@@ -7,29 +7,14 @@ import MosfetDiagram from './MosfetDiagram';
 import NChannelMosfetConfiguration from './NChannelMosfetConfiguration';
 import PChannelMosfetConfiguration from './PChannelMosfetConfiguration';
 import Description from './Description';
+import type { MosfetDetails, MosfetInputValues } from '@/types/tools';
 import './styles.css';
-
-interface InputValues {
-  vg: string;
-  vcc: string;
-  vd: string;
-  vs: string;
-  loadResistance: string;
-}
-
-interface MosfetDetails {
-  vth: string;
-  rds_on: string;
-  vgs_th?: string;
-  type?: string;
-  [key: string]: string | undefined;
-}
 
 export default function MosfetCalculator() {
   const [mosfetType, setMosfetType] = useState<string>('n-channel');
   const [mosfetName, setMosfetName] = useState<string>('');
   const [mosfetDetails, setMosfetDetails] = useState<MosfetDetails>({ vth: '', rds_on: '' });
-  const [inputValues, setInputValues] = useState<InputValues>({
+  const [inputValues, setInputValues] = useState<MosfetInputValues>({
     vg: '',
     vcc: '',
     vd: '',

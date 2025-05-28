@@ -87,7 +87,7 @@ const HDMIPinout = () => {
             {pinData[activePin].highlight && (
               <div className={styles.hackingNote}>
                 <h4>Hacking Potential</h4>
-                <p>This I2C pin can be accessed to interact with the display's EDID and control functions, allowing us to programmatically control HDMI devices.</p>
+                <p>This I2C pin can be accessed to interact with the display&apos;s EDID and control functions, allowing us to programmatically control HDMI devices.</p>
               </div>
             )}
           </div>

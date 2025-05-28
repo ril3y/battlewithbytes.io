@@ -155,5 +155,5 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
 };
 
 // Optional: Export component from an index file in the components directory
-// e.g., in src/app/tools/wiremapper/components/index.ts
+// e.g., in src/components/tools/WireMapper/components/index.ts
 // export * from './DynamicConfigInput';

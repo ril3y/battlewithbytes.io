@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Console from "react-console-emulator"
-import { loadCommands } from "@/components/terminal/CommandRegistry"
+import { loadCommands } from "@/components/interactive/terminal/CommandRegistry"
 
 const registry = loadCommands()
 

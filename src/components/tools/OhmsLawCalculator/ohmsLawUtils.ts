@@ -1,6 +1,6 @@
 'use client';
 
-import { OhmsLawValues, OhmsLawResults } from './index'; // Assuming index.tsx defines these types
+import type { OhmsLawValues, OhmsLawResults } from '@/types/tools';
 import {
   parseValueWithSuffix,     // Use the corrected, robust parser
   formatValueWithSuffix     // Used for formatting within descriptions

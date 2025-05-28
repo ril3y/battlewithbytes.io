@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { OhmsLawValues } from './index';
+import type { OhmsLawValues } from '@/types/tools';
 import { parseFieldValue, formatValueWithSuffix } from '../../../lib/utils/inputUtils';
 
 interface OhmsLawDiagramProps {

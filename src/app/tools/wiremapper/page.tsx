@@ -1,6 +1,6 @@
 import { generateToolSchema } from '@/lib/utils/seo';
 import Script from 'next/script';
-import { WireMapper } from './components/WireMapper';
+import { WireMapper } from '@/components/tools/WireMapper';
 
 // Enhanced SEO metadata
 export const metadata = {

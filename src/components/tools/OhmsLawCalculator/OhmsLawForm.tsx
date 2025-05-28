@@ -12,7 +12,7 @@ import {
   getParameterTooltip,
   // FieldType // Removed as validateFieldInput/parseFieldValue are removed
 } from '../../../lib/utils/inputUtils';
-import { OhmsLawValues } from './index'; // Assuming OhmsLawValues is defined here
+import type { OhmsLawValues } from '@/types/tools';
 
 interface OhmsLawFormProps {
   values: OhmsLawValues;

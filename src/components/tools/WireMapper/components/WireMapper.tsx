@@ -261,3 +261,5 @@ export const WireMapper: React.FC = () => {
     </div>
   );
 };
+
+export default WireMapper;

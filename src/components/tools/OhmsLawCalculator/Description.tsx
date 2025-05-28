@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { OhmsLawResults } from './index'; // Assuming OhmsLawResults is defined in index.tsx
+import type { OhmsLawResults } from '@/types/tools';
 // Import only the necessary utility
 import { formatValueWithSuffix } from '../../../lib/utils/inputUtils';
 

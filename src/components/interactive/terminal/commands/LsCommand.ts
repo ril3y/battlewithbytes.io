@@ -1,6 +1,6 @@
 import { Command } from './Command'
 
-interface BlogPost {
+interface BlogPostData {
   slug: string;
   metadata: {
     title: string;
@@ -35,7 +35,7 @@ export class LsCommand extends Command {
         throw new Error(`Failed to fetch blog data: ${response.statusText}`);
       }
       
-      const posts: BlogPost[] = await response.json();
+      const posts: BlogPostData[] = await response.json();
       
       if (!posts || posts.length === 0) {
         return 'No blog posts found.';

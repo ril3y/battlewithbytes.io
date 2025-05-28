@@ -5,24 +5,8 @@ import OhmsLawDiagram from './OhmsLawDiagram';
 import OhmsLawForm from './OhmsLawForm';
 import Description from './Description';
 import { calculateOhmsLaw } from './ohmsLawUtils';
+import type { OhmsLawValues, OhmsLawResults } from '@/types/tools';
 import './styles.css';
-
-export interface OhmsLawValues {
-  voltage: string;
-  current: string;
-  resistance: string;
-  power: string;
-}
-
-export interface OhmsLawResults {
-  voltage: string;
-  current: string;
-  resistance: string;
-  power: string;
-  calculatedProperty: 'voltage' | 'current' | 'resistance' | 'power' | null;
-  description: string;
-  displayCurrentInMilliamps?: boolean;
-}
 
 export default function OhmsLawCalculator() {
   const [values, setValues] = useState<OhmsLawValues>({

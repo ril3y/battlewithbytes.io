@@ -1,25 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-
-type FormState = {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-};
-
-type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
+import type { ContactFormData, FormStatus } from '@/types';
 
 export default function ContactForm() {
-  const [formState, setFormState] = useState<FormState>({
+  const [formState, setFormState] = useState<ContactFormData>({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
   
-  const [status, setStatus] = useState<SubmissionStatus>('idle');
+  const [status, setStatus] = useState<FormStatus>('idle');
   const [error, setError] = useState<string>('');
   
   const handleChange = (
