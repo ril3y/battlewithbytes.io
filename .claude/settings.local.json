@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx next lint:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
