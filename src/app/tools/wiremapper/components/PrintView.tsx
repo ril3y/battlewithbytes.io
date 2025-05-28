@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import { Connector, Mapping } from '../types';
+import { Connector } from '../types';
 
 // Connector layout constants - matching those in WiringDiagramPreview but adjusted for print
 const CONNECTOR_WIDTH = 120;
@@ -52,8 +52,6 @@ export const PrintView: React.FC = () => {
     
     // First arrange connectors in rows
     connectors.forEach(connector => {
-      const connectorHeight = CONNECTOR_HEADER_HEIGHT + CONNECTOR_TYPE_HEADER_HEIGHT + 
-                            (connector.pins.length * PIN_ROW_HEIGHT);
       
       if (currentRowWidth + CONNECTOR_WIDTH > 800) {
         // Start a new row if this one would be too wide
@@ -188,7 +186,7 @@ export const PrintView: React.FC = () => {
 
   // Render connection tables
   const renderConnectionTables = () => {
-    return connectors.map((connector, index) => {
+    return connectors.map((connector) => {
       const relevantMappings = mappings.filter(
         m => m.source.connectorId === connector.id || m.target.connectorId === connector.id
       );
@@ -277,7 +275,7 @@ export const PrintView: React.FC = () => {
       </div>
       
       {/* Print-specific styles */}
-      <style jsx="true">{`
+      <style>{`
         /* Print view styles */
         .print-view {
           padding: 20px;

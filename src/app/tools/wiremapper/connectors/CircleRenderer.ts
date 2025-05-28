@@ -83,12 +83,13 @@ export class CircleRenderer implements IConnectorRenderer {
         pins.push({
           id: generateUniqueId(),
           index: i,
+          pos: i + 1, // Add the required 'pos' property
           name: `Pin ${i + 1}`,
           number: i + 1,
           x: position.x,
           y: position.y,
           config: {},
-          connectedWireId: null,
+          connectedWireIds: [],
           active: true,
           visible: true,
         });

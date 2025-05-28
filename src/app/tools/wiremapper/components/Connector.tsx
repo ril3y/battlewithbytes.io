@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useRef, CSSProperties } from 'react';
+import React, { CSSProperties } from 'react'; // Removed unused useState
 import { motion, PanInfo } from 'framer-motion';
-import { Connector as ConnectorType, Pin, Mapping, ConnectorGender } from '../types';
+import { Connector as ConnectorType, Pin, Mapping } from '../types'; // Removed unused ConnectorGender
 import { useWireMapperStore } from '../store/useWireMapperStore';
 import { ConnectorRenderer } from './ConnectorRenderer';
 
 // Define constants locally
 const PIN_SIZE = 20;
 const PIN_MARGIN = 4;
-
-interface Point { x: number; y: number; }
 
 interface ConnectorProps {
   connector: ConnectorType;
@@ -33,13 +31,12 @@ export const Connector: React.FC<ConnectorProps> = ({
   connectingPin,
   dragConstraintsRef,
 }) => {
-  const [hoveredPin, setHoveredPin] = useState<number | null>(null);
-  const { settings, mappings, updateConnectorPosition } = useWireMapperStore();
+  const { mappings, updateConnectorPosition, settings } = useWireMapperStore();
 
   const isConnected = (pinIndex: number) => {
     return mappings.some((mapping: Mapping) => 
-      (mapping.startConnectorId === connector.id && mapping.startPinPos === pinIndex) ||
-      (mapping.endConnectorId === connector.id && mapping.endPinPos === pinIndex)
+      (mapping.source.connectorId === connector.id && mapping.source.pinPos === pinIndex) ||
+      (mapping.target.connectorId === connector.id && mapping.target.pinPos === pinIndex)
     );
   };
 
@@ -57,16 +54,15 @@ export const Connector: React.FC<ConnectorProps> = ({
     updateConnectorPosition(connector.id, newX, newY);
   };
 
-  const getPinStyle = (pinData: { displayValue: number | string, pin: Pin }): CSSProperties => {
+  const getPinStyle = (pinData: { pin: Pin }): CSSProperties => {
     const pin = pinData.pin;
     const isPinSelected = selectedPin?.connectorId === connector.id && selectedPin?.pinIndex === pin.index;
-    const isPinHovered = hoveredPin === pin.index;
+    const isPinHovered = false; // Temporarily set to false since hover state is not currently used
     const connected = isConnected(pin.index);
     const isConnectingStartPin = connectingPin?.connectorId === connector.id && connectingPin?.pinIndex === pin.index;
-    const isConnectingEndPin = connectingPin?.connectorId === connector.id && connectingPin?.pinIndex === pin.index;
 
     // Use the pin's specific color if available, otherwise default by gender
-    let pinColor = pin.config.color ?? (connector.gender === 'Male' ? '#111111' : '#333333'); 
+    const pinColor = pin.config.color ?? (connector.gender === 'Male' ? '#111111' : '#333333'); 
     let borderColor = '#00ff9d'; 
     let boxShadow = `0 0 5px ${borderColor}`;
 
@@ -129,16 +125,13 @@ export const Connector: React.FC<ConnectorProps> = ({
     }
   };
 
-  // Generate a CSS class string based on gender for potential styling hooks
-  // Uses the correct ConnectorGender type internally
-  const getGenderClass = (gender: ConnectorGender): string => {
-    switch (gender) {
+  const genderClass = (() => {
+    switch (connector.gender) {
       case 'Male': return 'connector-male';
       case 'Female': return 'connector-female';
       default: return 'connector-unknown';
     }
-  };
-  const genderClass = getGenderClass(connector.gender ?? 'Unknown'); // Provide default
+  })();
 
   return (
     <motion.div
@@ -194,99 +187,4 @@ export const Connector: React.FC<ConnectorProps> = ({
   );
 }
 
-interface PinProps {
-  connectorId: string;
-  pin: Pin;
-  mode: string;
-  isSelected: boolean;
-  isConnecting: boolean;
-  isHovered: boolean;
-  onClick: (pinIndex: number) => void;
-}
-
-const PinComponent: React.FC<PinProps> = ({ 
-  connectorId, 
-  pin, 
-  mode, 
-  isSelected, 
-  isConnecting,
-  isHovered,
-  onClick 
-}) => {
-  const { settings, mappings } = useWireMapperStore();
-  
-  const isConnected = mappings.some((mapping: Mapping) => 
-    (mapping.startConnectorId === connectorId && mapping.startPinPos === pin.index) || 
-    (mapping.endConnectorId === connectorId && mapping.endPinPos === pin.index)
-  );
-
-  // Determine pin color - Use config, fallback based on connection/selection state
-  let pinColor = pin.config.color; 
-  let borderColor = '#00ff9d'; 
-  let textColor = '#e0e0e0';
-  let boxShadow = 'none';
-
-  if (!pinColor) { 
-    pinColor = isConnected ? '#4a4a4a' : '#2a2a2a'; 
-  }
-
-  if (isConnected) {
-    borderColor = '#ff6b00'; 
-    boxShadow = `0 0 6px ${borderColor}`;
-  } else if (isSelected) {
-    borderColor = '#ffffff'; 
-    boxShadow = `0 0 8px ${borderColor}`;
-    pinColor = pin.config.color ?? '#555555'; 
-  } else if (isConnecting) {
-    borderColor = '#facc15'; 
-    boxShadow = `0 0 8px ${borderColor}`;
-  } else if (isHovered) {
-    borderColor = '#00ffff'; 
-    boxShadow = `0 0 7px ${borderColor}`;
-  }
-
-  const style: CSSProperties = {
-    width: PIN_SIZE,
-    height: PIN_SIZE,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: `${Math.max(8, PIN_SIZE * 0.4)}px`,
-    fontWeight: 'bold',
-    backgroundColor: pinColor,
-    border: `2px solid ${borderColor}`,
-    boxShadow: boxShadow,
-    color: textColor,
-    cursor: 'pointer',
-    transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
-    margin: `${PIN_MARGIN}px`,
-  };
-
-  return (
-    <div
-      key={pin.id}
-      className="pin-wrapper"
-      data-pin-pos={pin.index} 
-      style={style}
-      onClick={(e) => {
-        e.stopPropagation(); 
-        onClick(pin.index); 
-      }}
-    >
-      {pin.number}
-    </div>
-  );
-};
-
-// Helper to determine pin display value based on numbering mode
-// Note: This logic might need adjustments based on the full renderer implementation
-// Currently simplified
-const getPinDisplayValue = (
-  pinIndex: number,
-  totalPins: number,
-  numberingMode: string | undefined 
-): number | string => {
-  // TODO: Implement proper numbering based on mode (sequential, row/col, etc.)
-  return pinIndex + 1; 
-};
+// Removed unused PinComponent and related code

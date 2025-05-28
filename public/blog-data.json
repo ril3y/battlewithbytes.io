@@ -28,7 +28,7 @@
         "saleae",
         "firmware"
       ],
-      "author": "Riley Porter",
+      "author": "ril3y",
       "coverImage": "/images/blog/custom-protocol-bruh/cover.png"
     }
   },
@@ -43,7 +43,7 @@
         "reverse engineering",
         "spi"
       ],
-      "author": "Riley Porter",
+      "author": "ril3y",
       "coverImage": "/images/blog/whats-hiding-in-my-coffee-maker/concept.png"
     }
   },
@@ -63,7 +63,7 @@
         "cli",
         "modular"
       ],
-      "author": "Riley Porter",
+      "author": "ril3y",
       "coverImage": "/images/blog/introducing-picotag/concept.png"
     }
   },
@@ -79,7 +79,7 @@
         "Radio",
         "RAK3172"
       ],
-      "author": "Riley Porter",
+      "author": "ril3y",
       "coverImage": "/images/blog/lora-without-lorawan/cover.png"
     }
   }

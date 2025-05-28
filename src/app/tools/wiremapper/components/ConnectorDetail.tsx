@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Connector, ConnectorGender } from '../types';
+import { Connector } from '../types';
 import { useWireMapperStore } from '../store/useWireMapperStore';
 import { debounce } from 'lodash';
 
@@ -10,18 +10,15 @@ interface ConnectorDetailProps {
   onEdit: () => void; // Callback when the 'Edit in Builder' button is clicked
 }
 
-interface LocalConnectorData extends Partial<Connector> {
-  // We can add more specific local state if needed, but Partial<Connector> is a good start
-}
 
 export const ConnectorDetail: React.FC<ConnectorDetailProps> = ({ connector, onEdit }) => {
   const { updateConnector } = useWireMapperStore();
-  const [localData, setLocalData] = useState<LocalConnectorData | null>(null);
+  const [localData, setLocalData] = useState<Partial<Connector>>({});
   const [isLayoutLocked, setIsLayoutLocked] = useState(false);
 
   useEffect(() => {
     if (!connector) {
-      setLocalData(null);
+      setLocalData({});
       setIsLayoutLocked(false);
       return;
     }
@@ -42,7 +39,7 @@ export const ConnectorDetail: React.FC<ConnectorDetailProps> = ({ connector, onE
                               ? (activeElement as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name 
                               : null;
 
-      let newLocalData = { ...localData };
+      const newLocalData = { ...localData };
       let needsUpdate = false;
 
       // Sync top-level editable properties
@@ -59,8 +56,7 @@ export const ConnectorDetail: React.FC<ConnectorDetailProps> = ({ connector, onE
 
         if (String(normalizedStoreValue) !== String(normalizedLocalValue)) { // Compare as strings for simplicity here, refine if type issues arise
           if (focusedInputName !== field) { 
-            // @ts-ignore
-            newLocalData[field] = connector[field];
+            (newLocalData as Record<string, unknown>)[field] = connector[field];
             needsUpdate = true;
           }
         }
@@ -89,14 +85,17 @@ export const ConnectorDetail: React.FC<ConnectorDetailProps> = ({ connector, onE
   }, [connector]); // localData is intentionally omitted to prevent cycles, logic handles merging.
 
   const debouncedUpdateConnector = useCallback(
-    debounce((id: string, updates: Partial<Connector>) => {
-      updateConnector(id, updates);
-    }, 500),
+    (id: string, updates: Partial<Connector>) => {
+      const debouncedFn = debounce(() => {
+        updateConnector(id, updates);
+      }, 500);
+      debouncedFn();
+    },
     [updateConnector]
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    if (!localData || !connector) return;
+    if (!connector || !localData) return;
     const { name, value, type } = e.target;
     let parsedValue: string | number | boolean = value;
 
@@ -201,7 +200,7 @@ export const ConnectorDetail: React.FC<ConnectorDetailProps> = ({ connector, onE
         <h4 className="text-md font-semibold text-green-500 mb-2">Layout Configuration</h4>
         {isLayoutLocked && (
             <p className="text-xs text-yellow-400 bg-yellow-900/50 p-2 rounded mb-3">
-                Layout properties (rows, columns, etc.) are locked because this connector has active wire connections. To modify layout, please remove all wires first or use the 'Edit in Builder' option which may re-generate pins.
+                Layout properties (rows, columns, etc.) are locked because this connector has active wire connections. To modify layout, please remove all wires first or use the &apos;Edit in Builder&apos; option which may re-generate pins.
             </p>
         )}
         <div>

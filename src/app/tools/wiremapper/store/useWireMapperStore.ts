@@ -22,9 +22,9 @@ const hslToHex = (h: number, s: number, l: number): string => {
   s = Math.max(0, Math.min(100, s)) / 100;
   l = Math.max(0, Math.min(100, l)) / 100;
 
-  let c = (1 - Math.abs(2 * l - 1)) * s;
-  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  let m = l - c / 2;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
   let r = 0, g = 0, b = 0;
 
   if (0 <= h && h < 60) {
@@ -427,7 +427,7 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
          // Calculate actual rows and columns based on pinPattern or provided values
          let actualRows = connectorData.rows ?? 1;
          let actualCols = connectorData.cols ?? 1;
-         const pinPattern = connectorData.config?.pinPattern?.trim();
+         const pinPattern = typeof connectorData.config?.pinPattern === 'string' ? connectorData.config.pinPattern.trim() : undefined;
 
          if (pinPattern) {
            try {
@@ -577,7 +577,7 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
       };
     }),
     
-    setSelectedConnector: (connectorId: string | null) => set((state) => {
+    setSelectedConnector: (connectorId: string | null) => set(() => {
       return {
         selectedConnectorId: connectorId,
         selectedPin: null, // Deselect pin when selecting a connector
@@ -704,7 +704,7 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
     setSelectedConnectorId: (id: string | null) => set({ selectedConnectorId: id, selectedPin: null }), // Added type
 
     // Set the focused wire - when set, only this wire/net will be displayed
-    setFocusedWireId: (id: string | null) => set((state) => {
+    setFocusedWireId: (id: string | null) => set(() => {
       return {
         focusedWireId: id,
         // Deselect connector and pin when setting focused wire

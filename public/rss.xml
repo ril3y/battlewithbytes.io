@@ -9,9 +9,9 @@
             <link>https://battlewithbytes.io</link>
         </image>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Tue, 13 May 2025 03:41:19 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 28 May 2025 13:54:19 GMT</lastBuildDate>
         <atom:link href="https://battlewithbytes.io/rss.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Tue, 13 May 2025 03:41:19 GMT</pubDate>
+        <pubDate>Wed, 28 May 2025 13:54:19 GMT</pubDate>
         <copyright><![CDATA[2025 Riley Porter]]></copyright>
         <language><![CDATA[en]]></language>
         <managingEditor><![CDATA[Riley Porter]]></managingEditor>
@@ -43,7 +43,7 @@
             <guid isPermaLink="false">https://battlewithbytes.io/blog/custom-protocol-bruh</guid>
             <category><![CDATA[saleae]]></category>
             <category><![CDATA[firmware]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <dc:creator><![CDATA[ril3y]]></dc:creator>
             <pubDate>Tue, 15 Apr 2025 00:00:00 GMT</pubDate>
         </item>
         <item>
@@ -54,7 +54,7 @@
             <category><![CDATA[firmware]]></category>
             <category><![CDATA[reverse engineering]]></category>
             <category><![CDATA[spi]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <dc:creator><![CDATA[ril3y]]></dc:creator>
             <pubDate>Tue, 15 Apr 2025 00:00:00 GMT</pubDate>
         </item>
         <item>
@@ -70,7 +70,7 @@
             <category><![CDATA[hardware]]></category>
             <category><![CDATA[cli]]></category>
             <category><![CDATA[modular]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <dc:creator><![CDATA[ril3y]]></dc:creator>
             <pubDate>Tue, 23 Jul 2024 00:00:00 GMT</pubDate>
         </item>
         <item>
@@ -82,7 +82,7 @@
             <category><![CDATA[Hardware]]></category>
             <category><![CDATA[Radio]]></category>
             <category><![CDATA[RAK3172]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
+            <dc:creator><![CDATA[ril3y]]></dc:creator>
             <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
         </item>
     </channel>

@@ -34,7 +34,6 @@ export const ConnectorPreview: React.FC<ConnectorPreviewProps> = ({ connector, s
   }
 
   const pins = connector.pins;
-  const config = connector.config || {};
 
   // --- Calculate pin bounds for dynamic padding ---
   const scaledPinRadius = PIN_RADIUS * scale;

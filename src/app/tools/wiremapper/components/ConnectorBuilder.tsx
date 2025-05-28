@@ -1,19 +1,32 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { nanoid } from 'nanoid';
-// Import necessary types and store
-import {
-  Connector,
-  ConnectorShape,
-  ConnectorConfig,
-  ConnectorGender,
-  Pin,
-  PinConfig,
-  DynamicConfigSchema
+import { v4 as uuidv4 } from 'uuid';
+
+// Basic form components with proper TypeScript types
+
+const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ 
+  children, 
+  className = '',
+  ...props 
+}) => (
+  <button 
+    className={`px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+);
+
+import { 
+  Connector, 
+  ConnectorConfig, 
+  ConnectorGender, 
+  ConnectorShape, 
+  DynamicConfigSchema, 
+  Pin 
 } from '../types';
-import { useWireMapperStore } from '../store/useWireMapperStore'; // Import the store
-import { generateUniqueId } from '../utils/generateUniqueId';
+import { useWireMapperStore } from '../store/useWireMapperStore';
 import { ConnectorPreview } from '.';
 import { DynamicConfigInput } from './DynamicConfigInput';
 import { getAvailableShapes, getDefaultRenderer, getRenderer } from '../connectors/connectorRegistry';
@@ -26,7 +39,6 @@ interface ConnectorBuilderProps {
 
 const GENDER_OPTIONS: ConnectorGender[] = ['Male', 'Female', 'Unknown'];
 
-// Helper to get default config from schema
 const getDefaultConfigFromSchema = (schema: DynamicConfigSchema): ConnectorConfig => {
   const defaultConfig: ConnectorConfig = {};
   for (const key in schema) {
@@ -34,7 +46,6 @@ const getDefaultConfigFromSchema = (schema: DynamicConfigSchema): ConnectorConfi
       defaultConfig[key] = schema[key].defaultValue;
     }
   }
-  // Ensure basic properties exist if not in schema (though they should be)
   if (!('rows' in defaultConfig)) defaultConfig.rows = CONNECTOR_DEFAULTS.rows;
   if (!('columns' in defaultConfig)) defaultConfig.columns = CONNECTOR_DEFAULTS.cols;
   if (!('numPins' in defaultConfig)) defaultConfig.numPins = CONNECTOR_DEFAULTS.numPins;
@@ -44,27 +55,22 @@ const getDefaultConfigFromSchema = (schema: DynamicConfigSchema): ConnectorConfi
 export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToEdit, onComplete }) => {
   const isEditing = !!connectorToEdit;
   const defaultShape = useMemo(() => getDefaultRenderer().shape, []);
-  // Get actions from the store
   const { addConnector, updateConnector } = useWireMapperStore();
 
-  // --- Centralized State ---
-  const [connectorState, setConnectorState] = useState<Partial<Connector>>(() => {
+  const [connectorState, setConnectorState] = useState<Omit<Connector, 'id' | 'pins'> & { id?: string; pins?: Pin[] }>(() => {
     if (isEditing && connectorToEdit) {
-      // Ensure config is present when editing
       const config = connectorToEdit.config || {};
-      // Make sure essential keys from potential schema mismatch are present
       if (!('rows' in config)) config.rows = CONNECTOR_DEFAULTS.rows;
       if (!('columns' in config)) config.columns = CONNECTOR_DEFAULTS.cols;
       if (!('numPins' in config)) config.numPins = CONNECTOR_DEFAULTS.numPins;
       return { ...connectorToEdit, config };
     }
-    // Default for new connector
     const initialShape = defaultShape;
     const initialRenderer = getRenderer(initialShape);
     const initialSchema = initialRenderer?.getConfigurationSchema() ?? {};
     const initialConfig = getDefaultConfigFromSchema(initialSchema);
     return {
-      id: generateUniqueId(),
+      id: uuidv4(),
       name: '',
       type: '',
       gender: 'Unknown',
@@ -77,15 +83,22 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
     };
   });
 
-  const [pins, setPins] = useState<Pin[]>(() => connectorToEdit?.pins ?? []); // Initialize pins if editing
+  const [pins, setPins] = useState<Pin[]>(connectorToEdit?.pins ?? []);
   const [configSchema, setConfigSchema] = useState<DynamicConfigSchema>(() => {
     const initialRenderer = getRenderer(connectorState.shape ?? defaultShape);
     return initialRenderer?.getConfigurationSchema() ?? {};
   });
 
-  // --- Effects ---
+  // Helper to safely update connector state with proper typing
+  const updateConnectorState = useCallback(<K extends keyof Connector>(
+    updates: Pick<Connector, K> | ((prev: Omit<Connector, 'id' | 'pins'> & { id?: string; pins?: Pin[] }) => Pick<Connector, K>)
+  ) => {
+    setConnectorState(prev => ({
+      ...prev,
+      ...(typeof updates === 'function' ? updates(prev) : updates)
+    } as Omit<Connector, 'id' | 'pins'> & { id?: string; pins?: Pin[] }));
+  }, []);
 
-  // Update schema and config when shape changes
   useEffect(() => {
     const shape = connectorState.shape;
     if (!shape) return;
@@ -103,19 +116,15 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
 
     setConfigSchema(newSchema);
 
-    // Update config: Preserve existing values if keys match, otherwise use new defaults.
-    // This handles both shape changes and initial load for editing.
     setConnectorState(prev => {
       const currentConfig = prev.config || {};
-      const updatedConfig = { ...newDefaultConfig }; // Start with new defaults
+      const updatedConfig = { ...newDefaultConfig };
 
-      // Carry over values from previous config if the key exists in the new schema
       for (const key in newSchema) {
         if (key in currentConfig) {
           updatedConfig[key] = currentConfig[key];
         }
       }
-      // Ensure essential keys like 'rows' or 'numPins' are present, using defaults if needed
       if (newSchema.rows && !('rows' in updatedConfig)) updatedConfig.rows = newDefaultConfig.rows;
       if (newSchema.columns && !('columns' in updatedConfig)) updatedConfig.columns = newDefaultConfig.columns;
       if (newSchema.numPins && !('numPins' in updatedConfig)) updatedConfig.numPins = newDefaultConfig.numPins;
@@ -123,9 +132,8 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
       return { ...prev, config: updatedConfig };
     });
 
-  }, [connectorState.shape]); // Rerun only when shape changes
+  }, [connectorState.shape]);
 
-  // Regenerate pins when config or dimensions change
   useEffect(() => {
     const shape = connectorState.shape;
     const config = connectorState.config;
@@ -144,16 +152,14 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
 
     try {
       const newPins = renderer.generatePins(config, dimensions);
-      // Preserve active state and ID if pin index matches (more robust than ID match if IDs change)
       setPins(currentPins => {
         const currentPinMapByIndex = new Map(currentPins.map(p => [p.index, p]));
         return newPins.map(newPin => {
           const existingPin = currentPinMapByIndex.get(newPin.index);
-          // Preserve active state, and keep original ID if it exists
           return {
             ...newPin,
-            id: existingPin?.id ?? newPin.id, // Keep old ID if possible
-            active: existingPin?.active ?? newPin.active // Preserve active state
+            id: existingPin?.id ?? newPin.id,
+            active: existingPin?.active ?? newPin.active
           };
         });
       });
@@ -161,29 +167,32 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
       console.error("Error generating pins:", error);
       setPins([]);
     }
-    // Only trigger when config content, shape, width, or height changes.
   }, [connectorState.config, connectorState.shape, connectorState.width, connectorState.height]);
 
-  // --- Handlers ---
+  const handleStateChange = useCallback(<K extends keyof Connector>(
+    key: K, 
+    value: Connector[K]
+  ) => {
+    updateConnectorState({
+      [key]: value
+    } as Pick<Connector, K>);
+  }, [updateConnectorState]);
 
-  const handleStateChange = useCallback(<K extends keyof Connector>(key: K, value: Connector[K]) => {
-    setConnectorState(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleConfigChange = useCallback((key: string, value: any) => {
-    setConnectorState(prev => ({
-      ...prev,
+  const handleConfigChange = useCallback(<K extends keyof ConnectorConfig>(
+    key: K,
+    value: ConnectorConfig[K]
+  ) => {
+    updateConnectorState(prev => ({
       config: {
-        ...(prev.config ?? {}),
-        [key]: value,
+        ...(prev.config || {}),
+        [key]: value
       }
-    }));
-  }, []);
+    } as Pick<Connector, 'config'>));
+  }, [updateConnectorState]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation (example)
     if (!connectorState.name?.trim()) {
       alert('Connector Name is required.');
       return;
@@ -193,52 +202,38 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
       return;
     }
 
-    // Extract rows/cols from config for top-level properties, default to 1 if not set
-    const rows = connectorState.config?.rows ?? 1;
-    const cols = connectorState.config?.cols ?? 1;
+    const rows = (connectorState.config?.rows as number) ?? 1;
+    const cols = (connectorState.config?.cols as number) ?? 1;
 
     const finalConnector: Omit<Connector, 'id'> & { id?: string } = {
       name: connectorState.name || 'Unnamed Connector',
-      type: connectorState.type,
+      type: connectorState.type || '',
       gender: connectorState.gender || 'Unknown',
       shape: connectorState.shape,
-      rows: rows, // Add top-level rows
-      cols: cols, // Add top-level cols
+      rows: rows,
+      cols: cols,
       config: connectorState.config || {},
-      pins: pins, // Use the latest generated pins state
+      pins: pins,
       width: connectorState.width || CONNECTOR_DEFAULTS.width,
       height: connectorState.height || CONNECTOR_DEFAULTS.height,
       x: connectorState.x ?? CONNECTOR_DEFAULTS.x,
       y: connectorState.y ?? CONNECTOR_DEFAULTS.y,
-      // Removed obsolete properties
     };
 
     console.log('Final Connector:', finalConnector);
 
     try {
       if (isEditing && connectorToEdit?.id) {
-        // Update existing connector
         updateConnector(connectorToEdit.id, finalConnector as Partial<Connector>);
       } else {
-        // Add new connector (casting away id for Omit type)
         addConnector(finalConnector as Omit<Connector, 'id'>);
       }
-      onComplete(); // Close modal only after successful save
+      onComplete();
     } catch (error) {
       console.error("Error saving connector:", error);
       alert(`Failed to save connector: ${error instanceof Error ? error.message : String(error)}`);
-      // Optionally, don't close the modal on error
-      // onComplete(); 
     }
   };
-
-  const handlePinToggle = useCallback((pinId: string) => {
-    setPins(currentPins =>
-      currentPins.map(pin =>
-        pin.id === pinId ? { ...pin, active: !pin.active } : pin
-      )
-    );
-  }, []); // Dependency: setPins
 
   // --- Derived State for Preview ---
   // Ensure required fields for preview are present before rendering
@@ -337,7 +332,7 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
                 <DynamicConfigInput
                   key={key}
                   option={option} // Pass the individual option object
-                  value={connectorState.config?.[key]}
+                  value={connectorState.config?.[key] as string | number | boolean | undefined}
                   onChange={handleConfigChange}
                 />
               ) : null; // Handle case where an option might be undefined, though schema should be well-formed
@@ -365,13 +360,13 @@ export const ConnectorBuilder: React.FC<ConnectorBuilderProps> = ({ connectorToE
 
       {/* Save Button */}
       <div className="flex justify-end pt-4">
-        <button
+        <Button
           type="submit"
           disabled={!previewConnector} // Disable save if preview isn't ready (shape/config missing)
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isEditing ? 'Save Changes' : 'Create Connector'}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -3,7 +3,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import { Connector, WireMapperProject } from '../types';
+import { ConnectorShape, Connector, WireMapperProject } from '../types';
 
 /**
  * Generate a unique ID for connectors or mappings
@@ -18,27 +18,42 @@ export const createConnectorTemplate = (
   type: string,
   rows: number,
   cols: number,
-  gender: 'male' | 'female'
+  gender: 'Male' | 'Female' | 'Unknown'
 ): Omit<Connector, 'id'> => {
   // Generate default pins
   const pins = Array.from({ length: rows * cols }).map((_, i) => ({
+    id: `pin-${i}`,
+    index: i,
     pos: i + 1,
     name: `Pin ${i + 1}`,
-    color: '#cccccc',
+    x: 0,
+    y: 0,
+    connectedWireIds: [],
+    active: true,
+    config: {
+      color: '#cccccc',
+      type: 'signal' as 'power' | 'ground' | 'signal' | 'data' | 'nc'
+    },
+    visible: true
   }));
 
   // Create connector template
   return {
     name,
     type,
+    shape: 'Rectangle' as ConnectorShape, // Default shape
     rows,
     cols,
     gender,
     pins,
-    position: {
-      x: 100 + Math.random() * 200,
-      y: 100 + Math.random() * 200,
-      rotation: 0
+    x: 100 + Math.random() * 200,
+    y: 100 + Math.random() * 200,
+    width: 150, // Default width
+    height: 100, // Default height
+    config: { // Default ConnectorConfig
+      rows: rows,
+      columns: cols,
+      numPins: rows * cols
     }
   };
 };

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import { Connector, Mapping, Pin } from '../types';
+import { Connector, Pin } from '../types';
 
 // Layout Constants
 const CONNECTOR_WIDTH = 230; // px
@@ -83,7 +83,7 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
             };
             
             const commonCellStyle = {
-              whiteSpace: 'nowrap' as 'nowrap',
+              whiteSpace: 'nowrap' as const,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               maxWidth: 0, // Necessary for text-overflow to work in table cells

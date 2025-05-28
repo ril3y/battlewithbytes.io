@@ -7,7 +7,6 @@ import {
   ConnectorShape,
 } from '../types';
 import { IConnectorRenderer } from './base/IConnectorRenderer';
-import { CONNECTOR_DEFAULTS } from '../constants';
 import { generateUniqueId } from '../utils/generateUniqueId'; // Corrected import path
 
 // Define the available numbering modes
@@ -24,7 +23,7 @@ function calculatePinNumber(
   actualRows: number,
   pinLayout: number[]
 ): number | string {
-  const { numberingMode = 'sequential', rows = 1, cols = 8 } = config;
+  const { numberingMode = 'sequential' } = config;
   const pinIndex = globalPinIndex + 1; // 1-based index
 
   // If using pinPattern, complex numbering requires more logic (TODO)
@@ -80,7 +79,7 @@ export class RectangleRenderer implements IConnectorRenderer {
         min: 1,
         max: 20, // Example max
         defaultValue: 1,
-        disabledCondition: (config: ConnectorConfig) => !!config.pinPattern?.trim(), // Disable if pinPattern has value
+        disabledCondition: (config: ConnectorConfig) => !!(typeof config.pinPattern === 'string' && config.pinPattern.trim()), // Disable if pinPattern has value
         required: true,
         description: 'Number of rows. Used if Pin Pattern is not set.',
       },
@@ -91,7 +90,7 @@ export class RectangleRenderer implements IConnectorRenderer {
         min: 1,
         max: 20, // Example max
         defaultValue: 8,
-        disabledCondition: (config: ConnectorConfig) => !!config.pinPattern?.trim(), // Disable if pinPattern has value
+        disabledCondition: (config: ConnectorConfig) => !!(typeof config.pinPattern === 'string' && config.pinPattern.trim()), // Disable if pinPattern has value
         required: true,
         description: 'Number of columns per row, or max columns for Pin Pattern. Used if Pin Pattern is not set.',
       },
@@ -134,7 +133,10 @@ export class RectangleRenderer implements IConnectorRenderer {
     config: ConnectorConfig,
     dimensions: { width: number; height: number }
   ): Pin[] {
-    const { rows = 1, cols = 8, pinPattern, centerPinsHorizontally = true } = config;
+    const rows = typeof config.rows === 'number' ? config.rows : 1;
+    const cols = typeof config.columns === 'number' ? config.columns : 8;
+    const pinPattern = config.pinPattern;
+    const centerPinsHorizontally = typeof config.centerPinsHorizontally === 'boolean' ? config.centerPinsHorizontally : true;
     const pins: Pin[] = [];
     let pinLayout: number[] = [];
     let totalPins = 0;
@@ -143,12 +145,11 @@ export class RectangleRenderer implements IConnectorRenderer {
     console.log(`Starting generatePins with config:`, { rows, cols, pinPattern });
 
     // Pin dimensions and spacing for pattern layout
-    const pinSize = CONNECTOR_DEFAULTS.PIN_SIZE;
     const horizontalPinSpacing = 25; // Spacing between centers of pins horizontally
     const verticalPinSpacing = 25;   // Spacing between centers of pins vertically
 
     // Parse the pin pattern if available
-    if (pinPattern && pinPattern.trim()) {
+    if (pinPattern && typeof pinPattern === 'string' && pinPattern.trim()) {
       console.log(`Parsing pin pattern: "${pinPattern}" typeof=${typeof pinPattern}`);
       
       // Simple split and parse approach for reliability
@@ -266,9 +267,12 @@ export class RectangleRenderer implements IConnectorRenderer {
     pinLayoutParam?: number[] // Optional: pass parsed pinLayout from generatePins
   ): { x: number; y: number } | null {
     
-    const { rows = 1, cols = 8, pinPattern, centerPinsHorizontally = true } = config;
+    const rows = typeof config.rows === 'number' ? config.rows : 1;
+    const cols = typeof config.columns === 'number' ? config.columns : 8;
+    const pinPattern = config.pinPattern;
+    const centerPinsHorizontally = typeof config.centerPinsHorizontally === 'boolean' ? config.centerPinsHorizontally : true;
     let pinLayout: number[] = [];
-    if (pinPattern && pinPattern.trim()) {
+    if (pinPattern && typeof pinPattern === 'string' && pinPattern.trim()) {
       const parts = pinPattern.split(',').map((p: string) => parseInt(p.trim(), 10));
       if (parts.every((p: number) => !isNaN(p) && p > 0)) {
         pinLayout = parts;
@@ -285,7 +289,6 @@ export class RectangleRenderer implements IConnectorRenderer {
     const actualNumRows = pinLayout.length;
 
     // Pin dimensions and spacing
-    const pinSize = CONNECTOR_DEFAULTS.PIN_SIZE;
     const horizontalPinSpacing = 12; // Spacing between centers of pins horizontally
     const verticalPinSpacing = 10;   // Spacing between centers of pins vertically
     const padding = 15;              // Padding from connector edges

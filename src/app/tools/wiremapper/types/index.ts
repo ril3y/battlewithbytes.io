@@ -34,7 +34,7 @@ export type ConnectorGender = 'Male' | 'Female' | 'Unknown';
 
 // Configuration specific to a connector instance
 export interface ConnectorConfig {
-  [key: string]: any; // Allow arbitrary properties initially
+  [key: string]: unknown; // Allow arbitrary properties initially
   // Shape-specific properties are defined dynamically by the schema
   rows?: number;
   columns?: number;
@@ -63,7 +63,7 @@ interface BaseConfigOption<TValue, TType extends string> {
   required?: boolean; // Optional required flag
   description?: string; // Optional description for the field
   placeholder?: string; // Optional placeholder text for input fields
-  disabledCondition?: (state: Partial<ConnectorConfig>) => boolean; // Optional conditional disabling
+  disabledCondition?: ((state: Partial<ConnectorConfig>) => boolean) | ((value: TValue) => boolean); // Optional conditional disabling
   visibleCondition?: (state: Partial<ConnectorConfig>) => boolean; // Optional conditional visibility
 }
 
@@ -73,7 +73,7 @@ export interface ConfigOptionNumber extends BaseConfigOption<number, 'number'> {
   step?: number;
 }
 
-export interface ConfigOptionBoolean extends BaseConfigOption<boolean, 'boolean'> {}
+export type ConfigOptionBoolean = BaseConfigOption<boolean, 'boolean'>;
 
 export interface ConfigOptionSelectOption<T> {
   label: string;
@@ -88,9 +88,8 @@ export interface ConfigOptionSelect<T = string | number> extends BaseConfigOptio
   options: ConfigOptionSelectOption<T>[];
 }
 
-export interface ConfigOptionText extends BaseConfigOption<string, 'text'> {
-  // Future: minLength, maxLength, pattern (regex) etc.
-}
+export type ConfigOptionText = BaseConfigOption<string, 'text'>;
+// Future: extend with minLength, maxLength, pattern (regex) etc.
 
 // Union type for any config option
 export type ConfigOption = ConfigOptionNumber | ConfigOptionBoolean | ConfigOptionRadio | ConfigOptionSelect | ConfigOptionText;
@@ -117,7 +116,7 @@ export interface Connector {
   config: ConnectorConfig; // Holds dynamic configuration values
   // REMOVED pinNumberingMode - It's now fully within config
   gender?: ConnectorGender; // Use the exported type
-  metadata?: Record<string, any>; // For extra info like datasheet link, part number etc.
+  metadata?: Record<string, unknown>; // For extra info like datasheet link, part number etc.
 }
 
 // Represents the visual wire drawn on the canvas

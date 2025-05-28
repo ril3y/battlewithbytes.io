@@ -37,7 +37,6 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
   // --- Core Rendering Logic (To be moved from ConnectorBuilder Preview) ---
   const renderPinsLayout = () => {
     const pinLayout = pins; // Use the passed pins
-    const visiblePins = pinLayout.filter(p => p.visible !== false); // Assume visible if undefined
     const pinsByRow: { [key: number]: { pin: Pin, displayValue: number | string }[] } = {};
     let visiblePinIndex = 0;
 

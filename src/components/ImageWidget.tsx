@@ -62,7 +62,7 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
           onKeyDown={(e) => e.key === 'Enter' && openLightbox()}
           aria-label={`View larger image: ${alt}`}
         >
-          <Image {...imageProps} />
+          <Image {...imageProps} alt={alt} />
         </div>
         {caption && (
           <figcaption className="mt-2 text-sm text-center text-gray-400 italic">
@@ -95,12 +95,14 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
             {/* The parent needs position relative and defined dimensions or aspect ratio. */}
             {/* Changed h-auto to flex-1 to allow this container to grow within the flex-col parent */}
             <div className="relative w-full flex-1 overflow-hidden flex justify-center items-center">
-              {/* DEBUG: Using standard img tag for lightbox to bypass Next/Image issues in modal */}
-              <img 
-                src={src as string} 
+              <Image 
+                src={src} 
                 alt={alt} 
-                className="object-contain rounded-lg w-full h-full"
-                style={{ display: 'block' }} // Ensure it's not display:none by other styles
+                className="object-contain rounded-lg"
+                fill
+                sizes="100vw"
+                quality={quality}
+                priority
               />
             </div>
             {caption && (

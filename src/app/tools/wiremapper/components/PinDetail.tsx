@@ -84,14 +84,17 @@ export const PinDetail: React.FC = () => {
                                  // when `selectedPin` itself hasn't changed identity.
 
   const debouncedUpdatePin = useCallback(
-    debounce((connectorId: string, pinPos: number, updates: Partial<Pin>) => {
-      const { config: configUpdates, ...topLevelUpdates } = updates;
-      const currentPin = connectors.find(c => c.id === connectorId)?.pins.find(p => p.pos === pinPos);
-      const currentConfig = currentPin?.config ?? {};
-      const newConfig = { ...currentConfig, ...configUpdates };
+    (connectorId: string, pinPos: number, updates: Partial<Pin>) => {
+      const debouncedFn = debounce(() => {
+        const { config: configUpdates, ...topLevelUpdates } = updates;
+        const currentPin = connectors.find(c => c.id === connectorId)?.pins.find(p => p.pos === pinPos);
+        const currentConfig = currentPin?.config ?? {};
+        const newConfig = { ...currentConfig, ...configUpdates };
 
-      updatePinDetailsAndNet(connectorId, pinPos, { ...topLevelUpdates, config: newConfig });
-    }, 300),
+        updatePinDetailsAndNet(connectorId, pinPos, { ...topLevelUpdates, config: newConfig });
+      }, 300);
+      debouncedFn();
+    },
     [connectors, updatePinDetailsAndNet]
   );
 

@@ -2,28 +2,21 @@ import React, { useEffect, useCallback, useState, useRef } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
-  addEdge,
   Connection,
   Edge,
   Node as ReactFlowNode,
-  Position,
-  NodeChange,
-  applyNodeChanges,
   Background,
   Controls,
-  Handle,
   BackgroundVariant,
   ConnectionMode,
-  useReactFlow, // Added useReactFlow import
 } from 'reactflow';
 // Import ReactFlow styles first, then our custom styles will override them
 import 'reactflow/dist/style.css';
 
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import { ContextMenu } from './ContextMenu'; // Added import for new ContextMenu
+import { ContextMenu } from './ContextMenu';
 import '../wiremapper.css';
-import { Connector as ConnectorType, Pin, Mapping, WireMapperSettings, ContextMenuOption } from '../types'; // Added ContextMenuOption import
-import type { PinIdentifier } from '../types';
+import { Connector as ConnectorType, ContextMenuOption, Mapping } from '../types';
 import ConnectorNode from './ConnectorNode';
 
 // Define the node types for React Flow
@@ -33,7 +26,6 @@ const ConnectorCanvas: React.FC = () => {
   const { 
     connectors, 
     mappings, 
-    wires,
     settings, 
     focusedWireId,
     // connectingNodeId, // Removed: Not from store
@@ -41,7 +33,6 @@ const ConnectorCanvas: React.FC = () => {
     removeConnector, // For context menu
     duplicateConnector, // For context menu
     addMapping, 
-    updateMapping, 
     updateConnectorPosition, 
     setSelectedConnectorId, 
     setSelectedPin,
@@ -54,7 +45,6 @@ const ConnectorCanvas: React.FC = () => {
   // React Flow state hooks
   const [nodes, setNodes, onNodesChange] = useNodesState<ConnectorType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { getEdges, screenToFlowPosition, getIntersectingNodes, project } = useReactFlow(); // Added getEdges
 
   // State for context menu
   const [contextMenuState, setContextMenuState] = useState<{ x: number; y: number; options: ContextMenuOption[]; nodeId: string } | null>(null);
@@ -194,8 +184,6 @@ const ConnectorCanvas: React.FC = () => {
           },
           danger: true,
         },
-        // TODO: Add 'Properties' option later if needed
-        // { label: 'Properties', action: () => { console.log(`Properties for node: ${node.id}`); closeContextMenu(); } },
       ];
 
       setContextMenuState({
@@ -205,7 +193,7 @@ const ConnectorCanvas: React.FC = () => {
         options,
       });
     },
-    [duplicateConnector, removeConnector, getEdges] // Removed storeRemoveEdges, added getEdges
+    [duplicateConnector, removeConnector]
   );
 
   const closeContextMenu = () => {
@@ -213,27 +201,19 @@ const ConnectorCanvas: React.FC = () => {
   };
 
   // Filter edges based on focused wire ID
-  const visibleEdges = (() => {
+  const visibleEdges = React.useMemo(() => {
     if (!settings.showWires) return []; // Don't show any wires if showWires is false
     
     if (focusedWireId) {
-      // Debug log to see what's happening with the filtering
-      console.log(`Filtering edges for wireId: ${focusedWireId}`);
-      console.log('Available edges:', edges.map(e => ({ id: e.id, wireId: e.data?.wireId })));
-      
       // If a wire is focused, only show edges with that wireId
       const filtered = edges.filter(edge => edge.data?.wireId === focusedWireId);
-      console.log('Filtered edges:', filtered.length);
       
-      // If no edges match the wireId, it might be stored differently
-      // Try using the mapping ID instead (as a fallback)
+      // If no edges match the wireId, try using the mapping ID as a fallback
       if (filtered.length === 0) {
-        console.log('No edges found with wireId, trying to match by mapping ID');
-        return edges.filter(edge => {
-          // Try to match by id which might be the mapping id
-          return edge.id.includes(focusedWireId) || 
-                (edge.data && edge.data.id === focusedWireId);
-        });
+        return edges.filter(edge => 
+          edge.id.includes(focusedWireId) || 
+          (edge.data && edge.data.id === focusedWireId)
+        );
       }
       
       return filtered;
@@ -241,7 +221,7 @@ const ConnectorCanvas: React.FC = () => {
     
     // Otherwise show all edges
     return edges;
-  })();
+  }, [edges, focusedWireId, settings.showWires]);
 
   // Add CSS to make edges non-interactive and handle global right-click events
   useEffect(() => {

@@ -33,9 +33,7 @@ export const WireMapper: React.FC = () => {
     selectedConnectorId,
     settings,
     loadProject,
-    clearProject,
     updateSettings,
-    setMode, // Add setMode action
   } = useWireMapperStore();
 
   const selectedConnector = useMemo(() => 

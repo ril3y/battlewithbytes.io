@@ -27,6 +27,12 @@ export const CONNECTOR_DEFAULTS = {
     TEXT_COLOR: '#e5e7eb', // gray-200
     FONT_SIZE: 10,
     FONT_FAMILY: 'monospace',
+    // Default grid layout properties
+    rows: 2,
+    cols: 3,
+    numPins: 6, // Default number of pins for new connectors
+    x: 100, // Default X position
+    y: 100, // Default Y position
 };
 
 export const CANVAS_DEFAULTS = {

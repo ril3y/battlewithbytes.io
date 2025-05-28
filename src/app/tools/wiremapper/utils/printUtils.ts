@@ -18,7 +18,7 @@ const getConnectorName = (connector: Connector): string => {
 /**
  * Gets a pin's label with position
  */
-const getPinLabel = (pin: any, pinPos: number): string => {
+const getPinLabel = (pin: { name?: string } | undefined, pinPos: number): string => {
   if (!pin) return `Pin ${pinPos}`;
   return pin.name ? `${pin.name} (Pos: ${pinPos})` : `Pin ${pinPos}`;
 };
@@ -63,7 +63,7 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
     });
     
     // Render the component to static HTML
-    let connectorSvg = ReactDOMServer.renderToStaticMarkup(previewElement);
+    const connectorSvg = ReactDOMServer.renderToStaticMarkup(previewElement);
     
     // Extract just the SVG part (we'll handle the labels separately)
     const svgMatch = connectorSvg.match(/<svg[\s\S]*?<\/svg>/i);
@@ -85,7 +85,7 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
     // Direct approach: Replace the fill colors in the SVG with the actual pin colors
     // Find all circles in the SVG (these represent pins)
     const circleRegex = /<circle[^>]*?cx="(\d+)"[^>]*?cy="(\d+)"[^>]*?<\/circle>/g;
-    let circles = [...processedSvg.matchAll(circleRegex)];
+    const circles = [...processedSvg.matchAll(circleRegex)];
     
     // For each pin in the connector
     sortedPins.forEach((pin, index) => {

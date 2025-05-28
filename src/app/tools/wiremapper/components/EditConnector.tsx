@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import { Connector, Pin } from '../types';
+import { ConnectorGender } from '../types';
 
 // Define the type for items in the pinLayout state
 interface PinLayoutItem {
@@ -30,9 +30,7 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
   const [gender, setGender] = useState(connector?.gender || 'male');
   const [pinLayout, setPinLayout] = useState<PinLayoutItem[]>([]); // Use PinLayoutItem type
   const [pinRemovalMode, setPinRemovalMode] = useState<'skip' | 'reindex'>('skip');
-  const [viewMode, setViewMode] = useState<'basic' | 'rows' | 'advanced'>('basic');
   const [rowPinCounts, setRowPinCounts] = useState<number[]>([]);
-  const [customLayout, setCustomLayout] = useState<string>('');
   const [presetLayout, setPresetLayout] = useState<'grid' | 'offset' | 'custom'>('grid');
   const [editMode, setEditMode] = useState<'standard' | 'advanced'>('standard');
 
@@ -40,15 +38,17 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
   useEffect(() => {
     if (connector) {
       setName(connector.name);
-      setType(connector.type);
-      setRows(connector.rows);
-      setCols(connector.cols);
-      setGender(connector.gender);
+      setType(connector.type || 'generic'); // Provide default value for optional type
+      setRows(connector.rows || 1); // Provide default value for optional rows
+      setCols(connector.cols || 8); // Provide default value for optional cols
+      setGender(connector.gender || 'male'); // Provide default value for optional gender
 
       // Initialize pinLayout with data from connector.pins if available, or create default
-      const initialPinLayout = Array.from({ length: connector.rows * connector.cols }).map((_, index) => {
-        const row = Math.floor(index / connector.cols);
-        const col = index % connector.cols;
+      const rowsValue = connector.rows || 1;
+      const colsValue = connector.cols || 8;
+      const initialPinLayout = Array.from({ length: rowsValue * colsValue }).map((_, index) => {
+        const row = Math.floor(index / colsValue);
+        const col = index % colsValue;
         const pos = index + 1;
         // Try find existing pin data (including visibility and color)
         const existingPin = connector.pins.find(p => p.pos === pos);
@@ -57,25 +57,26 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
           row,
           col,
           visible: existingPin?.visible !== undefined ? existingPin.visible : true, // Default to visible
-          color: existingPin?.color // Include color if available
+          color: existingPin?.config?.color || '#ffffff' // Access color via config property
         };
       });
       setPinLayout(initialPinLayout);
 
       // Initialize rowPinCounts based on existing pins or default cols
-      const counts = Array(connector.rows).fill(0);
+      // Use the rowsValue and colsValue from above
+      const counts = Array(rowsValue).fill(0);
       connector.pins.forEach(pin => {
-        const row = Math.floor((pin.pos - 1) / connector.cols);
-        if (row >= 0 && row < connector.rows) {
+        const row = Math.floor((pin.pos - 1) / colsValue);
+        if (row >= 0 && row < rowsValue) {
           counts[row]++;
         }
       });
       // Set default full row if empty
-      const defaultCounts = counts.map(count => count === 0 ? connector.cols : count);
+      const defaultCounts = counts.map(count => count === 0 ? colsValue : count);
       setRowPinCounts(defaultCounts);
 
       // Check if connector has a non-standard layout
-      const hasAllPins = connector.pins.length === connector.rows * connector.cols;
+      const hasAllPins = connector.pins.length === rowsValue * colsValue;
       if (!hasAllPins) {
         setPresetLayout('custom');
         setEditMode('advanced');
@@ -155,12 +156,21 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
         type,
         rows, 
         cols,
-        gender,
-        // Create default pins (all visible)
+        gender: gender as ConnectorGender, // Cast to the proper type
+        // Create default pins (all visible) with all required properties
         pins: Array(rows * cols).fill(0).map((_, i) => ({
+          id: `pin-${i}`,
+          index: i,
           pos: i + 1,
           name: `Pin ${i + 1}`,
-          color: '#00ff9d',
+          x: 0, // These will be calculated by the renderer
+          y: 0,
+          connectedWireIds: [],
+          active: true,
+          config: {
+            color: '#00ff9d',
+            type: 'signal' as 'power' | 'ground' | 'signal' | 'data' | 'nc'
+          },
           visible: true
         }))
       });
@@ -173,17 +183,26 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
           type,
           rows, 
           cols,
-          gender,
-          pins: Array(rows * cols).fill(0).map((_, i) => ({
-            pos: i + 1,
-            name: `Pin ${i + 1}`,
-            color: '#00ff9d',
+          gender: gender as ConnectorGender,
+          pins: Array(rows * cols).fill(0).map((_, index) => ({
+            id: `pin-${index}`,
+            index: index,
+            pos: index + 1,
+            name: `Pin ${index + 1}`,
+            x: 0,
+            y: 0,
+            connectedWireIds: [],
+            active: true,
+            config: {
+              color: '#00ff9d',
+              type: 'signal' as 'power' | 'ground' | 'signal' | 'data' | 'nc'
+            },
             visible: true
           }))
         });
       } else if (rowPinCounts.some(count => count !== cols)) {
         // Using row-based pin configuration
-        let pins = [];
+        const pins = [];
         let pinNumber = 1;
         let currentPosIndex = 0; // Track original position for stable IDs if needed
         
@@ -200,10 +219,19 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
             const originalPos = (row * cols) + actualCol + 1; // Estimate original grid position
             
             pins.push({
+              id: `pin-${currentPosIndex}`,
+              index: currentPosIndex,
               // Use sequential numbering if reindexing, otherwise try to keep original pos
               pos: pinRemovalMode === 'reindex' ? pinNumber++ : originalPos,
               name: `Pin ${pinRemovalMode === 'reindex' ? pinNumber-1 : originalPos}`,
-              color: '#00ff9d',
+              x: 0,
+              y: 0,
+              connectedWireIds: [],
+              active: true,
+              config: {
+                color: '#00ff9d',
+                type: 'signal' as 'power' | 'ground' | 'signal' | 'data' | 'nc'
+              },
               row,
               col: actualCol,
               visible: true
@@ -217,7 +245,7 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
           type,
           rows, 
           cols,
-          gender,
+          gender: gender as ConnectorGender,
           // Filter out potential duplicate pos if using originalPos in skip mode
           // And sort by position
           pins: pins.filter((pin, index, self) => 
@@ -228,11 +256,20 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
         // Custom or offset layout - only include visible pins
         const visiblePins = pinLayout
           .filter(pin => pin.visible)
-          // Ensure row/col data is included
+          // Ensure row/col data is included with all required Pin properties
           .map((pin, index) => ({
+            id: `pin-${index}`,
+            index: index,
             pos: pinRemovalMode === 'reindex' ? index + 1 : pin.pos, // Apply reindexing if needed
             name: `Pin ${pinRemovalMode === 'reindex' ? index + 1 : pin.pos}`,
-            color: pin.color || '#00ff9d', // Use existing pin color or default
+            x: 0,
+            y: 0,
+            connectedWireIds: [],
+            active: true,
+            config: {
+              color: pin.color || '#00ff9d', // Use existing pin color or default
+              type: 'signal' as 'power' | 'ground' | 'signal' | 'data' | 'nc' // Use specific literal type
+            },
             row: pin.row,
             col: pin.col,
             visible: true
@@ -243,7 +280,7 @@ export const EditConnector: React.FC<EditConnectorProps> = ({ connectorId, onCom
           type,
           rows, 
           cols,
-          gender,
+          gender: gender as ConnectorGender,
           // Sort by position just in case
           pins: visiblePins.sort((a,b) => a.pos - b.pos)
         });
