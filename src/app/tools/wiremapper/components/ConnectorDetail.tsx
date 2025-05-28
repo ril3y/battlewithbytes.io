@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Connector } from '../types';
 import { useWireMapperStore } from '../store/useWireMapperStore';
-import { debounce } from 'lodash';
+import debounce from 'lodash.debounce';
 
 interface ConnectorDetailProps {
   connector: Connector;
