@@ -9,6 +9,14 @@
         "Vds_max": "55V",
         "Vgs_max": "20V"
       },
+      "IRF7493TRPBF": {
+        "vth": 2.0,
+        "rds_on": 0.015,
+        "Id": "9.3A",
+        "P_max": "2.5W",
+        "Vds_max": "80V",
+        "Vgs_max": "20V"
+      },
       "BSS138": {
         "vth": 0.8,
         "rds_on": 3.5,
