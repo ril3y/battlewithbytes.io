@@ -2,6 +2,18 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.1] - 2025-10-24 - Bug Fixes
+
+### Fixed
+- 🐛  Timestamps appearing in the middle of lines - now only applied to complete lines
+- 🐛  Line numbers counting data fragments instead of complete lines
+- 🐛  Proper line buffering for serial data to prevent formatting mid-word
+
+### Changed
+- Implemented line buffering system to accumulate incomplete data before processing
+- Timestamps and line numbers now apply only to complete lines (ending with newline)
+- Buffer automatically clears on terminal clear and new connection
+
 ## [1.1.0] - 2025-10-24 - PWA Update
 
 ### Added
