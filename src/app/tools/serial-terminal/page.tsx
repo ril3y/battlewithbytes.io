@@ -48,7 +48,8 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://battlewithbytes.io/tools/serial-terminal'
-  }
+  },
+  manifest: '/battleterm-manifest.json'
 };
 
 export default function SerialTerminalPage() {
