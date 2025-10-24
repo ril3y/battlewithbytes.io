@@ -72,22 +72,23 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
         />
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={onNewConnector}
-          className="px-3 py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition"
+          className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition text-xs sm:text-base whitespace-nowrap"
         >
-          Add Connector
+          <span className="hidden sm:inline">Add Connector</span>
+          <span className="sm:hidden">Add</span>
         </button>
-        
+
         <button
           onClick={handleExport}
-          className="px-3 py-2 bg-gray-800 text-blue-400 rounded hover:bg-gray-700 transition"
+          className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-blue-400 rounded hover:bg-gray-700 transition text-xs sm:text-base whitespace-nowrap"
         >
           Export
         </button>
-        
-        <label className="px-3 py-2 bg-gray-800 text-purple-400 rounded hover:bg-gray-700 transition cursor-pointer">
+
+        <label className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-purple-400 rounded hover:bg-gray-700 transition cursor-pointer text-xs sm:text-base whitespace-nowrap">
           Import
           <input
             type="file"
@@ -96,17 +97,17 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
             className="hidden"
           />
         </label>
-        
+
         <button
           onClick={() => openPrintView(connectors, mappings)}
-          className="px-3 py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition"
+          className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition text-xs sm:text-base whitespace-nowrap"
         >
           Print
         </button>
-        
+
         <button
           onClick={handleClearProject}
-          className="px-3 py-2 bg-gray-800 text-red-400 rounded hover:bg-gray-700 transition"
+          className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-red-400 rounded hover:bg-gray-700 transition text-xs sm:text-base whitespace-nowrap"
         >
           Clear
         </button>

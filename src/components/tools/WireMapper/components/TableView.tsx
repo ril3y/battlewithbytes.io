@@ -1,32 +1,76 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
 
 export const TableView: React.FC = () => {
-  const { connectors, mappings } = useWireMapperStore();
+  const { connectors, mappings, updatePinName } = useWireMapperStore();
+  const [editingPin, setEditingPin] = useState<{ connectorId: string; pinPos: number } | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   const getConnectorName = (connectorId: string) => {
     const connector = connectors.find(c => c.id === connectorId);
     return connector ? connector.name : 'Unknown Connector';
   };
 
-  const getPinLabel = (connectorId: string, pinPos: number): string => {
-    if (typeof pinPos !== 'number' || isNaN(pinPos)) {
-      return 'Invalid Pin';
+  const handleStartEdit = (connectorId: string, pinPos: number, currentName: string) => {
+    setEditingPin({ connectorId, pinPos });
+    setEditValue(currentName);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingPin && editValue.trim()) {
+      updatePinName(editingPin.connectorId, editingPin.pinPos, editValue.trim());
     }
+    setEditingPin(null);
+    setEditValue('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPin(null);
+    setEditValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
+  const renderEditablePin = (connectorId: string, pinPos: number) => {
     const connector = connectors.find(c => c.id === connectorId);
-    if (!connector) {
-      return `Pin ${pinPos} (Conn?)`;
-    }
+    if (!connector) return <span className="text-red-400">Invalid Connector</span>;
+
     const pin = connector.pins.find(p => p.pos === pinPos);
-    if (!pin) {
-      return `Pin ${pinPos} (N/F)`; // N/F for Not Found in this context
+    if (!pin) return <span className="text-red-400">Pin {pinPos} (N/F)</span>;
+
+    const isEditing = editingPin?.connectorId === connectorId && editingPin?.pinPos === pinPos;
+    const displayName = pin.name || `Pin ${pinPos}`;
+
+    if (isEditing) {
+      return (
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSaveEdit}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="bg-gray-700 text-white px-2 py-1 rounded text-xs font-mono border border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 w-full"
+        />
+      );
     }
-    if (pin.name) {
-      return `${pin.name} (Pos: ${pinPos})`;
-    }
-    return `Pin ${pinPos}`;
+
+    return (
+      <span
+        onClick={() => handleStartEdit(connectorId, pinPos, displayName)}
+        className="cursor-pointer hover:text-cyan-400 hover:underline transition-colors"
+      >
+        {displayName} <span className="text-gray-600 text-xs">(Pos: {pinPos})</span>
+      </span>
+    );
   };
 
   if (connectors.length === 0) {
@@ -60,16 +104,17 @@ export const TableView: React.FC = () => {
             {relevantMappings.length === 0 ? (
               <p className="text-gray-500 text-sm pl-2 italic">No connections for this connector.</p>
             ) : (
-              <table className="min-w-full text-sm text-left text-gray-300 bg-gray-900 rounded-lg">
-                <thead className="text-xs uppercase bg-gray-800">
-                  <tr>
-                    <th className="px-4 py-3 w-12">Color</th>
-                    <th className="px-4 py-3">Own Pin</th>
-                    <th className="px-4 py-3">Connected To (Connector)</th>
-                    <th className="px-4 py-3">Connected To (Pin)</th>
-                    <th className="px-4 py-3">Net Name</th>
-                  </tr>
-                </thead>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm text-left text-gray-300 bg-gray-900 rounded-lg">
+                  <thead className="text-xs uppercase bg-gray-800">
+                    <tr>
+                      <th className="px-2 sm:px-4 py-3 w-12">Color</th>
+                      <th className="px-2 sm:px-4 py-3">Own Pin</th>
+                      <th className="px-2 sm:px-4 py-3">Connected To (Connector)</th>
+                      <th className="px-2 sm:px-4 py-3">Connected To (Pin)</th>
+                      <th className="px-2 sm:px-4 py-3">Net Name</th>
+                    </tr>
+                  </thead>
                 <tbody className="divide-y divide-gray-700">
                   {relevantMappings.map(mapping => {
                     const isSourceLocal = mapping.source.connectorId === connector.id;
@@ -79,17 +124,17 @@ export const TableView: React.FC = () => {
 
                     return (
                       <tr key={mapping.id} className="hover:bg-gray-850 transition-colors duration-150">
-                        <td className="px-4 py-3">
-                          <div 
+                        <td className="px-2 sm:px-4 py-3">
+                          <div
                             className="w-4 h-4 rounded-full border border-gray-600"
                             style={{ backgroundColor: mapping.color || 'transparent' }}
                             title={`Wire color: ${mapping.color || 'Default'}`}
                           />
                         </td>
-                        <td className="px-4 py-3 text-gray-400 font-mono text-xs">{getPinLabel(connector.id, localPinPos)}</td>
-                        <td className="px-4 py-3 font-mono text-xs">{getConnectorName(remoteConnectorId)}</td>
-                        <td className="px-4 py-3 text-gray-400 font-mono text-xs">{getPinLabel(remoteConnectorId, remotePinPos)}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-2 sm:px-4 py-3 text-gray-400 font-mono text-xs">{renderEditablePin(connector.id, localPinPos)}</td>
+                        <td className="px-2 sm:px-4 py-3 font-mono text-xs">{getConnectorName(remoteConnectorId)}</td>
+                        <td className="px-2 sm:px-4 py-3 text-gray-400 font-mono text-xs">{renderEditablePin(remoteConnectorId, remotePinPos)}</td>
+                        <td className="px-2 sm:px-4 py-3">
                           <span className={`px-2 py-1 text-xs rounded-full ${mapping.netName ? 'bg-gray-700 text-gray-200' : 'text-gray-500'}`}>
                             {mapping.netName || '--'}
                           </span>
@@ -99,6 +144,7 @@ export const TableView: React.FC = () => {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         );

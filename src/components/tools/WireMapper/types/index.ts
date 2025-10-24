@@ -154,6 +154,7 @@ export interface Mapping {
   target: { connectorId: string; pinPos: number }; // Ending point
   netName?: string; // Optional logical name for the connection
   color?: string; // Optional color for the wire/highlight
+  gauge?: string; // Optional wire gauge (e.g., "22 AWG", "18 AWG")
   // Add any other mapping-specific properties here
 }
 

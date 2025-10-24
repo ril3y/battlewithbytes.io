@@ -120,32 +120,35 @@ export const WireMapper: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Canvas area - Main workspace */}
-        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 h-[850px] overflow-hidden flex flex-col">
+        <div className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-4 min-h-[600px] h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
           {/* Control toolbar */}
           {connectors.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3 border-b border-gray-800 pb-3">
               {/* View Mode Toggles - Always show first */}
-              <div className="flex mr-4 border-r border-gray-700 pr-3">
+              <div className="flex w-full sm:w-auto sm:mr-4 sm:border-r sm:border-gray-700 sm:pr-3 mb-2 sm:mb-0">
                 <button
                   onClick={() => setViewMode('canvas')}
-                  className={`px-3 py-1 rounded-l text-sm ${viewMode === 'canvas' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-l text-xs sm:text-sm ${viewMode === 'canvas' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                   title="Interactive Canvas View"
                 >
-                  Canvas View
+                  <span className="hidden sm:inline">Canvas View</span>
+                  <span className="sm:hidden">Canvas</span>
                 </button>
                 <button
                   onClick={() => setViewMode('diagram')}
-                  className={`px-3 py-1 text-sm ${viewMode === 'diagram' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs sm:text-sm ${viewMode === 'diagram' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                   title="Documentation-style Wiring Diagram"
                 >
-                  Wiring Diagram
+                  <span className="hidden sm:inline">Wiring Diagram</span>
+                  <span className="sm:hidden">Diagram</span>
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`px-3 py-1 rounded-r text-sm ${viewMode === 'table' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-r text-xs sm:text-sm ${viewMode === 'table' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                   title="Table View of Connections"
                 >
-                  Table View
+                  <span className="hidden sm:inline">Table View</span>
+                  <span className="sm:hidden">Table</span>
                 </button>
               </div>
               
@@ -155,37 +158,40 @@ export const WireMapper: React.FC = () => {
                   {/* Wire Visibility Toggle */}
                   <button
                     onClick={() => updateSettings({ showWires: !settings.showWires })}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
                     title="Toggle wire visibility"
                   >
                     {settings.showWires ? 'Hide Wires' : 'Show Wires'}
                   </button>
-                  
+
                   {/* Grid Toggle */}
                   <button
                     onClick={() => updateSettings({ showGrid: !settings.showGrid })}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
                     title="Toggle grid visibility"
                   >
-                    {settings.showGrid ? 'Hide Grid' : 'Show Grid'}
+                    <span className="hidden sm:inline">{settings.showGrid ? 'Hide Grid' : 'Show Grid'}</span>
+                    <span className="sm:hidden">Grid</span>
                   </button>
-                  
+
                   {/* Snap to Grid Toggle */}
                   <button
                     onClick={() => updateSettings({ snapToGrid: !settings.snapToGrid })}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
                     title="Toggle snap to grid"
                   >
-                    {settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}
+                    <span className="hidden sm:inline">{settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}</span>
+                    <span className="sm:hidden">Snap</span>
                   </button>
-                  
+
                   {/* Simplify Connections Toggle */}
                   <button
                     onClick={() => updateSettings({ simplifyConnections: !settings.simplifyConnections })}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
                     title="Toggle animated connections"
                   >
-                    {settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}
+                    <span className="hidden sm:inline">{settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}</span>
+                    <span className="sm:hidden">{settings.simplifyConnections ? 'Simple' : 'Animated'}</span>
                   </button>
                 </>
               )}
@@ -219,7 +225,7 @@ export const WireMapper: React.FC = () => {
         </div>
 
         {/* Right sidebar - Details and Mappings */}
-        <div className="md:col-span-1 bg-gray-950 border border-gray-800 rounded-lg flex flex-col overflow-hidden h-[850px]"> {/* Ensure this is a flex column and manages overflow, matches canvas height */}
+        <div className="md:col-span-1 bg-gray-950 border border-gray-800 rounded-lg flex flex-col overflow-hidden min-h-[600px] h-[calc(100vh-12rem)]"> {/* Ensure this is a flex column and manages overflow, matches canvas height */}
           {/* Details Section */}
           <div className="p-4"> {/* Add padding here for Details content */}
             <h3 className="text-lg font-semibold text-green-400 mb-3">Details</h3>

@@ -61,6 +61,7 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
               <th className="px-3 py-2">From</th>
               <th className="px-3 py-2">To</th>
               <th className="px-3 py-2">Net Name</th>
+              <th className="px-3 py-2">Gauge</th>
               <th className="px-3 py-2">Actions</th>
             </tr>
           </thead>
@@ -103,6 +104,23 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
                     onChange={(e) => updateMapping(mapping.id, { netName: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-400"
                   />
+                </td>
+                <td className="px-3 py-2">
+                  <select
+                    value={mapping.gauge || ''}
+                    onChange={(e) => updateMapping(mapping.id, { gauge: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-400"
+                  >
+                    <option value="">--</option>
+                    <option value="26 AWG">26 AWG</option>
+                    <option value="24 AWG">24 AWG</option>
+                    <option value="22 AWG">22 AWG</option>
+                    <option value="20 AWG">20 AWG</option>
+                    <option value="18 AWG">18 AWG</option>
+                    <option value="16 AWG">16 AWG</option>
+                    <option value="14 AWG">14 AWG</option>
+                    <option value="12 AWG">12 AWG</option>
+                  </select>
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">

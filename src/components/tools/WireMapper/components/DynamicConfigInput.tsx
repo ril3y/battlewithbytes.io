@@ -40,7 +40,16 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
             max={numOption.max}
             step={numOption.step ?? 1}
             value={value as number ?? numOption.defaultValue ?? 0}
-            onChange={(e) => onChange(option.key, parseInt(e.target.value, 10) || 0)}
+            onChange={(e) => {
+              const val = e.target.value;
+              // Allow empty string temporarily for editing
+              if (val === '') {
+                onChange(option.key, numOption.min ?? 0);
+              } else {
+                const parsed = parseInt(val, 10);
+                onChange(option.key, isNaN(parsed) ? (numOption.defaultValue ?? 0) : parsed);
+              }
+            }}
             disabled={disabled}
             className={`${commonClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
