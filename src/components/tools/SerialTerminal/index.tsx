@@ -245,7 +245,7 @@ export default function SerialTerminal() {
 
         // In hex mode, show only raw hex bytes (no text processing)
         if (viewMode === 'hex') {
-          const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
+          const hexStr = bytesToHex(value, { uppercase: true, separator: ' ', bytesPerLine: 0 });
           terminalRef.current?.write(hexStr + ' ');
         } else {
           // ASCII mode: process text with line buffering
