@@ -2,6 +2,16 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.2] - 2025-10-24 - ANSI Color Support
+
+### Fixed
+- 🎨  ANSI color codes from serial devices not displaying properly
+- Colors from devices (like colored log output) now render correctly in the terminal
+
+### Changed
+- Disabled EOL conversion (`convertEol: false`) in xterm.js to preserve raw ANSI escape sequences
+- Terminal now handles data more like a raw terminal (similar to PuTTY)
+
 ## [1.1.1] - 2025-10-24 - Bug Fixes
 
 ### Fixed

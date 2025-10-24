@@ -155,7 +155,7 @@ export function getXtermOptions(options: TerminalOptions) {
     scrollback: options.scrollback,
     theme,
     allowTransparency: true,
-    convertEol: true,
+    convertEol: false, // Keep raw data to preserve ANSI escape sequences
     disableStdin: false,
     rendererType: 'canvas' as const
   };

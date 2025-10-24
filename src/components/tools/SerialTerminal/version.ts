@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Bug Fixes';
+export const VERSION_NAME = 'ANSI Color Support';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.2',
+    date: '2025-10-24',
+    name: 'ANSI Color Support',
+    changes: [
+      '🎨  Fixed ANSI color codes not displaying from serial devices',
+      '🔧  Disabled EOL conversion to preserve raw ANSI escape sequences',
+      '✨  Colors from devices now display correctly (tested with colored log output)'
+    ]
+  },
   {
     version: '1.1.1',
     date: '2025-10-24',
