@@ -101,19 +101,22 @@ export interface ConnectionPanelProps {
   onConnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
   error: string | null;
+  onConfigClick: () => void;
+  onHelpClick: () => void;
+  onClear: () => void;
+  onDownloadLog: () => void;
 }
 
 export interface ConfigurationPanelProps {
   config: SerialConfig;
   onChange: (config: SerialConfig) => void;
   disabled: boolean;
-}
-
-export interface SendControlsProps {
-  onSend: (data: string) => Promise<void>;
-  disabled: boolean;
   sendOptions: SendOptions;
-  onOptionsChange: (options: SendOptions) => void;
+  onSendOptionsChange: (options: SendOptions) => void;
+  showTimestamps: boolean;
+  onToggleTimestamps: () => void;
+  showLineNumbers: boolean;
+  onToggleLineNumbers: () => void;
 }
 
 export interface MacroPanelProps {
@@ -129,14 +132,13 @@ export interface StatusBarProps {
   stats: ConnectionStats;
   isConnected: boolean;
   viewMode: ViewMode;
+  onViewModeToggle: () => void;
+  rxActive?: boolean;
+  txActive?: boolean;
 }
 
 export interface AdvancedControlsProps {
-  showTimestamps: boolean;
-  showHex: boolean;
   autoScroll: boolean;
-  onToggleTimestamps: () => void;
-  onToggleHex: () => void;
   onToggleAutoScroll: () => void;
   onClear: () => void;
   onDownloadLog: () => void;

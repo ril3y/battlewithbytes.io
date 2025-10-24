@@ -1,23 +1,32 @@
+'use client';
+
 /**
  * Terminal Display Component
  * xterm.js integration for terminal emulation
  */
 
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
+import type { Terminal } from '@xterm/xterm';
+import type { FitAddon } from '@xterm/addon-fit';
 import type { TerminalOptions } from './serialTerminal.types';
 import { getXtermOptions } from './terminalUtils';
+import { VERSION, formatChangelogForTerminal, getLatestChangelog } from './version';
 import '@xterm/xterm/css/xterm.css';
+
+// Extended Terminal type with scroll interval
+interface TerminalWithAnimation extends Terminal {
+  __scrollInterval?: NodeJS.Timeout;
+}
 
 export interface TerminalDisplayRef {
   write: (data: string) => void;
   writeln: (data: string) => void;
   clear: () => void;
   getContent: () => string;
+  getSelection: () => string;
   scrollToBottom: () => void;
   focus: () => void;
+  stopAnimation: () => void;
 }
 
 interface TerminalDisplayProps {
@@ -36,50 +45,149 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
     useEffect(() => {
       if (!containerRef.current) return;
 
-      // Create terminal instance
-      const terminal = new Terminal(getXtermOptions(options));
-      const fitAddon = new FitAddon();
-      const webLinksAddon = new WebLinksAddon();
+      let mounted = true;
 
-      terminal.loadAddon(fitAddon);
-      terminal.loadAddon(webLinksAddon);
+      // Dynamically import xterm modules (client-side only)
+      const initTerminal = async () => {
+        const { Terminal } = await import('@xterm/xterm');
+        const { FitAddon } = await import('@xterm/addon-fit');
+        const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
-      terminal.open(containerRef.current);
-      fitAddon.fit();
+        if (!mounted || !containerRef.current) return;
 
-      // Handle user input (if onData callback is provided)
-      if (onData) {
-        terminal.onData(onData);
-      }
+        // Create terminal instance
+        const terminal = new Terminal(getXtermOptions(options));
+        const fitAddon = new FitAddon();
+        const webLinksAddon = new WebLinksAddon();
 
-      // Store refs
-      terminalRef.current = terminal;
-      fitAddonRef.current = fitAddon;
+        terminal.loadAddon(fitAddon);
+        terminal.loadAddon(webLinksAddon);
 
-      // Welcome message
-      terminal.writeln('\x1b[1;32m╔════════════════════════════════════════════════════════════╗\x1b[0m');
-      terminal.writeln('\x1b[1;32m║         Serial Terminal - Battle With Bytes               ║\x1b[0m');
-      terminal.writeln('\x1b[1;32m╚════════════════════════════════════════════════════════════╝\x1b[0m');
-      terminal.writeln('');
-      terminal.writeln('\x1b[33mConnect to a serial port to begin...\x1b[0m');
-      terminal.writeln('');
+        terminal.open(containerRef.current);
+        fitAddon.fit();
 
-      // Handle window resize
-      const handleResize = () => {
-        if (fitAddonRef.current) {
-          fitAddonRef.current.fit();
+        // Handle user input (for raw data mode if needed)
+        if (onData) {
+          terminal.onData((data) => {
+            onData(data);
+          });
         }
+
+        // Store refs
+        terminalRef.current = terminal;
+        fitAddonRef.current = fitAddon;
+
+        // Scrolling animation for banner - no box, just clean text
+        const bannerLines = [
+          '',
+          '   \x1b[1;32m███████╗  ██████╗  ████████╗ ████████╗ ██╗     ███████╗\x1b[0m',
+          '   \x1b[1;32m██╔══██╗ ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██║     ██╔════╝\x1b[0m',
+          '   \x1b[1;32m██████╦╝ ███████║    ██║       ██║    ██║     █████╗\x1b[0m',
+          '   \x1b[1;32m██╔══██╗ ██╔══██║    ██║       ██║    ██║     ██╔══╝\x1b[0m',
+          '   \x1b[1;32m███████║ ██║  ██║    ██║       ██║    ███████╗███████╗\x1b[0m',
+          '   \x1b[1;32m╚══════╝ ╚═╝  ╚═╝    ╚═╝       ╚═╝    ╚══════╝╚══════╝\x1b[0m',
+          '',
+          '              \x1b[1;35m████████╗ ███████╗ ██████╗  ███╗   ███╗\x1b[0m',
+          '              \x1b[1;35m╚══██╔══╝ ██╔════╝ ██╔══██╗ ████╗ ████║\x1b[0m',
+          '                 \x1b[1;35m██║    █████╗   ██████╔╝ ██╔████╔██║\x1b[0m',
+          '                 \x1b[1;35m██║    ██╔══╝   ██╔══██╗ ██║╚██╔╝██║\x1b[0m',
+          '                 \x1b[1;35m██║    ███████╗ ██║  ██║ ██║ ╚═╝ ██║\x1b[0m',
+          '                 \x1b[1;35m╚═╝    ╚══════╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝\x1b[0m',
+          '',
+          '                    \x1b[1;33mBrowser-Based Serial Terminal\x1b[0m',
+          `                       \x1b[0;37mVersion ${VERSION} • 2025\x1b[0m`,
+          '                    \x1b[0;36mhttps://battlewithbytes.io\x1b[0m',
+          '',
+          '\x1b[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m',
+          ''
+        ];
+
+        // Get changelog for display
+        const changelog = getLatestChangelog();
+        const changelogLines = formatChangelogForTerminal(changelog, 5);
+
+        // Typewriter text with delays and varied colors
+        const typewriterText = [
+          { text: '\x1b[1;33m  Getting Started:\x1b[0m', delay: 500 },
+          { text: '\x1b[0;36m  • Click the \x1b[1;32mConnect\x1b[0;36m button above to select your serial port\x1b[0m', delay: 80 },
+          { text: '\x1b[0;36m  • Configure baud rate and settings via the \x1b[1;35m⚙\x1b[0;36m icon\x1b[0m', delay: 80 },
+          { text: '\x1b[0;36m  • Use \x1b[1;33m↑/↓\x1b[0;36m arrows for command history\x1b[0m', delay: 80 },
+          { text: '', delay: 50 },
+          ...changelogLines.map((line, idx) => ({
+            text: line,
+            delay: idx === 0 ? 300 : 80
+          })),
+          { text: '', delay: 50 },
+          { text: '\x1b[1;32m  Quick Features:\x1b[0m', delay: 200 },
+          { text: '\x1b[0;35m  ◆ \x1b[0;37mANSI colors\x1b[0;90m  ◆ \x1b[0;37mHex view\x1b[0;90m  ◆ \x1b[0;37mCommand history\x1b[0;90m  ◆ \x1b[0;37mCopy/paste\x1b[0m', delay: 80 },
+          { text: '\x1b[0;35m  ◆ \x1b[0;37mDownload logs\x1b[0;90m  ◆ \x1b[0;37mTimestamps\x1b[0;90m  ◆ \x1b[0;37mTX/RX indicators\x1b[0m', delay: 80 },
+          { text: '', delay: 50 },
+          { text: '\x1b[2;32m  ► Ready. Click \x1b[1;32mConnect\x1b[2;32m to begin...\x1b[0m', delay: 80 }
+        ];
+
+        let bannerIndex = 0;
+
+        // Scroll in banner
+        const scrollInterval = setInterval(() => {
+          if (bannerIndex < bannerLines.length) {
+            terminal.writeln(bannerLines[bannerIndex]);
+            bannerIndex++;
+          } else {
+            // Banner complete, start typewriter
+            clearInterval(scrollInterval);
+
+            // Typewriter effect - write line by line with delays
+            let typewriterIndex = 0;
+            const writeNextLine = () => {
+              if (typewriterIndex < typewriterText.length) {
+                const current = typewriterText[typewriterIndex];
+                terminal.writeln(current.text);
+                typewriterIndex++;
+
+                // Schedule next line with delay
+                const timeout = setTimeout(writeNextLine, current.delay);
+                (terminal as TerminalWithAnimation).__scrollInterval = timeout;
+              }
+            };
+
+            // Start typewriter with initial delay
+            const initialTimeout = setTimeout(writeNextLine, 300);
+            (terminal as TerminalWithAnimation).__scrollInterval = initialTimeout;
+          }
+        }, 80);
+
+        // Handle window resize
+        const handleResize = () => {
+          if (fitAddonRef.current) {
+            fitAddonRef.current.fit();
+          }
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Store cleanup function
+        return () => {
+          window.removeEventListener('resize', handleResize);
+          clearInterval(scrollInterval);
+          const terminalWithAnim = terminal as TerminalWithAnimation;
+          if (terminalWithAnim.__scrollInterval) {
+            clearTimeout(terminalWithAnim.__scrollInterval);
+          }
+          terminal.dispose();
+        };
       };
 
-      window.addEventListener('resize', handleResize);
+      let cleanup: (() => void) | undefined;
+      initTerminal().then(fn => { cleanup = fn; });
 
       // Cleanup
       return () => {
-        window.removeEventListener('resize', handleResize);
-        terminal.dispose();
+        mounted = false;
+        if (cleanup) cleanup();
         terminalRef.current = null;
         fitAddonRef.current = null;
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Update terminal options when they change
@@ -122,6 +230,12 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
       getContent: () => {
         return contentBuffer.current;
       },
+      getSelection: () => {
+        if (terminalRef.current) {
+          return terminalRef.current.getSelection();
+        }
+        return '';
+      },
       scrollToBottom: () => {
         if (terminalRef.current) {
           terminalRef.current.scrollToBottom();
@@ -131,8 +245,19 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
         if (terminalRef.current) {
           terminalRef.current.focus();
         }
+      },
+      stopAnimation: () => {
+        if (terminalRef.current) {
+          const terminal = terminalRef.current as TerminalWithAnimation;
+          if (terminal.__scrollInterval) {
+            clearTimeout(terminal.__scrollInterval);
+            terminal.__scrollInterval = undefined;
+          }
+          terminalRef.current.clear();
+          contentBuffer.current = '';
+        }
       }
-    }));
+    }), []);
 
     return (
       <div

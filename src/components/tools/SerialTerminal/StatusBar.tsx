@@ -5,9 +5,11 @@
 
 import React from 'react';
 import type { StatusBarProps } from './serialTerminal.types';
-import { formatBytes, formatTransferRate, formatDuration } from './terminalUtils';
+import { formatBytes, formatTransferRate } from './serialUtils';
+import { formatDuration } from './terminalUtils';
+import ActivityIndicator from './ActivityIndicator';
 
-export default function StatusBar({ stats, isConnected, viewMode }: StatusBarProps) {
+export default function StatusBar({ stats, isConnected, viewMode, onViewModeToggle, rxActive = false, txActive = false }: StatusBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-black/50 border-t border-gray-800 font-mono text-xs text-gray-400">
       {/* Connection Status */}
@@ -65,10 +67,23 @@ export default function StatusBar({ stats, isConnected, viewMode }: StatusBarPro
         </div>
       )}
 
-      {/* View Mode */}
-      <div className="ml-auto flex items-center gap-2">
+      {/* Activity Indicator (TX/RX LEDs) */}
+      <div className="ml-auto">
+        {isConnected && (
+          <ActivityIndicator rxActive={rxActive} txActive={txActive} />
+        )}
+      </div>
+
+      {/* View Mode - Clickable Toggle */}
+      <div className="flex items-center gap-2">
         <span className="text-gray-500">View:</span>
-        <span className="text-green-400 uppercase">{viewMode}</span>
+        <button
+          onClick={onViewModeToggle}
+          className="px-2 py-1 rounded bg-green-600/20 hover:bg-green-600/40 text-green-400 uppercase transition-colors cursor-pointer border border-green-500/30 hover:border-green-500/60"
+          title="Click to toggle between ASCII and HEX view"
+        >
+          {viewMode}
+        </button>
       </div>
     </div>
   );

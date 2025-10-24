@@ -1,17 +1,18 @@
 'use client';
 
 /**
- * Serial Terminal - Main Component
- * A modern web-based serial terminal using the Web Serial API
+ * BattleTerm - Main Component
+ * A professional browser-based serial terminal using the Web Serial API
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ConnectionPanel from './ConnectionPanel';
-import ConfigurationPanel from './ConfigurationPanel';
+import ConfigurationModal from './ConfigurationModal';
+import HelpModal from './HelpModal';
 import TerminalDisplay, { TerminalDisplayRef } from './TerminalDisplay';
-import SendControls from './SendControls';
+import TerminalInput from './TerminalInput';
+import TerminalContextMenu from './TerminalContextMenu';
 import StatusBar from './StatusBar';
-import AdvancedControls from './AdvancedControls';
 import type {
   SerialConfig,
   TerminalOptions,
@@ -32,8 +33,7 @@ import {
   closeSerialPort,
   formatDataForSend,
   parseSerialData,
-  bytesToHex,
-  getPortInfo
+  bytesToHex
 } from './serialUtils';
 import { downloadTerminalLog, formatWithTimestamp } from './terminalUtils';
 import { saveLastConfig, loadLastConfig } from './configManager';
@@ -61,9 +61,22 @@ export default function SerialTerminal() {
 
   // UI state
   const [showTimestamps, setShowTimestamps] = useState(false);
-  const [showHex, setShowHex] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [showHex] = useState(false);
+  const [autoScroll] = useState(true);
+  const [showLineNumbers, setShowLineNumbers] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('ascii');
+
+  // Modal state
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // Activity state for TX/RX LEDs
+  const [rxActive, setRxActive] = useState(false);
+  const [txActive, setTxActive] = useState(false);
+
+  // Context menu state
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hasSelection, setHasSelection] = useState(false);
 
   // Stats state
   const [stats, setStats] = useState<ConnectionStats>({
@@ -78,6 +91,8 @@ export default function SerialTerminal() {
   const isReading = useRef(false);
   const connectionStartTime = useRef<number>(0);
   const statsInterval = useRef<NodeJS.Timeout | null>(null);
+  const rxLedTimeout = useRef<NodeJS.Timeout | null>(null);
+  const txLedTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load last config on mount
   useEffect(() => {
@@ -126,6 +141,86 @@ export default function SerialTerminal() {
     };
   }, [terminalState.isConnected, terminalState.bytesReceived, terminalState.bytesSent]);
 
+  // Send data to serial port (used by inline terminal command input)
+  const handleCommand = useCallback(async (command: string) => {
+    if (!terminalState.writer || !terminalState.isConnected) {
+      return;
+    }
+
+    try {
+      const bytes = formatDataForSend(command, sendOptions.lineEnding, sendOptions.sendAsHex);
+      await terminalState.writer.write(bytes);
+
+      // Local echo
+      if (sendOptions.localEcho) {
+        const echoText = sendOptions.sendAsHex ? `[TX HEX] ${command}` : `> ${command}`;
+        terminalRef.current?.writeln(`\x1b[36m${echoText}\x1b[0m`);
+      }
+
+      // Update byte count and trigger TX LED
+      setTerminalState(prev => ({
+        ...prev,
+        bytesSent: prev.bytesSent + bytes.length
+      }));
+
+      // Blink TX LED - clear any existing timeout first
+      if (txLedTimeout.current) {
+        clearTimeout(txLedTimeout.current);
+      }
+      setTxActive(true);
+      txLedTimeout.current = setTimeout(() => {
+        setTxActive(false);
+        txLedTimeout.current = null;
+      }, 100);
+
+      if (autoScroll) {
+        terminalRef.current?.scrollToBottom();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      terminalRef.current?.writeln(`\x1b[31m✗ Send error: ${message}\x1b[0m`);
+      setTerminalState(prev => ({
+        ...prev,
+        error: `Send error: ${message}`
+      }));
+    }
+  }, [terminalState, sendOptions, autoScroll]);
+
+  // Keyboard shortcuts (Ctrl+C to copy, Ctrl+V to paste)
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Ctrl+C - Copy selection
+      if (e.ctrlKey && e.key === 'c' && !e.shiftKey) {
+        const selection = terminalRef.current?.getSelection() || '';
+        if (selection) {
+          e.preventDefault();
+          try {
+            await navigator.clipboard.writeText(selection);
+          } catch (error) {
+            console.error('Copy failed:', error);
+          }
+        }
+      }
+      // Ctrl+V - Paste
+      else if (e.ctrlKey && e.key === 'v' && !e.shiftKey) {
+        if (terminalState.isConnected) {
+          e.preventDefault();
+          try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              await handleCommand(text);
+            }
+          } catch (error) {
+            console.error('Paste failed:', error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [terminalState.isConnected, handleCommand]);
+
   // Read from serial port
   const readFromPort = useCallback(async (port: SerialPort, reader: ReadableStreamDefaultReader<Uint8Array>) => {
     if (isReading.current) return;
@@ -158,11 +253,21 @@ export default function SerialTerminal() {
           terminalRef.current?.scrollToBottom();
         }
 
-        // Update byte count
+        // Update byte count and trigger RX LED
         setTerminalState(prev => ({
           ...prev,
           bytesReceived: prev.bytesReceived + value.length
         }));
+
+        // Blink RX LED - clear any existing timeout first
+        if (rxLedTimeout.current) {
+          clearTimeout(rxLedTimeout.current);
+        }
+        setRxActive(true);
+        rxLedTimeout.current = setTimeout(() => {
+          setRxActive(false);
+          rxLedTimeout.current = null;
+        }, 100);
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'NetworkError') {
@@ -189,15 +294,11 @@ export default function SerialTerminal() {
     }
 
     try {
-      terminalRef.current?.writeln('\x1b[33mRequesting serial port...\x1b[0m');
+      // Stop animation and clear terminal
+      terminalRef.current?.stopAnimation();
+
       const port = await requestSerialPort();
-
-      terminalRef.current?.writeln('\x1b[33mOpening port...\x1b[0m');
       await openSerialPort(port, serialConfig);
-
-      const portInfo = getPortInfo(port);
-      terminalRef.current?.writeln(`\x1b[32m✓ Connected to ${portInfo}\x1b[0m`);
-      terminalRef.current?.writeln('');
 
       const reader = port.readable?.getReader();
       const writer = port.writable?.getWriter();
@@ -248,8 +349,17 @@ export default function SerialTerminal() {
         await closeSerialPort(terminalState.port);
       }
 
-      terminalRef.current?.writeln('');
-      terminalRef.current?.writeln('\x1b[33m✓ Disconnected\x1b[0m');
+      // Clear LED timeouts
+      if (rxLedTimeout.current) {
+        clearTimeout(rxLedTimeout.current);
+        rxLedTimeout.current = null;
+      }
+      if (txLedTimeout.current) {
+        clearTimeout(txLedTimeout.current);
+        txLedTimeout.current = null;
+      }
+      setRxActive(false);
+      setTxActive(false);
 
       setTerminalState({
         isConnected: false,
@@ -266,41 +376,6 @@ export default function SerialTerminal() {
     }
   }, [terminalState]);
 
-  // Send data to serial port
-  const handleSend = useCallback(async (data: string) => {
-    if (!terminalState.writer || !terminalState.isConnected) {
-      return;
-    }
-
-    try {
-      const bytes = formatDataForSend(data, sendOptions.lineEnding, sendOptions.sendAsHex);
-      await terminalState.writer.write(bytes);
-
-      // Local echo
-      if (sendOptions.localEcho) {
-        const echoText = sendOptions.sendAsHex ? `[TX HEX] ${data}` : `[TX] ${data}`;
-        terminalRef.current?.writeln(`\x1b[32m${echoText}\x1b[0m`);
-      }
-
-      // Update byte count
-      setTerminalState(prev => ({
-        ...prev,
-        bytesSent: prev.bytesSent + bytes.length
-      }));
-
-      if (autoScroll) {
-        terminalRef.current?.scrollToBottom();
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      terminalRef.current?.writeln(`\x1b[31m✗ Send error: ${message}\x1b[0m`);
-      setTerminalState(prev => ({
-        ...prev,
-        error: `Send error: ${message}`
-      }));
-    }
-  }, [terminalState, sendOptions, autoScroll]);
-
   // Terminal controls
   const handleClear = useCallback(() => {
     terminalRef.current?.clear();
@@ -309,6 +384,49 @@ export default function SerialTerminal() {
   const handleDownloadLog = useCallback(() => {
     const content = terminalRef.current?.getContent() || '';
     downloadTerminalLog(content);
+  }, []);
+
+  // Context menu handlers
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+
+    // Check if there's a selection in the terminal
+    const selection = terminalRef.current?.getSelection() || '';
+    setHasSelection(selection.length > 0);
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenuPosition(null);
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      const selection = terminalRef.current?.getSelection();
+      if (selection) {
+        await navigator.clipboard.writeText(selection);
+      }
+    } catch (error) {
+      console.error('Copy failed:', error);
+    }
+  }, []);
+
+  const handlePaste = useCallback(async () => {
+    if (!terminalState.isConnected) return;
+
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        await handleCommand(text);
+      }
+    } catch (error) {
+      console.error('Paste failed:', error);
+    }
+  }, [terminalState.isConnected, handleCommand]);
+
+  // Toggle view mode
+  const handleViewModeToggle = useCallback(() => {
+    setViewMode(prev => prev === 'ascii' ? 'hex' : 'ascii');
   }, []);
 
   // Browser support check
@@ -327,55 +445,79 @@ export default function SerialTerminal() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Connection Panel */}
-      <ConnectionPanel
-        isConnected={terminalState.isConnected}
-        onConnect={handleConnect}
-        onDisconnect={handleDisconnect}
-        error={terminalState.error}
-      />
+    <div className="bg-gray-900/50 border-2 border-green-500/30 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.15)] overflow-hidden">
+      {/* Connection Panel with Toolbar */}
+      <div className="border-b border-green-500/20">
+        <ConnectionPanel
+          isConnected={terminalState.isConnected}
+          onConnect={handleConnect}
+          onDisconnect={handleDisconnect}
+          error={terminalState.error}
+          onConfigClick={() => setShowConfigModal(true)}
+          onHelpClick={() => setShowHelpModal(true)}
+          onClear={handleClear}
+          onDownloadLog={handleDownloadLog}
+        />
+      </div>
 
-      {/* Configuration Panel */}
-      <ConfigurationPanel
-        config={serialConfig}
-        onChange={setSerialConfig}
-        disabled={terminalState.isConnected}
-      />
-
-      {/* Advanced Controls */}
-      <AdvancedControls
-        showTimestamps={showTimestamps}
-        showHex={showHex}
-        autoScroll={autoScroll}
-        onToggleTimestamps={() => setShowTimestamps(prev => !prev)}
-        onToggleHex={() => setShowHex(prev => !prev)}
-        onToggleAutoScroll={() => setAutoScroll(prev => !prev)}
-        onClear={handleClear}
-        onDownloadLog={handleDownloadLog}
-      />
-
-      {/* Terminal Display */}
-      <div className="border border-gray-800 rounded-lg overflow-hidden bg-black">
+      {/* Terminal Display with Context Menu */}
+      <div
+        className="bg-black"
+        onContextMenu={handleContextMenu}
+      >
         <TerminalDisplay
           ref={terminalRef}
           options={terminalOptions}
         />
       </div>
 
-      {/* Send Controls */}
-      <SendControls
-        onSend={handleSend}
-        disabled={!terminalState.isConnected}
-        sendOptions={sendOptions}
-        onOptionsChange={setSendOptions}
+      {/* Terminal Input Area - Fixed at Bottom */}
+      <TerminalInput
+        isConnected={terminalState.isConnected}
+        onCommand={handleCommand}
       />
 
       {/* Status Bar */}
-      <StatusBar
-        stats={stats}
-        isConnected={terminalState.isConnected}
-        viewMode={viewMode}
+      <div className="border-t border-green-500/20">
+        <StatusBar
+          stats={stats}
+          isConnected={terminalState.isConnected}
+          viewMode={viewMode}
+          onViewModeToggle={handleViewModeToggle}
+          rxActive={rxActive}
+          txActive={txActive}
+        />
+      </div>
+
+      {/* Configuration Modal */}
+      <ConfigurationModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        config={serialConfig}
+        onChange={setSerialConfig}
+        disabled={terminalState.isConnected}
+        sendOptions={sendOptions}
+        onSendOptionsChange={setSendOptions}
+        showTimestamps={showTimestamps}
+        onToggleTimestamps={() => setShowTimestamps(prev => !prev)}
+        showLineNumbers={showLineNumbers}
+        onToggleLineNumbers={() => setShowLineNumbers(prev => !prev)}
+      />
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
+
+      {/* Terminal Context Menu */}
+      <TerminalContextMenu
+        position={contextMenuPosition}
+        onClose={handleCloseContextMenu}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        onClear={handleClear}
+        hasSelection={hasSelection}
       />
     </div>
   );

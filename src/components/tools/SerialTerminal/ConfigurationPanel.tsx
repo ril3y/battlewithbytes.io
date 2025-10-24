@@ -1,16 +1,22 @@
 /**
  * Configuration Panel Component
- * Serial port configuration (baud rate, parity, etc.)
+ * Serial port configuration and terminal display settings
  */
 
 import React, { useState } from 'react';
-import type { ConfigurationPanelProps } from './serialTerminal.types';
+import type { ConfigurationPanelProps, LineEnding } from './serialTerminal.types';
 import { BAUD_RATES } from './serialTerminal.types';
 
 export default function ConfigurationPanel({
   config,
   onChange,
-  disabled
+  disabled,
+  sendOptions,
+  onSendOptionsChange,
+  showTimestamps,
+  onToggleTimestamps,
+  showLineNumbers,
+  onToggleLineNumbers
 }: ConfigurationPanelProps) {
   const [customBaudRate, setCustomBaudRate] = useState('');
   const [showCustomBaud, setShowCustomBaud] = useState(false);
@@ -33,13 +39,14 @@ export default function ConfigurationPanel({
     }
   };
 
-  const currentBaudInPresets = BAUD_RATES.includes(config.baudRate as any);
+  const currentBaudInPresets = (BAUD_RATES as readonly number[]).includes(config.baudRate);
 
   return (
-    <div className="p-4 bg-black/30 border border-gray-800 rounded-lg space-y-4">
-      <h3 className="text-lg font-bold text-green-400 font-mono">Configuration</h3>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="p-4 bg-black/30 border border-gray-800 rounded-lg space-y-6">
+      {/* Serial Port Configuration Section */}
+      <div>
+        <h3 className="text-lg font-bold text-green-400 font-mono mb-4">Serial Port Configuration</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {/* Baud Rate */}
         <div>
           <label className="block text-sm font-mono text-gray-400 mb-2">
@@ -191,13 +198,110 @@ export default function ConfigurationPanel({
             step={256}
           />
         </div>
+        </div>
+
+        {disabled && (
+          <div className="text-sm text-yellow-400 font-mono mt-4">
+            Disconnect to change serial port configuration
+          </div>
+        )}
       </div>
 
-      {disabled && (
-        <div className="text-sm text-yellow-400 font-mono">
-          Disconnect to change configuration
+      {/* Send Settings Section */}
+      <div className="border-t border-gray-700 pt-4">
+        <h3 className="text-lg font-bold text-green-400 font-mono mb-4">Send Settings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Line Ending */}
+          <div>
+            <label className="block text-sm font-mono text-gray-400 mb-2">
+              Line Ending
+            </label>
+            <select
+              value={sendOptions.lineEnding}
+              onChange={(e) =>
+                onSendOptionsChange({
+                  ...sendOptions,
+                  lineEnding: e.target.value as LineEnding
+                })
+              }
+              className="w-full px-3 py-2 bg-black border border-gray-700 rounded text-white font-mono text-sm"
+            >
+              <option value="none">None</option>
+              <option value="cr">CR (\r)</option>
+              <option value="lf">LF (\n)</option>
+              <option value="crlf">CR+LF (\r\n)</option>
+            </select>
+          </div>
+
+          {/* Local Echo */}
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-800/50 rounded">
+              <input
+                type="checkbox"
+                checked={sendOptions.localEcho}
+                onChange={(e) =>
+                  onSendOptionsChange({
+                    ...sendOptions,
+                    localEcho: e.target.checked
+                  })
+                }
+                className="w-4 h-4 rounded border-gray-700 bg-black text-green-600 focus:ring-green-500"
+              />
+              <span className="text-gray-300 font-mono text-sm">Local Echo</span>
+            </label>
+          </div>
+
+          {/* Send as Hex */}
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-800/50 rounded">
+              <input
+                type="checkbox"
+                checked={sendOptions.sendAsHex}
+                onChange={(e) =>
+                  onSendOptionsChange({
+                    ...sendOptions,
+                    sendAsHex: e.target.checked
+                  })
+                }
+                className="w-4 h-4 rounded border-gray-700 bg-black text-green-600 focus:ring-green-500"
+              />
+              <span className="text-gray-300 font-mono text-sm">Send as Hex</span>
+            </label>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Display Settings Section */}
+      <div className="border-t border-gray-700 pt-4">
+        <h3 className="text-lg font-bold text-green-400 font-mono mb-4">Display Settings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Timestamps */}
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-800/50 rounded">
+              <input
+                type="checkbox"
+                checked={showTimestamps}
+                onChange={onToggleTimestamps}
+                className="w-4 h-4 rounded border-gray-700 bg-black text-green-600 focus:ring-green-500"
+              />
+              <span className="text-gray-300 font-mono text-sm">Show Timestamps</span>
+            </label>
+          </div>
+
+          {/* Line Numbers */}
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-800/50 rounded">
+              <input
+                type="checkbox"
+                checked={showLineNumbers}
+                onChange={onToggleLineNumbers}
+                className="w-4 h-4 rounded border-gray-700 bg-black text-green-600 focus:ring-green-500"
+              />
+              <span className="text-gray-300 font-mono text-sm">Show Line Numbers</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
