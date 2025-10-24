@@ -173,7 +173,7 @@ export const DEFAULT_SERIAL_CONFIG: SerialConfig = {
 export const DEFAULT_TERMINAL_OPTIONS: TerminalOptions = {
   fontSize: 14,
   fontFamily: 'monospace',
-  theme: 'green',
+  theme: 'default', // Use default theme to support all ANSI colors
   cursorBlink: true,
   cursorStyle: 'block',
   scrollback: 1000
