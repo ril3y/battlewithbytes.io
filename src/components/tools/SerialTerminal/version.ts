@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.4';
+export const VERSION = '1.1.5';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'PWA Enhancements & UI Fixes';
+export const VERSION_NAME = 'Full-Screen Terminal';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.5',
+    date: '2025-10-24',
+    name: 'Full-Screen Terminal',
+    changes: [
+      '🎯  Removed header - terminal now full-screen always',
+      '🔗  battlewithbytes.io attribution always visible in status bar',
+      '✨  Cleaner, more professional terminal-only interface'
+    ]
+  },
   {
     version: '1.1.4',
     date: '2025-10-24',

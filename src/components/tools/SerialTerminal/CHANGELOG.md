@@ -2,6 +2,14 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.5] - 2025-10-24 - Full-Screen Terminal
+
+### Changed
+- 🎯 Removed `<BattleTerm />` header completely - terminal now full-screen always
+- 🔗 battlewithbytes.io attribution always visible in status bar footer
+- ✨ Cleaner, more professional terminal-only interface
+- 📐 Page always uses full viewport height for maximum terminal space
+
 ## [1.1.4] - 2025-10-24 - PWA Enhancements & UI Fixes
 
 ### Added
