@@ -2,6 +2,17 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.6] - 2025-10-24 - Fullscreen Toggle
+
+### Added
+- ✨ Fullscreen toggle button in browser mode (next to BattleTerm header)
+- ✕ Exit fullscreen button when in fullscreen mode
+
+### Changed
+- 🎯 PWA mode automatically hides header for clean app experience
+- 📱 Browser mode shows header by default with fullscreen toggle option
+- 🔄 Users can easily switch between normal and fullscreen views in browser
+
 ## [1.1.5] - 2025-10-24 - Full-Screen Terminal
 
 ### Changed

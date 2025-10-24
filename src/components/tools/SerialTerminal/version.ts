@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.5';
+export const VERSION = '1.1.6';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Full-Screen Terminal';
+export const VERSION_NAME = 'Fullscreen Toggle';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.6',
+    date: '2025-10-24',
+    name: 'Fullscreen Toggle',
+    changes: [
+      '✨  Added fullscreen toggle button in browser mode',
+      '🎯  PWA mode automatically hides header for app experience',
+      '📱  Browser mode shows header with fullscreen button',
+      '🔄  Easy toggle between normal and fullscreen views',
+      '✕  Exit fullscreen button when in fullscreen mode'
+    ]
+  },
   {
     version: '1.1.5',
     date: '2025-10-24',
