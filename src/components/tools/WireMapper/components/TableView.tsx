@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
+import { cleanPinName } from '../utils/formatPinName';
 
 export const TableView: React.FC = () => {
-  const { connectors, mappings, updatePinName } = useWireMapperStore();
+  const { connectors, mappings, updatePin } = useWireMapperStore();
   const [editingPin, setEditingPin] = useState<{ connectorId: string; pinPos: number } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const justStartedEditingRef = React.useRef(false);
 
   const getConnectorName = (connectorId: string) => {
     const connector = connectors.find(c => c.id === connectorId);
@@ -14,13 +16,18 @@ export const TableView: React.FC = () => {
   };
 
   const handleStartEdit = (connectorId: string, pinPos: number, currentName: string) => {
+    justStartedEditingRef.current = true;
     setEditingPin({ connectorId, pinPos });
     setEditValue(currentName);
+    // Clear the flag after a short delay
+    setTimeout(() => {
+      justStartedEditingRef.current = false;
+    }, 100);
   };
 
   const handleSaveEdit = () => {
     if (editingPin && editValue.trim()) {
-      updatePinName(editingPin.connectorId, editingPin.pinPos, editValue.trim());
+      updatePin(editingPin.connectorId, editingPin.pinPos, { name: editValue.trim() });
     }
     setEditingPin(null);
     setEditValue('');
@@ -31,10 +38,21 @@ export const TableView: React.FC = () => {
     setEditValue('');
   };
 
+  const handleBlur = () => {
+    // Don't process blur if we just started editing (prevents immediate blur)
+    if (justStartedEditingRef.current) {
+      return;
+    }
+    // Blur should save the changes
+    handleSaveEdit();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSaveEdit();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
       handleCancelEdit();
     }
   };
@@ -47,7 +65,7 @@ export const TableView: React.FC = () => {
     if (!pin) return <span className="text-red-400">Pin {pinPos} (N/F)</span>;
 
     const isEditing = editingPin?.connectorId === connectorId && editingPin?.pinPos === pinPos;
-    const displayName = pin.name || `Pin ${pinPos}`;
+    const displayName = cleanPinName(pin.name || `Pin ${pinPos}`);
 
     if (isEditing) {
       return (
@@ -55,7 +73,7 @@ export const TableView: React.FC = () => {
           type="text"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleSaveEdit}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoFocus
           className="bg-gray-700 text-white px-2 py-1 rounded text-xs font-mono border border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 w-full"

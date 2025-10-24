@@ -16,6 +16,7 @@ import { PinDetail } from './PinDetail';
 import { Modal } from './Modal';
 import { WiringDiagramPreview } from './WiringDiagramPreview';
 import { TableView } from './TableView';
+import { demoProject } from '../utils/demoProject';
 
 // View mode types
 type ViewMode = 'canvas' | 'diagram' | 'table';
@@ -46,15 +47,27 @@ export const WireMapper: React.FC = () => {
   console.log('[WireMapper] Rendering. selectedPin (object):', JSON.stringify(selectedPin));
   console.log('[WireMapper] Rendering. derived selectedConnector (object):', selectedConnector ? selectedConnector.id : null, selectedConnector);
 
-  // Load from localStorage on mount if available
+  // Load from localStorage on mount if available, otherwise load demo
   useEffect(() => {
     try {
       // Load project data
       const savedProject = localStorage.getItem('wireMapperProject');
       if (savedProject) {
-        loadProject(JSON.parse(savedProject));
+        const parsed = JSON.parse(savedProject);
+        // Only load if it has actual content (not an empty project)
+        if (parsed.connectors && parsed.connectors.length > 0) {
+          loadProject(parsed);
+        } else {
+          // Load demo project if saved project is empty
+          console.log('Loading demo project');
+          loadProject(demoProject);
+        }
+      } else {
+        // No saved project, load demo
+        console.log('No saved project found, loading demo');
+        loadProject(demoProject);
       }
-      
+
       // Load settings data
       const savedSettings = localStorage.getItem('wireMapperSettings');
       if (savedSettings) {
@@ -62,6 +75,8 @@ export const WireMapper: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load data from localStorage:', error);
+      // On error, try loading demo as fallback
+      loadProject(demoProject);
     }
   }, [loadProject, updateSettings]);
 

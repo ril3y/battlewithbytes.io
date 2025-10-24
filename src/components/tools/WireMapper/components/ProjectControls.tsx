@@ -99,7 +99,41 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
         </label>
 
         <button
-          onClick={() => openPrintView(connectors, mappings)}
+          onClick={() => {
+            // Try to capture the wiring diagram if it's currently displayed
+            const diagramElement = document.querySelector('[data-wiring-diagram]');
+            let diagramHTML: string | undefined;
+
+            if (diagramElement) {
+              // Clone the element to avoid modifying the original
+              const clone = diagramElement.cloneNode(true) as HTMLElement;
+
+              // Convert dark theme to printer-friendly colors
+              clone.style.background = 'white';
+              clone.style.color = '#333';
+
+              // Update all text elements to dark color
+              clone.querySelectorAll('text, span, div').forEach(el => {
+                (el as HTMLElement).style.color = '#333';
+              });
+
+              // Update connector boxes to white background
+              clone.querySelectorAll('[style*="background"]').forEach(el => {
+                const element = el as HTMLElement;
+                if (element.style.backgroundColor &&
+                    (element.style.backgroundColor.includes('rgb(15') ||
+                     element.style.backgroundColor.includes('#0F') ||
+                     element.style.backgroundColor.includes('#1'))) {
+                  element.style.backgroundColor = 'white';
+                  element.style.border = '1px solid #ccc';
+                }
+              });
+
+              diagramHTML = clone.outerHTML;
+            }
+
+            openPrintView(connectors, mappings, diagramHTML);
+          }}
           className="px-2 sm:px-3 py-1 sm:py-2 bg-gray-800 text-green-400 rounded hover:bg-gray-700 transition text-xs sm:text-base whitespace-nowrap"
         >
           Print

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
+import { cleanPinName } from '../utils/formatPinName';
 
 interface MappingListProps {
   filterConnectorId?: string | null; // Optional ID to filter by
@@ -33,8 +34,8 @@ export const MappingList: React.FC<MappingListProps> = ({ filterConnectorId }) =
       return `Pin ${pinPos} (Not Found)`;
     }
 
-    // Pin found, return its name or default label
-    return pin.name || `Pin ${pinPos}`;
+    // Pin found, return its name or default label (cleaned of row/col indicators)
+    return cleanPinName(pin.name || `Pin ${pinPos}`);
   };
 
   // Utility function to get connector name by ID

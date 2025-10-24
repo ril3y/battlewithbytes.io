@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWireMapperStore } from '../store/useWireMapperStore';
 import { Connector, Pin } from '../types';
 import { produce } from 'immer';
+import { cleanPinName } from '../utils/formatPinName';
 
 // Layout Constants
 const CONNECTOR_WIDTH = 230; // px
@@ -52,6 +53,7 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
 }) => {
   const [editingPinPos, setEditingPinPos] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
+  const justStartedEditingRef = useRef(false);
   // Only show pins that are used in mappings
   const connectorPins = connector.pins.filter(pin => 
     usedPins.has(`${connector.id}-${pin.pos}`)
@@ -94,9 +96,9 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
           {sortedPins.map((pin, index) => {
             const pinKey = `${connector.id}-${pin.pos}`;
             const color = wireColors.get(pinKey) || '#fff'; // Default to white if no color found
-            const displayName = pin.name || `Pin ${pin.pos}`;
+            const displayName = cleanPinName(pin.name || `Pin ${pin.pos}`);
             const displayNet = netNames.get(pinKey) || '';
-            
+
             const dataAttrs = {
               'data-pin-id': pinKey,
               'data-pin-index': index, // Visual index of displayed pins
@@ -104,13 +106,18 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
               'data-connector-id': connector.id,
               'data-connector-position': position,
             };
-            
+
             const isEditing = editingPinPos === pin.pos;
 
             const handleStartEdit = (e: React.MouseEvent) => {
               e.stopPropagation(); // Prevent event bubbling
+              justStartedEditingRef.current = true;
               setEditingPinPos(pin.pos);
-              setEditValue(pin.name || '');
+              setEditValue(cleanPinName(pin.name || ''));
+              // Clear the flag after a short delay
+              setTimeout(() => {
+                justStartedEditingRef.current = false;
+              }, 100);
             };
 
             const handleSave = () => {
@@ -123,6 +130,15 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
             const handleCancel = () => {
               setEditingPinPos(null);
               setEditValue('');
+            };
+
+            const handleBlur = () => {
+              // Don't process blur if we just started editing (prevents immediate blur)
+              if (justStartedEditingRef.current) {
+                return;
+              }
+              // Blur should save the changes
+              handleSave();
             };
 
             const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -145,7 +161,7 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={handleSave}
+                        onBlur={handleBlur}
                         onKeyDown={handleKeyDown}
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
@@ -191,7 +207,7 @@ const ConnectorTable: React.FC<ConnectorTableProps> = ({
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={handleSave}
+                        onBlur={handleBlur}
                         onKeyDown={handleKeyDown}
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
@@ -580,7 +596,7 @@ export const WiringDiagramPreview: React.FC = () => {
   }
   
   return (
-    <div ref={diagramRef} className="relative w-full h-full overflow-auto bg-gray-900 p-4">
+    <div ref={diagramRef} className="relative w-full h-full overflow-auto bg-gray-900 p-4" data-wiring-diagram>
       <div style={{ position: 'relative', width: `${svgDimensions.width}px`, height: `${svgDimensions.height}px` }}>
         {/* Left Connectors */}
         {leftConnectorsWithPins.map((connector) => {
