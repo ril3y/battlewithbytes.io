@@ -272,9 +272,10 @@ export default function SerialTerminal() {
     } catch (error) {
       if (error instanceof Error && error.name !== 'NetworkError') {
         console.error('Read error:', error);
+        const errorMessage = error.message;
         setTerminalState(prev => ({
           ...prev,
-          error: `Read error: ${error.message}`
+          error: `Read error: ${errorMessage}`
         }));
       }
     } finally {
