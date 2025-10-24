@@ -61,7 +61,6 @@ export default function SerialTerminal() {
 
   // UI state
   const [showTimestamps, setShowTimestamps] = useState(false);
-  const [showHex] = useState(false);
   const [autoScroll] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('ascii');
@@ -242,7 +241,7 @@ export default function SerialTerminal() {
           output = formatWithTimestamp(output, parsed.timestamp);
         }
 
-        if (showHex) {
+        if (viewMode === 'hex') {
           const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
           output = `[HEX] ${hexStr}\n${output}`;
         }
@@ -272,15 +271,16 @@ export default function SerialTerminal() {
     } catch (error) {
       if (error instanceof Error && error.name !== 'NetworkError') {
         console.error('Read error:', error);
+        const errorMessage = error.message;
         setTerminalState(prev => ({
           ...prev,
-          error: `Read error: ${error.message}`
+          error: `Read error: ${errorMessage}`
         }));
       }
     } finally {
       isReading.current = false;
     }
-  }, [showTimestamps, showHex, autoScroll]);
+  }, [showTimestamps, viewMode, autoScroll]);
 
   // Connect to serial port
   const handleConnect = useCallback(async () => {
