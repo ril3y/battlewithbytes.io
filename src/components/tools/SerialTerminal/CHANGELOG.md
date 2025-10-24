@@ -2,6 +2,20 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.3] - 2025-10-24 - Hex View Fix
+
+### Fixed
+- 🐛  Hex view was showing both hex AND ASCII text mixed together
+- 🐛  Hex view was executing newlines instead of showing them as `0A`
+- 🐛  Removed `[HEX]` prefix that made copying hex data annoying
+- 🐛  No longer requires disconnect/reconnect to toggle hex mode
+
+### Changed
+- Hex mode now shows ONLY raw hex bytes in continuous stream
+- Hex bytes display as: `FF A2 3A 4F AD ...` (no text interpretation)
+- Line buffer automatically cleared when switching between ASCII/hex modes
+- Mode switching is instant and seamless
+
 ## [1.1.2] - 2025-10-24 - ANSI Color Support
 
 ### Fixed

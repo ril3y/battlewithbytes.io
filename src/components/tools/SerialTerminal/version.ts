@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.2';
+export const VERSION = '1.1.3';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'ANSI Color Support';
+export const VERSION_NAME = 'Hex View Fix';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.3',
+    date: '2025-10-24',
+    name: 'Hex View Fix',
+    changes: [
+      '🐛  Fixed hex view showing both hex AND text (now shows only hex)',
+      '🐛  Fixed hex view executing newlines (now shows 0A instead of \\n)',
+      '🐛  Removed annoying [HEX] prefix from hex output',
+      '✨  Hex view now works instantly without reconnecting',
+      '🔧  Cleared line buffer when switching between ASCII/hex modes'
+    ]
+  },
   {
     version: '1.1.2',
     date: '2025-10-24',

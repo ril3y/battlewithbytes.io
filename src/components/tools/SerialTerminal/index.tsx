@@ -243,40 +243,42 @@ export default function SerialTerminal() {
         // Parse and display data
         const parsed = parseSerialData(value);
 
-        // Add to buffer
-        lineBufferRef.current += parsed.text;
+        // In hex mode, show only raw hex bytes (no text processing)
+        if (viewMode === 'hex') {
+          const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
+          terminalRef.current?.write(hexStr + ' ');
+        } else {
+          // ASCII mode: process text with line buffering
+          // Add to buffer
+          lineBufferRef.current += parsed.text;
 
-        // Split into lines
-        const lines = lineBufferRef.current.split('\n');
+          // Split into lines
+          const lines = lineBufferRef.current.split('\n');
 
-        // Keep last incomplete line in buffer
-        lineBufferRef.current = lines.pop() || '';
+          // Keep last incomplete line in buffer
+          lineBufferRef.current = lines.pop() || '';
 
-        // Process complete lines
-        if (lines.length > 0) {
-          let output = lines.map(line => {
-            let processedLine = line;
+          // Process complete lines
+          if (lines.length > 0) {
+            const output = lines.map(line => {
+              let processedLine = line;
 
-            // Add timestamp to each complete line
-            if (showTimestamps) {
-              processedLine = formatWithTimestamp(processedLine, parsed.timestamp);
-            }
+              // Add timestamp to each complete line
+              if (showTimestamps) {
+                processedLine = formatWithTimestamp(processedLine, parsed.timestamp);
+              }
 
-            // Add line number to each complete line
-            if (showLineNumbers) {
-              const lineNum = lineNumberRef.current++;
-              processedLine = `\x1b[2;90m${String(lineNum).padStart(4, ' ')}|\x1b[0m ${processedLine}`;
-            }
+              // Add line number to each complete line
+              if (showLineNumbers) {
+                const lineNum = lineNumberRef.current++;
+                processedLine = `\x1b[2;90m${String(lineNum).padStart(4, ' ')}|\x1b[0m ${processedLine}`;
+              }
 
-            return processedLine;
-          }).join('\n') + '\n'; // Add back the newline
+              return processedLine;
+            }).join('\n') + '\n'; // Add back the newline
 
-          if (viewMode === 'hex') {
-            const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
-            output = `[HEX] ${hexStr}\n${output}`;
+            terminalRef.current?.write(output);
           }
-
-          terminalRef.current?.write(output);
         }
 
         if (autoScroll) {
@@ -461,6 +463,8 @@ export default function SerialTerminal() {
 
   // Toggle view mode
   const handleViewModeToggle = useCallback(() => {
+    // Clear line buffer when switching modes to prevent data mixing
+    lineBufferRef.current = '';
     setViewMode(prev => prev === 'ascii' ? 'hex' : 'ascii');
   }, []);
 
