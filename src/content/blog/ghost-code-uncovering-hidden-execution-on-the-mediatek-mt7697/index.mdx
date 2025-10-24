@@ -1,0 +1,240 @@
+---
+title: "Ghost Code: Uncovering Hidden Execution on the MediaTek MT7697"
+slug: "ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697"
+date: "2025-09-22"
+excerpt: "This post documents the discovery of ghost code behavior on the MT7697 SoC, where code runs normally while memory reads show only zeros. By analyzing the SDK, datasheet, and live debug sessions, we reveal MediaTek's custom bus-level protection and eFUSE-controlled boot security."
+tags:
+  - "mt7697"
+  - "reversing"
+  - "hardware hacking"
+  - "gdb"
+  - "arm"
+  - "black magic"
+author: "Riley Porter"
+coverImage: "./images/blog/ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697/cover.png"
+---
+
+import CodeBlock from '../../../components/CodeBlock'
+import DropCap from '../../../components/DropCap'
+
+<DropCap>
+While reversing the MediaTek MT7697, I encountered one of the strangest debugging experiences I’ve ever seen: code running normally, registers updating, but all memory locations reading back as zeros. This blog documents that journey, using a Black Magic Probe with GDB, and how we uncovered the hidden execution model inside the SoC.
+</DropCap>
+
+---
+
+## Connecting via SWD
+
+I used the [**Black Magic Probe**](https://black-magic.org/index.html) to connect directly to the MT7697's SWD interface. The connection worked flawlessly — I could halt, step, and inspect registers in GDB:
+
+```gdb
+(gdb) info reg
+r0   0x2001417c
+r1   0x102ffb8a
+r2   0x2a8
+r3   0x8
+...
+sp   0x20014148
+lr   0x102721
+pc   0x102686
+xpsr 0x01000000
+```
+
+Registers updated exactly as expected when single-stepping through code.
+
+---
+
+## The Ghost Code Phenomenon
+
+The confusion started when trying to disassemble memory. Every instruction appeared as a `movs r0, r0` no-op, and memory reads returned only `0x00000000`.
+
+```gdb
+(gdb) x/16i $pc
+0x102682: movs r0, r0
+0x102684: movs r0, r0
+0x102686: movs r0, r0
+...
+```
+
+Even worse, dumping flash or SRAM while the device was running showed only zeros:
+
+```gdb
+(gdb) x/16xw 0x10000000
+0x10000000: 0x00000000 0x00000000 0x00000000 0x00000000
+```
+
+Yet clearly, *real code was executing*. This paradox is what I call **ghost code execution**.
+
+---
+
+## Breakpoints That Never Land
+
+Setting both software and hardware breakpoints failed. The debugger would accept the command, but execution never stopped at the desired address. This suggested that code fetches were happening outside of the regions GDB could see, or that the SoC was actively blocking debug patching.
+
+### Why Breakpoints Fail
+
+On ARM Cortex-M devices, breakpoints are typically set either by patching instructions in flash or by using the Flash Patch and Breakpoint (FPB) unit. But with the MT7697:
+
+- **Flash reads always return 0x00**, so GDB cannot patch instructions
+- **Execute-only filtering** prevents the debugger from verifying code locations
+- **Result**: breakpoints are silently ignored, confirming the bus-level security filter at work
+
+The FPB unit relies on being able to compare actual instruction addresses with breakpoint locations. Since the debugger can't read the real instructions due to the SFC filtering, it can't properly configure hardware breakpoints either.
+
+---
+
+## Relocated Vector Table
+
+When inspecting the **System Control Block (SCB)** registers, I found the vector table had been relocated into SRAM at `0x20000000`:
+
+```gdb
+(gdb) x/1wx 0xE000ED08
+0xe000ed08: 0x20000000   # VTOR
+```
+
+This meant execution was jumping into RAM very early, instead of staying in flash.
+
+Using the ELF we dumped offline, I cross-referenced where the vector table and reset handler were originally located. This confirmed that the firmware copies itself into RAM during startup, then runs from there — with protections applied.
+
+---
+
+## Registers vs Memory Access
+
+Here’s the strangest part: CPU registers and system control space were fully readable, but memory-mapped flash and RAM were blocked:
+
+```gdb
+(gdb) x/1wx 0xE000ED00    # CPUID
+0xe000ed00: 0x410fc241    # ARM Cortex-M4
+
+(gdb) x/1wx 0x10000000    # Flash
+0x10000000: 0x00000000    # Always zero
+```
+
+The ARM debug interface (AHB-AP) could access the SCB, NVIC, and debug control blocks — but anything resembling firmware memory was filtered out.
+
+---
+
+## What We Learned
+
+### 1. MediaTek bypasses ARM's MPU
+
+On Cortex-M4 cores, the **Memory Protection Unit (MPU)** is configured through registers in the System Control Block (SCB), starting at `0xE000ED90`. Here's what each register does, and how to interpret the values we observed on the MT7697:
+
+- `MPU_TYPE = 0x00000800` → 8 regions supported
+- `MPU_CTRL = 0x0` → MPU disabled
+
+### 2. Custom bus-level security
+
+The Serial Flash Controller (SFC) and bus fabric enforce execute-only memory access, bypassing ARM's standard protection mechanisms.
+
+### 3. eFUSE-controlled at boot
+
+The MT7697’s protection isn’t software-driven — it’s baked into the silicon.  
+On reset, the Boot ROM reads configuration bits from **eFUSE**. These one-time programmable values permanently control security features such as the Serial Flash Controller (SFC) execute-only mode. By the time user code ever runs, the ROM has already enabled filtering logic that:
+
+- Allows instruction fetches from flash,
+- Blocks data or debug reads (returning zeros),
+- Prevents breakpoints or disassembly from working in protected regions.
+
+This explains why, under normal debugging conditions, everything looks blank:
+
+- **Registers:** Always visible (PC, SP, LR, GPRs).  
+- **System Control Block (SCB):** Blocked — attempts to read `0xE000ED00` and neighbors fail.  
+- **Memory (flash, SRAM):** Reads return `0x00000000`.  
+- **Disassembly:** Only `movs r0, r0`, since `0x00 0x00` decodes to that instruction.  
+
+In this state, the only reliable information is the live CPU registers; all memory and system context is hidden.
+
+---
+
+### 4. Boot window investigation
+
+Initially, I hypothesized that catching the CPU before the Boot ROM finished applying eFUSE settings might reveal a vulnerable window where protections weren't yet active. To test this theory, I wrote scripts that rapidly cycled reset and attach attempts:
+
+<CodeBlock
+  language="python"
+  code={`import gdb, time
+
+class MT7697BootAttack:
+    def attempt_connection(self):
+        try:
+            gdb.execute("target extended-remote \\\\.\\COM25")
+            gdb.execute("monitor reset")
+            gdb.execute("monitor swdp_scan")
+            gdb.execute("attach 1")
+            gdb.execute("monitor halt")
+            # Test SCB and eFUSE access
+            cpuid = gdb.execute("x/1wx 0xE000ED00", to_string=True)
+            efuse = gdb.execute("x/1wx 0x81070000", to_string=True)
+            print(f"CPUID: {cpuid}, eFUSE: {efuse}")
+        except gdb.error:
+            print("Attach failed, retrying...")
+
+attack = MT7697BootAttack()
+for i in range(100):
+    attack.attempt_connection()
+    time.sleep(0.05)`}
+/>
+
+This approach successfully caught the system at different execution points, evidenced by varying PC values across attempts. More importantly, it revealed that the System Control Block (SCB) was consistently accessible:
+
+- CPUID = 0x410fc241 → confirmed Cortex-M4
+- VTOR = 0x20000000 → vector table relocated into SRAM
+- AIRCR = 0xFA050000 → reset/security configuration visible
+- MPU_TYPE = 0x00000800 → 8 regions supported
+- MPU_CTRL = 0x0 → MPU disabled
+
+However, eFUSE registers remained completely inaccessible throughout all timing attempts:
+
+```gdb
+(gdb) x/1wx 0x81070000    # eFUSE EE_CTRL
+0x81070000: 0x00000000    # Always zero
+
+(gdb) x/1wx 0x81070030    # eFUSE RDATA0
+0x81070030: 0x00000000    # Always zero
+```
+
+**Key Discovery: Two-Tier Protection**
+
+The boot window experiments revealed that MediaTek implements two separate protection mechanisms:
+
+1. **ARM SCB protection** - Temporarily disabled during reset/debug attachment, allowing normal CPU debugging
+2. **eFUSE hardware protection** - Permanent silicon-level security that activates immediately upon power-on and cannot be bypassed with timing attacks
+
+This explains why we could successfully read ARM standard registers (proving we were catching genuine boot states) while eFUSE registers remained perpetually protected. The eFUSE controller has dedicated hardware security that operates independently of the ARM core's debug architecture.
+
+**Attack Verdict**
+
+The timing-based boot window attack does not work against MediaTek's eFUSE implementation. Unlike some other SoCs where eFUSE protection is software-initialized and vulnerable to precise timing, the MT7697's eFUSE security is hardware-enforced from power-on and immune to debugger timing manipulation.
+
+MediaTek's security implementation demonstrates sophisticated defense-in-depth, with eFUSE protection operating at a level below even the ARM debug subsystem.
+
+---
+
+### 5. eFUSE & Security Registers
+
+Digging into the MT7697 SDK revealed the exact registers that the Boot ROM initializes from eFUSE to enforce these protections:
+
+```c
+#define SFC_SECURITY_REG   (CM4_SFC_BASE + 0x8008)
+#define SFC_CONTROL_REG    (CM4_SFC_BASE + 0x800C)
+#define SFC_CRC_REG        (CM4_SFC_BASE + 0x803C)
+```
+
+These Serial Flash Controller (SFC) registers control the execute-only memory access behavior:
+
+- **SFC_SECURITY_REG** - Configures memory protection modes and access restrictions
+- **SFC_CONTROL_REG** - Controls the SFC operation and filtering behavior
+- **SFC_CRC_REG** - Validates firmware integrity during the boot process
+
+The Boot ROM reads one-time programmable eFUSE values and uses them to lock these registers into their security configuration. Once set, they cannot be reconfigured by user code - explaining why attempts to manually disable the protection during runtime failed completely.
+
+This hardware-enforced security model moves the protection layer below the ARM core itself, making it invisible to standard debugging tools that operate at the CPU level.
+
+---
+
+## Conclusion
+
+The MT7697 doesn’t just rely on ARM’s built-in features. MediaTek added a custom layer of protection that makes firmware invisible to debuggers while still executing normally. This “ghost code” behavior is a powerful anti-reversing measure, and it shows how IoT security is moving deeper into silicon.
+
+For researchers, the lesson is clear: even when memory looks blank, the CPU may be running a hidden world of code just beneath your probe.

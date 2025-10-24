@@ -1,5 +1,41 @@
 [
   {
+    "slug": "designing-my-golf-cart-wiring-harness",
+    "metadata": {
+      "title": "Designing my golf cart wiring harness",
+      "date": "2025-09-26",
+      "excerpt": "A hardware description of designing a wiring harness for my 1975 Harley Davidson golf cart rebuild.",
+      "tags": [
+        "project",
+        "golfcart",
+        "hardware",
+        "makers",
+        "kicad",
+        "embedded"
+      ],
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/designing-my-golf-cart-wiring-harness/cover.png"
+    }
+  },
+  {
+    "slug": "ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697",
+    "metadata": {
+      "title": "Ghost Code: Uncovering Hidden Execution on the MediaTek MT7697",
+      "date": "2025-09-22",
+      "excerpt": "This post documents the discovery of ghost code behavior on the MT7697 SoC, where code runs normally while memory reads show only zeros. By analyzing the SDK, datasheet, and live debug sessions, we reveal MediaTek's custom bus-level protection and eFUSE-controlled boot security.",
+      "tags": [
+        "mt7697",
+        "reversing",
+        "hardware hacking",
+        "gdb",
+        "arm",
+        "black magic"
+      ],
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697/cover.png"
+    }
+  },
+  {
     "slug": "i2c-hdmi-hacks",
     "metadata": {
       "title": "I2C HDMI Hacks",
