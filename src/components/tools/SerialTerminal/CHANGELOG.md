@@ -2,6 +2,13 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.7] - 2025-10-24 - Auto-Focus Input
+
+### Changed
+- ⌨️ Terminal input automatically focuses on page load
+- ✨ Users can start typing immediately without clicking the input box
+- 🎯 Improved user experience - terminal is ready to use right away
+
 ## [1.1.6] - 2025-10-24 - Fullscreen Toggle
 
 ### Added

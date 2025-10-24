@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.6';
+export const VERSION = '1.1.7';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Fullscreen Toggle';
+export const VERSION_NAME = 'Auto-Focus Input';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.7',
+    date: '2025-10-24',
+    name: 'Auto-Focus Input',
+    changes: [
+      '⌨️  Terminal input automatically focuses on page load',
+      '✨  Start typing immediately without clicking',
+      '🎯  Better user experience - ready to use right away'
+    ]
+  },
   {
     version: '1.1.6',
     date: '2025-10-24',

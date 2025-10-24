@@ -6,7 +6,7 @@
  * Handles command input, history, and auto-completion
  */
 
-import React, { useState, useRef, useCallback, KeyboardEvent, ChangeEvent } from 'react';
+import React, { useState, useRef, useCallback, useEffect, KeyboardEvent, ChangeEvent } from 'react';
 
 export interface TerminalInputProps {
   isConnected: boolean;
@@ -23,6 +23,13 @@ export default function TerminalInput({
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus input on mount
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   // Handle input change
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
