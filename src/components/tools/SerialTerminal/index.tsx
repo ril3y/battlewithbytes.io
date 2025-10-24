@@ -13,6 +13,7 @@ import TerminalDisplay, { TerminalDisplayRef } from './TerminalDisplay';
 import TerminalInput from './TerminalInput';
 import TerminalContextMenu from './TerminalContextMenu';
 import StatusBar from './StatusBar';
+import VersionChecker from './VersionChecker';
 import type {
   SerialConfig,
   TerminalOptions,
@@ -41,6 +42,12 @@ import { saveLastConfig, loadLastConfig } from './configManager';
 export default function SerialTerminal() {
   // Terminal reference
   const terminalRef = useRef<TerminalDisplayRef>(null);
+
+  // Line number counter
+  const lineNumberRef = useRef<number>(1);
+
+  // Buffer for incomplete lines
+  const lineBufferRef = useRef<string>('');
 
   // Configuration state
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(DEFAULT_SERIAL_CONFIG);
@@ -235,18 +242,42 @@ export default function SerialTerminal() {
 
         // Parse and display data
         const parsed = parseSerialData(value);
-        let output = parsed.text;
 
-        if (showTimestamps) {
-          output = formatWithTimestamp(output, parsed.timestamp);
+        // Add to buffer
+        lineBufferRef.current += parsed.text;
+
+        // Split into lines
+        const lines = lineBufferRef.current.split('\n');
+
+        // Keep last incomplete line in buffer
+        lineBufferRef.current = lines.pop() || '';
+
+        // Process complete lines
+        if (lines.length > 0) {
+          let output = lines.map(line => {
+            let processedLine = line;
+
+            // Add timestamp to each complete line
+            if (showTimestamps) {
+              processedLine = formatWithTimestamp(processedLine, parsed.timestamp);
+            }
+
+            // Add line number to each complete line
+            if (showLineNumbers) {
+              const lineNum = lineNumberRef.current++;
+              processedLine = `\x1b[2;90m${String(lineNum).padStart(4, ' ')}|\x1b[0m ${processedLine}`;
+            }
+
+            return processedLine;
+          }).join('\n') + '\n'; // Add back the newline
+
+          if (viewMode === 'hex') {
+            const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
+            output = `[HEX] ${hexStr}\n${output}`;
+          }
+
+          terminalRef.current?.write(output);
         }
-
-        if (viewMode === 'hex') {
-          const hexStr = bytesToHex(value, { uppercase: true, separator: ' ' });
-          output = `[HEX] ${hexStr}\n${output}`;
-        }
-
-        terminalRef.current?.write(output);
 
         if (autoScroll) {
           terminalRef.current?.scrollToBottom();
@@ -280,7 +311,7 @@ export default function SerialTerminal() {
     } finally {
       isReading.current = false;
     }
-  }, [showTimestamps, viewMode, autoScroll]);
+  }, [showTimestamps, viewMode, autoScroll, showLineNumbers]);
 
   // Connect to serial port
   const handleConnect = useCallback(async () => {
@@ -296,6 +327,8 @@ export default function SerialTerminal() {
     try {
       // Stop animation and clear terminal
       terminalRef.current?.stopAnimation();
+      lineNumberRef.current = 1; // Reset line counter for new connection
+      lineBufferRef.current = ''; // Clear line buffer for new connection
 
       const port = await requestSerialPort();
       await openSerialPort(port, serialConfig);
@@ -379,6 +412,8 @@ export default function SerialTerminal() {
   // Terminal controls
   const handleClear = useCallback(() => {
     terminalRef.current?.clear();
+    lineNumberRef.current = 1; // Reset line counter
+    lineBufferRef.current = ''; // Clear line buffer
   }, []);
 
   const handleDownloadLog = useCallback(() => {
@@ -519,6 +554,9 @@ export default function SerialTerminal() {
         onClear={handleClear}
         hasSelection={hasSelection}
       />
+
+      {/* Version Update Checker for PWA */}
+      <VersionChecker />
     </div>
   );
 }

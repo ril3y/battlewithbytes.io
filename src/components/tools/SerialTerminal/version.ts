@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.1';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Initial Release';
+export const VERSION_NAME = 'Bug Fixes';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,29 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.1',
+    date: '2025-10-24',
+    name: 'Bug Fixes',
+    changes: [
+      '🐛  Fixed timestamps appearing in middle of lines',
+      '🐛  Fixed line numbers counting data fragments instead of complete lines',
+      '✨  Implemented proper line buffering for serial data',
+      '🔧  Timestamps and line numbers now apply to complete lines only'
+    ]
+  },
+  {
+    version: '1.1.0',
+    date: '2025-10-24',
+    name: 'PWA Update',
+    changes: [
+      '📱  Installable as standalone PWA app',
+      '🎯  Fullscreen mode when installed - no navigation clutter',
+      '📐  Minimum window size constraints (800x600)',
+      '✨  Professional app experience on desktop and mobile',
+      '🔧  Improved viewport configuration for PWA'
+    ]
+  },
   {
     version: '1.0.0',
     date: '2025-10-24',

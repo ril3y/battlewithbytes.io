@@ -2,6 +2,32 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.1] - 2025-10-24 - Bug Fixes
+
+### Fixed
+- 🐛  Timestamps appearing in the middle of lines - now only applied to complete lines
+- 🐛  Line numbers counting data fragments instead of complete lines
+- 🐛  Proper line buffering for serial data to prevent formatting mid-word
+
+### Changed
+- Implemented line buffering system to accumulate incomplete data before processing
+- Timestamps and line numbers now apply only to complete lines (ending with newline)
+- Buffer automatically clears on terminal clear and new connection
+
+## [1.1.0] - 2025-10-24 - PWA Update
+
+### Added
+- 📱  Progressive Web App (PWA) support - BattleTerm can now be installed as a standalone application
+- 🎯  Fullscreen mode when installed as PWA - removes navigation and header for dedicated terminal experience
+- 📐  Minimum window size constraints (800x600) to prevent UI issues
+- ✨  Enhanced viewport configuration for optimal PWA display
+- 🔧  Standalone mode detection for iOS, Android, and desktop platforms
+
+### Changed
+- Terminal page now renders fullscreen when launched as installed PWA app
+- Navigation and footer hidden in standalone/PWA mode for distraction-free experience
+- Improved professional appearance when used as standalone app
+
 ## [1.0.0] - 2025-10-24 - Initial Release
 
 ### Added
