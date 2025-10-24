@@ -2,6 +2,7 @@ import { Connector, Mapping } from '../types';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { ConnectorPreview } from '../components/ConnectorPreview';
+import { cleanPinName } from './formatPinName';
 
 /**
  * Opens a print-friendly view in a new window and triggers print dialog
@@ -20,7 +21,8 @@ const getConnectorName = (connector: Connector): string => {
  */
 const getPinLabel = (pin: { name?: string } | undefined, pinPos: number): string => {
   if (!pin) return `Pin ${pinPos}`;
-  return pin.name ? `${pin.name} (Pos: ${pinPos})` : `Pin ${pinPos}`;
+  const cleanedName = cleanPinName(pin.name || `Pin ${pinPos}`);
+  return pin.name ? `${cleanedName} (Pos: ${pinPos})` : `Pin ${pinPos}`;
 };
 
 
@@ -28,7 +30,7 @@ const getPinLabel = (pin: { name?: string } | undefined, pinPos: number): string
 /**
  * Creates an HTML-based print view of the wire harness
  */
-export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
+export const openPrintView = (connectors: Connector[], mappings: Mapping[], diagramHTML?: string) => {
   // Open a new window
   const printWindow = window.open('', '_blank', 'width=1000,height=800');
   
@@ -69,16 +71,16 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
     const svgMatch = connectorSvg.match(/<svg[\s\S]*?<\/svg>/i);
     const svgContent = svgMatch ? svgMatch[0] : '';
     
-    // Clean up the SVG by replacing template literals with actual values
+    // Clean up the SVG by replacing template literals with printer-friendly colors
     let processedSvg = svgContent
       .replace(/className="[^"]*"/g, '')
       .replace(/\$\{[^}]*\}/g, function(match) {
-        // Replace template literals with actual colors
-        if (match.includes('THEME_COLORS.accent')) return '#00ff9d';
-        if (match.includes('THEME_COLORS.background')) return '#111826';
-        if (match.includes('THEME_COLORS.pinFill')) return '#374151';
-        if (match.includes('THEME_COLORS.textLight')) return '#E2E8F0';
-        if (match.includes('THEME_COLORS.border')) return '#475569';
+        // Replace template literals with printer-friendly colors
+        if (match.includes('THEME_COLORS.accent')) return '#333333';
+        if (match.includes('THEME_COLORS.background')) return '#ffffff';
+        if (match.includes('THEME_COLORS.pinFill')) return '#f0f0f0';
+        if (match.includes('THEME_COLORS.textLight')) return '#333333';
+        if (match.includes('THEME_COLORS.border')) return '#cccccc';
         return '';
       });
     
@@ -90,8 +92,8 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
     // For each pin in the connector
     sortedPins.forEach((pin, index) => {
       if (index < circles.length) {
-        // Get the pin's color from config
-        const pinColor = pin.config?.color || '#374151';
+        // Get the pin's color from config (use lighter default for printing)
+        const pinColor = pin.config?.color || '#e0e0e0';
         
         // Get the complete circle tag for this pin
         const circleMatch = circles[index][0];
@@ -108,8 +110,8 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
     // Create the connector HTML with SVG and pin legend
     connectorsHTML += `
       <div class="connector-box" style="margin: 20px; display: inline-block; vertical-align: top;">
-        <div style="position: relative; border: 2px solid #00ff9d; border-radius: 8px; padding: 20px; background-color: #111826; max-width: 550px;">
-          <div style="font-weight: bold; font-size: 16px; color: white; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: #111826; padding: 5px 15px; border: 2px solid #00ff9d; border-radius: 15px;">
+        <div style="position: relative; border: 2px solid #333; border-radius: 8px; padding: 20px; background-color: #ffffff; max-width: 550px;">
+          <div style="font-weight: bold; font-size: 16px; color: #333; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: #ffffff; padding: 5px 15px; border: 2px solid #333; border-radius: 15px;">
             ${connector.name || 'Unnamed Connector'}
           </div>
           <div style="color: #666; margin-bottom: 15px; text-align: center; font-size: 12px;">
@@ -125,9 +127,9 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
         <div style="margin-top: 15px; font-size: 12px; padding-left: 0;">
           <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           ${sortedPins.map(pin => {
-            const pinColor = pin.config?.color || '#555555';
+            const pinColor = pin.config?.color || '#cccccc';
             const pinFunction = pin.netName || pin.desc || '';
-            const pinName = pin.name || '';
+            const pinName = cleanPinName(pin.name || `Pin ${pin.pos}`);
             const displayText = [pinName, pinFunction].filter(Boolean).join(' (') + (pinFunction ? ')' : '');
             
             return `
@@ -179,8 +181,8 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
               const localPin = connector.pins.find(p => p.pos === localPinPos);
               const remoteConnector = connectors.find(c => c.id === remoteConnectorId);
               const remotePin = remoteConnector?.pins.find(p => p.pos === remotePinPos);
-              
-              const pinColor = localPin?.config?.color || '#888';
+
+              const pinColor = localPin?.config?.color || '#cccccc';
               
               return `
                 <tr>
@@ -251,11 +253,15 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
               size: landscape;
               margin: 1cm;
             }
-            /* Critical: Force color printing */
-            * {
+            /* Force color printing for pin indicators */
+            .connector-box [style*="background-color"] {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
               color-adjust: exact !important;
+            }
+            /* Keep everything else printer-friendly */
+            body {
+              background: white !important;
             }
           }
         </style>
@@ -273,7 +279,15 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[]) => {
         <div style="display: flex; flex-wrap: wrap;">
           ${connectorsHTML}
         </div>
-        
+
+        ${diagramHTML ? `
+          <div style="page-break-before: always;"></div>
+          <h2 style="margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Wiring Diagram</h2>
+          <div style="background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: auto;">
+            ${diagramHTML}
+          </div>
+        ` : ''}
+
         <h2 style="margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Connection Tables</h2>
         ${tablesHTML || '<p style="color: #666;">No connections to display.</p>'}
       </body>

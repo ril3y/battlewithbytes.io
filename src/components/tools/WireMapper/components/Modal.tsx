@@ -8,17 +8,17 @@ interface ModalProps {
 
 export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-start z-50 p-4 overflow-y-auto"
       onClick={onClose} // Close modal on overlay click
     >
-      <div 
-        className="bg-gray-900 rounded-lg shadow-xl p-6 max-w-2xl w-full border border-gray-700"
+      <div
+        className="bg-gray-900 rounded-lg shadow-xl p-6 max-w-2xl w-full border border-gray-700 my-8 max-h-[calc(100vh-4rem)]"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal content
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-gray-900 z-10 pb-2">
           <h2 className="text-xl font-semibold text-gray-200">{title}</h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-100 text-2xl"
             aria-label="Close modal"
@@ -26,7 +26,7 @@ export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
             &times;
           </button>
         </div>
-        <div>
+        <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
           {children}
         </div>
       </div>

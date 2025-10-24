@@ -134,7 +134,7 @@ export class RectangleRenderer implements IConnectorRenderer {
     dimensions: { width: number; height: number }
   ): Pin[] {
     const rows = typeof config.rows === 'number' ? config.rows : 1;
-    const cols = typeof config.columns === 'number' ? config.columns : 8;
+    const cols = typeof config.cols === 'number' ? config.cols : 8;
     const pinPattern = config.pinPattern;
     const centerPinsHorizontally = typeof config.centerPinsHorizontally === 'boolean' ? config.centerPinsHorizontally : true;
     const pins: Pin[] = [];
@@ -234,13 +234,13 @@ export class RectangleRenderer implements IConnectorRenderer {
         // Calculate pin number based on chosen numbering scheme
         const pinNumber = calculatePinNumber(globalPinIndex, config, actualRows, pinLayout);
         
-        // Create the pin object with explicit row information in the name
+        // Create the pin object
         const pin: Pin = {
           id: generateUniqueId(),
           index: globalPinIndex,
           number: pinNumber, // User-facing number
           pos: typeof pinNumber === 'number' ? pinNumber : globalPinIndex + 1, // Logical position (use number if possible, else index+1)
-          name: `Pin ${pinNumber} (r${currentRow}c${currentCol})`, // Include row/col in name for debugging
+          name: `Pin ${pinNumber}`, // Simple pin name
           row: currentRow, // Add the row property
           col: currentCol, // Add the col property
           x: xPos,
@@ -266,9 +266,9 @@ export class RectangleRenderer implements IConnectorRenderer {
     dimensions: { width: number; height: number },
     pinLayoutParam?: number[] // Optional: pass parsed pinLayout from generatePins
   ): { x: number; y: number } | null {
-    
+
     const rows = typeof config.rows === 'number' ? config.rows : 1;
-    const cols = typeof config.columns === 'number' ? config.columns : 8;
+    const cols = typeof config.cols === 'number' ? config.cols : 8;
     const pinPattern = config.pinPattern;
     const centerPinsHorizontally = typeof config.centerPinsHorizontally === 'boolean' ? config.centerPinsHorizontally : true;
     let pinLayout: number[] = [];

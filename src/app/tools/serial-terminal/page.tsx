@@ -1,16 +1,7 @@
-import { Metadata, Viewport } from 'next';
+import { Metadata } from 'next';
 import Script from 'next/script';
 import { generateToolSchema } from '@/lib/utils/seo';
-import SerialTerminalPageClient from '@/components/tools/SerialTerminal/SerialTerminalPageClient';
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  minimumScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: 'cover',
-};
+import SerialTerminal from '@/components/tools/SerialTerminal/SerialTerminalClient';
 
 export const metadata: Metadata = {
   title: 'BattleTerm - Browser Serial Terminal | Battle With Bytes',
@@ -57,8 +48,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://battlewithbytes.io/tools/serial-terminal'
-  },
-  manifest: '/battleterm-manifest.json'
+  }
 };
 
 export default function SerialTerminalPage() {
@@ -69,11 +59,19 @@ export default function SerialTerminalPage() {
   );
 
   return (
-    <>
+    <main className="min-h-screen py-16 px-4">
       <Script id="serial-terminal-schema" type="application/ld+json">
         {JSON.stringify(toolSchema)}
       </Script>
-      <SerialTerminalPageClient />
-    </>
+
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold font-mono mb-6 glow-text">
+          <span className="text-green-400">&lt;</span> BattleTerm <span className="text-green-400">/&gt;</span>
+        </h1>
+
+        {/* BattleTerm Component */}
+        <SerialTerminal />
+      </div>
+    </main>
   );
 }
