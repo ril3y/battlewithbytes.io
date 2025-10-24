@@ -9,9 +9,9 @@
             <link>https://battlewithbytes.io</link>
         </image>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Fri, 24 Oct 2025 21:10:08 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 24 Oct 2025 21:36:32 GMT</lastBuildDate>
         <atom:link href="https://battlewithbytes.io/rss.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Fri, 24 Oct 2025 21:10:08 GMT</pubDate>
+        <pubDate>Fri, 24 Oct 2025 21:36:32 GMT</pubDate>
         <copyright><![CDATA[2025 Riley Porter]]></copyright>
         <language><![CDATA[en]]></language>
         <managingEditor><![CDATA[Riley Porter]]></managingEditor>
@@ -21,34 +21,6 @@
         <category><![CDATA[Hardware]]></category>
         <category><![CDATA[Software Engineering]]></category>
         <category><![CDATA[Technology]]></category>
-        <item>
-            <title><![CDATA[Designing my golf cart wiring harness]]></title>
-            <description><![CDATA[A hardware description of designing a wiring harness for my 1975 Harley Davidson golf cart rebuild.]]></description>
-            <link>https://battlewithbytes.io/blog/designing-my-golf-cart-wiring-harness</link>
-            <guid isPermaLink="false">https://battlewithbytes.io/blog/designing-my-golf-cart-wiring-harness</guid>
-            <category><![CDATA[project]]></category>
-            <category><![CDATA[golfcart]]></category>
-            <category><![CDATA[hardware]]></category>
-            <category><![CDATA[makers]]></category>
-            <category><![CDATA[kicad]]></category>
-            <category><![CDATA[embedded]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
-            <pubDate>Fri, 26 Sep 2025 00:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[Ghost Code: Uncovering Hidden Execution on the MediaTek MT7697]]></title>
-            <description><![CDATA[This post documents the discovery of ghost code behavior on the MT7697 SoC, where code runs normally while memory reads show only zeros. By analyzing the SDK, datasheet, and live debug sessions, we reveal MediaTek's custom bus-level protection and eFUSE-controlled boot security.]]></description>
-            <link>https://battlewithbytes.io/blog/ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697</link>
-            <guid isPermaLink="false">https://battlewithbytes.io/blog/ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697</guid>
-            <category><![CDATA[mt7697]]></category>
-            <category><![CDATA[reversing]]></category>
-            <category><![CDATA[hardware hacking]]></category>
-            <category><![CDATA[gdb]]></category>
-            <category><![CDATA[arm]]></category>
-            <category><![CDATA[black magic]]></category>
-            <dc:creator><![CDATA[Riley Porter]]></dc:creator>
-            <pubDate>Mon, 22 Sep 2025 00:00:00 GMT</pubDate>
-        </item>
         <item>
             <title><![CDATA[I2C HDMI Hacks]]></title>
             <description><![CDATA[Hijack HDMI’s hidden DDC/CI I²C bus to automate input switching from Python on a Raspberry Pi—no remote required.]]></description>

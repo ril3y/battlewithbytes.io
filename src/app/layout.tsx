@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import '../styles/dropcap.css';
-import "../styles/prism-theme.css"; 
+import "../styles/prism-theme.css";
 import ClientQuakeTerminalWrapper from '@/components/ClientQuakeTerminalWrapper';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import StandaloneWrapper from '@/components/StandaloneWrapper';
 
 
 const geistSans = Geist({
@@ -38,11 +37,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Navigation />
-        <div className="pt-16 flex-grow">
+        <StandaloneWrapper>
           {children}
-        </div>
-        <Footer />
+        </StandaloneWrapper>
         <ClientQuakeTerminalWrapper />
       </body>
     </html>
