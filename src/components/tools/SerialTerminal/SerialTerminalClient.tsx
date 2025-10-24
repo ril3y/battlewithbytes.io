@@ -7,6 +7,10 @@
 
 import dynamic from 'next/dynamic';
 
+interface SerialTerminalClientProps {
+  isStandalone?: boolean;
+}
+
 const SerialTerminal = dynamic(() => import('./index'), {
   ssr: false,
   loading: () => (
@@ -19,4 +23,6 @@ const SerialTerminal = dynamic(() => import('./index'), {
   )
 });
 
-export default SerialTerminal;
+export default function SerialTerminalClient({ isStandalone = false }: SerialTerminalClientProps) {
+  return <SerialTerminal isStandalone={isStandalone} />;
+}

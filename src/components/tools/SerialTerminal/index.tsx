@@ -39,7 +39,11 @@ import {
 import { downloadTerminalLog, formatWithTimestamp } from './terminalUtils';
 import { saveLastConfig, loadLastConfig } from './configManager';
 
-export default function SerialTerminal() {
+interface SerialTerminalProps {
+  isStandalone?: boolean;
+}
+
+export default function SerialTerminal({ isStandalone = false }: SerialTerminalProps) {
   // Terminal reference
   const terminalRef = useRef<TerminalDisplayRef>(null);
 
@@ -48,6 +52,9 @@ export default function SerialTerminal() {
 
   // Buffer for incomplete lines
   const lineBufferRef = useRef<string>('');
+
+  // View mode ref for real-time access in read loop
+  const viewModeRef = useRef<ViewMode>('ascii');
 
   // Configuration state
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(DEFAULT_SERIAL_CONFIG);
@@ -116,6 +123,11 @@ export default function SerialTerminal() {
       saveLastConfig(serialConfig, terminalOptions, sendOptions);
     }
   }, [serialConfig, terminalOptions, sendOptions, terminalState.isConnected]);
+
+  // Keep viewModeRef in sync with viewMode state for real-time switching
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
 
   // Update stats periodically
   useEffect(() => {
@@ -244,7 +256,8 @@ export default function SerialTerminal() {
         const parsed = parseSerialData(value);
 
         // In hex mode, show only raw hex bytes (no text processing)
-        if (viewMode === 'hex') {
+        // Use ref instead of state for real-time mode switching
+        if (viewModeRef.current === 'hex') {
           const hexStr = bytesToHex(value, { uppercase: true, separator: ' ', bytesPerLine: 0 });
           terminalRef.current?.write(hexStr + ' ');
         } else {
@@ -313,7 +326,7 @@ export default function SerialTerminal() {
     } finally {
       isReading.current = false;
     }
-  }, [showTimestamps, viewMode, autoScroll, showLineNumbers]);
+  }, [showTimestamps, autoScroll, showLineNumbers]);
 
   // Connect to serial port
   const handleConnect = useCallback(async () => {
@@ -465,7 +478,11 @@ export default function SerialTerminal() {
   const handleViewModeToggle = useCallback(() => {
     // Clear line buffer when switching modes to prevent data mixing
     lineBufferRef.current = '';
-    setViewMode(prev => prev === 'ascii' ? 'hex' : 'ascii');
+    setViewMode(prev => {
+      const newMode = prev === 'ascii' ? 'hex' : 'ascii';
+      viewModeRef.current = newMode; // Update ref for real-time switching
+      return newMode;
+    });
   }, []);
 
   // Browser support check
@@ -525,6 +542,7 @@ export default function SerialTerminal() {
           onViewModeToggle={handleViewModeToggle}
           rxActive={rxActive}
           txActive={txActive}
+          isStandalone={isStandalone}
         />
       </div>
 

@@ -262,7 +262,7 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
     return (
       <div
         ref={containerRef}
-        className="terminal-container h-full min-h-[500px] md:min-h-[600px] lg:min-h-[700px] rounded bg-black"
+        className="terminal-container h-full min-h-[40vh] md:min-h-[50vh] lg:min-h-[55vh] rounded bg-black"
         style={{ padding: '8px' }}
       />
     );

@@ -2,6 +2,21 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.4] - 2025-10-24 - PWA Enhancements & UI Fixes
+
+### Added
+- ✨ Real-time hex/ASCII mode switching without needing to disconnect/reconnect
+- 🎯 Full-screen mode in PWA - header is hidden when running as installed app
+- 🔗 Attribution link to battlewithbytes.io in status bar when in PWA mode
+
+### Changed
+- 📐 Terminal height now dynamically adjusts based on viewport height (40vh/50vh/55vh)
+- 🔧 Improved laptop display with responsive height constraints
+
+### Fixed
+- 🐛 Fixed TypeScript strict mode errors for better reliability
+- 🐛 Hex/ASCII mode toggle now works instantly while connected
+
 ## [1.1.3] - 2025-10-24 - Hex View Fix
 
 ### Fixed

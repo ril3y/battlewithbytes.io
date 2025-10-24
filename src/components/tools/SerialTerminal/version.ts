@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.3';
+export const VERSION = '1.1.4';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Hex View Fix';
+export const VERSION_NAME = 'PWA Enhancements & UI Fixes';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.4',
+    date: '2025-10-24',
+    name: 'PWA Enhancements & UI Fixes',
+    changes: [
+      '✨  Real-time hex/ASCII mode switching without reconnecting',
+      '📐  Dynamic terminal height based on viewport (better laptop support)',
+      '🎯  Hide header in PWA mode for full-screen terminal experience',
+      '🔗  Show battlewithbytes.io attribution in status bar when in PWA mode',
+      '🐛  Fixed TypeScript strict mode issues for better reliability'
+    ]
+  },
   {
     version: '1.1.3',
     date: '2025-10-24',

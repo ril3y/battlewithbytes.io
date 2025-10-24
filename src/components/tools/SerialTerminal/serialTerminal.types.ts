@@ -135,6 +135,7 @@ export interface StatusBarProps {
   onViewModeToggle: () => void;
   rxActive?: boolean;
   txActive?: boolean;
+  isStandalone?: boolean;
 }
 
 export interface AdvancedControlsProps {
