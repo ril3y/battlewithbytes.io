@@ -17,12 +17,21 @@ export default function SerialTerminalPageClient() {
     const isAndroidApp = document.referrer.includes('android-app://');
 
     const standalone = isDisplayStandalone || isIOSStandalone || isAndroidApp;
+
+    console.log('[BattleTerm] Standalone detection:', {
+      isDisplayStandalone,
+      isIOSStandalone,
+      isAndroidApp,
+      standalone
+    });
+
     setIsStandalone(standalone);
 
     // Set minimum window size via CSS when in standalone mode
     if (standalone) {
       document.documentElement.style.minWidth = '800px';
       document.documentElement.style.minHeight = '600px';
+      document.body.classList.add('battleterm-standalone');
     }
   }, []);
 

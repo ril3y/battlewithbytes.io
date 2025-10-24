@@ -290,3 +290,25 @@ button:hover, .button:hover, button:focus, .button:focus {
   padding-bottom: 0.2em;
   margin-bottom: 0.7em;
 }
+
+/* PWA Standalone Mode - Hide navigation and footer */
+@media (display-mode: standalone) {
+  /* Hide navigation when running as PWA */
+  body > nav,
+  body > header,
+  body > footer {
+    display: none !important;
+  }
+
+  /* Remove top padding when nav is hidden */
+  body > div:first-of-type {
+    padding-top: 0 !important;
+  }
+
+  /* Make terminal fullscreen */
+  .battleterm-standalone main {
+    min-height: 100vh !important;
+    height: 100vh !important;
+    padding: 0 !important;
+  }
+}
