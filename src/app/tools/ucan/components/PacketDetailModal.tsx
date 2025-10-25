@@ -14,20 +14,46 @@ interface PacketDetailModalProps {
   message: CANMessage | undefined;
   isOpen: boolean;
   onClose: () => void;
+  onNavigate?: (direction: 'prev' | 'next') => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
-export default function PacketDetailModal({ message, isOpen, onClose }: PacketDetailModalProps) {
-  // Handle ESC key to close modal
+export default function PacketDetailModal({
+  message,
+  isOpen,
+  onClose,
+  onNavigate,
+  hasPrev = false,
+  hasNext = false
+}: PacketDetailModalProps) {
+  // Handle keyboard shortcuts
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      switch (e.key) {
+        case 'Escape':
+          onClose();
+          break;
+        case 'ArrowLeft':
+          if (hasPrev && onNavigate) {
+            e.preventDefault();
+            onNavigate('prev');
+          }
+          break;
+        case 'ArrowRight':
+          if (hasNext && onNavigate) {
+            e.preventDefault();
+            onNavigate('next');
+          }
+          break;
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, onNavigate, hasPrev, hasNext]);
 
   if (!isOpen || !message) {
     return null;
@@ -43,8 +69,30 @@ export default function PacketDetailModal({ message, isOpen, onClose }: PacketDe
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-8">
+        {/* Previous Button */}
+        {hasPrev && onNavigate && (
+          <button
+            onClick={() => onNavigate('prev')}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-800/90 hover:bg-gray-700 border-2 border-gray-600 rounded-full flex items-center justify-center text-white text-2xl transition-all hover:scale-110 z-50"
+            title="Previous packet (←)"
+          >
+            ‹
+          </button>
+        )}
+
+        {/* Next Button */}
+        {hasNext && onNavigate && (
+          <button
+            onClick={() => onNavigate('next')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-800/90 hover:bg-gray-700 border-2 border-gray-600 rounded-full flex items-center justify-center text-white text-2xl transition-all hover:scale-110 z-50"
+            title="Next packet (→)"
+          >
+            ›
+          </button>
+        )}
+
         <div
-          className="bg-gray-900 border-2 border-gray-700 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          className="bg-gray-900 border-2 border-gray-700 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col relative"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -185,8 +233,16 @@ export default function PacketDetailModal({ message, isOpen, onClose }: PacketDe
 
           {/* Footer */}
           <div className="bg-gray-800 border-t border-gray-700 p-4 flex items-center justify-between">
-            <div className="text-xs text-gray-400">
-              Press <kbd className="px-2 py-1 bg-gray-700 rounded text-gray-300">ESC</kbd> to close
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <span>
+                Press <kbd className="px-2 py-1 bg-gray-700 rounded text-gray-300">ESC</kbd> to close
+              </span>
+              {onNavigate && (hasPrev || hasNext) && (
+                <span>
+                  <kbd className="px-2 py-1 bg-gray-700 rounded text-gray-300">←</kbd>
+                  <kbd className="px-2 py-1 bg-gray-700 rounded text-gray-300 ml-1">→</kbd> to navigate
+                </span>
+              )}
             </div>
             <button
               onClick={onClose}

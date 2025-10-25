@@ -17,6 +17,7 @@ interface MessageLogProps {
   autoScroll?: boolean;
   showTimestamps?: boolean;
   viewMode?: 'list' | 'hex' | 'detail';
+  reverseOrder?: boolean;
 }
 
 export default function MessageLog({
@@ -25,23 +26,33 @@ export default function MessageLog({
   selectedMessageId,
   autoScroll = true,
   showTimestamps = true,
-  viewMode = 'list'
+  viewMode = 'list',
+  reverseOrder = true
 }: MessageLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll when new messages arrive
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (reverseOrder) {
+        // Scroll to top for reverse order (newest first)
+        scrollRef.current.scrollTop = 0;
+      } else {
+        // Scroll to bottom for normal order (oldest first)
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
-  }, [messages, autoScroll]);
+  }, [messages, autoScroll, reverseOrder]);
 
   const handleMessageClick = (message: CANMessage) => {
     if (onMessageSelect) {
       onMessageSelect(message.id);
     }
   };
+
+  // Apply reverse order if requested
+  const displayMessages = reverseOrder ? [...messages].reverse() : messages;
 
   if (messages.length === 0) {
     return (
@@ -62,7 +73,7 @@ export default function MessageLog({
     >
       {viewMode === 'list' && (
         <div className="divide-y divide-gray-800">
-          {messages.map((message) => (
+          {displayMessages.map((message) => (
             <MessageRow
               key={message.id}
               message={message}
@@ -79,7 +90,7 @@ export default function MessageLog({
 
       {viewMode === 'hex' && (
         <div className="p-4 space-y-2">
-          {messages.map((message) => (
+          {displayMessages.map((message) => (
             <HexMessageRow
               key={message.id}
               message={message}

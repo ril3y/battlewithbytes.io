@@ -249,6 +249,28 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
   // Get all seen CAN IDs
   const allCANIds = statsEngineRef.current?.getAllCANIds() || [];
 
+  // Calculate navigation state for modal
+  const selectedMessageIndex = selectedMessageId
+    ? filteredMessages.findIndex(m => m.id === selectedMessageId)
+    : -1;
+  const hasPrevMessage = selectedMessageIndex > 0;
+  const hasNextMessage = selectedMessageIndex >= 0 && selectedMessageIndex < filteredMessages.length - 1;
+
+  /**
+   * Navigate between messages in modal
+   */
+  const handleNavigateMessage = useCallback((direction: 'prev' | 'next') => {
+    if (selectedMessageIndex < 0) return;
+
+    const newIndex = direction === 'prev'
+      ? selectedMessageIndex - 1
+      : selectedMessageIndex + 1;
+
+    if (newIndex >= 0 && newIndex < filteredMessages.length) {
+      setSelectedMessageId(filteredMessages[newIndex].id);
+    }
+  }, [selectedMessageIndex, filteredMessages]);
+
   return (
     <div className={`flex flex-col ${isStandalone ? 'h-screen' : 'min-h-screen'} bg-gray-950 text-white`}>
       {/* Header */}
@@ -398,6 +420,9 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
         message={filteredMessages.find(m => m.id === selectedMessageId)}
         isOpen={!!selectedMessageId}
         onClose={() => setSelectedMessageId(undefined)}
+        onNavigate={handleNavigateMessage}
+        hasPrev={hasPrevMessage}
+        hasNext={hasNextMessage}
       />
 
       {/* Status Bar */}
