@@ -356,15 +356,46 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
           </div>
 
           {/* Center - Message Log */}
-          <div className="flex-1 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-            <MessageLog
-              messages={filteredMessages}
-              onMessageSelect={setSelectedMessageId}
-              selectedMessageId={selectedMessageId}
-              autoScroll={displayOptions.autoScroll && !displayOptions.paused}
-              showTimestamps={displayOptions.showTimestamps}
-              viewMode={displayOptions.viewMode}
-            />
+          <div className="flex-1 flex gap-4">
+            {/* Message List */}
+            <div className={`${selectedMessageId ? 'w-1/2' : 'w-full'} bg-gray-900 border border-gray-700 rounded-lg overflow-hidden transition-all`}>
+              <MessageLog
+                messages={filteredMessages}
+                onMessageSelect={setSelectedMessageId}
+                selectedMessageId={selectedMessageId}
+                autoScroll={displayOptions.autoScroll && !displayOptions.paused}
+                showTimestamps={displayOptions.showTimestamps}
+                viewMode={displayOptions.viewMode}
+              />
+            </div>
+
+            {/* Detail Panel - slides in when message selected */}
+            {selectedMessageId && (
+              <div className="w-1/2 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                <div className="h-full flex flex-col">
+                  {/* Detail Header */}
+                  <div className="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between">
+                    <h3 className="text-white font-semibold">📋 Packet Details</h3>
+                    <button
+                      onClick={() => setSelectedMessageId(undefined)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Detail Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    <MessageLog
+                      messages={filteredMessages}
+                      selectedMessageId={selectedMessageId}
+                      viewMode="detail"
+                      showTimestamps={displayOptions.showTimestamps}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar */}
