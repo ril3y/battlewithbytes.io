@@ -120,9 +120,27 @@ function MessageRow({
   onMouseEnter,
   onMouseLeave
 }: MessageRowProps) {
-  const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
-  const directionBg = message.direction === 'RX' ? 'bg-green-600/5' : 'bg-blue-600/5';
-  const directionSymbol = message.direction === 'RX' ? '🟢' : '🔵';
+  // Special styling for INFO messages (STATS/STATUS)
+  const isInfoMessage = message.type === 'STATS' || message.type === 'STATUS';
+  const isErrorMessage = message.type === 'CAN_ERR';
+
+  const directionColor = isInfoMessage
+    ? 'text-cyan-400'
+    : isErrorMessage
+    ? 'text-red-400'
+    : message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
+
+  const directionBg = isInfoMessage
+    ? 'bg-cyan-600/5'
+    : isErrorMessage
+    ? 'bg-red-600/5'
+    : message.direction === 'RX' ? 'bg-green-600/5' : 'bg-blue-600/5';
+
+  const directionSymbol = isInfoMessage
+    ? 'ℹ️'
+    : isErrorMessage
+    ? '❌'
+    : message.direction === 'RX' ? '🟢' : '🔵';
 
   const rowBg = isSelected
     ? 'bg-yellow-600/20 border-l-4 border-yellow-500'
@@ -145,10 +163,12 @@ function MessageRow({
           </span>
         )}
 
-        {/* Direction */}
+        {/* Direction / Type */}
         <span className={`${directionColor} w-16 flex-shrink-0 flex items-center gap-1`}>
           <span className="text-xs">{directionSymbol}</span>
-          <span className="font-semibold">{message.direction}</span>
+          <span className="font-semibold">
+            {isInfoMessage ? message.type.substring(0, 4) : message.direction}
+          </span>
         </span>
 
         {/* CAN ID */}

@@ -1,5 +1,23 @@
 [
   {
+    "slug": "designing-my-golf-cart-wiring-harness",
+    "metadata": {
+      "title": "Designing my golf cart wiring harness",
+      "date": "2025-09-26",
+      "excerpt": "A hardware description of designing a wiring harness for my 1975 Harley Davidson golf cart rebuild.",
+      "tags": [
+        "project",
+        "golfcart",
+        "hardware",
+        "makers",
+        "kicad",
+        "embedded"
+      ],
+      "author": "Riley Porter",
+      "coverImage": "/images/blog/designing-my-golf-cart-wiring-harness/cover.png"
+    }
+  },
+  {
     "slug": "ghost-code-uncovering-hidden-execution-on-the-mediatek-mt7697",
     "metadata": {
       "title": "Ghost Code: Uncovering Hidden Execution on the MediaTek MT7697",

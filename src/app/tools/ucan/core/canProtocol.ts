@@ -152,31 +152,78 @@ function parseStatsMessage(parts: string[]): ProtocolMessage {
  * Convert protocol message to CANMessage
  */
 export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | null {
-  if (protocol.type !== 'CAN_RX' && protocol.type !== 'CAN_TX') {
-    return null;
+  // Handle CAN messages (RX/TX)
+  if (protocol.type === 'CAN_RX' || protocol.type === 'CAN_TX') {
+    if (protocol.canId === undefined || !protocol.data) {
+      return null;
+    }
+
+    const direction = protocol.type === 'CAN_RX' ? 'RX' : 'TX';
+    const data = new Uint8Array(protocol.data);
+
+    // Determine if extended ID (29-bit vs 11-bit)
+    const isExtended = protocol.canId > 0x7FF;
+
+    return {
+      id: `${direction}_${Date.now()}_${protocol.canId}`,
+      timestamp: new Date(),
+      direction,
+      type: protocol.type,
+      canId: protocol.canId,
+      data,
+      length: data.length,
+      isExtended,
+      success: true
+    };
   }
 
-  if (protocol.canId === undefined || !protocol.data) {
-    return null;
+  // Handle STATUS and STATS messages as info messages
+  if (protocol.type === 'STATUS' || protocol.type === 'STATS') {
+    // Create a pseudo CAN message for display purposes
+    // Use CAN ID 0x7FF (max standard ID) to indicate info message
+    const statusText = protocol.status || '';
+    const textEncoder = new TextEncoder();
+    const data = textEncoder.encode(statusText.substring(0, 8)); // Max 8 bytes for display
+    const paddedData = new Uint8Array(8);
+    paddedData.set(data);
+
+    return {
+      id: `INFO_${Date.now()}`,
+      timestamp: new Date(),
+      direction: 'RX', // Show as received
+      type: protocol.type,
+      canId: 0x7FF, // Use max standard ID for info messages
+      data: paddedData,
+      length: data.length,
+      isExtended: false,
+      success: true,
+      error: protocol.type === 'STATS' ? `Heartbeat: ${statusText}` : statusText
+    };
   }
 
-  const direction = protocol.type === 'CAN_RX' ? 'RX' : 'TX';
-  const data = new Uint8Array(protocol.data);
+  // Handle error messages
+  if (protocol.type === 'CAN_ERR') {
+    const errorText = protocol.error || 'Unknown error';
+    const textEncoder = new TextEncoder();
+    const data = textEncoder.encode(errorText.substring(0, 8));
+    const paddedData = new Uint8Array(8);
+    paddedData.set(data);
 
-  // Determine if extended ID (29-bit vs 11-bit)
-  const isExtended = protocol.canId > 0x7FF;
+    return {
+      id: `ERR_${Date.now()}`,
+      timestamp: new Date(),
+      direction: 'RX',
+      type: protocol.type,
+      canId: 0x7FE, // Use 0x7FE for error messages
+      data: paddedData,
+      length: data.length,
+      isExtended: false,
+      success: false,
+      error: errorText
+    };
+  }
 
-  return {
-    id: `${direction}_${Date.now()}_${protocol.canId}`,
-    timestamp: new Date(),
-    direction,
-    type: protocol.type,
-    canId: protocol.canId,
-    data,
-    length: data.length,
-    isExtended,
-    success: true
-  };
+  return null;
 }
 
 /**
