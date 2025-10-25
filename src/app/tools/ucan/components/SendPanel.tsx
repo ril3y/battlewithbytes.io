@@ -55,7 +55,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
         setError('CAN ID out of range (max 0x1FFFFFFF)');
         return;
       }
-    } catch (err) {
+    } catch {
       setError('Invalid CAN ID');
       return;
     }
@@ -69,7 +69,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
         return;
       }
       data = parsed;
-    } catch (err) {
+    } catch {
       setError('Invalid data bytes');
       return;
     }

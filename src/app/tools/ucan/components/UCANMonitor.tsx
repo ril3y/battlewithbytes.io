@@ -36,7 +36,7 @@ interface UCANMonitorProps {
 export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) {
   // Connection state
   const [isConnected, setIsConnected] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState<any>(undefined);
+  const [deviceInfo, setDeviceInfo] = useState<{ vendorId?: number; productId?: number } | undefined>(undefined);
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(DEFAULT_SERIAL_CONFIG);
   const [lastHeartbeat, setLastHeartbeat] = useState<Date | null>(null);
 
@@ -90,6 +90,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
         serialBridgeRef.current.disconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update stats periodically
