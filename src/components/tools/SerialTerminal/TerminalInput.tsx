@@ -31,6 +31,13 @@ export default function TerminalInput({
     }
   }, []);
 
+  // Auto-focus input when connected
+  useEffect(() => {
+    if (isConnected && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isConnected]);
+
   // Handle input change
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);

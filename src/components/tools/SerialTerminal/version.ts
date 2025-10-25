@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.2.1';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'ESC Key & Cursor Fixes';
+export const VERSION_NAME = 'Auto-Focus on Connect';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.1',
+    date: '2025-10-24',
+    name: 'Auto-Focus on Connect',
+    changes: [
+      '✨  Input box automatically focuses when connected to serial port',
+      '⌨️  Start typing immediately after connecting',
+      '🎯  Better workflow - no need to click input box'
+    ]
+  },
   {
     version: '1.2.0',
     date: '2025-10-24',

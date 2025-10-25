@@ -2,6 +2,13 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.2.1] - 2025-10-24 - Auto-Focus on Connect
+
+### Changed
+- ✨ Input box automatically receives focus when connected to serial port
+- ⌨️ Users can start typing immediately after connecting
+- 🎯 Improved workflow - no need to manually click the input box
+
 ## [1.2.0] - 2025-10-24 - ESC Key & Cursor Fixes
 
 ### Fixed
