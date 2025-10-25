@@ -2,6 +2,13 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.2.2] - 2025-10-24 - Serial Connection Fix
+
+### Fixed
+- 🐛 Fixed "Application error: a client-side exception has occurred" when connecting to serial port
+- 🔧 Removed deprecated `rendererType` property that caused errors in xterm.js v5+
+- ✨ Serial port connections now work reliably without crashes
+
 ## [1.2.1] - 2025-10-24 - Auto-Focus on Connect
 
 ### Changed

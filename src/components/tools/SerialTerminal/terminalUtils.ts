@@ -156,8 +156,8 @@ export function getXtermOptions(options: TerminalOptions) {
     theme,
     allowTransparency: true,
     convertEol: false, // Keep raw data to preserve ANSI escape sequences
-    disableStdin: false,
-    rendererType: 'canvas' as const
+    disableStdin: false
+    // rendererType removed - deprecated in xterm.js v5+
   };
 }
 

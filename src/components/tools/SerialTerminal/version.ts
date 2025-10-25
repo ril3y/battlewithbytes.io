@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.2.1';
+export const VERSION = '1.2.2';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Auto-Focus on Connect';
+export const VERSION_NAME = 'Serial Connection Fix';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.2',
+    date: '2025-10-24',
+    name: 'Serial Connection Fix',
+    changes: [
+      '🐛  Fixed application error when connecting to serial port',
+      '🔧  Removed deprecated rendererType property for xterm.js v5+ compatibility',
+      '✨  Serial port connections now work reliably'
+    ]
+  },
   {
     version: '1.2.1',
     date: '2025-10-24',
