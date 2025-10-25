@@ -8,6 +8,7 @@ import SerialTerminal from '@/components/tools/SerialTerminal/SerialTerminalClie
 export default function SerialTerminalPage() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
 
   useEffect(() => {
     // Detect if running in PWA/standalone mode
@@ -17,6 +18,28 @@ export default function SerialTerminalPage() {
 
     setIsStandalone(isDisplayStandalone || isIOSStandalone || isAndroidApp);
   }, []);
+
+  // Handle ESC key to exit fullscreen
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+        setShowExitHint(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isFullscreen]);
+
+  // Show exit hint briefly when entering fullscreen
+  useEffect(() => {
+    if (isFullscreen && !isStandalone) {
+      setShowExitHint(true);
+      const timer = setTimeout(() => setShowExitHint(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFullscreen, isStandalone]);
 
   const toolSchema = generateToolSchema(
     'BattleTerm - Browser Serial Terminal',
@@ -50,16 +73,12 @@ export default function SerialTerminalPage() {
           </div>
         )}
 
-        {/* Exit fullscreen button when in fullscreen mode (but not PWA) */}
-        {isFullscreen && !isStandalone && (
-          <div className="absolute top-4 right-4 z-50">
-            <button
-              onClick={() => setIsFullscreen(false)}
-              className="px-3 py-1 bg-gray-800/90 hover:bg-gray-700/90 text-gray-300 rounded border border-gray-600 hover:border-gray-500 transition-colors font-mono text-xs"
-              title="Exit fullscreen view"
-            >
-              ✕ Exit Fullscreen
-            </button>
+        {/* Exit fullscreen hint when in fullscreen mode (but not PWA) */}
+        {showExitHint && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+            <div className="px-4 py-2 bg-gray-900/95 text-gray-300 rounded-lg border border-green-500/30 shadow-lg font-mono text-sm">
+              Press <kbd className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-green-400">ESC</kbd> to exit fullscreen
+            </div>
           </div>
         )}
 

@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.8';
+export const VERSION = '1.1.9';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Fullscreen Height Fix';
+export const VERSION_NAME = 'ESC to Exit Fullscreen';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.9',
+    date: '2025-10-24',
+    name: 'ESC to Exit Fullscreen',
+    changes: [
+      '⌨️  Press ESC key to exit fullscreen mode',
+      '💡  Brief hint message shows when entering fullscreen',
+      '🔧  Removed persistent exit button that overlapped with controls',
+      '✨  Cleaner fullscreen experience'
+    ]
+  },
   {
     version: '1.1.8',
     date: '2025-10-24',

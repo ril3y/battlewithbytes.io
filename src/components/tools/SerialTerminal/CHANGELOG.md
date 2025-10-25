@@ -2,6 +2,16 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.9] - 2025-10-24 - ESC to Exit Fullscreen
+
+### Added
+- ⌨️ Press ESC key to exit fullscreen mode
+- 💡 Brief hint message displays for 3 seconds when entering fullscreen
+
+### Fixed
+- 🔧 Removed persistent exit fullscreen button that overlapped with terminal controls
+- ✨ Cleaner fullscreen experience without UI conflicts
+
 ## [1.1.8] - 2025-10-24 - Fullscreen Height Fix
 
 ### Fixed
