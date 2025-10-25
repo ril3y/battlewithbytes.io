@@ -391,7 +391,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
       <div className="flex-1 overflow-hidden">
         <div className="max-w-[1920px] mx-auto h-full p-4 px-4 flex gap-4">
           {/* Left Sidebar */}
-          <div className="w-80 flex-shrink-0 space-y-4 overflow-y-auto h-full">
+          <div className="w-72 flex-shrink-0 space-y-4 overflow-y-auto h-full">
             <ConnectionPanel
               isConnected={isConnected}
               deviceInfo={deviceInfo}
@@ -429,7 +429,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-80 flex-shrink-0 overflow-y-auto h-full">
+          <div className="w-72 flex-shrink-0 overflow-y-auto h-full">
             <StatsPanel stats={stats} onExport={handleExportStats} />
           </div>
         </div>

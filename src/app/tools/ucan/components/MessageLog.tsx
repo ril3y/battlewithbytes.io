@@ -66,45 +66,62 @@ export default function MessageLog({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="h-full overflow-y-auto bg-gray-950"
-      style={{ scrollBehavior: autoScroll ? 'smooth' : 'auto' }}
-    >
+    <div className="h-full flex flex-col bg-gray-950">
+      {/* Header Row */}
       {viewMode === 'list' && (
-        <div className="divide-y divide-gray-800">
-          {displayMessages.map((message) => (
-            <MessageRow
-              key={message.id}
-              message={message}
-              isSelected={message.id === selectedMessageId}
-              isHovered={message.id === hoveredId}
-              showTimestamps={showTimestamps}
-              onClick={() => handleMessageClick(message)}
-              onMouseEnter={() => setHoveredId(message.id)}
-              onMouseLeave={() => setHoveredId(null)}
-            />
-          ))}
+        <div className="sticky top-0 bg-gray-800 border-b-2 border-gray-600 px-2 py-2 text-sm font-semibold text-gray-200 z-10">
+          <div className="flex items-center gap-2">
+            {showTimestamps && (
+              <span className="w-20 flex-shrink-0">Time</span>
+            )}
+            <span className="w-10 flex-shrink-0">Dir</span>
+            <span className="w-20 flex-shrink-0">CAN ID</span>
+            <span className="w-8 flex-shrink-0 text-center">Len</span>
+            <span className="flex-1 min-w-0">Data</span>
+          </div>
         </div>
       )}
 
-      {viewMode === 'hex' && (
-        <div className="p-2 space-y-2">
-          {displayMessages.map((message) => (
-            <HexMessageRow
-              key={message.id}
-              message={message}
-              showTimestamps={showTimestamps}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto"
+        style={{ scrollBehavior: autoScroll ? 'smooth' : 'auto' }}
+      >
+        {viewMode === 'list' && (
+          <div className="divide-y divide-gray-800">
+            {displayMessages.map((message) => (
+              <MessageRow
+                key={message.id}
+                message={message}
+                isSelected={message.id === selectedMessageId}
+                isHovered={message.id === hoveredId}
+                showTimestamps={showTimestamps}
+                onClick={() => handleMessageClick(message)}
+                onMouseEnter={() => setHoveredId(message.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              />
+            ))}
+          </div>
+        )}
 
-      {viewMode === 'detail' && selectedMessageId && (
-        <DetailedMessageView
-          message={messages.find(m => m.id === selectedMessageId)}
-        />
-      )}
+        {viewMode === 'hex' && (
+          <div className="p-2 space-y-2">
+            {displayMessages.map((message) => (
+              <HexMessageRow
+                key={message.id}
+                message={message}
+                showTimestamps={showTimestamps}
+              />
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'detail' && selectedMessageId && (
+          <DetailedMessageView
+            message={messages.find(m => m.id === selectedMessageId)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -161,12 +178,12 @@ function MessageRow({
 
   return (
     <div
-      className={`px-2 py-1 cursor-pointer transition-colors ${rowBg} hover:bg-gray-800/70`}
+      className={`px-2 py-1.5 cursor-pointer transition-colors ${rowBg} hover:bg-gray-800/70`}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-sm">
         {/* Timestamp */}
         {showTimestamps && (
           <span className="text-gray-500 w-20 flex-shrink-0 font-mono">
@@ -176,8 +193,8 @@ function MessageRow({
 
         {/* Direction / Type */}
         <span className={`${directionColor} w-10 flex-shrink-0 flex items-center gap-0.5`}>
-          <span className="text-[10px]">{directionSymbol}</span>
-          <span className="font-semibold text-[11px]">
+          <span className="text-xs">{directionSymbol}</span>
+          <span className="font-semibold text-xs">
             {isInfoMessage ? message.type.substring(0, 4) : message.direction}
           </span>
         </span>
@@ -206,7 +223,7 @@ function MessageRow({
 
         {/* Error indicator */}
         {message.error && (
-          <span className="text-red-400 text-[10px] flex-shrink-0">
+          <span className="text-red-400 text-xs flex-shrink-0">
             ⚠️ {message.error}
           </span>
         )}
