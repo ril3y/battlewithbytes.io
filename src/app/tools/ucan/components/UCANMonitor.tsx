@@ -272,7 +272,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
   }, [selectedMessageIndex, filteredMessages]);
 
   return (
-    <div className={`flex flex-col ${isStandalone ? 'h-screen' : 'min-h-screen'} bg-gray-950 text-white`}>
+    <div className={`flex flex-col h-screen bg-gray-950 text-white`}>
       {/* Header */}
       {!isStandalone && (
         <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 border-b border-gray-700">
@@ -371,7 +371,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
       <div className="flex-1 overflow-hidden">
         <div className="max-w-[1920px] mx-auto h-full p-4 px-4 flex gap-4">
           {/* Left Sidebar */}
-          <div className="w-80 flex-shrink-0 space-y-4 overflow-y-auto">
+          <div className="w-80 flex-shrink-0 space-y-4 overflow-y-auto h-full">
             <ConnectionPanel
               isConnected={isConnected}
               deviceInfo={deviceInfo}
@@ -397,7 +397,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
           </div>
 
           {/* Center - Message Log (Full Width) */}
-          <div className="flex-1 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+          <div className="flex-1 h-full bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
             <MessageLog
               messages={filteredMessages}
               onMessageSelect={setSelectedMessageId}
@@ -409,7 +409,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-80 flex-shrink-0 overflow-y-auto">
+          <div className="w-80 flex-shrink-0 overflow-y-auto h-full">
             <StatsPanel stats={stats} onExport={handleExportStats} />
           </div>
         </div>
