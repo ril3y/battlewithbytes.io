@@ -11,6 +11,7 @@ import ConnectionPanel from './ConnectionPanel';
 import MessageLog from './MessageLog';
 import FilterPanel from './FilterPanel';
 import StatsPanel from './StatsPanel';
+import SendPanel from './SendPanel';
 import {
   CANMessage,
   SerialConfig,
@@ -212,6 +213,17 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
   };
 
   /**
+   * Send CAN message
+   */
+  const handleSendMessage = async (command: string) => {
+    if (!serialBridgeRef.current) {
+      throw new Error('Not connected');
+    }
+
+    await serialBridgeRef.current.sendCommand(command);
+  };
+
+  /**
    * Toggle pause
    */
   const togglePause = () => {
@@ -344,6 +356,11 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
               config={serialConfig}
               onConfigChange={setSerialConfig}
               lastHeartbeat={lastHeartbeat}
+            />
+
+            <SendPanel
+              isConnected={isConnected}
+              onSend={handleSendMessage}
             />
 
             <FilterPanel
