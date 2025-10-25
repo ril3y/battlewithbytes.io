@@ -68,7 +68,7 @@ export default function MessageLog({
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto bg-gray-950 font-mono text-sm"
+      className="h-full overflow-y-auto bg-gray-950"
       style={{ scrollBehavior: autoScroll ? 'smooth' : 'auto' }}
     >
       {viewMode === 'list' && (
@@ -89,7 +89,7 @@ export default function MessageLog({
       )}
 
       {viewMode === 'hex' && (
-        <div className="p-4 space-y-2">
+        <div className="p-2 space-y-2">
           {displayMessages.map((message) => (
             <HexMessageRow
               key={message.id}
@@ -161,39 +161,39 @@ function MessageRow({
 
   return (
     <div
-      className={`px-4 py-2 cursor-pointer transition-colors ${rowBg} hover:bg-gray-800/70`}
+      className={`px-2 py-1 cursor-pointer transition-colors ${rowBg} hover:bg-gray-800/70`}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 text-xs">
         {/* Timestamp */}
         {showTimestamps && (
-          <span className="text-gray-500 text-xs w-24 flex-shrink-0">
+          <span className="text-gray-500 w-20 flex-shrink-0 font-mono">
             {formatTimestamp(message.timestamp)}
           </span>
         )}
 
         {/* Direction / Type */}
-        <span className={`${directionColor} w-16 flex-shrink-0 flex items-center gap-1`}>
-          <span className="text-xs">{directionSymbol}</span>
-          <span className="font-semibold">
+        <span className={`${directionColor} w-10 flex-shrink-0 flex items-center gap-0.5`}>
+          <span className="text-[10px]">{directionSymbol}</span>
+          <span className="font-semibold text-[11px]">
             {isInfoMessage ? message.type.substring(0, 4) : message.direction}
           </span>
         </span>
 
         {/* CAN ID */}
-        <span className={`${directionColor} font-bold w-28 flex-shrink-0`}>
+        <span className={`${directionColor} font-bold w-20 flex-shrink-0 font-mono`}>
           {formatCANId(message.canId, message.isExtended)}
         </span>
 
         {/* Length */}
-        <span className="text-gray-400 w-12 flex-shrink-0">
+        <span className="text-gray-400 w-8 flex-shrink-0 text-center">
           [{message.length}]
         </span>
 
         {/* Data bytes */}
-        <div className="flex-1 min-w-0 max-w-md overflow-x-auto flex gap-1">
+        <div className="flex-1 min-w-0 max-w-md overflow-x-auto flex gap-1 font-mono">
           {Array.from(message.data).map((byte, idx) => (
             <span
               key={idx}
@@ -206,7 +206,7 @@ function MessageRow({
 
         {/* Error indicator */}
         {message.error && (
-          <span className="text-red-400 text-xs flex-shrink-0">
+          <span className="text-red-400 text-[10px] flex-shrink-0">
             ⚠️ {message.error}
           </span>
         )}
@@ -227,41 +227,41 @@ function HexMessageRow({ message, showTimestamps }: HexMessageRowProps) {
   const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
 
   return (
-    <div className="border border-gray-800 rounded p-3 bg-gray-900/50">
+    <div className="border border-gray-800 rounded p-2 bg-gray-900/50">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2 pb-2 border-b border-gray-800">
+      <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-800 text-xs">
         {showTimestamps && (
-          <span className="text-gray-500 text-xs">{formatTimestamp(message.timestamp)}</span>
+          <span className="text-gray-500 font-mono">{formatTimestamp(message.timestamp)}</span>
         )}
-        <span className={directionColor}>
+        <span className={`${directionColor} font-mono`}>
           {message.direction} {formatCANId(message.canId, message.isExtended)} [{message.length}]
         </span>
       </div>
 
       {/* Hex dump */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 text-xs">
         {/* Hex */}
         <div>
-          <div className="text-xs text-gray-500 mb-1">Hexadecimal</div>
-          <div className="text-gray-300">{formatBytes(message.data, ' ')}</div>
+          <div className="text-[10px] text-gray-500 mb-1">Hexadecimal</div>
+          <div className="text-gray-300 font-mono">{formatBytes(message.data, ' ')}</div>
         </div>
 
         {/* Binary */}
         <div>
-          <div className="text-xs text-gray-500 mb-1">Binary</div>
-          <div className="text-gray-400 text-xs break-all">{formatBinary(message.data, ' ')}</div>
+          <div className="text-[10px] text-gray-500 mb-1">Binary</div>
+          <div className="text-gray-400 text-[10px] break-all font-mono">{formatBinary(message.data, ' ')}</div>
         </div>
 
         {/* Decimal */}
         <div>
-          <div className="text-xs text-gray-500 mb-1">Decimal</div>
-          <div className="text-gray-300">{Array.from(message.data).join(' ')}</div>
+          <div className="text-[10px] text-gray-500 mb-1">Decimal</div>
+          <div className="text-gray-300 font-mono">{Array.from(message.data).join(' ')}</div>
         </div>
 
         {/* ASCII */}
         <div>
-          <div className="text-xs text-gray-500 mb-1">ASCII</div>
-          <div className="text-gray-300">{formatASCII(message.data)}</div>
+          <div className="text-[10px] text-gray-500 mb-1">ASCII</div>
+          <div className="text-gray-300 font-mono">{formatASCII(message.data)}</div>
         </div>
       </div>
     </div>
