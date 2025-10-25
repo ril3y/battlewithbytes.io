@@ -37,6 +37,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
   const [isConnected, setIsConnected] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState<any>(undefined);
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(DEFAULT_SERIAL_CONFIG);
+  const [lastHeartbeat, setLastHeartbeat] = useState<Date | null>(null);
 
   // Display state
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
@@ -105,6 +106,11 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
    * Handle incoming protocol message from serial port
    */
   const handleProtocolMessage = useCallback((protocolMsg: ProtocolMessage) => {
+    // Track heartbeat from STATS messages
+    if (protocolMsg.type === 'STATS') {
+      setLastHeartbeat(new Date());
+    }
+
     const canMessage = protocolToCANMessage(protocolMsg);
 
     if (canMessage) {
@@ -337,6 +343,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
               onDisconnect={handleDisconnect}
               config={serialConfig}
               onConfigChange={setSerialConfig}
+              lastHeartbeat={lastHeartbeat}
             />
 
             <FilterPanel

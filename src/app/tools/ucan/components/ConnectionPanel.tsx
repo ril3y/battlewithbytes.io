@@ -18,6 +18,7 @@ interface ConnectionPanelProps {
   onDisconnect: () => Promise<void>;
   config?: SerialConfig;
   onConfigChange?: (config: SerialConfig) => void;
+  lastHeartbeat?: Date | null;
 }
 
 export default function ConnectionPanel({
@@ -26,7 +27,8 @@ export default function ConnectionPanel({
   onConnect,
   onDisconnect,
   config = DEFAULT_SERIAL_CONFIG,
-  onConfigChange
+  onConfigChange,
+  lastHeartbeat
 }: ConnectionPanelProps) {
   const [isSupported, setIsSupported] = useState(true);
   const [authorizedPorts, setAuthorizedPorts] = useState<SerialPort[]>([]);
@@ -101,21 +103,35 @@ export default function ConnectionPanel({
       {/* Connection Status */}
       <div className="mb-4">
         {isConnected ? (
-          <div className="flex items-center justify-between p-3 bg-green-600/10 border border-green-500/30 rounded">
-            <div className="flex-1">
-              <p className="text-green-400 font-medium">Connected</p>
-              {deviceInfo && (
-                <p className="text-sm text-gray-400 mt-1">
-                  {deviceInfo.productName || `VID: 0x${deviceInfo.vendorId?.toString(16)}, PID: 0x${deviceInfo.productId?.toString(16)}`}
-                </p>
-              )}
+          <div className="p-3 bg-green-600/10 border border-green-500/30 rounded space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-green-400 font-medium">Connected</p>
+                {deviceInfo && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    {deviceInfo.productName || `VID: 0x${deviceInfo.vendorId?.toString(16)}, PID: 0x${deviceInfo.productId?.toString(16)}`}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={handleDisconnect}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors"
+              >
+                Disconnect
+              </button>
             </div>
-            <button
-              onClick={handleDisconnect}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors"
-            >
-              Disconnect
-            </button>
+
+            {/* Heartbeat Indicator */}
+            {lastHeartbeat && (
+              <div className="pt-2 border-t border-green-500/20">
+                <p className="text-xs text-gray-400 flex items-center gap-2">
+                  <span className="text-red-500 animate-pulse">💓</span>
+                  Last heartbeat: {new Date().getTime() - lastHeartbeat.getTime() < 5000
+                    ? 'just now'
+                    : `${Math.floor((new Date().getTime() - lastHeartbeat.getTime()) / 1000)}s ago`}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
