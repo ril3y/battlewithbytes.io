@@ -225,16 +225,16 @@ export default function FilterPanel({
               type="text"
               value={rangeMin}
               onChange={(e) => setRangeMin(e.target.value)}
-              placeholder="Min (0x100)"
-              className="flex-1 px-3 py-2 bg-gray-950 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
+              placeholder="0x100"
+              className="w-20 px-2 py-1 bg-gray-950 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
             />
-            <span className="text-gray-500">to</span>
+            <span className="text-gray-500 text-sm">to</span>
             <input
               type="text"
               value={rangeMax}
               onChange={(e) => setRangeMax(e.target.value)}
-              placeholder="Max (0x1FF)"
-              className="flex-1 px-3 py-2 bg-gray-950 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
+              placeholder="0x1FF"
+              className="w-20 px-2 py-1 bg-gray-950 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
             />
           </div>
           <div className="flex gap-2">

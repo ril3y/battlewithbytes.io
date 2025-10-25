@@ -177,10 +177,9 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     };
   }
 
-  // Handle STATUS and STATS messages as info messages
-  if (protocol.type === 'STATUS' || protocol.type === 'STATS') {
+  // Handle STATUS messages as info messages (but NOT STATS - those are just heartbeats)
+  if (protocol.type === 'STATUS') {
     // Create a pseudo CAN message for display purposes
-    // Use CAN ID 0x7FF (max standard ID) to indicate info message
     const statusText = protocol.status || '';
     const textEncoder = new TextEncoder();
     const data = textEncoder.encode(statusText.substring(0, 8)); // Max 8 bytes for display
@@ -197,8 +196,14 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
       length: data.length,
       isExtended: false,
       success: true,
-      error: protocol.type === 'STATS' ? `Heartbeat: ${statusText}` : statusText
+      error: statusText
     };
+  }
+
+  // STATS messages are just heartbeats - don't convert to CAN messages
+  // They should be handled separately for connection status
+  if (protocol.type === 'STATS') {
+    return null; // Don't display as a message
   }
 
   // Handle error messages
