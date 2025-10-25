@@ -12,6 +12,7 @@ import MessageLog from './MessageLog';
 import FilterPanel from './FilterPanel';
 import StatsPanel from './StatsPanel';
 import SendPanel from './SendPanel';
+import PacketDetailModal from './PacketDetailModal';
 import {
   CANMessage,
   SerialConfig,
@@ -253,7 +254,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
       {/* Header */}
       {!isStandalone && (
         <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 border-b border-gray-700">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-[1920px] mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               <span className="text-green-400">u</span>CAN <span className="text-gray-400">|</span>{' '}
               <span className="text-gray-300">Universal CAN Monitor</span>
@@ -265,7 +266,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
 
       {/* Toolbar */}
       <div className="bg-gray-900 border-b border-gray-700 p-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
             <div className="flex gap-1 bg-gray-950 border border-gray-700 rounded p-1">
@@ -346,7 +347,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full p-4 flex gap-4">
+        <div className="max-w-[1920px] mx-auto h-full p-4 px-4 flex gap-4">
           {/* Left Sidebar */}
           <div className="w-80 flex-shrink-0 space-y-4 overflow-y-auto">
             <ConnectionPanel
@@ -373,47 +374,16 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
             />
           </div>
 
-          {/* Center - Message Log */}
-          <div className="flex-1 flex gap-4">
-            {/* Message List */}
-            <div className={`${selectedMessageId ? 'w-1/2' : 'w-full'} bg-gray-900 border border-gray-700 rounded-lg overflow-hidden transition-all`}>
-              <MessageLog
-                messages={filteredMessages}
-                onMessageSelect={setSelectedMessageId}
-                selectedMessageId={selectedMessageId}
-                autoScroll={displayOptions.autoScroll && !displayOptions.paused}
-                showTimestamps={displayOptions.showTimestamps}
-                viewMode={displayOptions.viewMode}
-              />
-            </div>
-
-            {/* Detail Panel - slides in when message selected */}
-            {selectedMessageId && (
-              <div className="w-1/2 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-                <div className="h-full flex flex-col">
-                  {/* Detail Header */}
-                  <div className="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between">
-                    <h3 className="text-white font-semibold">📋 Packet Details</h3>
-                    <button
-                      onClick={() => setSelectedMessageId(undefined)}
-                      className="text-gray-400 hover:text-white transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Detail Content */}
-                  <div className="flex-1 overflow-y-auto">
-                    <MessageLog
-                      messages={filteredMessages}
-                      selectedMessageId={selectedMessageId}
-                      viewMode="detail"
-                      showTimestamps={displayOptions.showTimestamps}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Center - Message Log (Full Width) */}
+          <div className="flex-1 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+            <MessageLog
+              messages={filteredMessages}
+              onMessageSelect={setSelectedMessageId}
+              selectedMessageId={selectedMessageId}
+              autoScroll={displayOptions.autoScroll && !displayOptions.paused}
+              showTimestamps={displayOptions.showTimestamps}
+              viewMode={displayOptions.viewMode}
+            />
           </div>
 
           {/* Right Sidebar */}
@@ -423,9 +393,16 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
         </div>
       </div>
 
+      {/* Packet Detail Modal */}
+      <PacketDetailModal
+        message={filteredMessages.find(m => m.id === selectedMessageId)}
+        isOpen={!!selectedMessageId}
+        onClose={() => setSelectedMessageId(undefined)}
+      />
+
       {/* Status Bar */}
       <div className="bg-gray-900 border-t border-gray-700 p-2 text-xs text-gray-400">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto px-4 flex items-center justify-between">
           <span>
             {isConnected ? '🟢 Connected' : '⚫ Disconnected'} | {filteredMessages.length} messages shown
             {displayOptions.paused && ' | ⏸️ PAUSED'}
