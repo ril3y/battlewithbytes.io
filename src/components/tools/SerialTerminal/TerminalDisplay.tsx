@@ -192,17 +192,18 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
     }, []);
 
     // Update terminal options when they change
+    // Note: Some options like cols/rows can only be set in constructor
     useEffect(() => {
       if (!terminalRef.current) return;
 
       const terminal = terminalRef.current;
-      const xtermOptions = getXtermOptions(options);
 
-      terminal.options = {
-        ...terminal.options,
-        ...xtermOptions,
-        cursorBlink: isConnected && options.cursorBlink, // Only blink when connected
-      };
+      // Only update options that can be changed after construction
+      terminal.options.cursorBlink = isConnected && options.cursorBlink;
+      terminal.options.cursorStyle = options.cursorStyle;
+      terminal.options.fontFamily = options.fontFamily;
+      terminal.options.fontSize = options.fontSize;
+      terminal.options.scrollback = options.scrollback;
 
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();
