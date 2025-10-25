@@ -233,6 +233,13 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
   };
 
   /**
+   * Toggle auto-scroll
+   */
+  const toggleAutoScroll = () => {
+    setDisplayOptions((prev) => ({ ...prev, autoScroll: !prev.autoScroll }));
+  };
+
+  /**
    * Change view mode
    */
   const setViewMode = (mode: ViewMode) => {
@@ -335,6 +342,19 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
             >
               {displayOptions.paused ? '▶️ Resume' : '⏸️ Pause'}
             </button>
+
+            {/* Auto-Scroll Toggle */}
+            <button
+              onClick={toggleAutoScroll}
+              className={`px-4 py-1 text-sm rounded border transition-colors ${
+                displayOptions.autoScroll
+                  ? 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+              }`}
+              title={displayOptions.autoScroll ? 'Disable auto-scroll to browse older packets' : 'Enable auto-scroll to follow newest packets'}
+            >
+              {displayOptions.autoScroll ? '📜 Auto-Scroll' : '🔒 Scroll Locked'}
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -431,6 +451,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
           <span>
             {isConnected ? '🟢 Connected' : '⚫ Disconnected'} | {filteredMessages.length} messages shown
             {displayOptions.paused && ' | ⏸️ PAUSED'}
+            {!displayOptions.autoScroll && ' | 🔒 SCROLL LOCKED'}
           </span>
           <span>uCAN Monitor v1.0 | {serialConfig.baudRate} baud</span>
         </div>
