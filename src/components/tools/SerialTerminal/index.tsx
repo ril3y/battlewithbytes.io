@@ -524,6 +524,7 @@ export default function SerialTerminal({ isStandalone = false }: SerialTerminalP
         <TerminalDisplay
           ref={terminalRef}
           options={terminalOptions}
+          isConnected={terminalState.isConnected}
         />
       </div>
 

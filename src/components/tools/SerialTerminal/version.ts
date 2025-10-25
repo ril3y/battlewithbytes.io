@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.9';
+export const VERSION = '1.2.0';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'ESC to Exit Fullscreen';
+export const VERSION_NAME = 'ESC Key & Cursor Fixes';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.0',
+    date: '2025-10-24',
+    name: 'ESC Key & Cursor Fixes',
+    changes: [
+      '🐛  Fixed ESC key not working in fullscreen when terminal focused',
+      '🐛  Disabled cursor blink when not connected to port',
+      '✨  ESC now uses event capture to bypass xterm interception',
+      '⌨️  Cleaner terminal state - no blinking cursor until connected'
+    ]
+  },
   {
     version: '1.1.9',
     date: '2025-10-24',

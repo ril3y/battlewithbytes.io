@@ -32,10 +32,11 @@ export interface TerminalDisplayRef {
 interface TerminalDisplayProps {
   options: TerminalOptions;
   onData?: (data: string) => void;
+  isConnected?: boolean;
 }
 
 const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
-  ({ options, onData }, ref) => {
+  ({ options, onData, isConnected = false }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
@@ -199,13 +200,14 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
 
       terminal.options = {
         ...terminal.options,
-        ...xtermOptions
+        ...xtermOptions,
+        cursorBlink: isConnected && options.cursorBlink, // Only blink when connected
       };
 
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();
       }
-    }, [options]);
+    }, [options, isConnected]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({

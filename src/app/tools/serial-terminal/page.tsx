@@ -19,17 +19,20 @@ export default function SerialTerminalPage() {
     setIsStandalone(isDisplayStandalone || isIOSStandalone || isAndroidApp);
   }, []);
 
-  // Handle ESC key to exit fullscreen
+  // Handle ESC key to exit fullscreen (use capture to intercept before xterm)
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
+        e.preventDefault();
+        e.stopPropagation();
         setIsFullscreen(false);
         setShowExitHint(false);
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    // Use capture phase to intercept ESC before xterm.js terminal gets it
+    window.addEventListener('keydown', handleEscape, { capture: true });
+    return () => window.removeEventListener('keydown', handleEscape, { capture: true });
   }, [isFullscreen]);
 
   // Show exit hint briefly when entering fullscreen

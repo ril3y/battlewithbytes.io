@@ -2,6 +2,14 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.2.0] - 2025-10-24 - ESC Key & Cursor Fixes
+
+### Fixed
+- 🐛 ESC key now works in fullscreen even when terminal is focused
+- 🐛 Terminal cursor no longer blinks when not connected to a serial port
+- ✨ ESC key uses event capture phase to bypass xterm.js interception
+- ⌨️ Cleaner visual state - cursor only appears when actively connected
+
 ## [1.1.9] - 2025-10-24 - ESC to Exit Fullscreen
 
 ### Added
