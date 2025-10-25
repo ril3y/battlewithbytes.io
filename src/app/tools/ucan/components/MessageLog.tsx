@@ -12,7 +12,7 @@ import { formatTimestamp, formatCANId, formatBytes, formatBinary, formatASCII } 
 
 interface MessageLogProps {
   messages: CANMessage[];
-  onMessageSelect?: (message: CANMessage) => void;
+  onMessageSelect?: (messageId: string) => void;
   selectedMessageId?: string;
   autoScroll?: boolean;
   showTimestamps?: boolean;
@@ -39,7 +39,7 @@ export default function MessageLog({
 
   const handleMessageClick = (message: CANMessage) => {
     if (onMessageSelect) {
-      onMessageSelect(message);
+      onMessageSelect(message.id);
     }
   };
 
@@ -182,11 +182,11 @@ function MessageRow({
         </span>
 
         {/* Data bytes */}
-        <div className="flex-1 flex gap-1">
+        <div className="flex-1 min-w-0 max-w-md overflow-x-auto flex gap-1">
           {Array.from(message.data).map((byte, idx) => (
             <span
               key={idx}
-              className={idx % 2 === 0 ? 'text-gray-300' : 'text-gray-400'}
+              className={`flex-shrink-0 ${idx % 2 === 0 ? 'text-gray-300' : 'text-gray-400'}`}
             >
               {byte.toString(16).toUpperCase().padStart(2, '0')}
             </span>
