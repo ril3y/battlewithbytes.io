@@ -28,12 +28,12 @@ export default function SerialTerminalPage() {
   const hideHeader = isStandalone || isFullscreen;
 
   return (
-    <main className={hideHeader ? 'min-h-screen' : 'min-h-screen py-16 px-4'}>
+    <main className={hideHeader ? 'h-screen' : 'min-h-screen py-16 px-4'}>
       <Script id="serial-terminal-schema" type="application/ld+json">
         {JSON.stringify(toolSchema)}
       </Script>
 
-      <div className={hideHeader ? 'h-screen flex flex-col' : 'max-w-7xl mx-auto'}>
+      <div className={hideHeader ? 'h-full flex flex-col' : 'max-w-7xl mx-auto'}>
         {/* Header - show only in browser mode when not fullscreen */}
         {!hideHeader && (
           <div className="flex items-center justify-between mb-6">

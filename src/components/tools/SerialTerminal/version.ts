@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = '1.1.7';
+export const VERSION = '1.1.8';
 export const VERSION_DATE = '2025-10-24';
-export const VERSION_NAME = 'Auto-Focus Input';
+export const VERSION_NAME = 'Fullscreen Height Fix';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.8',
+    date: '2025-10-24',
+    name: 'Fullscreen Height Fix',
+    changes: [
+      '📐  Fullscreen mode now uses full viewport height',
+      '⬇️  Status bar pinned to bottom of window in fullscreen',
+      '✨  Better use of screen space in fullscreen mode'
+    ]
+  },
   {
     version: '1.1.7',
     date: '2025-10-24',

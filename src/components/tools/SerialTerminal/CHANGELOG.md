@@ -2,6 +2,13 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.1.8] - 2025-10-24 - Fullscreen Height Fix
+
+### Fixed
+- 📐 Fullscreen mode now uses full viewport height (100vh)
+- ⬇️ Status bar is now pinned to the bottom of the window in fullscreen mode
+- ✨ Better utilization of screen space when in fullscreen
+
 ## [1.1.7] - 2025-10-24 - Auto-Focus Input
 
 ### Changed
