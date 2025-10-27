@@ -198,7 +198,40 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       }
     }
 
-    // Handle RULE response (from action:list command)
+    // Handle ACTION response (from action:list command)
+    // Format: ACTION;1;true;ANY;NEOPIXEL_COLOR;R:255 G:255 B:0 Br:64
+    if (protocolMsg.raw.startsWith('ACTION;')) {
+      try {
+        const parts = protocolMsg.raw.split(';');
+        if (parts.length >= 5) {
+          const rule: ActionRule = {
+            id: parseInt(parts[1]),
+            name: `Rule ${parts[1]}: ${parts[4]}`,
+            canId: 0, // Not provided in ACTION format
+            canMask: '',
+            extended: false,
+            actionType: parts[4],
+            paramSource: 'fixed',
+            params: parts.length > 5 ? [parts.slice(5).join(';')] : [],
+            enabled: parts[2] === 'true'
+          };
+
+          console.log('📜 Action rule received:', rule);
+
+          setActionRules((prev) => {
+            const exists = prev.find(r => r.id === rule.id);
+            if (exists) {
+              return prev.map(r => r.id === rule.id ? rule : r);
+            }
+            return [...prev, rule];
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse action:', error, protocolMsg.raw);
+      }
+    }
+
+    // Handle RULE response (alternative format from some firmware versions)
     // Format: RULE;1;0x500;0xFFFFFFFF;;0;;NEOPIXEL;candata
     if (protocolMsg.raw.startsWith('RULE;')) {
       try {
@@ -206,7 +239,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         if (parts.length >= 9) {
           const rule: ActionRule = {
             id: parseInt(parts[1]),
-            name: `Rule ${parts[1]}: ${parts[7]}`, // name: "Rule {ID}: {ACTION_NAME}"
+            name: `Rule ${parts[1]}: ${parts[7]}`,
             canId: parseInt(parts[2]),
             canMask: parts[3],
             extended: parts[4] === '1',
@@ -500,7 +533,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const handleAddRule = useCallback(async (command: string) => {
     if (!serialBridgeRef.current) return;
 
-    console.log('📤 Sending rule command:', command);
     await serialBridgeRef.current.sendCommand(command);
 
     // Refresh rules list after adding
@@ -514,7 +546,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const handleDeleteRule = useCallback(async (ruleId: number) => {
     if (!serialBridgeRef.current) return;
 
-    console.log('🗑️ Deleting rule:', ruleId);
     await serialBridgeRef.current.sendCommand(`action:remove:${ruleId}`);
 
     // Remove from local state
@@ -534,7 +565,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const handleClearAllRules = useCallback(async () => {
     if (!serialBridgeRef.current) return;
 
-    console.log('🗑️ Clearing all rules');
     await serialBridgeRef.current.sendCommand('action:clear');
 
     // Clear local state
@@ -544,7 +574,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const handleRefreshRules = useCallback(async () => {
     if (!serialBridgeRef.current) return;
 
-    console.log('🔄 Refreshing rules from device');
     await serialBridgeRef.current.sendCommand('action:list');
   }, []);
 

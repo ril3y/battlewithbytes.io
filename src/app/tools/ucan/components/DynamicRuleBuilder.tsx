@@ -52,7 +52,6 @@ export default function DynamicRuleBuilder({
       command += ':' + paramValues.join(':');
     }
 
-    console.log('📤 Sending rule command:', command);
     await onAddRule(command);
 
     // Reset form

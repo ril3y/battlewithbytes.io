@@ -121,12 +121,10 @@ export async function writeToPort(
   writer: WritableStreamDefaultWriter<Uint8Array>,
   data: string
 ): Promise<void> {
-  console.log('📤 SENDING:', data);
+  console.log('📤', data);
   const encoder = new TextEncoder();
   const bytes = encoder.encode(data + '\n'); // Add newline for protocol
-  console.log('📤 RAW BYTES:', bytes.length, 'bytes:', Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' '));
   await writer.write(bytes);
-  console.log('✅ SENT successfully');
 }
 
 /**
@@ -160,16 +158,13 @@ export class SerialReader {
 
     try {
       while (this.isReading && this.reader) {
-        console.log('🔄 SerialReader: Waiting for data...');
         const { value, done } = await this.reader.read();
 
         if (done) {
-          console.log('✅ SerialReader: Read loop done');
           break;
         }
 
         if (value) {
-          console.log('📦 SerialReader: Received data chunk');
           this.processData(value);
         }
       }
@@ -207,9 +202,7 @@ export class SerialReader {
    * Process incoming data
    */
   private processData(data: Uint8Array): void {
-    console.log('📥 RAW DATA:', data.length, 'bytes');
     const text = this.decoder.decode(data, { stream: true });
-    console.log('📥 DECODED:', text);
     this.lineBuffer += text;
 
     // Split into lines
@@ -222,7 +215,10 @@ export class SerialReader {
     for (const line of lines) {
       const trimmed = line.trim();
       if (trimmed) {
-        console.log('📥 LINE:', trimmed);
+        // Only log STATUS and error messages
+        if (trimmed.startsWith('STATUS') || trimmed.startsWith('CAN_ERR')) {
+          console.log('📥', trimmed);
+        }
         this.handleLine(trimmed);
       }
     }
@@ -240,7 +236,6 @@ export class SerialReader {
     // Parse protocol message
     const message = parseProtocolLine(line);
     if (message && this.onMessage) {
-      console.log('📨 PARSED MESSAGE:', message.type);
       this.onMessage(message);
     } else {
       console.warn('⚠️ Failed to parse line:', line);
