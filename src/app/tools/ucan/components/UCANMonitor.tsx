@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import ConnectionPanel from './ConnectionPanel';
 import MessageLog from './MessageLog';
 import FilterPanel from './FilterPanel';
@@ -291,15 +292,23 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
 
   return (
     <div className={`flex flex-col h-screen bg-gray-950 text-white`}>
-      {/* Header */}
-      {!isStandalone && (
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 border-b border-gray-700">
-          <div className="max-w-[1920px] mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              <span className="text-green-400">u</span>CAN <span className="text-gray-400">|</span>{' '}
-              <span className="text-gray-300">Universal CAN Monitor</span>
-            </h1>
-            <p className="text-gray-200">Browser-based CAN packet analyzer for USB-to-CAN hardware</p>
+      {/* Header - Only shown in standalone mode */}
+      {isStandalone && (
+        <div className="bg-gray-900 border-b border-gray-700 p-4">
+          <div className="max-w-[1920px] mx-auto px-4 flex items-center gap-4">
+            <Image
+              src="/uCAN/ucanlogo.png"
+              alt="uCAN Logo"
+              width={48}
+              height={48}
+              className="rounded"
+            />
+            <div>
+              <h1 className="text-2xl font-bold font-mono">
+                <span className="text-green-400">u</span>CAN Monitor
+              </h1>
+              <p className="text-sm text-gray-400">Universal CAN Bus Analyzer</p>
+            </div>
           </div>
         </div>
       )}
