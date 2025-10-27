@@ -200,6 +200,9 @@ export class SerialReader {
    * Handle a complete line
    */
   private handleLine(line: string): void {
+    // Always log to console for debugging
+    console.log('📥 SERIAL:', line);
+
     // Call raw line callback
     if (this.onLine) {
       this.onLine(line);
@@ -312,46 +315,58 @@ export class SerialBridge {
 
   /**
    * Disconnect from serial port
+   * Must release locks before closing port
    */
   async disconnect(): Promise<void> {
+    if (!this.port) {
+      console.log('Already disconnected');
+      return;
+    }
+
+    console.log('Disconnecting...');
+
+    // Stop reader loop first
+    if (this.reader) {
+      this.reader.stop();
+      // Give the reader a moment to finish its current read() operation
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    // Release reader lock - CRITICAL: must do this before cancel()
+    if (this.readerStream) {
+      try {
+        this.readerStream.releaseLock();
+      } catch (error) {
+        console.warn('Error releasing reader lock:', error);
+      }
+    }
+
+    // Release writer lock
+    if (this.writer) {
+      try {
+        this.writer.releaseLock();
+      } catch (error) {
+        console.warn('Error releasing writer lock:', error);
+      }
+    }
+
+    // Store port reference and clear state
+    const portToClose = this.port;
+    this.port = null;
+    this.reader = null;
+    this.readerStream = null;
+    this.writer = null;
+
+    // Now closeSerialPort can cancel/abort the unlocked streams
     try {
-      // Stop reader
-      if (this.reader) {
-        this.reader.stop();
-        this.reader = null;
-      }
-
-      // Release writer
-      if (this.writer) {
-        try {
-          await this.writer.close();
-        } catch (error) {
-          console.error('Error closing writer:', error);
-        }
-        this.writer = null;
-      }
-
-      // Release reader stream
-      if (this.readerStream) {
-        try {
-          await this.readerStream.cancel();
-        } catch (error) {
-          console.error('Error canceling reader:', error);
-        }
-        this.readerStream = null;
-      }
-
-      // Close port
-      if (this.port) {
-        await closeSerialPort(this.port);
-        this.port = null;
-      }
-
-      if (this.onConnectionChange) {
-        this.onConnectionChange(false);
-      }
+      await closeSerialPort(portToClose);
+      console.log('✅ Disconnected successfully');
     } catch (error) {
-      console.error('Disconnect error:', error);
+      console.error('Error during disconnect:', error);
+    }
+
+    if (this.onConnectionChange) {
+      this.onConnectionChange(false);
     }
   }
 
