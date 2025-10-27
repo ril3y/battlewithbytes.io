@@ -12,7 +12,6 @@ import Link from 'next/link';
 import MessageLog from './MessageLog';
 import FilterPanel from './FilterPanel';
 import BoardInfoPanel from './BoardInfoPanel';
-import ConnectionPanel from './ConnectionPanel';
 import SendPanel from './SendPanel';
 import RulesPanel from './RulesPanel';
 import PacketDetailModal from './PacketDetailModal';
@@ -65,9 +64,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   } | null>(null);
 
   // Board capabilities and rules
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [capabilities, setCapabilities] = useState<BoardCapabilities | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [actionDefinitions, setActionDefinitions] = useState<ActionDefinition[]>([]);
   const [actionRules, setActionRules] = useState<ActionRule[]>([]);
   const [prefilledRuleMessage, setPrefilledRuleMessage] = useState<CANMessage | null>(null);
@@ -198,6 +195,41 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         });
       } catch (error) {
         console.error('❌ Failed to parse action definition:', error, protocolMsg.raw);
+      }
+    }
+
+    // Handle RULE response (from action:list command)
+    // Format: RULE;1;0x500;0xFFFFFFFF;;0;;NEOPIXEL;candata
+    if (protocolMsg.raw.startsWith('RULE;')) {
+      try {
+        const parts = protocolMsg.raw.split(';');
+        if (parts.length >= 9) {
+          const rule: ActionRule = {
+            id: parseInt(parts[1]),
+            name: `Rule ${parts[1]}: ${parts[7]}`, // name: "Rule {ID}: {ACTION_NAME}"
+            canId: parseInt(parts[2]),
+            canMask: parts[3],
+            extended: parts[4] === '1',
+            priority: parts[5] ? parseInt(parts[5]) : undefined,
+            index: parts[6] ? parseInt(parts[6]) : undefined,
+            actionType: parts[7],
+            paramSource: parts[8] as 'fixed' | 'candata',
+            params: parts.length > 9 ? parts.slice(9) : [],
+            enabled: true
+          };
+
+          console.log('📜 Rule received:', rule);
+
+          setActionRules((prev) => {
+            const exists = prev.find(r => r.id === rule.id);
+            if (exists) {
+              return prev.map(r => r.id === rule.id ? rule : r);
+            }
+            return [...prev, rule];
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse rule:', error, protocolMsg.raw);
       }
     }
 
@@ -465,19 +497,55 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   /**
    * Rule management functions
    */
-  const handleAddRule = useCallback(() => {
-    // Placeholder - will be implemented with full rule builder
-    console.log('Add rule clicked', prefilledRuleMessage);
-  }, [prefilledRuleMessage]);
+  const handleAddRule = useCallback(async (command: string) => {
+    if (!serialBridgeRef.current) return;
 
-  const handleDeleteRule = useCallback((ruleId: number) => {
+    console.log('📤 Sending rule command:', command);
+    await serialBridgeRef.current.sendCommand(command);
+
+    // Refresh rules list after adding
+    setTimeout(() => {
+      if (serialBridgeRef.current) {
+        serialBridgeRef.current.sendCommand('action:list');
+      }
+    }, 100);
+  }, []);
+
+  const handleDeleteRule = useCallback(async (ruleId: number) => {
+    if (!serialBridgeRef.current) return;
+
+    console.log('🗑️ Deleting rule:', ruleId);
+    await serialBridgeRef.current.sendCommand(`action:remove:${ruleId}`);
+
+    // Remove from local state
     setActionRules((prev) => prev.filter(r => r.id !== ruleId));
   }, []);
 
-  const handleToggleRule = useCallback((ruleId: number) => {
+  const handleToggleRule = useCallback(async (ruleId: number) => {
+    // Toggle in local state
     setActionRules((prev) => prev.map(r =>
       r.id === ruleId ? { ...r, enabled: !r.enabled } : r
     ));
+
+    // Note: Protocol doesn't support enable/disable, so this is UI-only for now
+    // In a full implementation, we'd use action:remove and action:add
+  }, []);
+
+  const handleClearAllRules = useCallback(async () => {
+    if (!serialBridgeRef.current) return;
+
+    console.log('🗑️ Clearing all rules');
+    await serialBridgeRef.current.sendCommand('action:clear');
+
+    // Clear local state
+    setActionRules([]);
+  }, []);
+
+  const handleRefreshRules = useCallback(async () => {
+    if (!serialBridgeRef.current) return;
+
+    console.log('🔄 Refreshing rules from device');
+    await serialBridgeRef.current.sendCommand('action:list');
   }, []);
 
   return (
@@ -696,9 +764,12 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                     <RulesPanel
                       isConnected={isConnected}
                       rules={actionRules}
+                      actionDefinitions={actionDefinitions}
                       onAddRule={handleAddRule}
                       onDeleteRule={handleDeleteRule}
                       onToggleRule={handleToggleRule}
+                      onClearAllRules={handleClearAllRules}
+                      onRefreshRules={handleRefreshRules}
                       prefilledMessage={prefilledRuleMessage}
                     />
                   )}

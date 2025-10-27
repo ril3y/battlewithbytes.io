@@ -8,7 +8,7 @@
 // ============================================================================
 
 export type MessageDirection = 'RX' | 'TX';
-export type MessageType = 'CAN_RX' | 'CAN_TX' | 'CAN_ERR' | 'STATUS' | 'STATS' | 'CAPS' | 'ACTIONDEF';
+export type MessageType = 'CAN_RX' | 'CAN_TX' | 'CAN_ERR' | 'STATUS' | 'STATS' | 'CAPS' | 'ACTIONDEF' | 'RULE';
 
 /**
  * Core CAN message structure

@@ -20,6 +20,8 @@ interface BoardInfoPanelProps {
 export default function BoardInfoPanel({ capabilities, isConnected, onSendCommand }: BoardInfoPanelProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [deviceName, setDeviceName] = useState('');
+  const [filterCanId, setFilterCanId] = useState('');
+  const [filterMask, setFilterMask] = useState('');
 
   if (!isConnected || !capabilities) {
     return (
@@ -128,6 +130,71 @@ export default function BoardInfoPanel({ capabilities, isConnected, onSendComman
           )}
         </div>
       </div>
+
+      {/* CAN Configuration */}
+      {onSendCommand && (
+        <div className="space-y-3">
+          {/* Bitrate */}
+          <div className="bg-gray-950 border border-gray-800 rounded p-3">
+            <div className="text-xs text-gray-500 mb-2">CAN Bitrate</div>
+            <select
+              onChange={async (e) => {
+                if (e.target.value && onSendCommand) {
+                  await onSendCommand(`config:baudrate:${e.target.value}`);
+                }
+              }}
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+              defaultValue=""
+            >
+              <option value="">Change bitrate...</option>
+              <option value="125000">125 kbps</option>
+              <option value="250000">250 kbps</option>
+              <option value="500000">500 kbps (Default)</option>
+              <option value="1000000">1000 kbps (1 Mbps)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">⚠️ Changing bitrate will restart CAN bus</p>
+          </div>
+
+          {/* Hardware Filter */}
+          <div className="bg-gray-950 border border-gray-800 rounded p-3">
+            <div className="text-xs text-gray-500 mb-2">Hardware CAN ID Filter</div>
+            <div className="space-y-2">
+              <div>
+                <input
+                  type="text"
+                  value={filterCanId}
+                  onChange={(e) => setFilterCanId(e.target.value)}
+                  placeholder="Filter ID (e.g., 0x500)"
+                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={filterMask}
+                  onChange={(e) => setFilterMask(e.target.value)}
+                  placeholder="Mask (e.g., 0x700)"
+                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  if (filterCanId && filterMask && onSendCommand) {
+                    await onSendCommand(`config:filter:${filterCanId}:${filterMask}`);
+                    setFilterCanId('');
+                    setFilterMask('');
+                  }
+                }}
+                disabled={!filterCanId || !filterMask}
+                className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm rounded transition-colors"
+              >
+                Apply Filter
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">🔧 Reduces CPU load by filtering in hardware</p>
+          </div>
+        </div>
+      )}
 
       {/* Hardware Resources */}
       <div>

@@ -51,7 +51,8 @@ export function parseProtocolLine(line: string): ProtocolMessage | null {
 
     case 'CAPS':
     case 'ACTIONDEF':
-      // Return raw message for CAPS and ACTIONDEF - handled in UCANMonitor
+    case 'RULE':
+      // Return raw message for CAPS, ACTIONDEF, and RULE - handled in UCANMonitor
       return { type: messageType, raw: line };
 
     default:
