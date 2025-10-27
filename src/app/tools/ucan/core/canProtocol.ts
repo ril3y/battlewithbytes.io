@@ -57,7 +57,10 @@ export function parseProtocolLine(line: string): ProtocolMessage | null {
 
 /**
  * Parse CAN_RX or CAN_TX message
- * Format: CAN_RX;0x123;01,02,03,04,05,06,07,08
+ * Protocol spec format: CAN_RX;<CAN_ID>;<DATA>[;<TIMESTAMP>]
+ * Examples:
+ *   CAN_RX;0x123;01,02,03,04,05,06,07,08
+ *   CAN_RX;0x1FFFFFFF;AA,BB,CC,DD;1635360000000
  */
 function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMessage | null {
   if (parts.length < 3) {
@@ -95,10 +98,14 @@ function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMe
     }
   }
 
+  // Parse optional timestamp (milliseconds since epoch)
+  const timestamp = parts[3] ? parseInt(parts[3].trim(), 10) : undefined;
+
   return {
     type,
     canId,
     data,
+    timestamp: timestamp && !isNaN(timestamp) ? timestamp : undefined,
     raw: parts.join(';')
   };
 }
@@ -136,14 +143,42 @@ function parseStatusMessage(parts: string[]): ProtocolMessage {
 
 /**
  * Parse STATS message
- * Format: STATS;RX:1234,TX:567,ERR:2
+ * Protocol spec format: STATS;<RX_COUNT>;<TX_COUNT>;<ERROR_COUNT>;<BUS_LOAD>[;<TIMESTAMP>]
+ * Example: STATS;1523;847;12;45;1635360000000
  */
 function parseStatsMessage(parts: string[]): ProtocolMessage {
-  const statsData = parts[1]?.trim() || '';
+  if (parts.length < 5) {
+    console.warn('Invalid STATS format (expected at least 5 fields):', parts.join(';'));
+    return {
+      type: 'STATS',
+      raw: parts.join(';')
+    };
+  }
+
+  const rxCount = parseInt(parts[1]?.trim() || '0', 10);
+  const txCount = parseInt(parts[2]?.trim() || '0', 10);
+  const errorCount = parseInt(parts[3]?.trim() || '0', 10);
+  const busLoad = parseFloat(parts[4]?.trim() || '0');
+  const timestamp = parts[5] ? parseInt(parts[5].trim(), 10) : undefined;
+
+  // Validate parsed values
+  if (isNaN(rxCount) || isNaN(txCount) || isNaN(errorCount) || isNaN(busLoad)) {
+    console.warn('Invalid STATS values:', { rxCount, txCount, errorCount, busLoad });
+    return {
+      type: 'STATS',
+      raw: parts.join(';')
+    };
+  }
 
   return {
     type: 'STATS',
-    status: statsData,
+    stats: {
+      rxCount,
+      txCount,
+      errorCount,
+      busLoad,
+      timestamp
+    },
     raw: parts.join(';')
   };
 }
@@ -164,9 +199,14 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     // Determine if extended ID (29-bit vs 11-bit)
     const isExtended = protocol.canId > 0x7FF;
 
+    // Use firmware timestamp if available, otherwise use current time
+    const timestamp = protocol.timestamp
+      ? new Date(protocol.timestamp)
+      : new Date();
+
     return {
       id: `${direction}_${Date.now()}_${protocol.canId}`,
-      timestamp: new Date(),
+      timestamp,
       direction,
       type: protocol.type,
       canId: protocol.canId,

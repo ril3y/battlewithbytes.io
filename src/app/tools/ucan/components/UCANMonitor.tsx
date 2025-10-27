@@ -109,9 +109,20 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
    * Handle incoming protocol message from serial port
    */
   const handleProtocolMessage = useCallback((protocolMsg: ProtocolMessage) => {
-    // Track heartbeat from STATS messages
+    // Handle STATS messages from firmware
     if (protocolMsg.type === 'STATS') {
       setLastHeartbeat(new Date());
+
+      // Update stats from firmware if available
+      if (protocolMsg.stats) {
+        setStats((prevStats) => ({
+          ...prevStats,
+          rxCount: protocolMsg.stats!.rxCount,
+          txCount: protocolMsg.stats!.txCount,
+          errorCount: protocolMsg.stats!.errorCount,
+          busLoad: protocolMsg.stats!.busLoad
+        }));
+      }
     }
 
     const canMessage = protocolToCANMessage(protocolMsg);
@@ -120,7 +131,7 @@ export default function UCANMonitor({ isStandalone = false }: UCANMonitorProps) 
       // Add to buffer
       messageBufferRef.current?.addMessage(canMessage);
 
-      // Update statistics
+      // Update statistics (client-side per-ID stats)
       statsEngineRef.current?.updateMessage(canMessage);
     }
   }, []);

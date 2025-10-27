@@ -43,8 +43,17 @@ export interface ProtocolMessage {
   type: MessageType;
   canId?: number;
   data?: number[];
+  timestamp?: number; // Optional firmware timestamp (milliseconds since epoch)
   error?: string;
   status?: string;
+  // STATS message fields (Protocol spec: STATS;<RX>;<TX>;<ERR>;<LOAD>[;<TIMESTAMP>])
+  stats?: {
+    rxCount: number;
+    txCount: number;
+    errorCount: number;
+    busLoad: number;
+    timestamp?: number;
+  };
   raw: string;
 }
 

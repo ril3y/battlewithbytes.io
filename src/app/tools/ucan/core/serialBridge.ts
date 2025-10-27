@@ -200,9 +200,6 @@ export class SerialReader {
    * Handle a complete line
    */
   private handleLine(line: string): void {
-    // Always log to console for debugging
-    console.log('📥 SERIAL:', line);
-
     // Call raw line callback
     if (this.onLine) {
       this.onLine(line);

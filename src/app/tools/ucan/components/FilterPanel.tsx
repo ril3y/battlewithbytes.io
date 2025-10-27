@@ -52,7 +52,7 @@ export default function FilterPanel({
         onFilterChange({ canIds: newIds });
         setCanIdInput('');
       }
-    } catch (error) {
+    } catch {
       console.error('Invalid CAN ID:', canIdInput);
     }
   };
@@ -76,7 +76,7 @@ export default function FilterPanel({
       if (!isNaN(min) && !isNaN(max) && min <= max) {
         onFilterChange({ canIdRange: { min, max } });
       }
-    } catch (error) {
+    } catch {
       console.error('Invalid range:', rangeMin, rangeMax);
     }
   };

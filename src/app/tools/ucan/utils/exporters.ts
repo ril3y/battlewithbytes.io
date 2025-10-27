@@ -4,7 +4,7 @@
  * Export CAN messages and statistics to various formats
  */
 
-import { CANMessage, BusStatistics, ExportConfig, ExportFormat } from '../types';
+import { CANMessage, BusStatistics, ExportConfig } from '../types';
 import { formatCANId, formatDataBytes } from '../core/canProtocol';
 
 /**
@@ -68,7 +68,7 @@ export function exportToJSON(
   includeStats: boolean = false,
   stats?: BusStatistics
 ): string {
-  const data: any = {
+  const data: Record<string, unknown> = {
     exportDate: new Date().toISOString(),
     messageCount: messages.length,
     messages: messages.map(msg => ({
