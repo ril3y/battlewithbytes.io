@@ -49,6 +49,11 @@ export function parseProtocolLine(line: string): ProtocolMessage | null {
     case 'STATS':
       return parseStatsMessage(parts);
 
+    case 'CAPS':
+    case 'ACTIONDEF':
+      // Return raw message for CAPS and ACTIONDEF - handled in UCANMonitor
+      return { type: messageType, raw: line };
+
     default:
       console.warn('Unknown message type:', messageType);
       return { type: messageType, raw: line };

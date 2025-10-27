@@ -105,9 +105,9 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
   };
 
   return (
-    <div className="p-4 bg-gray-900/50 border border-gray-700 rounded-lg space-y-4">
+    <div className="p-4 bg-black space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
           <span>📤</span>
           Send Message
         </h2>
@@ -127,7 +127,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
           onChange={(e) => setCanId(e.target.value)}
           placeholder="0x123 or 123"
           disabled={!isConnected}
-          className="w-full px-3 py-2 bg-gray-950 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500 disabled:bg-gray-900 disabled:text-gray-600"
+          className="w-full px-3 py-2 bg-gray-950 border border-purple-500/30 rounded text-white text-sm focus:outline-none focus:border-purple-500 disabled:bg-gray-900 disabled:text-gray-600"
         />
       </div>
 
@@ -142,7 +142,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
           placeholder="01 02 03 04&#10;or&#10;01020304"
           rows={3}
           disabled={!isConnected}
-          className="w-full px-3 py-2 bg-gray-950 border border-gray-600 rounded text-white text-sm font-mono focus:outline-none focus:border-green-500 disabled:bg-gray-900 disabled:text-gray-600 resize-none"
+          className="w-full px-3 py-2 bg-gray-950 border border-purple-500/30 rounded text-white text-sm font-mono focus:outline-none focus:border-purple-500 disabled:bg-gray-900 disabled:text-gray-600 resize-none"
         />
         <p className="text-xs text-gray-500 mt-1">
           Current: {parseHexString(dataInput.trim())?.length || 0} bytes
@@ -158,7 +158,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
               key={preset.label}
               onClick={() => handlePreset(preset.data)}
               disabled={!isConnected}
-              className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 disabled:text-gray-600 text-gray-300 rounded border border-gray-600 transition-colors"
+              className="px-2 py-1 text-xs bg-purple-900/30 hover:bg-purple-800/40 disabled:bg-gray-900 disabled:text-gray-600 text-purple-300 rounded border border-purple-500/30 transition-colors"
             >
               {preset.label}
             </button>
@@ -185,7 +185,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
         <button
           onClick={handleSend}
           disabled={!isConnected || isSending}
-          className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded font-medium transition-colors flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded font-medium transition-colors flex items-center justify-center gap-2"
         >
           {isSending ? (
             <>
@@ -202,15 +202,15 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
         <button
           onClick={handleClear}
           disabled={!isConnected}
-          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 disabled:text-gray-600 text-gray-300 rounded border border-gray-600 transition-colors"
+          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 disabled:text-gray-600 text-gray-300 rounded border border-purple-500/30 transition-colors"
         >
           Clear
         </button>
       </div>
 
       {/* Info */}
-      <div className="pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500">
+      <div className="pt-3 border-t border-purple-500/20">
+        <p className="text-xs text-purple-400/60">
           💡 Tip: Hex bytes can be separated by spaces, commas, or colons
         </p>
       </div>

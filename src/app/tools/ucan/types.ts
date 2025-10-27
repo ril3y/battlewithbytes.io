@@ -8,7 +8,7 @@
 // ============================================================================
 
 export type MessageDirection = 'RX' | 'TX';
-export type MessageType = 'CAN_RX' | 'CAN_TX' | 'CAN_ERR' | 'STATUS' | 'STATS';
+export type MessageType = 'CAN_RX' | 'CAN_TX' | 'CAN_ERR' | 'STATUS' | 'STATS' | 'CAPS' | 'ACTIONDEF';
 
 /**
  * Core CAN message structure
@@ -337,3 +337,88 @@ export type ConnectionCallback = (connected: boolean, error?: string) => void;
  * Callback for flash progress updates
  */
 export type FlashProgressCallback = (progress: FlashProgress) => void;
+
+// ============================================================================
+// Board Capabilities & Action Rules
+// ============================================================================
+
+/**
+ * Board capabilities response from get:capabilities
+ */
+export interface BoardCapabilities {
+  board?: string;
+  chip?: string;
+  features?: string[];
+  canSpeed?: number;
+  gpioCount?: number;
+  pwmCount?: number;
+  adcCount?: number;
+  dacCount?: number;
+  neopixelPin?: number;
+}
+
+/**
+ * Action parameter definition from get:actiondefs
+ */
+export interface ActionParameter {
+  /** Parameter name */
+  n: string;
+  /** Type: 0=uint8, 1=uint16, 2=uint32, 3=int8, 4=int16, 5=int32, 6=float, 7=bool */
+  t: number;
+  /** Data byte index (0-7) */
+  b: number;
+  /** Bit offset within byte (0-7) */
+  o: number;
+  /** Bit length (1-8) */
+  l: number;
+  /** Range (min-max string) */
+  r?: string;
+  /** Parameter role: 'action_param', 'output_param', 'trigger_param' */
+  role?: string;
+}
+
+/**
+ * Action definition response from get:actiondef or get:actiondefs
+ */
+export interface ActionDefinition {
+  /** Action ID (enum value) */
+  i: number;
+  /** Action name */
+  n: string;
+  /** Description */
+  d: string;
+  /** Category */
+  c: string;
+  /** Trigger type: 'can_msg', 'manual', 'periodic' */
+  trig?: string;
+  /** Parameters array */
+  p: ActionParameter[];
+}
+
+/**
+ * Action rule configuration (client-side state)
+ */
+export interface ActionRule {
+  /** Unique rule ID */
+  id: number;
+  /** Rule name/label */
+  name: string;
+  /** CAN ID to match */
+  canId: number;
+  /** CAN ID mask */
+  canMask: number;
+  /** Data pattern to match */
+  dataPattern?: string;
+  /** Data mask */
+  dataMask?: string;
+  /** Data length to match (0=any) */
+  dataLength: number;
+  /** Action type */
+  actionType: string;
+  /** Parameter source: 'candata' or 'fixed' */
+  paramSource: 'candata' | 'fixed';
+  /** Fixed parameters (when paramSource='fixed') */
+  params?: string[];
+  /** Whether rule is enabled */
+  enabled: boolean;
+}

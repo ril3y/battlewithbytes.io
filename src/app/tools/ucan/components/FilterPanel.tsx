@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import { MessageFilter, MessageDirection } from '../types';
+import CollapsiblePanel from './CollapsiblePanel';
 
 interface FilterPanelProps {
   filter: MessageFilter;
@@ -101,52 +102,30 @@ export default function FilterPanel({
     setRangeMax('');
   };
 
+  const clearAllButton = (
+    <button
+      onClick={handleClearAllFilters}
+      className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-600 transition-colors"
+    >
+      Clear All
+    </button>
+  );
+
   return (
-    <div className="p-4 bg-gray-900/50 border border-gray-700 rounded-lg space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-white">🔍 Filters</h2>
-        <button
-          onClick={handleClearAllFilters}
-          className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-600 transition-colors"
-        >
-          Clear All
-        </button>
-      </div>
-
-      {/* Filter Summary */}
-      <div className="p-3 bg-blue-600/10 border border-blue-500/30 rounded text-sm">
-        <p className="text-blue-300">
-          Showing <span className="font-bold">{filteredMessages}</span> of{' '}
-          <span className="font-bold">{totalMessages}</span> messages
-        </p>
-      </div>
-
-      {/* Direction Filter */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">Direction</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleDirectionToggle('RX')}
-            className={`flex-1 px-3 py-2 rounded border transition-colors ${
-              filter.directions.has('RX')
-                ? 'bg-green-600/20 border-green-500/50 text-green-300'
-                : 'bg-gray-800 border-gray-600 text-gray-500'
-            }`}
-          >
-            🟢 RX
-          </button>
-          <button
-            onClick={() => handleDirectionToggle('TX')}
-            className={`flex-1 px-3 py-2 rounded border transition-colors ${
-              filter.directions.has('TX')
-                ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-                : 'bg-gray-800 border-gray-600 text-gray-500'
-            }`}
-          >
-            🔵 TX
-          </button>
+    <CollapsiblePanel
+      title="Filters"
+      icon="🔍"
+      defaultCollapsed={false}
+      headerActions={clearAllButton}
+    >
+      <div className="space-y-4">
+        {/* Filter Summary */}
+        <div className="p-3 bg-blue-600/10 border border-blue-500/30 rounded text-sm">
+          <p className="text-blue-300">
+            Showing <span className="font-bold">{filteredMessages}</span> of{' '}
+            <span className="font-bold">{totalMessages}</span> messages
+          </p>
         </div>
-      </div>
 
       {/* CAN ID Filter */}
       <div>
@@ -303,6 +282,7 @@ export default function FilterPanel({
           <span className="text-sm text-gray-300">Show errors only</span>
         </label>
       </div>
-    </div>
+      </div>
+    </CollapsiblePanel>
   );
 }

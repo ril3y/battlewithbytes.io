@@ -18,6 +18,7 @@ interface MessageLogProps {
   showTimestamps?: boolean;
   viewMode?: 'list' | 'hex' | 'detail';
   reverseOrder?: boolean;
+  onContextMenu?: (message: CANMessage, x: number, y: number) => void;
 }
 
 export default function MessageLog({
@@ -27,7 +28,8 @@ export default function MessageLog({
   autoScroll = true,
   showTimestamps = true,
   viewMode = 'list',
-  reverseOrder = true
+  reverseOrder = true,
+  onContextMenu
 }: MessageLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -48,6 +50,13 @@ export default function MessageLog({
   const handleMessageClick = (message: CANMessage) => {
     if (onMessageSelect) {
       onMessageSelect(message.id);
+    }
+  };
+
+  const handleMessageRightClick = (e: React.MouseEvent, message: CANMessage) => {
+    e.preventDefault();
+    if (onContextMenu) {
+      onContextMenu(message, e.clientX, e.clientY);
     }
   };
 
@@ -97,6 +106,7 @@ export default function MessageLog({
                 isHovered={message.id === hoveredId}
                 showTimestamps={showTimestamps}
                 onClick={() => handleMessageClick(message)}
+                onContextMenu={(e) => handleMessageRightClick(e, message)}
                 onMouseEnter={() => setHoveredId(message.id)}
                 onMouseLeave={() => setHoveredId(null)}
               />
@@ -135,6 +145,7 @@ interface MessageRowProps {
   isHovered: boolean;
   showTimestamps: boolean;
   onClick: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }
@@ -145,6 +156,7 @@ function MessageRow({
   isHovered,
   showTimestamps,
   onClick,
+  onContextMenu,
   onMouseEnter,
   onMouseLeave
 }: MessageRowProps) {
@@ -180,6 +192,7 @@ function MessageRow({
     <div
       className={`px-2 py-1.5 cursor-pointer transition-colors ${rowBg} hover:bg-gray-800/70`}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
