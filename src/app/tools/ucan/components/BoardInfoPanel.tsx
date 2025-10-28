@@ -393,7 +393,13 @@ Filters: ${capabilities.can.filters || 'N/A'}`}
       <div className="bg-blue-600/10 border border-blue-500/30 rounded p-3">
         <div className="text-xs text-blue-400 mb-1">Action Rules</div>
         <div className="text-lg font-bold text-white">
-          {capabilities.max_rules} <span className="text-sm font-normal text-gray-400">max rules</span>
+          {capabilities.max_rules !== undefined ? (
+            <>
+              {capabilities.max_rules} <span className="text-sm font-normal text-gray-400">maximum</span>
+            </>
+          ) : (
+            <span className="text-sm font-normal text-gray-400">Loading...</span>
+          )}
         </div>
       </div>
 
