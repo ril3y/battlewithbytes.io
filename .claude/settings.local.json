@@ -18,7 +18,16 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git worktree:*)"
+      "Bash(git worktree:*)",
+      "Bash(git log:*)",
+      "WebSearch",
+      "WebFetch(domain:developer.chrome.com)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(taskkill:*)",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")"
     ],
     "deny": []
   },
