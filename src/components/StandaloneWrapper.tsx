@@ -1,15 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Navigation from './Navigation';
 import Footer from './Footer';
 
 /**
  * Wrapper component that conditionally shows Navigation and Footer
- * based on whether the app is running in PWA standalone mode
+ * based on whether the app is running in PWA standalone mode or on specific routes
  */
 export default function StandaloneWrapper({ children }: { children: React.ReactNode }) {
   const [isStandalone, setIsStandalone] = useState(false);
+  const pathname = usePathname();
+
+  // Routes that should be full-screen without navigation/footer
+  const fullscreenRoutes = ['/tools/ucan'];
+  const isFullscreenRoute = fullscreenRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
     // Check if running in standalone mode (PWA)
@@ -21,13 +27,16 @@ export default function StandaloneWrapper({ children }: { children: React.ReactN
     setIsStandalone(standalone);
   }, []);
 
+  // Hide navigation/footer if standalone OR on a fullscreen route
+  const shouldHideNavigation = isStandalone || isFullscreenRoute;
+
   return (
     <>
-      {!isStandalone && <Navigation />}
-      <div className={isStandalone ? 'flex-grow' : 'pt-16 flex-grow'}>
+      {!shouldHideNavigation && <Navigation />}
+      <div className={shouldHideNavigation ? 'flex-grow' : 'pt-16 flex-grow'}>
         {children}
       </div>
-      {!isStandalone && <Footer />}
+      {!shouldHideNavigation && <Footer />}
     </>
   );
 }

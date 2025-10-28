@@ -70,6 +70,20 @@ export default function ToolsPage() {
             </div>
           </div>
 
+          {/* uCAN Monitor Card */}
+          <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
+            <div className="p-6">
+              <div className="text-green-400 font-mono text-sm mb-2">05 // AUTOMOTIVE</div>
+              <h3 className="text-xl font-bold mb-3">uCAN Monitor</h3>
+              <p className="text-gray-400 mb-4">
+                Browser-based CAN bus packet analyzer with real-time monitoring, filtering, and action automation for USB-to-CAN hardware.
+              </p>
+              <Link href="/tools/ucan" className="text-green-400 font-mono text-sm hover:underline">
+                Open tool →
+              </Link>
+            </div>
+          </div>
+
           {/* Placeholder for future tools */}
           <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden opacity-50">
             <div className="p-6">
