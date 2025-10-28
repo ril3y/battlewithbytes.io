@@ -26,6 +26,7 @@ interface OverlayCanvasProps {
   widgets: WidgetBinding[];
   decodedMessages: Map<string, DecodedMessage>;
   selectedMessageId?: string;
+  isFullScreen?: boolean; // Optional flag for full-screen mode styling
 }
 
 const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
@@ -33,6 +34,7 @@ const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
   widgets,
   decodedMessages,
   selectedMessageId,
+  isFullScreen = false,
 }) => {
   // Create widget lookup map - memoize to avoid recreation
   const widgetMap = React.useMemo(() =>
@@ -40,13 +42,13 @@ const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
     [widgets]
   );
 
-  // Grid style
+  // Grid style - adjust padding and gap for full-screen mode
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: `repeat(${layout.gridColumns || 12}, 1fr)`,
     gridTemplateRows: `repeat(${layout.gridRows || 12}, 1fr)`,
-    gap: '8px',
-    padding: '16px',
+    gap: isFullScreen ? '12px' : '8px',
+    padding: isFullScreen ? '24px' : '16px',
     height: '100%',
     width: '100%',
     backgroundColor: layout.backgroundColor || '#0a0a0a',

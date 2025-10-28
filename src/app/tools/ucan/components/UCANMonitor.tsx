@@ -107,6 +107,14 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const [isDefinitionModalOpen, setIsDefinitionModalOpen] = useState(false);
   const [isOverlayPanelVisible, setIsOverlayPanelVisible] = useState(false);
   const [activeLayoutId, setActiveLayoutId] = useState<string | undefined>(undefined);
+  const [isOverlayExpanded, setIsOverlayExpanded] = useState(false);
+
+  // Definition mismatch tracking
+  const [definitionMismatchWarning, setDefinitionMismatchWarning] = useState<{
+    show: boolean;
+    message: string;
+    suggestedDefinitionId?: string;
+  }>({ show: false, message: '' });
 
   // Ref to track paused state for message callback (avoids stale closure)
   const isPausedRef = useRef(displayOptions.paused);
@@ -450,6 +458,90 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       setDecodedMessages(new Map());
     }
   }, [activeDefinitionId, isOverlayPanelVisible, decodedMessages.size]);
+
+  /**
+   * Check for definition mismatch - compares incoming CAN IDs with active definition
+   */
+  useEffect(() => {
+    if (!activeDefinitionId || !definitionManagerRef.current || !isOverlayPanelVisible) {
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    // Get unique CAN IDs from recent messages (last 50)
+    const recentMessages = messages.slice(-50);
+    const incomingCanIds = new Set(recentMessages.map(m => normalizeCANId(m.canId)));
+
+    if (incomingCanIds.size === 0) {
+      // No messages yet, no warning
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    // Get CAN IDs from active definition
+    const activeDefinition = definitionManagerRef.current.getDefinition(activeDefinitionId);
+    if (!activeDefinition) {
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    const definitionCanIds = new Set(activeDefinition.messages.map(m => m.id));
+
+    // Calculate match percentage
+    let matchCount = 0;
+    incomingCanIds.forEach(canId => {
+      if (definitionCanIds.has(canId)) {
+        matchCount++;
+      }
+    });
+
+    const matchPercentage = (matchCount / incomingCanIds.size) * 100;
+
+    // Show warning if less than 50% match
+    if (matchPercentage < 50) {
+      // Try to find a better matching definition
+      const allDefinitions = definitionManagerRef.current.getDefinitionMetadata();
+      let bestMatch: { id: string; score: number; name: string } | null = null;
+
+      for (const defMeta of allDefinitions) {
+        if (defMeta.id === activeDefinitionId) continue; // Skip current
+
+        const def = definitionManagerRef.current.getDefinition(defMeta.id);
+        if (!def) continue;
+
+        const defCanIds = new Set(def.messages.map(m => m.id));
+        let defMatchCount = 0;
+        incomingCanIds.forEach(canId => {
+          if (defCanIds.has(canId)) {
+            defMatchCount++;
+          }
+        });
+
+        const defMatchPercentage = (defMatchCount / incomingCanIds.size) * 100;
+
+        if (!bestMatch || defMatchPercentage > bestMatch.score) {
+          bestMatch = { id: defMeta.id, score: defMatchPercentage, name: defMeta.name };
+        }
+      }
+
+      if (bestMatch && bestMatch.score > matchPercentage) {
+        setDefinitionMismatchWarning({
+          show: true,
+          message: `Active definition '${activeDefinition.name}' only matches ${matchPercentage.toFixed(0)}% of incoming messages. Try '${bestMatch.name}' (${bestMatch.score.toFixed(0)}% match)?`,
+          suggestedDefinitionId: bestMatch.id
+        });
+      } else {
+        setDefinitionMismatchWarning({
+          show: true,
+          message: `Active definition '${activeDefinition.name}' only matches ${matchPercentage.toFixed(0)}% of incoming messages. You may need a different definition.`,
+          suggestedDefinitionId: undefined
+        });
+      }
+    } else {
+      // Good match, clear warning
+      setDefinitionMismatchWarning({ show: false, message: '' });
+    }
+  }, [messages, activeDefinitionId, isOverlayPanelVisible]);
 
   /**
    * Connect to serial port
@@ -1014,49 +1106,140 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         <div className="max-w-[1920px] mx-auto h-full p-4 px-4 flex gap-4">
           {/* Center - Message Log with integrated Send Panel */}
           <div className="flex-1 h-full flex flex-col bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <MessageLog
-                messages={filteredMessages}
-                onMessageSelect={setSelectedMessageId}
-                selectedMessageId={selectedMessageId}
-                autoScroll={displayOptions.autoScroll && !displayOptions.paused}
-                showTimestamps={displayOptions.showTimestamps}
-                viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
-                onContextMenu={handleMessageContextMenu}
-                decodedMessages={decodedMessages}
-                isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
-              />
-            </div>
-            {/* Send Panel - Collapsible */}
-            <div className="border-t border-gray-700">
-              <CollapsiblePanel
-                title="Send CAN Message"
-                icon="📤"
-                defaultCollapsed={false}
-              >
-                <SendPanel
-                  isConnected={isConnected}
-                  onSend={handleSendMessage}
+            {/* Message Log - hidden when overlay is expanded */}
+            {!isOverlayExpanded && (
+              <div className="flex-1 overflow-hidden">
+                <MessageLog
+                  messages={filteredMessages}
+                  onMessageSelect={setSelectedMessageId}
+                  selectedMessageId={selectedMessageId}
+                  autoScroll={displayOptions.autoScroll && !displayOptions.paused}
+                  showTimestamps={displayOptions.showTimestamps}
+                  viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
+                  onContextMenu={handleMessageContextMenu}
+                  decodedMessages={decodedMessages}
+                  isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
                 />
-              </CollapsiblePanel>
-            </div>
-
-            {/* Overlay Panel - Collapsible */}
-            {isOverlayPanelVisible && activeDefinitionId && definitionManagerRef.current && (
+              </div>
+            )}
+            {/* Send Panel - Collapsible (hidden when overlay is expanded) */}
+            {!isOverlayExpanded && (
               <div className="border-t border-gray-700">
                 <CollapsiblePanel
-                  title="CAN Overlay"
-                  icon="🎨"
+                  title="Send CAN Message"
+                  icon="📤"
                   defaultCollapsed={false}
                 >
-                  <div className="flex flex-col h-[400px]">
-                    {/* Layout Selector */}
-                    <div className="flex items-center gap-2 mb-2 p-2 bg-gray-800 border-b border-gray-700">
+                  <SendPanel
+                    isConnected={isConnected}
+                    onSend={handleSendMessage}
+                  />
+                </CollapsiblePanel>
+              </div>
+            )}
+
+            {/* Overlay Panel - Collapsible or Full-Screen */}
+            {isOverlayPanelVisible && activeDefinitionId && definitionManagerRef.current && (
+              <div className={`border-t border-gray-700 ${isOverlayExpanded ? 'flex-1' : ''}`}>
+                {!isOverlayExpanded ? (
+                  <CollapsiblePanel
+                    title="CAN Overlay"
+                    icon="🎨"
+                    defaultCollapsed={false}
+                  >
+                    <div className="flex flex-col h-[400px]">
+                      {/* Layout Selector & Controls */}
+                      <div className="flex items-center gap-2 mb-2 p-2 bg-gray-800 border-b border-gray-700">
+                        <label className="text-sm text-gray-300">Layout:</label>
+                        <select
+                          value={activeLayoutId || ''}
+                          onChange={(e) => setActiveLayoutId(e.target.value)}
+                          className="flex-1 px-2 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
+                        >
+                          {definitionManagerRef.current.getDefinition(activeDefinitionId)?.layouts.map((layout) => (
+                            <option key={layout.id} value={layout.id}>
+                              {layout.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setIsOverlayExpanded(true)}
+                          className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded"
+                          title="Expand overlay to full-screen"
+                        >
+                          ⛶ Expand
+                        </button>
+                        <button
+                          onClick={() => setIsOverlayPanelVisible(false)}
+                          className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded"
+                        >
+                          Close
+                        </button>
+                      </div>
+
+                      {/* Definition Mismatch Warning */}
+                      {definitionMismatchWarning.show && (
+                        <div className="bg-yellow-900/30 border-b border-yellow-600/50 p-2 flex items-center gap-2 mb-2">
+                          <span className="text-yellow-400">⚠️</span>
+                          <p className="text-xs text-yellow-200 flex-1">{definitionMismatchWarning.message}</p>
+                          {definitionMismatchWarning.suggestedDefinitionId && (
+                            <button
+                              onClick={() => {
+                                handleSelectDefinition(definitionMismatchWarning.suggestedDefinitionId!);
+                                setDefinitionMismatchWarning({ show: false, message: '' });
+                              }}
+                              className="px-2 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                            >
+                              Switch
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setDefinitionMismatchWarning({ show: false, message: '' })}
+                            className="px-1 text-xs text-yellow-400 hover:text-yellow-200"
+                            title="Dismiss"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Overlay Canvas */}
+                      <div className="flex-1 overflow-auto">
+                        {activeLayoutId && (() => {
+                          const definition = definitionManagerRef.current?.getDefinition(activeDefinitionId);
+                          const layout = definition?.layouts.find((l) => l.id === activeLayoutId);
+                          if (layout && definition) {
+                            return (
+                              <OverlayCanvas
+                                layout={layout}
+                                widgets={definition.widgets}
+                                decodedMessages={decodedMessages}
+                                selectedMessageId={selectedMessageId}
+                                isFullScreen={false}
+                              />
+                            );
+                          }
+                          return (
+                            <div className="flex items-center justify-center h-full text-gray-500">
+                              Select a layout to display
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </CollapsiblePanel>
+                ) : (
+                  /* Full-Screen Overlay Mode */
+                  <div className="flex flex-col h-full">
+                    {/* Full-Screen Header */}
+                    <div className="flex items-center gap-2 p-3 bg-gray-800 border-b border-gray-700">
+                      <span className="text-lg font-semibold text-green-400">🎨 CAN Overlay</span>
+                      <span className="text-gray-500 mx-2">|</span>
                       <label className="text-sm text-gray-300">Layout:</label>
                       <select
                         value={activeLayoutId || ''}
                         onChange={(e) => setActiveLayoutId(e.target.value)}
-                        className="flex-1 px-2 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
+                        className="px-3 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
                       >
                         {definitionManagerRef.current.getDefinition(activeDefinitionId)?.layouts.map((layout) => (
                           <option key={layout.id} value={layout.id}>
@@ -1064,15 +1247,49 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                           </option>
                         ))}
                       </select>
+                      <div className="flex-1"></div>
+                      <button
+                        onClick={() => setIsOverlayExpanded(false)}
+                        className="px-3 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                        title="Collapse to split view"
+                      >
+                        ⛶ Collapse
+                      </button>
                       <button
                         onClick={() => setIsOverlayPanelVisible(false)}
-                        className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded"
+                        className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded"
                       >
                         Close
                       </button>
                     </div>
 
-                    {/* Overlay Canvas */}
+                    {/* Definition Mismatch Warning */}
+                    {definitionMismatchWarning.show && (
+                      <div className="bg-yellow-900/30 border-b border-yellow-600/50 p-3 flex items-center gap-3">
+                        <span className="text-yellow-400 text-lg">⚠️</span>
+                        <p className="text-sm text-yellow-200 flex-1">{definitionMismatchWarning.message}</p>
+                        {definitionMismatchWarning.suggestedDefinitionId && (
+                          <button
+                            onClick={() => {
+                              handleSelectDefinition(definitionMismatchWarning.suggestedDefinitionId!);
+                              setDefinitionMismatchWarning({ show: false, message: '' });
+                            }}
+                            className="px-3 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                          >
+                            Switch Definition
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDefinitionMismatchWarning({ show: false, message: '' })}
+                          className="px-2 py-1 text-xs text-yellow-400 hover:text-yellow-200"
+                          title="Dismiss warning"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Full-Screen Overlay Canvas */}
                     <div className="flex-1 overflow-auto">
                       {activeLayoutId && (() => {
                         const definition = definitionManagerRef.current?.getDefinition(activeDefinitionId);
@@ -1084,18 +1301,19 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                               widgets={definition.widgets}
                               decodedMessages={decodedMessages}
                               selectedMessageId={selectedMessageId}
+                              isFullScreen={true}
                             />
                           );
                         }
                         return (
-                          <div className="flex items-center justify-center h-full text-gray-500">
+                          <div className="flex items-center justify-center h-full text-gray-500 text-lg">
                             Select a layout to display
                           </div>
                         );
                       })()}
                     </div>
                   </div>
-                </CollapsiblePanel>
+                )}
               </div>
             )}
           </div>
