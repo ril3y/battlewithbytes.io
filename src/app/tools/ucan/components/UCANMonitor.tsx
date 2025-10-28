@@ -13,10 +13,11 @@ import MessageLog from './MessageLog';
 import FilterPanel from './FilterPanel';
 import BoardInfoPanel from './BoardInfoPanel';
 import SendPanel from './SendPanel';
-import RulesPanel from './RulesPanel';
 import PacketDetailModal from './PacketDetailModal';
 import SettingsModal from './SettingsModal';
+import RuleBuilderModal from './RuleBuilderModal';
 import ContextMenu from './ContextMenu';
+import CollapsiblePanel from './CollapsiblePanel';
 import {
   CANMessage,
   SerialConfig,
@@ -36,6 +37,7 @@ import { SerialBridge } from '../core/serialBridge';
 import { protocolToCANMessage, ProtocolMessage } from '../core/canProtocol';
 import { MessageBuffer, StatisticsEngine } from '../core/messageBuffer';
 import { exportMessages, exportStatsSummary } from '../utils/exporters';
+import { saveLastDevice } from '../utils/deviceStorage';
 
 interface UCANMonitorProps {
   isStandalone?: boolean;
@@ -44,7 +46,6 @@ interface UCANMonitorProps {
 export default function UCANMonitor({ }: UCANMonitorProps) {
   // Connection state
   const [isConnected, setIsConnected] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState<{ vendorId?: number; productId?: number } | undefined>(undefined);
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(DEFAULT_SERIAL_CONFIG);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lastHeartbeat, setLastHeartbeat] = useState<Date | null>(null);
@@ -53,8 +54,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
   const [selectedMessageId, setSelectedMessageId] = useState<string | undefined>(undefined);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSendPanelOpen, setIsSendPanelOpen] = useState(false);
-  const [activePanelTab, setActivePanelTab] = useState<'send' | 'rules'>('send');
+  const [isRuleBuilderOpen, setIsRuleBuilderOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<ActionRule | null>(null);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -68,6 +69,9 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const [actionDefinitions, setActionDefinitions] = useState<ActionDefinition[]>([]);
   const [actionRules, setActionRules] = useState<ActionRule[]>([]);
   const [prefilledRuleMessage, setPrefilledRuleMessage] = useState<CANMessage | null>(null);
+
+  // Track recently fired rules (ruleId -> timestamp) - short blink duration
+  const [recentlyFiredRules, setRecentlyFiredRules] = useState<Map<number, number>>(new Map());
 
   // Messages and filtering
   const [messages, setMessages] = useState<CANMessage[]>([]);
@@ -198,84 +202,161 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       }
     }
 
-    // Handle ACTION response (from action:list command)
-    // Format: ACTION;1;true;ANY;NEOPIXEL_COLOR;R:255 G:255 B:0 Br:64
+    // Handle ACTION messages - can be either:
+    // 1. Execution report: ACTION;{RULE_ID};{ACTION_TYPE};{TRIGGER_CAN_ID};{STATUS}
+    //    Example: ACTION;1;GPIO_SET;0x100;OK
+    // 2. Rule listing (from action:list): ACTION;{RULE_ID};{ENABLED};{CAN_ID};{ACTION_TYPE};{PARAMS...}
+    //    Example: ACTION;1;true;0x100;GPIO_SET;Pin:13
     if (protocolMsg.raw.startsWith('ACTION;')) {
       try {
         const parts = protocolMsg.raw.split(';');
-        if (parts.length >= 5) {
+
+        // Distinguish between execution report and rule listing
+        // Execution report: parts[4] is "OK" or "FAIL"
+        // Rule listing: parts[2] is "true" or "false" (enabled status)
+        const isRuleListing = parts.length >= 5 && (parts[2] === 'true' || parts[2] === 'false');
+
+        if (isRuleListing) {
+          // This is a rule listing from action:list (firmware doesn't use RULE format yet)
+          console.log('📥 ACTION rule listing:', protocolMsg.raw);
+
+          const ruleId = parseInt(parts[1]);
+          const enabled = parts[2] === 'true';
+          const canIdStr = parts[3];
+          const actionType = parts[4];
+          const params = parts.length > 5 ? parts.slice(5) : undefined;
+
+          // Parse CAN ID
+          const canId = canIdStr.startsWith('0x')
+            ? parseInt(canIdStr.substring(2), 16)
+            : parseInt(canIdStr, 16);
+
           const rule: ActionRule = {
-            id: parseInt(parts[1]),
-            name: `Rule ${parts[1]}: ${parts[4]}`,
-            canId: 0, // Not provided in ACTION format
-            canMask: '',
-            extended: false,
-            actionType: parts[4],
-            paramSource: 'fixed',
-            params: parts.length > 5 ? [parts.slice(5).join(';')] : [],
-            enabled: parts[2] === 'true'
+            id: ruleId,
+            name: `Rule ${ruleId}: ${actionType}`,
+            canId,
+            canMask: 0xFFFFFFFF, // Not provided in ACTION format, assume exact match
+            extended: false, // Not provided in ACTION format
+            actionType,
+            paramSource: params && params.length > 0 ? 'fixed' : 'candata',
+            params,
+            enabled,
+            dataLength: 0
           };
 
-          console.log('📜 Action rule received:', rule);
+          console.log('📜 Rule parsed from ACTION:', rule);
 
           setActionRules((prev) => {
             const exists = prev.find(r => r.id === rule.id);
             if (exists) {
+              console.log(`♻️ Updating existing rule ${rule.id}`);
               return prev.map(r => r.id === rule.id ? rule : r);
             }
+            console.log(`✨ Adding new rule ${rule.id}`);
             return [...prev, rule];
+          });
+        } else if (parts.length >= 5 && (parts[4] === 'OK' || parts[4] === 'FAIL')) {
+          // This is an execution report
+          const ruleId = parseInt(parts[1]);
+          const actionType = parts[2];
+          const triggerCanId = parts[3];
+          const status = parts[4];
+
+          console.log(`⚡ Rule ${ruleId} executed: ${actionType} triggered by ${triggerCanId} - ${status}`);
+
+          // Track this rule execution for visual feedback
+          setRecentlyFiredRules(prev => {
+            const updated = new Map(prev);
+            updated.set(ruleId, Date.now());
+            return updated;
           });
         }
       } catch (error) {
-        console.error('❌ Failed to parse action:', error, protocolMsg.raw);
+        console.error('❌ Failed to parse ACTION message:', error, protocolMsg.raw);
       }
     }
 
-    // Handle RULE response (alternative format from some firmware versions)
-    // Format: RULE;1;0x500;0xFFFFFFFF;;0;;NEOPIXEL;candata
+    // Log ALL non-CAN messages for debugging rule loading issues
+    if (!protocolMsg.raw.startsWith('CAN_RX') &&
+        !protocolMsg.raw.startsWith('CAN_TX') &&
+        !protocolMsg.raw.startsWith('STATS')) {
+      console.log('🔍 Non-CAN message received:', protocolMsg.raw);
+    }
+
+    // Handle RULE response (from action:list command - Protocol v2.0)
+    // Format: RULE;{ID};{CAN_ID};{CAN_MASK};{DATA};{DATA_MASK};{DATA_LEN};{ACTION};{PARAM_SOURCE};{PARAMS...}
+    // Example: RULE;1;0x500;0xFFFFFFFF;;;0;NEOPIXEL;candata
+    // Example: RULE;2;0x100;0xFFFFFFFF;;;0;GPIO_SET;fixed;13
+    // Example: RULE;3;0x200;0xFFFFFFFF;FF;FF;1;GPIO_TOGGLE;fixed;14
     if (protocolMsg.raw.startsWith('RULE;')) {
       try {
+        console.log('📥 Raw RULE message:', protocolMsg.raw);
         const parts = protocolMsg.raw.split(';');
+        console.log('📋 Parsed RULE parts:', parts);
+
         if (parts.length >= 9) {
+          // Parse CAN ID (handle hex format)
+          const canIdStr = parts[2];
+          const canId = canIdStr.startsWith('0x')
+            ? parseInt(canIdStr.substring(2), 16)
+            : parseInt(canIdStr, 16);
+
+          // Parse CAN mask (handle hex format)
+          const canMaskStr = parts[3];
+          const canMask = canMaskStr.startsWith('0x')
+            ? parseInt(canMaskStr.substring(2), 16)
+            : parseInt(canMaskStr, 16);
+
+          // Parse data pattern and mask (positions 4 and 5)
+          const dataPattern = parts[4]?.trim() || undefined;
+          const dataMask = parts[5]?.trim() || undefined;
+
+          // Parse data length requirement (position 6)
+          const dataLength = parts[6] ? parseInt(parts[6], 10) : 0;
+
           const rule: ActionRule = {
             id: parseInt(parts[1]),
             name: `Rule ${parts[1]}: ${parts[7]}`,
-            canId: parseInt(parts[2]),
-            canMask: parts[3],
-            extended: parts[4] === '1',
-            priority: parts[5] ? parseInt(parts[5]) : undefined,
-            index: parts[6] ? parseInt(parts[6]) : undefined,
+            canId,
+            canMask,
+            dataPattern,
+            dataMask,
+            dataLength,
             actionType: parts[7],
             paramSource: parts[8] as 'fixed' | 'candata',
-            params: parts.length > 9 ? parts.slice(9) : [],
+            params: parts.length > 9 ? parts.slice(9) : undefined,
             enabled: true
           };
 
-          console.log('📜 Rule received:', rule);
+          console.log('📜 Rule parsed successfully:', rule);
 
           setActionRules((prev) => {
             const exists = prev.find(r => r.id === rule.id);
             if (exists) {
+              console.log(`♻️ Updating existing rule ${rule.id}`);
               return prev.map(r => r.id === rule.id ? rule : r);
             }
+            console.log(`✨ Adding new rule ${rule.id}`);
             return [...prev, rule];
           });
+        } else {
+          console.warn(`⚠️ RULE message has insufficient fields (${parts.length} < 9):`, protocolMsg.raw);
         }
       } catch (error) {
-        console.error('❌ Failed to parse rule:', error, protocolMsg.raw);
+        console.error('❌ Failed to parse RULE:', error, protocolMsg.raw);
       }
     }
 
     const canMessage = protocolToCANMessage(protocolMsg);
 
-    if (canMessage) {
-      // Add to buffer
+    if (canMessage && !displayOptions.paused) {
+      // Add to buffer (only if not paused)
       messageBufferRef.current?.addMessage(canMessage);
 
       // Update statistics (client-side per-ID stats)
       statsEngineRef.current?.updateMessage(canMessage);
     }
-  }, []);
+  }, [displayOptions.paused]);
 
   /**
    * Update messages and statistics from buffer
@@ -303,15 +384,17 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     const success = await serialBridgeRef.current.connect(port, config || serialConfig);
 
     if (success) {
+      setIsConnected(true);
+
+      // Save device info to localStorage for quick reconnect
       const connectedPort = serialBridgeRef.current.getPort();
       if (connectedPort) {
         const info = connectedPort.getInfo();
-        setDeviceInfo({
+        saveLastDevice({
           vendorId: info.usbVendorId,
           productId: info.usbProductId
         });
       }
-      setIsConnected(true);
 
       // Query device capabilities after connection
       await queryCapabilities();
@@ -325,7 +408,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     if (!serialBridgeRef.current) return;
     await serialBridgeRef.current.disconnect();
     setIsConnected(false);
-    setDeviceInfo(undefined);
   };
 
   /**
@@ -453,6 +535,17 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       console.log('📡 UCANMonitor: Sending get:actiondefs');
       await serialBridgeRef.current.sendCommand('get:actiondefs');
 
+      console.log('📡 UCANMonitor: Sending action:list');
+      await serialBridgeRef.current.sendCommand('action:list');
+
+      // Also try get:rules as fallback (some firmware versions use this)
+      setTimeout(async () => {
+        if (serialBridgeRef.current && actionRules.length === 0) {
+          console.log('📡 UCANMonitor: No rules received, trying get:rules');
+          await serialBridgeRef.current.sendCommand('get:rules');
+        }
+      }, 500);
+
       console.log('✅ UCANMonitor: Device queries sent (CAN starts automatically)');
 
       // Wait a bit for responses to arrive, then log summary
@@ -460,7 +553,10 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         console.log('📊 Device Configuration Summary:');
         console.log('  Capabilities:', capabilities ? 'Loaded' : 'Not yet loaded');
         console.log('  Action Definitions:', actionDefinitions.length, 'loaded');
+        console.log('  Active Rules:', actionRules.length, 'loaded');
+
         if (actionDefinitions.length > 0) {
+          console.log('\n📋 Available Actions:');
           console.table(actionDefinitions.map(a => ({
             ID: a.i,
             Name: a.n,
@@ -469,11 +565,22 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             Params: a.p?.length || 0
           })));
         }
+
+        if (actionRules.length > 0) {
+          console.log('\n⚡ Active Rules:');
+          console.table(actionRules.map(r => ({
+            ID: r.id,
+            Name: r.name,
+            'CAN ID': `0x${r.canId.toString(16).toUpperCase()}`,
+            Action: r.actionType,
+            Source: r.paramSource
+          })));
+        }
       }, 1000);
     } catch (error) {
       console.error('❌ Failed to query capabilities:', error);
     }
-  }, [capabilities, actionDefinitions]);
+  }, [capabilities, actionDefinitions, actionRules]);
 
   /**
    * Handle context menu on message
@@ -509,8 +616,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
    */
   const handleBuildRuleFromPacket = useCallback((message: CANMessage) => {
     setPrefilledRuleMessage(message);
-    setActivePanelTab('rules');
-    setIsSendPanelOpen(true);
+    setEditingRule(null); // Not editing, just prefilling
+    setIsRuleBuilderOpen(true);
     setContextMenu(null);
   }, []);
 
@@ -533,48 +640,44 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const handleAddRule = useCallback(async (command: string) => {
     if (!serialBridgeRef.current) return;
 
+    console.log('➕ Adding rule:', command);
     await serialBridgeRef.current.sendCommand(command);
 
-    // Refresh rules list after adding
+    // Refresh rules list after adding (increased timeout for firmware processing)
     setTimeout(() => {
       if (serialBridgeRef.current) {
+        console.log('🔄 Refreshing rules list after add');
         serialBridgeRef.current.sendCommand('action:list');
       }
-    }, 100);
+    }, 300);
   }, []);
 
   const handleDeleteRule = useCallback(async (ruleId: number) => {
     if (!serialBridgeRef.current) return;
-
+    console.log('🗑️ Deleting rule:', ruleId);
     await serialBridgeRef.current.sendCommand(`action:remove:${ruleId}`);
 
-    // Remove from local state
-    setActionRules((prev) => prev.filter(r => r.id !== ruleId));
-  }, []);
-
-  const handleToggleRule = useCallback(async (ruleId: number) => {
-    // Toggle in local state
-    setActionRules((prev) => prev.map(r =>
-      r.id === ruleId ? { ...r, enabled: !r.enabled } : r
-    ));
-
-    // Note: Protocol doesn't support enable/disable, so this is UI-only for now
-    // In a full implementation, we'd use action:remove and action:add
+    // Refresh rules list after deleting (query firmware instead of manual state update)
+    setTimeout(() => {
+      if (serialBridgeRef.current) {
+        console.log('🔄 Refreshing rules list after delete');
+        serialBridgeRef.current.sendCommand('action:list');
+      }
+    }, 300);
   }, []);
 
   const handleClearAllRules = useCallback(async () => {
     if (!serialBridgeRef.current) return;
-
+    console.log('🧹 Clearing all rules');
     await serialBridgeRef.current.sendCommand('action:clear');
 
-    // Clear local state
-    setActionRules([]);
-  }, []);
-
-  const handleRefreshRules = useCallback(async () => {
-    if (!serialBridgeRef.current) return;
-
-    await serialBridgeRef.current.sendCommand('action:list');
+    // Refresh rules list after clearing (query firmware instead of manual state update)
+    setTimeout(() => {
+      if (serialBridgeRef.current) {
+        console.log('🔄 Refreshing rules list after clear');
+        serialBridgeRef.current.sendCommand('action:list');
+      }
+    }, 300);
   }, []);
 
   return (
@@ -586,8 +689,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             <Image
               src="/uCAN/ucanlogo.png"
               alt="uCAN Logo"
-              width={64}
-              height={64}
+              width={77}
+              height={77}
               className="rounded"
             />
             <div>
@@ -661,8 +764,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               onClick={toggleAutoScroll}
               className={`px-4 py-1 text-sm rounded border transition-colors ${
                 displayOptions.autoScroll
-                  ? 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                  : 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
               }`}
               title={displayOptions.autoScroll ? 'Disable auto-scroll to browse older packets' : 'Enable auto-scroll to follow newest packets'}
             >
@@ -728,87 +831,39 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                 onContextMenu={handleMessageContextMenu}
               />
             </div>
-            {/* Send/Rules Panel at bottom - Collapsible with Tabs */}
-            <div className="border-t border-purple-500/20">
-              {/* Toggle Button */}
+            {/* Send Panel - Collapsible */}
+            <div className="border-t border-gray-700">
+              <CollapsiblePanel
+                title="Send CAN Message"
+                icon="📤"
+                defaultCollapsed={false}
+              >
+                <SendPanel
+                  isConnected={isConnected}
+                  onSend={handleSendMessage}
+                />
+              </CollapsiblePanel>
+            </div>
+
+            {/* Create Rule Button */}
+            <div className="border-t border-gray-700 p-4">
               <button
-                onClick={() => setIsSendPanelOpen(!isSendPanelOpen)}
-                className="w-full px-4 py-2 bg-black hover:bg-purple-950/30 text-purple-300 text-sm font-mono flex items-center justify-between transition-colors border-b border-purple-500/20"
+                onClick={() => {
+                  setEditingRule(null);
+                  setIsRuleBuilderOpen(true);
+                }}
+                disabled={!isConnected}
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                <span>{activePanelTab === 'send' ? 'Send CAN Message' : 'Action Rules'}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${isSendPanelOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <span>⚡</span>
+                Create Action Rule
+                {!isConnected && <span className="text-xs">(Connect first)</span>}
               </button>
-
-              {/* Animated Panel Container */}
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isSendPanelOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
-                }`}
-              >
-                {/* Tab Bar */}
-                <div className="flex gap-1 bg-black border-b border-purple-500/20 px-2 pt-2">
-                  <button
-                    onClick={() => setActivePanelTab('send')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
-                      activePanelTab === 'send'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50'
-                    }`}
-                  >
-                    Send Message
-                  </button>
-                  <button
-                    onClick={() => setActivePanelTab('rules')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
-                      activePanelTab === 'rules'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50'
-                    }`}
-                  >
-                    Rules
-                    {actionRules.length > 0 && (
-                      <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-purple-400/20 rounded">
-                        {actionRules.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
-                {/* Tab Content */}
-                <div className="bg-black">
-                  {activePanelTab === 'send' && (
-                    <SendPanel
-                      isConnected={isConnected}
-                      onSend={handleSendMessage}
-                    />
-                  )}
-                  {activePanelTab === 'rules' && (
-                    <RulesPanel
-                      isConnected={isConnected}
-                      rules={actionRules}
-                      actionDefinitions={actionDefinitions}
-                      onAddRule={handleAddRule}
-                      onDeleteRule={handleDeleteRule}
-                      onToggleRule={handleToggleRule}
-                      onClearAllRules={handleClearAllRules}
-                      onRefreshRules={handleRefreshRules}
-                      prefilledMessage={prefilledRuleMessage}
-                    />
-                  )}
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Right Sidebar - Board Info & Filters */}
-          <div className="w-80 flex-shrink-0 overflow-y-auto h-full p-4 space-y-4">
+          {/* Right Sidebar - Board Info & Filters (200% wider: was 320px, now 640px) */}
+          <div className="w-[40rem] flex-shrink-0 overflow-y-auto h-full p-4 space-y-4">
             {/* Board Information */}
             <BoardInfoPanel
               capabilities={capabilities}
@@ -818,6 +873,16 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                   await serialBridgeRef.current.sendCommand(command);
                 }
               }}
+              onDisconnect={handleDisconnect}
+              onConnect={handleConnect}
+              rules={actionRules}
+              onEditRule={(rule) => {
+                setEditingRule(rule);
+                setIsRuleBuilderOpen(true);
+              }}
+              onDeleteRule={handleDeleteRule}
+              onClearAllRules={handleClearAllRules}
+              recentlyFiredRules={recentlyFiredRules}
             />
 
             {/* Filters */}
@@ -845,42 +910,46 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       {/* Status Bar with Statistics */}
       <div className="bg-gray-900 border-t border-gray-700 p-2 text-xs font-mono">
         <div className="max-w-[1920px] mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <span className={isConnected ? 'text-green-400' : 'text-gray-500'}>
               {isConnected ? '🟢 Connected' : '⚫ Disconnected'}
             </span>
             <span className="text-gray-400">|</span>
-            <span className="text-gray-300">
-              RX: <span className="text-blue-400">{stats.rxCount}</span>
-            </span>
-            <span className="text-gray-300">
-              TX: <span className="text-yellow-400">{stats.txCount}</span>
-            </span>
-            <span className="text-gray-300">
-              ERR: <span className="text-red-400">{stats.errorCount}</span>
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300">
+                RX: <span className="text-blue-400 font-semibold">{stats.rxCount}</span>
+              </span>
+              <span className="text-gray-300">
+                TX: <span className="text-yellow-400 font-semibold">{stats.txCount}</span>
+              </span>
+              <span className="text-gray-300">
+                ERR: <span className="text-red-400 font-semibold">{stats.errorCount}</span>
+              </span>
+            </div>
             <span className="text-gray-400">|</span>
-            <span className="text-gray-300">
-              {stats.messagesPerSecond.toFixed(1)} msg/s
-            </span>
-            <span className="text-gray-300">
-              {stats.busLoad.toFixed(1)}% load
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300">
+                {stats.messagesPerSecond.toFixed(1)} <span className="text-gray-500">msg/s</span>
+              </span>
+              <span className="text-gray-300">
+                {stats.busLoad.toFixed(1)}<span className="text-gray-500">% load</span>
+              </span>
+            </div>
             {displayOptions.paused && (
               <>
                 <span className="text-gray-400">|</span>
-                <span className="text-yellow-400">⏸️ PAUSED</span>
+                <span className="text-yellow-400 font-semibold">⏸️ PAUSED</span>
               </>
             )}
             {!displayOptions.autoScroll && (
               <>
                 <span className="text-gray-400">|</span>
-                <span className="text-blue-400">🔒 SCROLL LOCKED</span>
+                <span className="text-blue-400 font-semibold">🔒 SCROLL LOCKED</span>
               </>
             )}
           </div>
           <span className="text-gray-400">
-            {serialConfig.baudRate} baud | {filteredMessages.length} shown
+            {serialConfig.baudRate} baud <span className="text-gray-500">|</span> {filteredMessages.length} shown
           </span>
         </div>
       </div>
@@ -891,10 +960,24 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         onClose={() => setIsSettingsOpen(false)}
         config={serialConfig}
         onConfigChange={setSerialConfig}
-        deviceInfo={deviceInfo}
         isConnected={isConnected}
         onConnect={handleConnect}
         onDisconnect={handleDisconnect}
+      />
+
+      {/* Rule Builder Modal */}
+      <RuleBuilderModal
+        isOpen={isRuleBuilderOpen}
+        onClose={() => {
+          setIsRuleBuilderOpen(false);
+          setEditingRule(null);
+          setPrefilledRuleMessage(null);
+        }}
+        actionDefinitions={actionDefinitions}
+        onAddRule={handleAddRule}
+        isConnected={isConnected}
+        editingRule={editingRule}
+        prefilledMessage={prefilledRuleMessage}
       />
 
       {/* Context Menu */}

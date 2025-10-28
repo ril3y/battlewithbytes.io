@@ -344,17 +344,38 @@ export type FlashProgressCallback = (progress: FlashProgress) => void;
 
 /**
  * Board capabilities response from get:capabilities
+ * Protocol v2.0 format
  */
 export interface BoardCapabilities {
   board?: string;
   chip?: string;
+  clock_mhz?: number;
+  flash_kb?: number;
+  ram_kb?: number;
+  can?: {
+    controllers?: number;
+    max_bitrate?: number;
+    fd_capable?: boolean;
+    filters?: number;
+  };
+  gpio?: {
+    total?: number;
+    pwm?: number;
+    adc?: number;
+    dac?: number;
+  };
   features?: string[];
+  protocol_version?: string;
+  firmware_version?: string;
+  // Legacy fields (for backward compatibility)
   canSpeed?: number;
   gpioCount?: number;
   pwmCount?: number;
   adcCount?: number;
   dacCount?: number;
   neopixelPin?: number;
+  neopixel?: boolean;
+  max_rules?: number;
 }
 
 /**
@@ -375,6 +396,10 @@ export interface ActionParameter {
   r?: string;
   /** Parameter role: 'action_param', 'output_param', 'trigger_param' */
   role?: string;
+  /** Human-friendly parameter name for UI display (Protocol v2.0+) */
+  label?: string;
+  /** Help text/example for UI tooltips (Protocol v2.0+) */
+  hint?: string;
 }
 
 /**
