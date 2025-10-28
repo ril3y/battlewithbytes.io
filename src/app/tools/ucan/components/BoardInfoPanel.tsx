@@ -170,7 +170,7 @@ export default function BoardInfoPanel({ capabilities, isConnected, onSendComman
   }
 
   const handleEditName = () => {
-    setDeviceName(capabilities.device_name || capabilities.board || '');
+    setDeviceName(capabilities.board || '');
     setIsEditingName(true);
   };
 
@@ -230,8 +230,8 @@ export default function BoardInfoPanel({ capabilities, isConnected, onSendComman
           ) : (
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-base font-semibold text-white">{capabilities.device_name || capabilities.board}</div>
-                <p className="text-xs text-gray-400 mt-0.5">{capabilities.chip} - {capabilities.manufacturer}</p>
+                <div className="text-base font-semibold text-white">{capabilities.board}</div>
+                <p className="text-xs text-gray-400 mt-0.5">{capabilities.chip}</p>
               </div>
               {onSendCommand && (
                 <button
@@ -246,29 +246,29 @@ export default function BoardInfoPanel({ capabilities, isConnected, onSendComman
         </div>
 
       {/* CAN Controller */}
-      <Tooltip
-        text={`CAN Controller Type
+      {capabilities.can && (
+        <Tooltip
+          text={`CAN Controller Info
 ━━━━━━━━━━━━━━━━━━━━
-${capabilities.can.hardware ? '✅ Hardware: Dedicated CAN peripheral chip (MCP2515, built-in CAN)' : '⚠️ Software: Bit-banged/emulated CAN'}
-━━━━━━━━━━━━━━━━━━━━
-${capabilities.can.hardware ? 'Better performance, lower CPU usage' : 'Limited performance, higher CPU usage'}`}
-        position="left"
-      >
-        <div className="bg-gray-950 border border-gray-800 rounded p-3">
-          <div className="text-xs text-gray-500 mb-1">CAN Controller</div>
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${capabilities.can.hardware ? 'text-green-400' : 'text-yellow-400'}`}>
-              {capabilities.can.controller}
-            </span>
-            {capabilities.can.hardware && (
-              <span className="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded">Hardware</span>
-            )}
-            {!capabilities.can.hardware && (
-              <span className="text-xs bg-yellow-600/20 text-yellow-400 px-2 py-0.5 rounded">Software</span>
-            )}
+Controllers: ${capabilities.can.controllers || 1}
+Max Bitrate: ${capabilities.can.max_bitrate ? `${capabilities.can.max_bitrate} bps` : 'Unknown'}
+FD Capable: ${capabilities.can.fd_capable ? 'Yes' : 'No'}
+Filters: ${capabilities.can.filters || 'N/A'}`}
+          position="left"
+        >
+          <div className="bg-gray-950 border border-gray-800 rounded p-3">
+            <div className="text-xs text-gray-500 mb-1">CAN Controller</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-green-400">
+                {capabilities.can.controllers || 1} Controller{(capabilities.can.controllers || 1) > 1 ? 's' : ''}
+              </span>
+              {capabilities.can.fd_capable && (
+                <span className="text-xs bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">FD</span>
+              )}
+            </div>
           </div>
-        </div>
-      </Tooltip>
+        </Tooltip>
+      )}
 
       {/* CAN Configuration */}
       {onSendCommand && (
@@ -380,11 +380,11 @@ ${capabilities.can.hardware ? 'Better performance, lower CPU usage' : 'Limited p
       )}
 
       {/* NeoPixel (if available) */}
-      {capabilities.neopixel && (
+      {capabilities.neopixel && capabilities.neopixelPin !== undefined && (
         <div className="bg-purple-600/10 border border-purple-500/30 rounded p-3">
           <div className="text-xs text-purple-400 mb-1">Built-in NeoPixel</div>
           <div className="text-sm text-gray-300">
-            Data Pin: {capabilities.neopixel.pin} | Power Pin: {capabilities.neopixel.power_pin}
+            Data Pin: {capabilities.neopixelPin}
           </div>
         </div>
       )}
@@ -498,19 +498,21 @@ ${rule.params ? `Params: ${rule.params.join(', ')}` : ''}`;
       )}
 
       {/* Features */}
-      <div>
-        <div className="text-xs text-gray-500 mb-2">Features</div>
-        <div className="flex flex-wrap gap-1.5">
-          {capabilities.features.map((feature) => (
-            <span
-              key={feature}
-              className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700"
-            >
-              {feature}
-            </span>
-          ))}
+      {capabilities.features && capabilities.features.length > 0 && (
+        <div>
+          <div className="text-xs text-gray-500 mb-2">Features</div>
+          <div className="flex flex-wrap gap-1.5">
+            {capabilities.features.map((feature) => (
+              <span
+                key={feature}
+                className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700"
+              >
+                {feature}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Disconnect Button */}
       {onDisconnect && (

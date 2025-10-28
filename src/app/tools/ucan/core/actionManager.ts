@@ -5,7 +5,7 @@
  * Actions are hardware operations (GPIO, PWM, NeoPixel) triggered by CAN messages
  */
 
-import { ActionRule, ActionType, BoardCapabilities } from '../types';
+import { ActionRule, BoardCapabilities } from '../types';
 
 /**
  * Action command builder
@@ -14,7 +14,7 @@ import { ActionRule, ActionType, BoardCapabilities } from '../types';
 export class ActionManager {
   private sendCommand: (command: string) => Promise<void>;
   private capabilities: BoardCapabilities | null = null;
-  private supportedActions: ActionType[] = [];
+  private supportedActions: string[] = [];
 
   constructor(sendCommand: (command: string) => Promise<void>) {
     this.sendCommand = sendCommand;
@@ -30,7 +30,7 @@ export class ActionManager {
   /**
    * Set supported actions for validation
    */
-  setSupportedActions(actions: ActionType[]): void {
+  setSupportedActions(actions: string[]): void {
     this.supportedActions = actions;
   }
 
@@ -48,7 +48,8 @@ export class ActionManager {
     this.validateAction(rule);
 
     // Format parameters based on action type
-    const formattedParams = this.formatParameters(rule.actionType, rule.parameters);
+    const paramsStr = rule.params?.join(',') || '';
+    const formattedParams = this.formatParameters(rule.actionType, paramsStr);
 
     // Get parameter source (Protocol v2.0 REQUIRED field)
     const paramSource = rule.paramSource || 'fixed'; // Default to 'fixed' for safety
@@ -62,11 +63,11 @@ export class ActionManager {
 
     // Build command - insert paramSource between actionType and parameters
     const command = paramSource === 'candata'
-      ? `action:add:${rule.ruleId}:${rule.canId}:${canMask}:${dataPattern}:${dataMask}:${dataLen}:${rule.actionType}:${paramSource}`
-      : `action:add:${rule.ruleId}:${rule.canId}:${canMask}:${dataPattern}:${dataMask}:${dataLen}:${rule.actionType}:${paramSource}:${formattedParams}`;
+      ? `action:add:${rule.id}:${rule.canId}:${canMask}:${dataPattern}:${dataMask}:${dataLen}:${rule.actionType}:${paramSource}`
+      : `action:add:${rule.id}:${rule.canId}:${canMask}:${dataPattern}:${dataMask}:${dataLen}:${rule.actionType}:${paramSource}:${formattedParams}`;
 
     console.log('🔧 Sending action command (Protocol v2.0):', command);
-    console.log('   Rule details:', { ruleId: rule.ruleId, canId: rule.canId, actionType: rule.actionType, paramSource, parameters: rule.parameters });
+    console.log('   Rule details:', { ruleId: rule.id, canId: rule.canId, actionType: rule.actionType, paramSource, parameters: paramsStr });
     await this.sendCommand(command);
   }
 
@@ -144,21 +145,26 @@ export class ActionManager {
    */
   async addGPIOAction(
     ruleId: number,
-    canId: string,
+    canId: number,
     pin: number,
     mode: 'SET' | 'CLEAR' | 'TOGGLE'
   ): Promise<void> {
     // Validate pin
-    if (this.capabilities && pin >= this.capabilities.gpio) {
-      throw new Error(`Invalid GPIO pin ${pin} (max: ${this.capabilities.gpio - 1})`);
+    const gpioCount = this.capabilities?.gpio?.total ?? 0;
+    if (this.capabilities && gpioCount > 0 && pin >= gpioCount) {
+      throw new Error(`Invalid GPIO pin ${pin} (max: ${gpioCount - 1})`);
     }
 
-    const actionType = `GPIO_${mode}` as ActionType;
+    const actionType = `GPIO_${mode}`;
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: `GPIO ${mode} Pin ${pin}`,
       canId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType,
-      parameters: pin.toString(),
+      paramSource: 'fixed',
+      params: [pin.toString()],
       enabled: true
     });
   }
@@ -168,18 +174,19 @@ export class ActionManager {
    */
   async addPWMAction(
     ruleId: number,
-    canId: string,
+    canId: number,
     pin: number,
     dutyCycle: number
   ): Promise<void> {
     // Validate PWM is supported
-    if (!this.capabilities?.features.includes('PWM')) {
+    if (!this.capabilities?.features?.includes('PWM')) {
       throw new Error('PWM not supported on this board');
     }
 
     // Validate pin
-    if (pin >= this.capabilities.pwm) {
-      throw new Error(`Invalid PWM pin ${pin} (max: ${this.capabilities.pwm - 1})`);
+    const pwmCount = this.capabilities?.gpio?.pwm ?? 0;
+    if (pwmCount > 0 && pin >= pwmCount) {
+      throw new Error(`Invalid PWM pin ${pin} (max: ${pwmCount - 1})`);
     }
 
     // Validate duty cycle (0-255)
@@ -188,10 +195,14 @@ export class ActionManager {
     }
 
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: `PWM Pin ${pin} Duty ${dutyCycle}`,
       canId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType: 'PWM_SET',
-      parameters: `${pin},${dutyCycle}`,
+      paramSource: 'fixed',
+      params: [pin.toString(), dutyCycle.toString()],
       enabled: true
     });
   }
@@ -201,13 +212,13 @@ export class ActionManager {
    */
   async addNeoPixelAction(
     ruleId: number,
-    canId: string,
+    canId: number,
     r: number,
     g: number,
     b: number
   ): Promise<void> {
     // Validate NeoPixel is supported
-    if (!this.capabilities?.features.includes('NEOPIXEL')) {
+    if (!this.capabilities?.features?.includes('NEOPIXEL')) {
       throw new Error('NeoPixel not supported on this board');
     }
 
@@ -217,10 +228,14 @@ export class ActionManager {
     }
 
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: `NeoPixel RGB(${r},${g},${b})`,
       canId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType: 'NEOPIXEL_COLOR',
-      parameters: `${r},${g},${b}`,
+      paramSource: 'fixed',
+      params: [r.toString(), g.toString(), b.toString()],
       enabled: true
     });
   }
@@ -228,16 +243,20 @@ export class ActionManager {
   /**
    * Helper: Add NeoPixel off action
    */
-  async addNeoPixelOffAction(ruleId: number, canId: string): Promise<void> {
-    if (!this.capabilities?.features.includes('NEOPIXEL')) {
+  async addNeoPixelOffAction(ruleId: number, canId: number): Promise<void> {
+    if (!this.capabilities?.features?.includes('NEOPIXEL')) {
       throw new Error('NeoPixel not supported on this board');
     }
 
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: 'NeoPixel Off',
       canId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType: 'NEOPIXEL_OFF',
-      parameters: '0',
+      paramSource: 'fixed',
+      params: ['0'],
       enabled: true
     });
   }
@@ -247,7 +266,7 @@ export class ActionManager {
    */
   async addCANSendAction(
     ruleId: number,
-    triggerCanId: string,
+    triggerCanId: number,
     sendCanId: string,
     data: number[]
   ): Promise<void> {
@@ -260,10 +279,14 @@ export class ActionManager {
     const dataStr = data.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(',');
 
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: `CAN Send ${sendCanId}`,
       canId: triggerCanId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType: 'CAN_SEND',
-      parameters: `${sendCanId},${dataStr}`,
+      paramSource: 'fixed',
+      params: [sendCanId, ...dataStr.split(',')],
       enabled: true
     });
   }
@@ -273,25 +296,30 @@ export class ActionManager {
    */
   async addADCReadSendAction(
     ruleId: number,
-    triggerCanId: string,
+    triggerCanId: number,
     adcPin: number,
     sendCanId: string
   ): Promise<void> {
     // Validate ADC is supported
-    if (!this.capabilities?.features.includes('ADC')) {
+    if (!this.capabilities?.features?.includes('ADC')) {
       throw new Error('ADC not supported on this board');
     }
 
     // Validate pin
-    if (adcPin >= this.capabilities.adc) {
-      throw new Error(`Invalid ADC pin ${adcPin} (max: ${this.capabilities.adc - 1})`);
+    const adcCount = this.capabilities?.gpio?.adc ?? 0;
+    if (adcCount > 0 && adcPin >= adcCount) {
+      throw new Error(`Invalid ADC pin ${adcPin} (max: ${adcCount - 1})`);
     }
 
     await this.addAction({
-      ruleId,
+      id: ruleId,
+      name: `ADC Read Pin ${adcPin}`,
       canId: triggerCanId,
+      canMask: 0xFFFFFFFF,
+      dataLength: 0,
       actionType: 'ADC_READ_SEND',
-      parameters: `${adcPin},${sendCanId}`,
+      paramSource: 'fixed',
+      params: [adcPin.toString(), sendCanId],
       enabled: true
     });
   }
@@ -300,7 +328,7 @@ export class ActionManager {
    * Format parameters for the firmware command
    * Converts comma-separated to colon-separated and adds default values
    */
-  private formatParameters(actionType: ActionType, parameters: string): string {
+  private formatParameters(actionType: string, parameters: string): string {
     switch (actionType) {
       case 'NEOPIXEL_COLOR': {
         // Format: R:G:B:Brightness
@@ -348,19 +376,20 @@ export class ActionManager {
       case 'GPIO_SET':
       case 'GPIO_CLEAR':
       case 'GPIO_TOGGLE': {
-        const pin = parseInt(rule.parameters, 10);
-        if (isNaN(pin) || (this.capabilities && pin >= this.capabilities.gpio)) {
-          throw new Error(`Invalid GPIO pin: ${rule.parameters}`);
+        const pin = rule.params?.[0] ? parseInt(rule.params[0], 10) : NaN;
+        if (isNaN(pin) || (this.capabilities?.gpio?.total && pin >= this.capabilities.gpio.total)) {
+          throw new Error(`Invalid GPIO pin: ${rule.params?.[0]}`);
         }
         break;
       }
 
       case 'PWM_SET': {
-        const [pin, duty] = rule.parameters.split(',').map(p => parseInt(p, 10));
+        const pin = rule.params?.[0] ? parseInt(rule.params[0], 10) : NaN;
+        const duty = rule.params?.[1] ? parseInt(rule.params[1], 10) : NaN;
         if (isNaN(pin) || isNaN(duty)) {
           throw new Error('PWM_SET requires pin,duty parameters');
         }
-        if (this.capabilities && pin >= this.capabilities.pwm) {
+        if (this.capabilities?.gpio?.pwm && pin >= this.capabilities.gpio.pwm) {
           throw new Error(`Invalid PWM pin: ${pin}`);
         }
         if (duty < 0 || duty > 255) {
@@ -370,7 +399,9 @@ export class ActionManager {
       }
 
       case 'NEOPIXEL_COLOR': {
-        const [r, g, b] = rule.parameters.split(',').map(p => parseInt(p, 10));
+        const r = rule.params?.[0] ? parseInt(rule.params[0], 10) : NaN;
+        const g = rule.params?.[1] ? parseInt(rule.params[1], 10) : NaN;
+        const b = rule.params?.[2] ? parseInt(rule.params[2], 10) : NaN;
         if (isNaN(r) || isNaN(g) || isNaN(b)) {
           throw new Error('NEOPIXEL_COLOR requires r,g,b parameters');
         }

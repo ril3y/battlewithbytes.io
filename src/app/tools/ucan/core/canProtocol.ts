@@ -13,6 +13,9 @@
 
 import { CANMessage, ProtocolMessage, MessageType } from '../types';
 
+// Counter to ensure unique IDs even when multiple messages arrive in the same millisecond
+let messageCounter = 0;
+
 /**
  * Parse a line of protocol text into a structured message
  */
@@ -212,7 +215,7 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
       : new Date();
 
     return {
-      id: `${direction}_${Date.now()}_${protocol.canId}`,
+      id: `${direction}_${Date.now()}_${protocol.canId}_${messageCounter++}`,
       timestamp,
       direction,
       type: protocol.type,
@@ -234,7 +237,7 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     paddedData.set(data);
 
     return {
-      id: `INFO_${Date.now()}`,
+      id: `INFO_${Date.now()}_${messageCounter++}`,
       timestamp: new Date(),
       direction: 'RX', // Show as received
       type: protocol.type,
@@ -262,7 +265,7 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     paddedData.set(data);
 
     return {
-      id: `ERR_${Date.now()}`,
+      id: `ERR_${Date.now()}_${messageCounter++}`,
       timestamp: new Date(),
       direction: 'RX',
       type: protocol.type,

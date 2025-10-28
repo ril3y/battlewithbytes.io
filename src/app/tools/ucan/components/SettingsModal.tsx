@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { SerialConfig, DeviceInfo } from '../types';
+import { SerialConfig } from '../types';
 import { isSerialSupported, getAuthorizedPorts } from '../core/serialBridge';
 
 interface SettingsModalProps {
@@ -15,7 +15,6 @@ interface SettingsModalProps {
   onClose: () => void;
   config: SerialConfig;
   onConfigChange: (config: SerialConfig) => void;
-  deviceInfo?: DeviceInfo;
   isConnected: boolean;
   onConnect: (port?: SerialPort, config?: SerialConfig) => Promise<void>;
   onDisconnect: () => Promise<void>;
@@ -26,7 +25,6 @@ export default function SettingsModal({
   onClose,
   config,
   onConfigChange,
-  deviceInfo,
   isConnected,
   onConnect,
   onDisconnect
@@ -78,39 +76,10 @@ export default function SettingsModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors border border-gray-600"
           >
             ✕
           </button>
-        </div>
-
-        {/* Connection Status */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Connection Status</h3>
-          <div className="bg-gray-800 border border-gray-700 rounded p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-400">Status:</span>
-              <span className={`text-sm font-semibold ${isConnected ? 'text-green-400' : 'text-gray-500'}`}>
-                {isConnected ? '🟢 Connected' : '⚫ Disconnected'}
-              </span>
-            </div>
-            {deviceInfo && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Vendor ID:</span>
-                  <span className="text-sm text-gray-300 font-mono">
-                    {deviceInfo.vendorId ? `0x${deviceInfo.vendorId.toString(16).toUpperCase()}` : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Product ID:</span>
-                  <span className="text-sm text-gray-300 font-mono">
-                    {deviceInfo.productId ? `0x${deviceInfo.productId.toString(16).toUpperCase()}` : 'N/A'}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
         </div>
 
         {/* Serial Configuration */}

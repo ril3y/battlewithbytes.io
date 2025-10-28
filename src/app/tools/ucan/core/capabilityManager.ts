@@ -6,7 +6,7 @@
  * that must be queried dynamically
  */
 
-import { BoardCapabilities, ActionType, PinInfo, ActionRule } from '../types';
+import { BoardCapabilities, ActionRule } from '../types';
 
 /**
  * Capability Manager
@@ -14,8 +14,7 @@ import { BoardCapabilities, ActionType, PinInfo, ActionRule } from '../types';
  */
 export class CapabilityManager {
   private capabilities: BoardCapabilities | null = null;
-  private supportedActions: ActionType[] = [];
-  private pinInfo: PinInfo | null = null;
+  private supportedActions: string[] = [];
   private actionRules: Map<number, ActionRule> = new Map();
 
   /**
@@ -24,7 +23,7 @@ export class CapabilityManager {
   setCapabilities(capabilities: BoardCapabilities): void {
     this.capabilities = capabilities;
     console.log(`Board detected: ${capabilities.board} (${capabilities.chip})`);
-    console.log(`Features: ${capabilities.features.join(', ')}`);
+    console.log(`Features: ${capabilities.features?.join(', ')}`);
     console.log(`Max rules: ${capabilities.max_rules}`);
   }
 
@@ -38,7 +37,7 @@ export class CapabilityManager {
   /**
    * Set supported actions from ACTIONS message
    */
-  setSupportedActions(actions: ActionType[]): void {
+  setSupportedActions(actions: string[]): void {
     this.supportedActions = actions;
     console.log(`Supported actions: ${actions.join(', ')}`);
   }
@@ -46,37 +45,22 @@ export class CapabilityManager {
   /**
    * Get supported actions
    */
-  getSupportedActions(): ActionType[] {
+  getSupportedActions(): string[] {
     return this.supportedActions;
   }
 
   /**
    * Check if an action type is supported by the connected board
    */
-  isActionSupported(actionType: ActionType): boolean {
+  isActionSupported(actionType: string): boolean {
     return this.supportedActions.includes(actionType);
-  }
-
-  /**
-   * Set pin information from PINS message
-   */
-  setPinInfo(pinInfo: PinInfo): void {
-    this.pinInfo = pinInfo;
-    console.log(`Pins: ${pinInfo.total} total, ${pinInfo.pwm} PWM, ${pinInfo.adc} ADC, ${pinInfo.dac} DAC`);
-  }
-
-  /**
-   * Get pin information
-   */
-  getPinInfo(): PinInfo | null {
-    return this.pinInfo;
   }
 
   /**
    * Check if board has a specific feature
    */
   hasFeature(feature: string): boolean {
-    return this.capabilities?.features.includes(feature) || false;
+    return this.capabilities?.features?.includes(feature) || false;
   }
 
   /**
@@ -90,7 +74,7 @@ export class CapabilityManager {
    * Add or update an action rule
    */
   addRule(rule: ActionRule): void {
-    this.actionRules.set(rule.ruleId, rule);
+    this.actionRules.set(rule.id, rule);
   }
 
   /**
@@ -139,21 +123,24 @@ export class CapabilityManager {
    * Validate if a pin number is valid for GPIO operations
    */
   isValidGPIOPin(pin: number): boolean {
-    return this.capabilities ? pin < this.capabilities.gpio : false;
+    const gpioTotal = this.capabilities?.gpio?.total ?? 0;
+    return gpioTotal > 0 ? pin < gpioTotal : false;
   }
 
   /**
    * Validate if a pin number is valid for PWM operations
    */
   isValidPWMPin(pin: number): boolean {
-    return this.capabilities ? pin < this.capabilities.pwm && this.hasFeature('PWM') : false;
+    const pwmCount = this.capabilities?.gpio?.pwm ?? 0;
+    return pwmCount > 0 && pin < pwmCount && this.hasFeature('PWM');
   }
 
   /**
    * Validate if a pin number is valid for ADC operations
    */
   isValidADCPin(pin: number): boolean {
-    return this.capabilities ? pin < this.capabilities.adc && this.hasFeature('ADC') : false;
+    const adcCount = this.capabilities?.gpio?.adc ?? 0;
+    return adcCount > 0 && pin < adcCount && this.hasFeature('ADC');
   }
 
   /**
@@ -171,11 +158,11 @@ export class CapabilityManager {
    * Get CAN controller type
    */
   getCANControllerType(): string {
-    if (!this.capabilities) {
+    if (!this.capabilities?.can) {
       return 'Unknown';
     }
 
-    return this.capabilities.can.hardware ? 'Hardware CAN' : 'Software CAN';
+    return this.capabilities.can.controllers ? 'Hardware CAN' : 'Software CAN';
   }
 
   /**
@@ -191,7 +178,6 @@ export class CapabilityManager {
   reset(): void {
     this.capabilities = null;
     this.supportedActions = [];
-    this.pinInfo = null;
     this.actionRules.clear();
   }
 
@@ -204,10 +190,10 @@ export class CapabilityManager {
     }
 
     return [
-      { name: 'GPIO', available: true, count: this.capabilities.gpio },
-      { name: 'PWM', available: this.hasFeature('PWM'), count: this.capabilities.pwm },
-      { name: 'ADC', available: this.hasFeature('ADC'), count: this.capabilities.adc },
-      { name: 'DAC', available: this.hasFeature('DAC'), count: this.capabilities.dac },
+      { name: 'GPIO', available: true, count: this.capabilities.gpio?.total },
+      { name: 'PWM', available: this.hasFeature('PWM'), count: this.capabilities.gpio?.pwm },
+      { name: 'ADC', available: this.hasFeature('ADC'), count: this.capabilities.gpio?.adc },
+      { name: 'DAC', available: this.hasFeature('DAC'), count: this.capabilities.gpio?.dac },
       { name: 'NeoPixel', available: this.hasFeature('NEOPIXEL') },
       { name: 'Flash Storage', available: this.hasFeature('FLASH') },
       { name: 'RTC', available: this.hasFeature('RTC') },

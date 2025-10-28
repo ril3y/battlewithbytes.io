@@ -8,11 +8,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ActionType, BoardCapabilities, ActionRule } from '../types';
+import { BoardCapabilities, ActionRule } from '../types';
 
 interface ActionRuleBuilderProps {
   capabilities: BoardCapabilities | undefined;
-  supportedActions: ActionType[];
+  supportedActions: string[];
   existingRules: ActionRule[];
   onAddRule: (rule: ActionRule) => void;
   onRemoveRule: (ruleId: number) => void;
@@ -34,7 +34,7 @@ export default function ActionRuleBuilder({
   onClearPrefilledCanId
 }: ActionRuleBuilderProps) {
   const [canId, setCanId] = useState<string>('0x100');
-  const [actionType, setActionType] = useState<ActionType | ''>('');
+  const [actionType, setActionType] = useState<string>('');
   const [paramSource, setParamSource] = useState<'fixed' | 'candata'>('fixed');
   const [pin, setPin] = useState<string>('13');
   const [pwmDuty, setPwmDuty] = useState<string>('128');
@@ -78,54 +78,51 @@ export default function ActionRuleBuilder({
 
   const handleEditRule = (rule: ActionRule) => {
     console.log('Edit rule - full rule object:', rule);
-    console.log('Edit rule - parameters:', rule.parameters);
+    console.log('Edit rule - params:', rule.params);
 
     // Load rule data into form
-    setCanId(rule.canId);
+    setCanId(rule.canId.toString());
     setActionType(rule.actionType);
     setParamSource(rule.paramSource || 'fixed');
-    setDescription(rule.description || '');
+    setDescription(rule.name || '');
 
     // Parse parameters based on action type
+    const params = rule.params || [];
     switch (rule.actionType) {
       case 'GPIO_SET':
       case 'GPIO_CLEAR':
       case 'GPIO_TOGGLE':
       case 'ADC_READ':
-        setPin(rule.parameters);
+        if (params[0]) setPin(params[0]);
         break;
 
       case 'PWM_SET': {
-        const [pwmPin, duty] = rule.parameters.split(',');
-        setPin(pwmPin);
-        setPwmDuty(duty);
+        if (params[0]) setPin(params[0]);
+        if (params[1]) setPwmDuty(params[1]);
         break;
       }
 
       case 'NEOPIXEL_COLOR': {
-        const [r, g, b] = rule.parameters.split(',');
-        setNeoR(r || '255');
-        setNeoG(g || '0');
-        setNeoB(b || '0');
+        if (params[0]) setNeoR(params[0]);
+        if (params[1]) setNeoG(params[1]);
+        if (params[2]) setNeoB(params[2]);
         break;
       }
 
       case 'CAN_SEND': {
-        const [canId, ...dataBytes] = rule.parameters.split(',');
-        setSendCanId(canId);
-        setSendData(dataBytes.join(','));
+        if (params[0]) setSendCanId(params[0]);
+        if (params.length > 1) setSendData(params.slice(1).join(','));
         break;
       }
 
       case 'ADC_READ_SEND': {
-        const [adcPin, canId] = rule.parameters.split(',');
-        setPin(adcPin);
-        setSendCanId(canId);
+        if (params[0]) setPin(params[0]);
+        if (params[1]) setSendCanId(params[1]);
         break;
       }
     }
 
-    setEditingRuleId(rule.ruleId);
+    setEditingRuleId(rule.id);
     console.log('Editing rule:', rule);
 
     // Scroll to top of the form
@@ -158,13 +155,18 @@ export default function ActionRuleBuilder({
       return;
     }
 
+    // Get pin counts (with fallback to legacy fields)
+    const gpioCount = capabilities.gpio?.total ?? capabilities.gpioCount ?? 0;
+    const pwmCount = capabilities.gpio?.pwm ?? capabilities.pwmCount ?? 0;
+    const adcCount = capabilities.gpio?.adc ?? capabilities.adcCount ?? 0;
+
     // Determine rule ID - use existing if editing, or find next available
     let ruleId: number;
     if (editingRuleId !== null) {
       ruleId = editingRuleId;
     } else {
       // Find next available rule ID
-      const usedIds = existingRules.map(r => r.ruleId);
+      const usedIds = existingRules.map(r => r.id);
       let nextId = 1;
       while (usedIds.includes(nextId)) {
         nextId++;
@@ -172,7 +174,7 @@ export default function ActionRuleBuilder({
       ruleId = nextId;
 
       // Check if we've hit max rules (only when adding new)
-      if (existingRules.length >= capabilities.max_rules) {
+      if (capabilities.max_rules && existingRules.length >= capabilities.max_rules) {
         alert(`Maximum of ${capabilities.max_rules} rules reached for this board`);
         return;
       }
@@ -186,8 +188,8 @@ export default function ActionRuleBuilder({
         case 'GPIO_CLEAR':
         case 'GPIO_TOGGLE':
           const gpioPin = parseInt(pin, 10);
-          if (isNaN(gpioPin) || gpioPin >= capabilities.gpio) {
-            alert(`Invalid GPIO pin. Must be 0-${capabilities.gpio - 1}`);
+          if (isNaN(gpioPin) || gpioPin >= gpioCount) {
+            alert(`Invalid GPIO pin. Must be 0-${gpioCount - 1}`);
             return;
           }
           parameters = pin;
@@ -196,8 +198,8 @@ export default function ActionRuleBuilder({
         case 'PWM_SET': {
           const pwmPin = parseInt(pin, 10);
           const duty = parseInt(pwmDuty, 10);
-          if (isNaN(pwmPin) || pwmPin >= capabilities.pwm) {
-            alert(`Invalid PWM pin. Must be 0-${capabilities.pwm - 1}`);
+          if (isNaN(pwmPin) || pwmPin >= pwmCount) {
+            alert(`Invalid PWM pin. Must be 0-${pwmCount - 1}`);
             return;
           }
           if (isNaN(duty) || duty < 0 || duty > 255) {
@@ -248,8 +250,8 @@ export default function ActionRuleBuilder({
 
         case 'ADC_READ_SEND': {
           const adcPin = parseInt(pin, 10);
-          if (isNaN(adcPin) || adcPin >= capabilities.adc) {
-            alert(`Invalid ADC pin. Must be 0-${capabilities.adc - 1}`);
+          if (isNaN(adcPin) || adcPin >= adcCount) {
+            alert(`Invalid ADC pin. Must be 0-${adcCount - 1}`);
             return;
           }
           if (!sendCanId.match(/^0x[0-9A-Fa-f]+$/)) {
@@ -262,8 +264,8 @@ export default function ActionRuleBuilder({
 
         case 'ADC_READ':
           const adcReadPin = parseInt(pin, 10);
-          if (isNaN(adcReadPin) || adcReadPin >= capabilities.adc) {
-            alert(`Invalid ADC pin. Must be 0-${capabilities.adc - 1}`);
+          if (isNaN(adcReadPin) || adcReadPin >= adcCount) {
+            alert(`Invalid ADC pin. Must be 0-${adcCount - 1}`);
             return;
           }
           parameters = pin;
@@ -275,13 +277,15 @@ export default function ActionRuleBuilder({
       }
 
       const rule: ActionRule = {
-        ruleId: ruleId,
-        canId: canId,
+        id: ruleId,
+        name: description || `Rule ${ruleId}`,
+        canId: parseInt(canId.replace('0x', ''), 16),
+        canMask: 0xFFFFFFFF, // Default to exact match
+        dataLength: 0, // Default to any length
         actionType: actionType,
         paramSource: paramSource, // Protocol v2.0 - fixed or candata
-        parameters: paramSource === 'candata' ? '' : parameters,
-        enabled: true,
-        description: description || undefined
+        params: paramSource === 'candata' ? [] : parameters.split(',').map(p => p.trim()),
+        enabled: true
       };
 
       onAddRule(rule);
@@ -322,7 +326,7 @@ export default function ActionRuleBuilder({
           {editingRuleId !== null ? `Editing Rule #${editingRuleId}` : 'Action Rule Builder'}
         </h3>
         <p className="text-xs text-gray-400">
-          {existingRules.length} / {capabilities.max_rules} rules used
+          {existingRules.length} / {capabilities.max_rules || '?'} rules used
         </p>
       </div>
 
@@ -350,7 +354,7 @@ export default function ActionRuleBuilder({
         <label className="block text-sm text-gray-300 mb-1">Action Type</label>
         <select
           value={actionType}
-          onChange={(e) => setActionType(e.target.value as ActionType)}
+          onChange={(e) => setActionType(e.target.value)}
           className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 text-white text-sm"
         >
           <option value="">Select action...</option>
@@ -402,14 +406,14 @@ export default function ActionRuleBuilder({
       {actionType && paramSource === 'fixed' && (actionType === 'GPIO_SET' || actionType === 'GPIO_CLEAR' || actionType === 'GPIO_TOGGLE') && (
         <div>
           <label className="block text-sm text-gray-300 mb-1">
-            GPIO Pin (0-{capabilities.gpio - 1})
+            GPIO Pin (0-{(capabilities.gpio?.total ?? capabilities.gpioCount ?? 1) - 1})
           </label>
           <input
             type="number"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             min="0"
-            max={capabilities.gpio - 1}
+            max={(capabilities.gpio?.total ?? capabilities.gpioCount ?? 1) - 1}
             className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 text-white text-sm"
           />
         </div>
@@ -419,14 +423,14 @@ export default function ActionRuleBuilder({
         <>
           <div>
             <label className="block text-sm text-gray-300 mb-1">
-              PWM Pin (0-{capabilities.pwm - 1})
+              PWM Pin (0-{(capabilities.gpio?.pwm ?? capabilities.pwmCount ?? 1) - 1})
             </label>
             <input
               type="number"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               min="0"
-              max={capabilities.pwm - 1}
+              max={(capabilities.gpio?.pwm ?? capabilities.pwmCount ?? 1) - 1}
               className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 text-white text-sm"
             />
           </div>
@@ -553,14 +557,14 @@ export default function ActionRuleBuilder({
       {actionType === 'ADC_READ' && paramSource === 'fixed' && (
         <div>
           <label className="block text-sm text-gray-300 mb-1">
-            ADC Pin (A0-A{capabilities ? capabilities.adc - 1 : '?'})
+            ADC Pin (A0-A{capabilities ? (capabilities.gpio?.adc ?? capabilities.adcCount ?? 1) - 1 : '?'})
           </label>
           <input
             type="number"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             min="0"
-            max={capabilities ? capabilities.adc - 1 : 0}
+            max={capabilities ? (capabilities.gpio?.adc ?? capabilities.adcCount ?? 1) - 1 : 0}
             className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 text-white text-sm"
           />
           <p className="text-xs text-gray-500 mt-1">Read analog value when CAN message received</p>
@@ -571,14 +575,14 @@ export default function ActionRuleBuilder({
         <>
           <div>
             <label className="block text-sm text-gray-300 mb-1">
-              ADC Pin (A0-A{capabilities ? capabilities.adc - 1 : '?'})
+              ADC Pin (A0-A{capabilities ? (capabilities.gpio?.adc ?? capabilities.adcCount ?? 1) - 1 : '?'})
             </label>
             <input
               type="number"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               min="0"
-              max={capabilities ? capabilities.adc - 1 : 0}
+              max={capabilities ? (capabilities.gpio?.adc ?? capabilities.adcCount ?? 1) - 1 : 0}
               className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 text-white text-sm"
             />
           </div>
@@ -634,14 +638,14 @@ export default function ActionRuleBuilder({
       ) : (
         <button
           onClick={handleAddRule}
-          disabled={!actionType || existingRules.length >= capabilities.max_rules}
+          disabled={!actionType || (capabilities.max_rules !== undefined && existingRules.length >= capabilities.max_rules)}
           className={`w-full py-2 rounded font-medium transition-colors ${
-            actionType && existingRules.length < capabilities.max_rules
+            actionType && (!capabilities.max_rules || existingRules.length < capabilities.max_rules)
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-gray-800 text-gray-500 cursor-not-allowed'
           }`}
         >
-          {existingRules.length >= capabilities.max_rules ? 'Max Rules Reached' : '+ Add Rule'}
+          {capabilities.max_rules && existingRules.length >= capabilities.max_rules ? 'Max Rules Reached' : '+ Add Rule'}
         </button>
       )}
 
@@ -663,7 +667,7 @@ export default function ActionRuleBuilder({
           <div className="space-y-2">
             {existingRules.map((rule) => (
               <div
-                key={rule.ruleId}
+                key={rule.id}
                 className={`bg-gray-950 border rounded p-3 ${
                   rule.enabled ? 'border-green-800/50' : 'border-gray-800'
                 }`}
@@ -672,9 +676,9 @@ export default function ActionRuleBuilder({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${rule.enabled ? 'bg-green-500' : 'bg-gray-600'}`} />
-                      <span className="text-sm text-white font-mono">{rule.canId}</span>
+                      <span className="text-sm text-white font-mono">0x{rule.canId.toString(16).toUpperCase()}</span>
                       <span className="text-xs bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">
-                        #{rule.ruleId}
+                        #{rule.id}
                       </span>
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
@@ -683,9 +687,9 @@ export default function ActionRuleBuilder({
                         {rule.paramSource === 'candata' ? 'CAN Data' : 'Fixed'}
                       </span>
                     </div>
-                    {rule.description && (
+                    {rule.name && (
                       <div className="text-xs text-gray-500 mt-1 italic">
-                        {rule.description}
+                        {rule.name}
                       </div>
                     )}
                   </div>
@@ -698,7 +702,7 @@ export default function ActionRuleBuilder({
                       ✎
                     </button>
                     <button
-                      onClick={() => onRemoveRule(rule.ruleId)}
+                      onClick={() => onRemoveRule(rule.id)}
                       className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs rounded transition-colors"
                       title="Remove rule"
                     >
@@ -707,7 +711,7 @@ export default function ActionRuleBuilder({
                   </div>
                 </div>
                 <div className="bg-gray-900/50 rounded px-2 py-1">
-                  <span className="text-xs text-gray-500 font-mono">{rule.parameters}</span>
+                  <span className="text-xs text-gray-500 font-mono">{rule.params?.join(', ')}</span>
                 </div>
               </div>
             ))}

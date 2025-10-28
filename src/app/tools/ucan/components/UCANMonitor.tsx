@@ -31,10 +31,11 @@ import {
   ExportConfig,
   BoardCapabilities,
   ActionDefinition,
-  ActionRule
+  ActionRule,
+  ProtocolMessage
 } from '../types';
 import { SerialBridge } from '../core/serialBridge';
-import { protocolToCANMessage, ProtocolMessage } from '../core/canProtocol';
+import { protocolToCANMessage } from '../core/canProtocol';
 import { MessageBuffer, StatisticsEngine } from '../core/messageBuffer';
 import { exportMessages, exportStatsSummary } from '../utils/exporters';
 import { saveLastDevice } from '../utils/deviceStorage';
@@ -236,7 +237,6 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             name: `Rule ${ruleId}: ${actionType}`,
             canId,
             canMask: 0xFFFFFFFF, // Not provided in ACTION format, assume exact match
-            extended: false, // Not provided in ACTION format
             actionType,
             paramSource: params && params.length > 0 ? 'fixed' : 'candata',
             params,
@@ -827,7 +827,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                 selectedMessageId={selectedMessageId}
                 autoScroll={displayOptions.autoScroll && !displayOptions.paused}
                 showTimestamps={displayOptions.showTimestamps}
-                viewMode={displayOptions.viewMode}
+                viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
                 onContextMenu={handleMessageContextMenu}
               />
             </div>
@@ -866,7 +866,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
           <div className="w-[40rem] flex-shrink-0 overflow-y-auto h-full p-4 space-y-4">
             {/* Board Information */}
             <BoardInfoPanel
-              capabilities={capabilities}
+              capabilities={capabilities || undefined}
               isConnected={isConnected}
               onSendCommand={async (command: string) => {
                 if (serialBridgeRef.current) {

@@ -1,5 +1,10 @@
 # uCAN Protocol Specification
 
+> **📌 Canonical Source:** This protocol documentation is maintained at:
+> https://raw.githubusercontent.com/ril3y/uCAN/refs/heads/main/docs/PROTOCOL.md
+>
+> The above link always contains the most up-to-date protocol version and content.
+
 **Version:** 2.0
 **Status:** Living Document - Updated with firmware implementation
 **Last Updated:** 2025-01-27

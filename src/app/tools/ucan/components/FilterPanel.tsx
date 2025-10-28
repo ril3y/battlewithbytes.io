@@ -29,16 +29,6 @@ export default function FilterPanel({
   const [rangeMin, setRangeMin] = useState('');
   const [rangeMax, setRangeMax] = useState('');
 
-  const handleDirectionToggle = (direction: MessageDirection) => {
-    const newDirections = new Set(filter.directions);
-    if (newDirections.has(direction)) {
-      newDirections.delete(direction);
-    } else {
-      newDirections.add(direction);
-    }
-    onFilterChange({ directions: newDirections });
-  };
-
   const handleAddCANId = () => {
     if (!canIdInput.trim()) return;
 

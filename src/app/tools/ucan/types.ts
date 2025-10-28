@@ -447,3 +447,34 @@ export interface ActionRule {
   /** Whether rule is enabled */
   enabled: boolean;
 }
+
+// ============================================================================
+// Application Configuration
+// ============================================================================
+
+/**
+ * Application configuration
+ */
+export interface AppConfig {
+  /** Serial port configuration */
+  serial: SerialConfig;
+  /** Maximum messages to buffer */
+  maxMessages: number;
+  /** Auto-scroll to new messages */
+  autoScroll: boolean;
+  /** Show timestamps */
+  showTimestamps: boolean;
+  /** Show raw hex data */
+  showRawHex: boolean;
+}
+
+/**
+ * Default application configuration
+ */
+export const DEFAULT_APP_CONFIG: AppConfig = {
+  serial: DEFAULT_SERIAL_CONFIG,
+  maxMessages: 10000,
+  autoScroll: true,
+  showTimestamps: true,
+  showRawHex: true
+};

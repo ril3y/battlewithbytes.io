@@ -5,8 +5,8 @@
  * Adapted from BattleTerm serialUtils.ts
  */
 
-import { SerialConfig, DEFAULT_SERIAL_CONFIG, ConnectionCallback, DeviceInfo } from '../types';
-import { parseProtocolLine, ProtocolMessage } from './canProtocol';
+import { SerialConfig, DEFAULT_SERIAL_CONFIG, ConnectionCallback, DeviceInfo, ProtocolMessage } from '../types';
+import { parseProtocolLine } from './canProtocol';
 
 /**
  * Check if Web Serial API is supported

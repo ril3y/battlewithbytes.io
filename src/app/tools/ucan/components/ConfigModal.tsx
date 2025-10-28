@@ -10,7 +10,33 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { AppConfig, DEFAULT_APP_CONFIG } from '../types';
+
+// TODO: Move these to types.ts when this component is actually used
+interface AppConfig {
+  serial: {
+    baudRate: number;
+    dataBits: 7 | 8;
+    stopBits: 1 | 2;
+    parity: 'none' | 'even' | 'odd';
+  };
+  maxMessages: number;
+  autoScroll: boolean;
+  showRawHex: boolean;
+  showTimestamps: boolean;
+}
+
+const DEFAULT_APP_CONFIG: AppConfig = {
+  serial: {
+    baudRate: 115200,
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+  },
+  maxMessages: 1000,
+  autoScroll: true,
+  showRawHex: false,
+  showTimestamps: true,
+};
 
 interface ConfigModalProps {
   isOpen: boolean;

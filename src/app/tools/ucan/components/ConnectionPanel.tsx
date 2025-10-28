@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { SerialConfig, DEFAULT_SERIAL_CONFIG, DeviceInfo } from '../types';
 import { isSerialSupported, getAuthorizedPorts } from '../core/serialBridge';
 import { formatBaudRate } from '../utils/formatters';
+import { loadLastDevice, formatDeviceName, isMatchingDevice, type StoredDeviceInfo } from '../utils/deviceStorage';
 
 interface ConnectionPanelProps {
   isConnected: boolean;
@@ -34,13 +35,27 @@ export default function ConnectionPanel({
   const [authorizedPorts, setAuthorizedPorts] = useState<SerialPort[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
+  const [lastDevice, setLastDevice] = useState<StoredDeviceInfo | null>(null);
+  const [lastDevicePort, setLastDevicePort] = useState<SerialPort | null>(null);
 
   useEffect(() => {
     setIsSupported(isSerialSupported());
 
-    // Load authorized ports
+    // Load last device from localStorage
+    const stored = loadLastDevice();
+    setLastDevice(stored);
+
+    // Load authorized ports and find the last device
     if (isSerialSupported()) {
-      getAuthorizedPorts().then(setAuthorizedPorts);
+      getAuthorizedPorts().then(ports => {
+        setAuthorizedPorts(ports);
+
+        // Find the port that matches the last device
+        if (stored) {
+          const matchingPort = ports.find(port => isMatchingDevice(port, stored));
+          setLastDevicePort(matchingPort || null);
+        }
+      });
     }
   }, []);
 
@@ -134,7 +149,42 @@ export default function ConnectionPanel({
             )}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {/* Last Connected Device - Quick Connect */}
+            {lastDevice && lastDevicePort && (
+              <div className="p-3 bg-blue-600/10 border border-blue-500/30 rounded">
+                <p className="text-xs text-blue-400 mb-2">💾 Last Connected Device</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate">
+                      {formatDeviceName(lastDevice)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(lastDevice.lastConnected).toLocaleDateString()} at {new Date(lastDevice.lastConnected).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleQuickConnect(lastDevicePort)}
+                    disabled={isConnecting}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded font-medium transition-colors text-sm whitespace-nowrap"
+                  >
+                    {isConnecting ? '⏳' : '⚡ Quick Connect'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Last device stored but port not found */}
+            {lastDevice && !lastDevicePort && (
+              <div className="p-3 bg-yellow-600/10 border border-yellow-500/30 rounded">
+                <p className="text-xs text-yellow-400 mb-1">⚠️ Last Device Not Available</p>
+                <p className="text-xs text-gray-400">
+                  {formatDeviceName(lastDevice)} is not currently connected. Please reconnect the device or select a new one below.
+                </p>
+              </div>
+            )}
+
+            {/* Connect to New Device Button */}
             <button
               onClick={handleConnect}
               disabled={isConnecting}
@@ -148,28 +198,33 @@ export default function ConnectionPanel({
               ) : (
                 <>
                   <span>🔌</span>
-                  Connect to uCAN Device
+                  Connect to {lastDevice ? 'Different' : 'New'} Device
                 </>
               )}
             </button>
 
-            {/* Quick connect to authorized ports */}
+            {/* Other authorized ports (excluding last device) */}
             {authorizedPorts.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs text-gray-500 mb-2">Quick Connect:</p>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">
+                  {lastDevice ? 'Other Devices:' : 'Previously Connected:'}
+                </p>
                 <div className="space-y-1">
-                  {authorizedPorts.map((port, index) => {
-                    const info = port.getInfo();
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => handleQuickConnect(port)}
-                        className="w-full px-3 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-600 transition-colors text-left"
-                      >
-                        Device {index + 1}: VID 0x{info.usbVendorId?.toString(16)}, PID 0x{info.usbProductId?.toString(16)}
-                      </button>
-                    );
-                  })}
+                  {authorizedPorts
+                    .filter(port => !lastDevice || !isMatchingDevice(port, lastDevice))
+                    .map((port, index) => {
+                      const info = port.getInfo();
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleQuickConnect(port)}
+                          disabled={isConnecting}
+                          className="w-full px-3 py-2 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-gray-300 rounded border border-gray-600 transition-colors text-left font-mono"
+                        >
+                          VID: 0x{info.usbVendorId?.toString(16).toUpperCase().padStart(4, '0')}, PID: 0x{info.usbProductId?.toString(16).toUpperCase().padStart(4, '0')}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             )}
