@@ -133,9 +133,9 @@ const Tooltip: React.FC<TooltipProps> = ({
       >
         {children}
         {showTooltip && (
-          <div 
+          <div
             className={`
-              absolute z-50 p-2 text-sm font-mono
+              absolute z-[9999] p-2 text-sm font-mono
               bg-[#0a0a0a] text-[#ededed]
               rounded-md max-w-xs backdrop-blur-sm
               animate-fadeIn
