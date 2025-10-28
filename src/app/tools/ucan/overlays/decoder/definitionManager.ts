@@ -9,6 +9,7 @@ import type { CANDefinitionFile, MessageDefinition } from '../types';
 
 // Built-in definitions will be imported here
 import golfCartDefinition from '../definitions/golf-cart.json';
+import driveControlHubDefinition from '../definitions/drive-control-hub.json';
 
 /**
  * Validation result
@@ -419,6 +420,9 @@ export class DefinitionManager {
   private loadBuiltinDefinitions(): void {
     // Load golf cart definition
     this.definitions.set('builtin:golf-cart', golfCartDefinition as CANDefinitionFile);
+
+    // Load drive control hub definition
+    this.definitions.set('builtin:drive-control-hub', driveControlHubDefinition as CANDefinitionFile);
   }
 
   /**

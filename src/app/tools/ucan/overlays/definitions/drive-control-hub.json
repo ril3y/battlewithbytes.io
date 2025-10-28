@@ -1,0 +1,1185 @@
+{
+  "version": "1.0",
+  "name": "Drive Control Hub",
+  "description": "Complete CAN overlay for ril3y's drive control hub system - motors, BMS, solar charger, and vehicle controls",
+  "author": "ril3y",
+  "created": "2025-01-15",
+
+  "messages": [
+    {
+      "id": "0x500",
+      "name": "Switch States",
+      "description": "Vehicle control switches and buttons",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "brake",
+          "description": "Brake pedal pressed",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "eco_mode",
+          "description": "Economy mode enabled",
+          "byteOffset": 0,
+          "bitOffset": 1,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "reverse",
+          "description": "Reverse gear selected",
+          "byteOffset": 0,
+          "bitOffset": 2,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "foot_switch",
+          "description": "Foot switch pressed",
+          "byteOffset": 0,
+          "bitOffset": 3,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "forward",
+          "description": "Forward gear selected",
+          "byteOffset": 0,
+          "bitOffset": 4,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "sequence",
+          "description": "Sequence counter",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "state_changes",
+          "description": "State change counter",
+          "byteOffset": 3,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        }
+      ]
+    },
+    {
+      "id": "0x600",
+      "name": "Harness Heartbeat",
+      "description": "Wiring harness controller status",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "status",
+          "description": "Device status",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "enum",
+          "enumValues": [
+            {"value": 0, "label": "ERROR", "description": "Device error"},
+            {"value": 1, "label": "OK", "description": "Operating normally"},
+            {"value": 2, "label": "WARNING", "description": "Warning condition"},
+            {"value": 3, "label": "INIT", "description": "Initializing"}
+          ]
+        },
+        {
+          "name": "error_count",
+          "description": "Rolling error counter",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "current_error",
+          "description": "Active error code",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "temperature",
+          "description": "Device temperature",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "offset": -40,
+          "unit": "°C"
+        }
+      ]
+    },
+    {
+      "id": "0x610",
+      "name": "Motor 1 Telemetry",
+      "description": "Primary motor basic telemetry",
+      "dlc": 8,
+      "cycleTime": 100,
+      "fields": [
+        {
+          "name": "rpm",
+          "description": "Motor speed",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "unit": "RPM",
+          "min": 0,
+          "max": 5000
+        },
+        {
+          "name": "current",
+          "description": "Motor current",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "A",
+          "min": 0,
+          "max": 300
+        },
+        {
+          "name": "motor_temp",
+          "description": "Motor temperature",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "offset": -40,
+          "unit": "°C",
+          "min": -40,
+          "max": 215
+        },
+        {
+          "name": "controller_temp",
+          "description": "Controller temperature",
+          "byteOffset": 5,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "offset": -40,
+          "unit": "°C",
+          "min": -40,
+          "max": 215
+        },
+        {
+          "name": "throttle",
+          "description": "Throttle position",
+          "byteOffset": 6,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        }
+      ]
+    },
+    {
+      "id": "0x611",
+      "name": "Motor 1 Status",
+      "description": "Primary motor status and faults",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "battery_voltage",
+          "description": "Battery voltage seen by controller",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "V",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "controller_temp",
+          "description": "Controller temperature",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "offset": -40,
+          "unit": "°C"
+        },
+        {
+          "name": "pwm_duty",
+          "description": "PWM duty cycle",
+          "byteOffset": 3,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "regen_active",
+          "description": "Regenerative braking active",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "throttle_active",
+          "description": "Throttle engaged",
+          "byteOffset": 4,
+          "bitOffset": 1,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "current_limiting",
+          "description": "Current limit active",
+          "byteOffset": 4,
+          "bitOffset": 2,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "voltage_limiting",
+          "description": "Voltage limit active",
+          "byteOffset": 4,
+          "bitOffset": 3,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "hall_sensors_ok",
+          "description": "Hall sensors operational",
+          "byteOffset": 4,
+          "bitOffset": 4,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "direction",
+          "description": "Motor direction",
+          "byteOffset": 4,
+          "bitOffset": 5,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "motor_running",
+          "description": "Motor is running",
+          "byteOffset": 4,
+          "bitOffset": 6,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "fault_flags",
+          "description": "Fault register",
+          "byteOffset": 5,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        }
+      ]
+    },
+    {
+      "id": "0x620",
+      "name": "BMS Pack Status",
+      "description": "Battery pack voltage, current, SOC - CRITICAL",
+      "dlc": 8,
+      "cycleTime": 100,
+      "fields": [
+        {
+          "name": "pack_voltage",
+          "description": "Total pack voltage",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "V",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "pack_current",
+          "description": "Pack current (+ charging, - discharge)",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "int",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "A",
+          "min": -300,
+          "max": 300
+        },
+        {
+          "name": "state_of_charge",
+          "description": "Battery state of charge",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        }
+      ]
+    },
+    {
+      "id": "0x621",
+      "name": "BMS Cell Summary",
+      "description": "Cell voltage statistics",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "max_cell_voltage",
+          "description": "Highest cell voltage",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.001,
+          "unit": "V",
+          "min": 0,
+          "max": 5
+        },
+        {
+          "name": "min_cell_voltage",
+          "description": "Lowest cell voltage",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.001,
+          "unit": "V",
+          "min": 0,
+          "max": 5
+        },
+        {
+          "name": "cell_voltage_diff",
+          "description": "Cell voltage imbalance",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.001,
+          "unit": "V",
+          "min": 0,
+          "max": 1
+        }
+      ]
+    },
+    {
+      "id": "0x622",
+      "name": "BMS Temperature",
+      "description": "Battery temperature monitoring",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "max_temperature",
+          "description": "Highest temperature sensor",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "int",
+          "unit": "°C",
+          "min": -40,
+          "max": 125
+        },
+        {
+          "name": "min_temperature",
+          "description": "Lowest temperature sensor",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "int",
+          "unit": "°C",
+          "min": -40,
+          "max": 125
+        },
+        {
+          "name": "avg_temperature",
+          "description": "Average pack temperature",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "int",
+          "unit": "°C",
+          "min": -40,
+          "max": 125
+        },
+        {
+          "name": "sensor_count",
+          "description": "Number of temperature sensors",
+          "byteOffset": 3,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "min": 1,
+          "max": 16
+        }
+      ]
+    },
+    {
+      "id": "0x623",
+      "name": "BMS Power Status",
+      "description": "BMS operational status and power management",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "charge_fet_enabled",
+          "description": "Charge FET state",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "discharge_fet_enabled",
+          "description": "Discharge FET state",
+          "byteOffset": 0,
+          "bitOffset": 1,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "charger_connected",
+          "description": "Charger detected",
+          "byteOffset": 0,
+          "bitOffset": 2,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "load_connected",
+          "description": "Load detected",
+          "byteOffset": 0,
+          "bitOffset": 3,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "cell_balance_active",
+          "description": "Cell balancing in progress",
+          "byteOffset": 0,
+          "bitOffset": 4,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "residual_capacity",
+          "description": "Remaining capacity",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "Ah",
+          "min": 0,
+          "max": 500
+        },
+        {
+          "name": "cell_count",
+          "description": "Total cells in pack",
+          "byteOffset": 3,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "min": 1,
+          "max": 48
+        },
+        {
+          "name": "cells_balancing",
+          "description": "Number of cells currently balancing",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "min": 0,
+          "max": 48
+        }
+      ]
+    },
+    {
+      "id": "0x624",
+      "name": "BMS Critical Alarms",
+      "description": "Critical fault flags",
+      "dlc": 8,
+      "cycleTime": 1000,
+      "fields": [
+        {
+          "name": "voltage_alarms",
+          "description": "Voltage fault bitfield",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "current_alarms",
+          "description": "Current fault bitfield",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "temperature_alarms",
+          "description": "Temperature fault bitfield",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        },
+        {
+          "name": "system_alarms",
+          "description": "System fault bitfield",
+          "byteOffset": 3,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint"
+        }
+      ]
+    },
+    {
+      "id": "0x630",
+      "name": "Solar Power Status",
+      "description": "Solar charger power data - CRITICAL",
+      "dlc": 8,
+      "cycleTime": 100,
+      "fields": [
+        {
+          "name": "battery_voltage",
+          "description": "Battery voltage",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "V",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "charging_current",
+          "description": "Charge current",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 16,
+          "type": "uint",
+          "byteOrder": "little",
+          "scale": 0.1,
+          "unit": "A",
+          "min": 0,
+          "max": 50
+        },
+        {
+          "name": "panel_voltage",
+          "description": "Solar panel voltage",
+          "byteOffset": 4,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "scale": 0.5,
+          "unit": "V",
+          "min": 0,
+          "max": 127.5
+        },
+        {
+          "name": "charging_power",
+          "description": "Current charging power",
+          "byteOffset": 5,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "scale": 10,
+          "unit": "W",
+          "min": 0,
+          "max": 2550
+        }
+      ]
+    },
+    {
+      "id": "0x631",
+      "name": "Solar Charging Status",
+      "description": "Solar charger operational status",
+      "dlc": 8,
+      "cycleTime": 200,
+      "fields": [
+        {
+          "name": "battery_soc",
+          "description": "Battery state of charge",
+          "byteOffset": 0,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "uint",
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "charging_active",
+          "description": "Charging in progress",
+          "byteOffset": 1,
+          "bitOffset": 0,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "night_mode",
+          "description": "Night mode active",
+          "byteOffset": 1,
+          "bitOffset": 2,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "battery_full",
+          "description": "Battery fully charged",
+          "byteOffset": 1,
+          "bitOffset": 3,
+          "bitLength": 1,
+          "type": "boolean"
+        },
+        {
+          "name": "charging_mode",
+          "description": "Current charging mode",
+          "byteOffset": 2,
+          "bitOffset": 0,
+          "bitLength": 8,
+          "type": "enum",
+          "enumValues": [
+            {"value": 0, "label": "OFF", "description": "Not charging"},
+            {"value": 1, "label": "BULK", "description": "Bulk charging"},
+            {"value": 2, "label": "ABS", "description": "Absorption"},
+            {"value": 3, "label": "FLOAT", "description": "Float charging"},
+            {"value": 4, "label": "EQ", "description": "Equalization"}
+          ]
+        }
+      ]
+    }
+  ],
+
+  "widgets": [
+    {
+      "id": "brake_led",
+      "config": {
+        "type": "led",
+        "label": "BRAKE",
+        "colorOn": "#ff0000",
+        "colorOff": "#330000",
+        "size": "large",
+        "showLabel": true
+      },
+      "messageId": "0x500",
+      "fieldName": "brake"
+    },
+    {
+      "id": "eco_mode_led",
+      "config": {
+        "type": "led",
+        "label": "ECO",
+        "colorOn": "#00ff00",
+        "colorOff": "#003300",
+        "size": "medium",
+        "showLabel": true
+      },
+      "messageId": "0x500",
+      "fieldName": "eco_mode"
+    },
+    {
+      "id": "reverse_led",
+      "config": {
+        "type": "led",
+        "label": "REVERSE",
+        "colorOn": "#ffffff",
+        "colorOff": "#333333",
+        "size": "medium",
+        "showLabel": true
+      },
+      "messageId": "0x500",
+      "fieldName": "reverse"
+    },
+    {
+      "id": "forward_led",
+      "config": {
+        "type": "led",
+        "label": "FORWARD",
+        "colorOn": "#00ff00",
+        "colorOff": "#003300",
+        "size": "medium",
+        "showLabel": true
+      },
+      "messageId": "0x500",
+      "fieldName": "forward"
+    },
+    {
+      "id": "motor_rpm_gauge",
+      "config": {
+        "type": "gauge",
+        "label": "Motor RPM",
+        "min": 0,
+        "max": 5000,
+        "unit": "RPM",
+        "warningZone": [4000, 4500],
+        "dangerZone": [4500, 5000],
+        "segments": 10,
+        "width": 250,
+        "height": 250
+      },
+      "messageId": "0x610",
+      "fieldName": "rpm"
+    },
+    {
+      "id": "motor_current_bar",
+      "config": {
+        "type": "bar",
+        "label": "Motor Current",
+        "min": 0,
+        "max": 300,
+        "unit": "A",
+        "orientation": "vertical",
+        "colorScale": "gradient",
+        "width": 60,
+        "height": 200
+      },
+      "messageId": "0x610",
+      "fieldName": "current"
+    },
+    {
+      "id": "motor_temp",
+      "config": {
+        "type": "temperature",
+        "label": "Motor Temp",
+        "precision": 0,
+        "unit": "°C",
+        "coldThreshold": 30,
+        "normalRange": [40, 80],
+        "hotThreshold": 100,
+        "width": 150,
+        "height": 100
+      },
+      "messageId": "0x610",
+      "fieldName": "motor_temp"
+    },
+    {
+      "id": "controller_temp",
+      "config": {
+        "type": "temperature",
+        "label": "Controller",
+        "precision": 0,
+        "unit": "°C",
+        "coldThreshold": 30,
+        "normalRange": [40, 70],
+        "hotThreshold": 85,
+        "width": 150,
+        "height": 100
+      },
+      "messageId": "0x610",
+      "fieldName": "controller_temp"
+    },
+    {
+      "id": "throttle_bar",
+      "config": {
+        "type": "bar",
+        "label": "Throttle",
+        "min": 0,
+        "max": 100,
+        "unit": "%",
+        "orientation": "horizontal",
+        "colorScale": "green",
+        "width": 200,
+        "height": 40
+      },
+      "messageId": "0x610",
+      "fieldName": "throttle"
+    },
+    {
+      "id": "pack_voltage",
+      "config": {
+        "type": "voltage",
+        "label": "Pack Voltage",
+        "precision": 1,
+        "lowThreshold": 42.0,
+        "highThreshold": 58.8,
+        "width": 180,
+        "height": 100
+      },
+      "messageId": "0x620",
+      "fieldName": "pack_voltage"
+    },
+    {
+      "id": "pack_current",
+      "config": {
+        "type": "number",
+        "label": "Pack Current",
+        "precision": 1,
+        "unit": "A",
+        "fontSize": 28,
+        "width": 180,
+        "height": 100
+      },
+      "messageId": "0x620",
+      "fieldName": "pack_current"
+    },
+    {
+      "id": "battery_soc_bar",
+      "config": {
+        "type": "bar",
+        "label": "Battery SOC",
+        "min": 0,
+        "max": 100,
+        "unit": "%",
+        "orientation": "horizontal",
+        "colorScale": "gradient",
+        "width": 300,
+        "height": 50
+      },
+      "messageId": "0x620",
+      "fieldName": "state_of_charge"
+    },
+    {
+      "id": "battery_temp_avg",
+      "config": {
+        "type": "temperature",
+        "label": "Battery Temp",
+        "precision": 0,
+        "unit": "°C",
+        "coldThreshold": 0,
+        "normalRange": [10, 35],
+        "hotThreshold": 45,
+        "width": 150,
+        "height": 100
+      },
+      "messageId": "0x622",
+      "fieldName": "avg_temperature"
+    },
+    {
+      "id": "motor_running_led",
+      "config": {
+        "type": "led",
+        "label": "RUNNING",
+        "colorOn": "#00ff00",
+        "colorOff": "#003300",
+        "size": "medium",
+        "showLabel": true
+      },
+      "messageId": "0x611",
+      "fieldName": "motor_running"
+    },
+    {
+      "id": "regen_active_led",
+      "config": {
+        "type": "led",
+        "label": "REGEN",
+        "colorOn": "#0099ff",
+        "colorOff": "#003333",
+        "size": "small",
+        "showLabel": true
+      },
+      "messageId": "0x611",
+      "fieldName": "regen_active"
+    },
+    {
+      "id": "motor_fault_bitfield",
+      "config": {
+        "type": "bitfield",
+        "label": "Motor Faults",
+        "bitLabels": ["OV", "UV", "OC", "COT", "MOT", "THR", "HALL", "GEN"],
+        "orientation": "horizontal",
+        "showLabel": true
+      },
+      "messageId": "0x611",
+      "fieldName": "fault_flags"
+    },
+    {
+      "id": "bms_voltage_alarms",
+      "config": {
+        "type": "bitfield",
+        "label": "BMS V-Alarms",
+        "orientation": "horizontal",
+        "showLabel": true
+      },
+      "messageId": "0x624",
+      "fieldName": "voltage_alarms"
+    },
+    {
+      "id": "bms_current_alarms",
+      "config": {
+        "type": "bitfield",
+        "label": "BMS I-Alarms",
+        "orientation": "horizontal",
+        "showLabel": true
+      },
+      "messageId": "0x624",
+      "fieldName": "current_alarms"
+    },
+    {
+      "id": "charge_fet_led",
+      "config": {
+        "type": "led",
+        "label": "CHG FET",
+        "colorOn": "#00ff00",
+        "colorOff": "#330000",
+        "size": "small",
+        "showLabel": true
+      },
+      "messageId": "0x623",
+      "fieldName": "charge_fet_enabled"
+    },
+    {
+      "id": "discharge_fet_led",
+      "config": {
+        "type": "led",
+        "label": "DSG FET",
+        "colorOn": "#00ff00",
+        "colorOff": "#330000",
+        "size": "small",
+        "showLabel": true
+      },
+      "messageId": "0x623",
+      "fieldName": "discharge_fet_enabled"
+    },
+    {
+      "id": "cell_balance_led",
+      "config": {
+        "type": "led",
+        "label": "BALANCING",
+        "colorOn": "#ffaa00",
+        "colorOff": "#332200",
+        "size": "small",
+        "showLabel": true
+      },
+      "messageId": "0x623",
+      "fieldName": "cell_balance_active"
+    },
+    {
+      "id": "cell_voltage_diff",
+      "config": {
+        "type": "number",
+        "label": "Cell Imbalance",
+        "precision": 3,
+        "unit": "V",
+        "fontSize": 18,
+        "width": 150,
+        "height": 80
+      },
+      "messageId": "0x621",
+      "fieldName": "cell_voltage_diff"
+    },
+    {
+      "id": "solar_charging_power",
+      "config": {
+        "type": "number",
+        "label": "Solar Power",
+        "precision": 0,
+        "unit": "W",
+        "fontSize": 32,
+        "width": 180,
+        "height": 100
+      },
+      "messageId": "0x630",
+      "fieldName": "charging_power"
+    },
+    {
+      "id": "solar_panel_voltage",
+      "config": {
+        "type": "number",
+        "label": "Panel Voltage",
+        "precision": 1,
+        "unit": "V",
+        "fontSize": 20,
+        "width": 150,
+        "height": 80
+      },
+      "messageId": "0x630",
+      "fieldName": "panel_voltage"
+    },
+    {
+      "id": "solar_charging_mode",
+      "config": {
+        "type": "text",
+        "label": "Charge Mode",
+        "fontSize": 20,
+        "showLabel": true,
+        "width": 150,
+        "height": 80
+      },
+      "messageId": "0x631",
+      "fieldName": "charging_mode"
+    },
+    {
+      "id": "solar_charging_active",
+      "config": {
+        "type": "led",
+        "label": "SOLAR",
+        "colorOn": "#ffaa00",
+        "colorOff": "#332200",
+        "size": "large",
+        "showLabel": true
+      },
+      "messageId": "0x631",
+      "fieldName": "charging_active"
+    },
+    {
+      "id": "harness_status",
+      "config": {
+        "type": "text",
+        "label": "Harness",
+        "fontSize": 16,
+        "showLabel": true,
+        "width": 120,
+        "height": 60
+      },
+      "messageId": "0x600",
+      "fieldName": "status"
+    }
+  ],
+
+  "layouts": [
+    {
+      "id": "main_dashboard",
+      "name": "Main Dashboard",
+      "description": "Primary driving display - switches, motor, battery essentials",
+      "gridColumns": 16,
+      "gridRows": 12,
+      "backgroundColor": "#0a0a0a",
+      "widgets": [
+        {"widgetId": "motor_rpm_gauge", "position": {"x": 0, "y": 0, "width": 6, "height": 6}},
+        {"widgetId": "brake_led", "position": {"x": 7, "y": 0, "width": 2, "height": 1}},
+        {"widgetId": "forward_led", "position": {"x": 7, "y": 1, "width": 2, "height": 1}},
+        {"widgetId": "reverse_led", "position": {"x": 9, "y": 1, "width": 2, "height": 1}},
+        {"widgetId": "eco_mode_led", "position": {"x": 7, "y": 2, "width": 2, "height": 1}},
+        {"widgetId": "motor_running_led", "position": {"x": 9, "y": 2, "width": 2, "height": 1}},
+        {"widgetId": "regen_active_led", "position": {"x": 7, "y": 3, "width": 2, "height": 1}},
+        {"widgetId": "throttle_bar", "position": {"x": 7, "y": 4, "width": 4, "height": 1}},
+        {"widgetId": "motor_current_bar", "position": {"x": 12, "y": 0, "width": 2, "height": 6}},
+        {"widgetId": "pack_voltage", "position": {"x": 0, "y": 7, "width": 3, "height": 2}},
+        {"widgetId": "pack_current", "position": {"x": 3, "y": 7, "width": 3, "height": 2}},
+        {"widgetId": "battery_soc_bar", "position": {"x": 0, "y": 9, "width": 6, "height": 1}},
+        {"widgetId": "motor_temp", "position": {"x": 7, "y": 7, "width": 3, "height": 2}},
+        {"widgetId": "controller_temp", "position": {"x": 10, "y": 7, "width": 3, "height": 2}},
+        {"widgetId": "battery_temp_avg", "position": {"x": 7, "y": 9, "width": 3, "height": 2}},
+        {"widgetId": "solar_charging_active", "position": {"x": 13, "y": 7, "width": 2, "height": 1}},
+        {"widgetId": "solar_charging_power", "position": {"x": 13, "y": 8, "width": 3, "height": 2}}
+      ]
+    },
+    {
+      "id": "diagnostics_view",
+      "name": "Full Diagnostics",
+      "description": "Complete system status - all critical parameters and faults",
+      "gridColumns": 20,
+      "gridRows": 14,
+      "backgroundColor": "#0a0a0a",
+      "widgets": [
+        {"widgetId": "motor_rpm_gauge", "position": {"x": 0, "y": 0, "width": 5, "height": 5}},
+        {"widgetId": "motor_current_bar", "position": {"x": 5, "y": 0, "width": 2, "height": 5}},
+        {"widgetId": "throttle_bar", "position": {"x": 7, "y": 0, "width": 4, "height": 1}},
+        {"widgetId": "brake_led", "position": {"x": 7, "y": 1, "width": 1, "height": 1}},
+        {"widgetId": "forward_led", "position": {"x": 8, "y": 1, "width": 1, "height": 1}},
+        {"widgetId": "reverse_led", "position": {"x": 9, "y": 1, "width": 1, "height": 1}},
+        {"widgetId": "eco_mode_led", "position": {"x": 10, "y": 1, "width": 1, "height": 1}},
+        {"widgetId": "motor_running_led", "position": {"x": 7, "y": 2, "width": 1, "height": 1}},
+        {"widgetId": "regen_active_led", "position": {"x": 8, "y": 2, "width": 1, "height": 1}},
+        {"widgetId": "motor_temp", "position": {"x": 7, "y": 3, "width": 2, "height": 2}},
+        {"widgetId": "controller_temp", "position": {"x": 9, "y": 3, "width": 2, "height": 2}},
+        {"widgetId": "motor_fault_bitfield", "position": {"x": 0, "y": 5, "width": 11, "height": 1}},
+        {"widgetId": "pack_voltage", "position": {"x": 12, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "pack_current", "position": {"x": 15, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "battery_soc_bar", "position": {"x": 12, "y": 2, "width": 6, "height": 1}},
+        {"widgetId": "battery_temp_avg", "position": {"x": 12, "y": 3, "width": 3, "height": 2}},
+        {"widgetId": "cell_voltage_diff", "position": {"x": 15, "y": 3, "width": 3, "height": 2}},
+        {"widgetId": "charge_fet_led", "position": {"x": 12, "y": 5, "width": 1, "height": 1}},
+        {"widgetId": "discharge_fet_led", "position": {"x": 13, "y": 5, "width": 1, "height": 1}},
+        {"widgetId": "cell_balance_led", "position": {"x": 14, "y": 5, "width": 1, "height": 1}},
+        {"widgetId": "bms_voltage_alarms", "position": {"x": 0, "y": 6, "width": 10, "height": 1}},
+        {"widgetId": "bms_current_alarms", "position": {"x": 0, "y": 7, "width": 10, "height": 1}},
+        {"widgetId": "solar_charging_power", "position": {"x": 12, "y": 6, "width": 3, "height": 2}},
+        {"widgetId": "solar_panel_voltage", "position": {"x": 15, "y": 6, "width": 3, "height": 2}},
+        {"widgetId": "solar_charging_mode", "position": {"x": 12, "y": 8, "width": 3, "height": 2}},
+        {"widgetId": "solar_charging_active", "position": {"x": 15, "y": 8, "width": 2, "height": 1}},
+        {"widgetId": "harness_status", "position": {"x": 0, "y": 8, "width": 2, "height": 1}}
+      ]
+    },
+    {
+      "id": "minimal_hud",
+      "name": "Minimal HUD",
+      "description": "Compact heads-up display - essential indicators only",
+      "gridColumns": 10,
+      "gridRows": 3,
+      "backgroundColor": "transparent",
+      "widgets": [
+        {"widgetId": "brake_led", "position": {"x": 0, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "forward_led", "position": {"x": 1, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "reverse_led", "position": {"x": 2, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "eco_mode_led", "position": {"x": 3, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "motor_running_led", "position": {"x": 4, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "regen_active_led", "position": {"x": 5, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "solar_charging_active", "position": {"x": 6, "y": 0, "width": 1, "height": 1}},
+        {"widgetId": "battery_soc_bar", "position": {"x": 0, "y": 1, "width": 7, "height": 1}},
+        {"widgetId": "pack_voltage", "position": {"x": 7, "y": 1, "width": 3, "height": 2}}
+      ]
+    },
+    {
+      "id": "battery_focus",
+      "name": "Battery Focus",
+      "description": "Detailed BMS monitoring - pack, cells, temperatures, and status",
+      "gridColumns": 12,
+      "gridRows": 10,
+      "backgroundColor": "#0a0a0a",
+      "widgets": [
+        {"widgetId": "pack_voltage", "position": {"x": 0, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "pack_current", "position": {"x": 3, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "battery_soc_bar", "position": {"x": 0, "y": 2, "width": 6, "height": 1}},
+        {"widgetId": "battery_temp_avg", "position": {"x": 6, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "cell_voltage_diff", "position": {"x": 9, "y": 0, "width": 3, "height": 2}},
+        {"widgetId": "charge_fet_led", "position": {"x": 0, "y": 3, "width": 1, "height": 1}},
+        {"widgetId": "discharge_fet_led", "position": {"x": 1, "y": 3, "width": 1, "height": 1}},
+        {"widgetId": "cell_balance_led", "position": {"x": 2, "y": 3, "width": 1, "height": 1}},
+        {"widgetId": "bms_voltage_alarms", "position": {"x": 0, "y": 4, "width": 12, "height": 1}},
+        {"widgetId": "bms_current_alarms", "position": {"x": 0, "y": 5, "width": 12, "height": 1}}
+      ]
+    },
+    {
+      "id": "solar_focus",
+      "name": "Solar Focus",
+      "description": "Solar charger monitoring - power generation and charging status",
+      "gridColumns": 8,
+      "gridRows": 6,
+      "backgroundColor": "#0a0a0a",
+      "widgets": [
+        {"widgetId": "solar_charging_power", "position": {"x": 0, "y": 0, "width": 4, "height": 2}},
+        {"widgetId": "solar_panel_voltage", "position": {"x": 4, "y": 0, "width": 4, "height": 2}},
+        {"widgetId": "solar_charging_mode", "position": {"x": 0, "y": 2, "width": 4, "height": 2}},
+        {"widgetId": "solar_charging_active", "position": {"x": 4, "y": 2, "width": 2, "height": 1}},
+        {"widgetId": "pack_voltage", "position": {"x": 0, "y": 4, "width": 4, "height": 2}},
+        {"widgetId": "battery_soc_bar", "position": {"x": 4, "y": 4, "width": 4, "height": 1}}
+      ]
+    }
+  ]
+}
