@@ -22,6 +22,7 @@ interface MessageLogProps {
   reverseOrder?: boolean;
   onContextMenu?: (message: CANMessage, x: number, y: number) => void;
   decodedMessages?: Map<string, DecodedMessage>;
+  isOverlayActive?: boolean;
 }
 
 export default function MessageLog({
@@ -33,7 +34,9 @@ export default function MessageLog({
   viewMode = 'list',
   reverseOrder = true,
   onContextMenu,
-  decodedMessages
+  decodedMessages,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isOverlayActive = false
 }: MessageLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);

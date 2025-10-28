@@ -25,12 +25,14 @@ interface OverlayCanvasProps {
   layout: Layout;
   widgets: WidgetBinding[];
   decodedMessages: Map<string, DecodedMessage>;
+  selectedMessageId?: string;
 }
 
 const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
   layout,
   widgets,
   decodedMessages,
+  selectedMessageId,
 }) => {
   // Create widget lookup map - memoize to avoid recreation
   const widgetMap = React.useMemo(() =>
@@ -217,15 +219,31 @@ const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
       {layout.widgets.map((layoutWidget) => {
         const { widgetId, position } = layoutWidget;
 
+        // Check if this widget is associated with the selected message
+        const widget = widgetMap.get(widgetId);
+        const isHighlighted = selectedMessageId && widget?.messageId === selectedMessageId;
+
         const cellStyle: React.CSSProperties = {
           gridColumn: `${position.x + 1} / span ${position.width || 1}`,
           gridRow: `${position.y + 1} / span ${position.height || 1}`,
           minHeight: '0',
           minWidth: '0',
+          position: 'relative',
         };
 
         return (
           <div key={widgetId} style={cellStyle}>
+            {isHighlighted && (
+              <div
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  border: '3px solid #fbbf24',
+                  borderRadius: '8px',
+                  boxShadow: '0 0 20px rgba(251, 191, 36, 0.6), inset 0 0 20px rgba(251, 191, 36, 0.2)',
+                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                }}
+              />
+            )}
             {renderWidget(widgetId)}
           </div>
         );

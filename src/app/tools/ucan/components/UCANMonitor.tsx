@@ -1024,6 +1024,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                 viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
                 onContextMenu={handleMessageContextMenu}
                 decodedMessages={decodedMessages}
+                isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
               />
             </div>
             {/* Send Panel - Collapsible */}
@@ -1082,6 +1083,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                               layout={layout}
                               widgets={definition.widgets}
                               decodedMessages={decodedMessages}
+                              selectedMessageId={selectedMessageId}
                             />
                           );
                         }
@@ -1145,6 +1147,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         onNavigate={handleNavigateMessage}
         hasPrev={hasPrevMessage}
         hasNext={hasNextMessage}
+        isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
+        decodedMessages={decodedMessages}
       />
 
       {/* Status Bar with Statistics */}

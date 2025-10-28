@@ -6,9 +6,11 @@
  * Full-screen overlay modal for detailed packet inspection
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CANMessage } from '../types';
 import { formatTimestamp, formatCANId, formatBytes, formatBinary, formatASCII } from '../utils/formatters';
+import { normalizeCANId, formatDecodedField } from '../overlays/decoder/messageDecoder';
+import type { DecodedMessage } from '../overlays/types';
 
 interface PacketDetailModalProps {
   message: CANMessage | undefined;
@@ -17,6 +19,8 @@ interface PacketDetailModalProps {
   onNavigate?: (direction: 'prev' | 'next') => void;
   hasPrev?: boolean;
   hasNext?: boolean;
+  isOverlayActive?: boolean;
+  decodedMessages?: Map<string, DecodedMessage>;
 }
 
 export default function PacketDetailModal({
@@ -25,8 +29,27 @@ export default function PacketDetailModal({
   onClose,
   onNavigate,
   hasPrev = false,
-  hasNext = false
+  hasNext = false,
+  isOverlayActive = false,
+  decodedMessages
 }: PacketDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<'hex' | 'decoded'>('hex');
+
+  // Get decoded message if available
+  const decodedMessage = message && decodedMessages
+    ? decodedMessages.get(normalizeCANId(message.canId))
+    : undefined;
+
+  // Show decoded tab only if overlay is active and message is decoded
+  const showDecodedTab = isOverlayActive && decodedMessage;
+
+  // Reset to hex tab when message changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('hex');
+    }
+  }, [isOpen, message?.id]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,9 +120,36 @@ export default function PacketDetailModal({
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700 p-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              📋 Packet Details
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                📋 Packet Details
+              </h2>
+              {/* Tab Switcher */}
+              {showDecodedTab && (
+                <div className="flex gap-1 bg-gray-950 border border-gray-600 rounded p-1">
+                  <button
+                    onClick={() => setActiveTab('hex')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      activeTab === 'hex'
+                        ? 'bg-green-600 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Hex View
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('decoded')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      activeTab === 'decoded'
+                        ? 'bg-green-600 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Decoded
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white transition-colors text-2xl w-8 h-8 flex items-center justify-center rounded hover:bg-gray-800"
@@ -112,11 +162,21 @@ export default function PacketDetailModal({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Message Header */}
             <div className="border-b border-gray-700 pb-4">
-              <p className="text-sm text-gray-400">
-                {formatTimestamp(message.timestamp, true)}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-400">
+                  {formatTimestamp(message.timestamp, true)}
+                </p>
+                {showDecodedTab && decodedMessage && (
+                  <span className="text-cyan-400 text-sm font-semibold">
+                    {decodedMessage.definition?.name}
+                  </span>
+                )}
+              </div>
             </div>
 
+            {/* Hex View */}
+            {activeTab === 'hex' && (
+            <>
             {/* Basic Info Grid */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
@@ -228,6 +288,115 @@ export default function PacketDetailModal({
                 <div className="text-sm text-red-400 mb-1 font-semibold">⚠️ Error</div>
                 <div className="text-red-300">{message.error}</div>
               </div>
+            )}
+            </>
+            )}
+
+            {/* Decoded View */}
+            {activeTab === 'decoded' && decodedMessage && (
+              <>
+                {/* Message Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">CAN ID</div>
+                    <div className="text-xl font-bold text-white font-mono">
+                      {formatCANId(message.canId, message.isExtended)}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">Data Length</div>
+                    <div className="text-xl font-bold text-white">
+                      {message.length} {message.length === 1 ? 'byte' : 'bytes'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Message Description */}
+                {decodedMessage.definition?.description && (
+                  <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">Description</div>
+                    <p className="text-gray-300 italic">{decodedMessage.definition.description}</p>
+                  </div>
+                )}
+
+                {/* Raw Data */}
+                <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
+                  <div className="text-xs text-gray-500 mb-2">Raw Data (Hex)</div>
+                  <div className="font-mono text-lg text-white bg-black/40 p-3 rounded border border-gray-800">
+                    {formatBytes(message.data, ' ')}
+                  </div>
+                </div>
+
+                {/* Decoded Fields */}
+                <div className="bg-gray-950 border border-gray-700 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-300 mb-4">Decoded Fields</h3>
+                  <div className="space-y-3">
+                    {Object.entries(decodedMessage.fields).map(([fieldName, field]) => (
+                      <div
+                        key={fieldName}
+                        className={`border rounded-lg p-4 ${
+                          field.valid
+                            ? 'border-gray-700 bg-gray-900/50'
+                            : 'border-red-500/50 bg-red-900/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-white font-semibold">{field.name}</h4>
+                              {!field.valid && (
+                                <span className="text-red-400 text-xs px-2 py-0.5 bg-red-900/30 rounded" title="Value out of valid range">
+                                  ⚠️ Out of Range
+                                </span>
+                              )}
+                            </div>
+                            {field.description && (
+                              <p className="text-gray-400 text-sm mt-1">{field.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-2xl font-bold font-mono ${
+                              field.valid ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {formatDecodedField(field)}
+                            </div>
+                            {field.unit && (
+                              <div className="text-gray-500 text-sm mt-1">{field.unit}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2 border-t border-gray-800 pt-2">
+                          Raw value: {typeof field.rawValue === 'boolean'
+                            ? (field.rawValue ? 'true' : 'false')
+                            : Array.isArray(field.rawValue)
+                            ? `[${field.rawValue.join(', ')}]`
+                            : field.rawValue}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Validation Summary */}
+                <div className={`border-2 rounded-lg p-4 ${
+                  Object.values(decodedMessage.fields).every(f => f.valid)
+                    ? 'border-green-500/50 bg-green-900/20'
+                    : 'border-yellow-500/50 bg-yellow-900/20'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">
+                      {Object.values(decodedMessage.fields).every(f => f.valid) ? '✅' : '⚠️'}
+                    </span>
+                    <div>
+                      <div className="font-semibold text-white">Validation Status</div>
+                      <div className="text-sm text-gray-300">
+                        {Object.values(decodedMessage.fields).filter(f => f.valid).length} / {Object.keys(decodedMessage.fields).length} fields valid
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
