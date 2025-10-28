@@ -18,6 +18,8 @@ import SettingsModal from './SettingsModal';
 import RuleBuilderModal from './RuleBuilderModal';
 import ContextMenu from './ContextMenu';
 import CollapsiblePanel from './CollapsiblePanel';
+import { DefinitionManagerModal } from './DefinitionManagerModal';
+import { OverlayCanvas } from './OverlayCanvas';
 import {
   CANMessage,
   SerialConfig,
@@ -39,6 +41,9 @@ import { protocolToCANMessage } from '../core/canProtocol';
 import { MessageBuffer, StatisticsEngine } from '../core/messageBuffer';
 import { exportMessages, exportStatsSummary } from '../utils/exporters';
 import { saveLastDevice } from '../utils/deviceStorage';
+import { DefinitionManager } from '../overlays/decoder/definitionManager';
+import { decodeMessage, matchesDefinition, normalizeCANId } from '../overlays/decoder/messageDecoder';
+import type { DecodedMessage } from '../overlays/types';
 
 interface UCANMonitorProps {
   isStandalone?: boolean;
@@ -91,15 +96,31 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const serialBridgeRef = useRef<SerialBridge | null>(null);
   const messageBufferRef = useRef<MessageBuffer | null>(null);
   const statsEngineRef = useRef<StatisticsEngine | null>(null);
+  const definitionManagerRef = useRef<DefinitionManager | null>(null);
+
+  // Decoder state
+  const [activeDefinitionId, setActiveDefinitionId] = useState<string | undefined>(undefined);
+  const [decodedMessages, setDecodedMessages] = useState<Map<string, DecodedMessage>>(new Map());
+
+  // Overlay UI state
+  const [isDefinitionModalOpen, setIsDefinitionModalOpen] = useState(false);
+  const [isOverlayPanelVisible, setIsOverlayPanelVisible] = useState(false);
+  const [activeLayoutId, setActiveLayoutId] = useState<string | undefined>(undefined);
+
+  // Ref to track paused state for message callback (avoids stale closure)
+  const isPausedRef = useRef(displayOptions.paused);
+
+  // Update paused ref when displayOptions changes
+  useEffect(() => {
+    isPausedRef.current = displayOptions.paused;
+  }, [displayOptions.paused]);
 
   // Initialize core services
   useEffect(() => {
     serialBridgeRef.current = new SerialBridge();
     messageBufferRef.current = new MessageBuffer(displayOptions.maxMessages);
     statsEngineRef.current = new StatisticsEngine();
-
-    // Set up message callback
-    serialBridgeRef.current.setMessageCallback(handleProtocolMessage);
+    definitionManagerRef.current = new DefinitionManager();
 
     // Set up connection callback
     serialBridgeRef.current.setConnectionCallback((connected, error) => {
@@ -349,14 +370,23 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
 
     const canMessage = protocolToCANMessage(protocolMsg);
 
-    if (canMessage && !displayOptions.paused) {
+    // Use ref to check paused state (avoids stale closure)
+    if (canMessage && !isPausedRef.current) {
       // Add to buffer (only if not paused)
       messageBufferRef.current?.addMessage(canMessage);
 
       // Update statistics (client-side per-ID stats)
       statsEngineRef.current?.updateMessage(canMessage);
     }
-  }, [displayOptions.paused]);
+  }, []);
+
+  // Register message callback after handleProtocolMessage is defined
+  useEffect(() => {
+    if (serialBridgeRef.current) {
+      serialBridgeRef.current.setMessageCallback(handleProtocolMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once after initial render when handleProtocolMessage exists
 
   /**
    * Update messages and statistics from buffer
@@ -373,7 +403,39 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     if (statsEngineRef.current) {
       setStats(statsEngineRef.current.getStatistics());
     }
-  }, []);
+
+    // Decode messages if a definition is active
+    if (activeDefinitionId && definitionManagerRef.current) {
+      const definition = definitionManagerRef.current.getDefinition(activeDefinitionId);
+      if (definition) {
+        const newDecodedMessages = new Map<string, DecodedMessage>();
+
+        // Decode recent messages (last 100 for performance)
+        const recentMessages = allMessages.slice(-100);
+        for (const canMsg of recentMessages) {
+          const canIdStr = normalizeCANId(canMsg.canId);
+
+          // Find message definition
+          const messageDef = definition.messages.find(m => matchesDefinition(canIdStr, m));
+          if (messageDef) {
+            try {
+              const decoded = decodeMessage(
+                canIdStr,
+                Array.from(canMsg.data),
+                messageDef,
+                canMsg.timestamp.getTime()
+              );
+              newDecodedMessages.set(canIdStr, decoded);
+            } catch (error) {
+              console.error(`Failed to decode message ${canIdStr}:`, error);
+            }
+          }
+        }
+
+        setDecodedMessages(newDecodedMessages);
+      }
+    }
+  }, [activeDefinitionId]);
 
   /**
    * Connect to serial port
@@ -680,6 +742,43 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     }, 300);
   }, []);
 
+  /**
+   * Definition management handlers
+   */
+  const handleSelectDefinition = useCallback((id: string) => {
+    setActiveDefinitionId(id);
+    setIsDefinitionModalOpen(false);
+    setIsOverlayPanelVisible(true);
+
+    // Auto-select first layout if available
+    if (definitionManagerRef.current) {
+      const definition = definitionManagerRef.current.getDefinition(id);
+      if (definition && definition.layouts.length > 0) {
+        setActiveLayoutId(definition.layouts[0].id);
+      }
+    }
+  }, []);
+
+  const handleUploadDefinition = useCallback(async (file: File): Promise<{ success: boolean; error?: string }> => {
+    if (!definitionManagerRef.current) {
+      return { success: false, error: 'Definition manager not initialized' };
+    }
+
+    try {
+      const content = await file.text();
+      const parsed = JSON.parse(content);
+      const result = definitionManagerRef.current.addDefinition(parsed);
+
+      if (result.valid) {
+        return { success: true };
+      } else {
+        return { success: false, error: result.errors.join(', ') };
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Upload failed' };
+    }
+  }, []);
+
   return (
     <div className={`flex flex-col h-screen bg-gray-950 text-white`}>
       {/* Header - Always shown with logo */}
@@ -689,8 +788,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             <Image
               src="/uCAN/ucanlogo.png"
               alt="uCAN Logo"
-              width={77}
-              height={77}
+              width={92}
+              height={92}
               className="rounded"
             />
             <div>
@@ -744,6 +843,18 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                 }`}
               >
                 📊 Stats
+              </button>
+              <button
+                onClick={() => setViewMode('decoded')}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  displayOptions.viewMode === 'decoded'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                disabled={!activeDefinitionId}
+                title={!activeDefinitionId ? 'Load a definition to enable decoded view' : 'Show decoded messages'}
+              >
+                🔍 Decoded
               </button>
             </div>
 
@@ -800,6 +911,19 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               🗑️ Clear
             </button>
 
+            {/* Overlays Button */}
+            <button
+              onClick={() => setIsDefinitionModalOpen(true)}
+              className={`px-4 py-1 text-sm rounded border transition-colors ${
+                activeDefinitionId
+                  ? 'bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30'
+                  : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+              }`}
+              title="Manage CAN overlay definitions"
+            >
+              🎨 Overlays
+            </button>
+
             {/* Settings */}
             <button
               onClick={() => setIsSettingsOpen(true)}
@@ -829,6 +953,7 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
                 showTimestamps={displayOptions.showTimestamps}
                 viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
                 onContextMenu={handleMessageContextMenu}
+                decodedMessages={decodedMessages}
               />
             </div>
             {/* Send Panel - Collapsible */}
@@ -845,21 +970,62 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               </CollapsiblePanel>
             </div>
 
-            {/* Create Rule Button */}
-            <div className="border-t border-gray-700 p-4">
-              <button
-                onClick={() => {
-                  setEditingRule(null);
-                  setIsRuleBuilderOpen(true);
-                }}
-                disabled={!isConnected}
-                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors flex items-center justify-center gap-2"
-              >
-                <span>⚡</span>
-                Create Action Rule
-                {!isConnected && <span className="text-xs">(Connect first)</span>}
-              </button>
-            </div>
+            {/* Overlay Panel - Collapsible */}
+            {isOverlayPanelVisible && activeDefinitionId && definitionManagerRef.current && (
+              <div className="border-t border-gray-700">
+                <CollapsiblePanel
+                  title="CAN Overlay"
+                  icon="🎨"
+                  defaultCollapsed={false}
+                >
+                  <div className="flex flex-col h-[400px]">
+                    {/* Layout Selector */}
+                    <div className="flex items-center gap-2 mb-2 p-2 bg-gray-800 border-b border-gray-700">
+                      <label className="text-sm text-gray-300">Layout:</label>
+                      <select
+                        value={activeLayoutId || ''}
+                        onChange={(e) => setActiveLayoutId(e.target.value)}
+                        className="flex-1 px-2 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
+                      >
+                        {definitionManagerRef.current.getDefinition(activeDefinitionId)?.layouts.map((layout) => (
+                          <option key={layout.id} value={layout.id}>
+                            {layout.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => setIsOverlayPanelVisible(false)}
+                        className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {/* Overlay Canvas */}
+                    <div className="flex-1 overflow-auto">
+                      {activeLayoutId && (() => {
+                        const definition = definitionManagerRef.current?.getDefinition(activeDefinitionId);
+                        const layout = definition?.layouts.find((l) => l.id === activeLayoutId);
+                        if (layout && definition) {
+                          return (
+                            <OverlayCanvas
+                              layout={layout}
+                              widgets={definition.widgets}
+                              decodedMessages={decodedMessages}
+                            />
+                          );
+                        }
+                        return (
+                          <div className="flex items-center justify-center h-full text-gray-500">
+                            Select a layout to display
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </CollapsiblePanel>
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar - Board Info & Filters (200% wider: was 320px, now 640px) */}
@@ -876,6 +1042,10 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               onDisconnect={handleDisconnect}
               onConnect={handleConnect}
               rules={actionRules}
+              onCreateRule={() => {
+                setEditingRule(null);
+                setIsRuleBuilderOpen(true);
+              }}
               onEditRule={(rule) => {
                 setEditingRule(rule);
                 setIsRuleBuilderOpen(true);
@@ -1003,6 +1173,18 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             }
           ]}
           onClose={handleContextMenuClose}
+        />
+      )}
+
+      {/* Definition Manager Modal */}
+      {definitionManagerRef.current && (
+        <DefinitionManagerModal
+          isOpen={isDefinitionModalOpen}
+          onClose={() => setIsDefinitionModalOpen(false)}
+          definitions={definitionManagerRef.current.getDefinitionMetadata()}
+          activeDefinitionId={activeDefinitionId}
+          onSelectDefinition={handleSelectDefinition}
+          onUploadDefinition={handleUploadDefinition}
         />
       )}
     </div>

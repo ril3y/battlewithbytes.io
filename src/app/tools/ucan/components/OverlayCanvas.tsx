@@ -1,0 +1,227 @@
+'use client';
+
+/**
+ * OverlayCanvas - Grid Layout Renderer for Overlay Widgets
+ *
+ * Renders widgets in a CSS grid layout based on layout definition.
+ * Dynamically displays decoded CAN data through appropriate widget components.
+ */
+
+import React from 'react';
+import type { Layout, WidgetBinding, DecodedMessage } from '../overlays/types';
+import { LEDWidget } from '../overlays/widgets/LEDWidget';
+import { SwitchWidget } from '../overlays/widgets/SwitchWidget';
+import { GaugeWidget } from '../overlays/widgets/GaugeWidget';
+import { BarWidget } from '../overlays/widgets/BarWidget';
+import { NumberWidget } from '../overlays/widgets/NumberWidget';
+import { TextWidget } from '../overlays/widgets/TextWidget';
+import { VoltageWidget } from '../overlays/widgets/VoltageWidget';
+import { TemperatureWidget } from '../overlays/widgets/TemperatureWidget';
+import { AnalogWidget } from '../overlays/widgets/AnalogWidget';
+import { GraphWidget } from '../overlays/widgets/GraphWidget';
+import { BitfieldWidget } from '../overlays/widgets/BitfieldWidget';
+
+interface OverlayCanvasProps {
+  layout: Layout;
+  widgets: WidgetBinding[];
+  decodedMessages: Map<string, DecodedMessage>;
+}
+
+export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
+  layout,
+  widgets,
+  decodedMessages,
+}) => {
+  // Create widget lookup map
+  const widgetMap = new Map(widgets.map((w) => [w.id, w]));
+
+  // Grid style
+  const gridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${layout.gridColumns || 12}, 1fr)`,
+    gridTemplateRows: `repeat(${layout.gridRows || 12}, 1fr)`,
+    gap: '8px',
+    padding: '16px',
+    height: '100%',
+    width: '100%',
+    backgroundColor: layout.backgroundColor || '#0a0a0a',
+  };
+
+  /**
+   * Render a widget based on its type and current data
+   */
+  const renderWidget = (widgetId: string) => {
+    const widget = widgetMap.get(widgetId);
+    if (!widget) {
+      return (
+        <div className="flex items-center justify-center text-red-400 text-xs">
+          Widget {widgetId} not found
+        </div>
+      );
+    }
+
+    // Get decoded message for this widget
+    const decodedMsg = decodedMessages.get(widget.messageId);
+    if (!decodedMsg) {
+      return (
+        <div className="flex items-center justify-center text-gray-500 text-xs">
+          Waiting for {widget.messageId}
+        </div>
+      );
+    }
+
+    // Get field value
+    const field = decodedMsg.fields[widget.fieldName];
+    if (!field) {
+      return (
+        <div className="flex items-center justify-center text-yellow-400 text-xs">
+          Field {widget.fieldName} not found
+        </div>
+      );
+    }
+
+    // Render appropriate widget based on type
+    const { config } = widget;
+
+    try {
+      switch (config.type) {
+        case 'led':
+          return (
+            <LEDWidget
+              config={config}
+              value={field.value as boolean}
+              valid={field.valid}
+            />
+          );
+
+        case 'switch':
+          return (
+            <SwitchWidget
+              config={config}
+              value={field.value as boolean}
+              valid={field.valid}
+            />
+          );
+
+        case 'gauge':
+          return (
+            <GaugeWidget
+              config={config}
+              value={field.value as number}
+              unit={field.unit}
+              valid={field.valid}
+            />
+          );
+
+        case 'bar':
+          return (
+            <BarWidget
+              config={config}
+              value={field.value as number}
+              unit={field.unit}
+              valid={field.valid}
+            />
+          );
+
+        case 'number':
+          return (
+            <NumberWidget
+              config={config}
+              value={field.value as number}
+              unit={field.unit}
+              valid={field.valid}
+            />
+          );
+
+        case 'text':
+          return (
+            <TextWidget
+              config={config}
+              value={String(field.value)}
+              valid={field.valid}
+            />
+          );
+
+        case 'voltage':
+          return (
+            <VoltageWidget
+              config={config}
+              value={field.value as number}
+              valid={field.valid}
+            />
+          );
+
+        case 'temperature':
+          return (
+            <TemperatureWidget
+              config={config}
+              value={field.value as number}
+              valid={field.valid}
+            />
+          );
+
+        case 'analog':
+          return (
+            <AnalogWidget
+              config={config}
+              value={field.value as number}
+              unit={field.unit}
+              valid={field.valid}
+            />
+          );
+
+        case 'graph':
+          return (
+            <GraphWidget
+              config={config}
+              value={field.value as number}
+              valid={field.valid}
+            />
+          );
+
+        case 'bitfield':
+          return (
+            <BitfieldWidget
+              config={config}
+              value={field.value as number}
+              valid={field.valid}
+            />
+          );
+
+        default:
+          return (
+            <div className="flex items-center justify-center text-gray-500 text-xs">
+              Unknown widget type: {(config as { type: string }).type}
+            </div>
+          );
+      }
+    } catch (error) {
+      return (
+        <div className="flex items-center justify-center text-red-400 text-xs">
+          Error: {error instanceof Error ? error.message : String(error)}
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div style={gridStyle}>
+      {layout.widgets.map((layoutWidget) => {
+        const { widgetId, position } = layoutWidget;
+
+        const cellStyle: React.CSSProperties = {
+          gridColumn: `${position.x + 1} / span ${position.width || 1}`,
+          gridRow: `${position.y + 1} / span ${position.height || 1}`,
+          minHeight: '0',
+          minWidth: '0',
+        };
+
+        return (
+          <div key={widgetId} style={cellStyle}>
+            {renderWidget(widgetId)}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
