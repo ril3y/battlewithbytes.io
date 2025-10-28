@@ -24,10 +24,11 @@ interface BoardInfoPanelProps {
   onEditRule?: (rule: ActionRule) => void;
   onDeleteRule?: (ruleId: number) => Promise<void>;
   onClearAllRules?: () => Promise<void>;
+  onCreateRule?: () => void;
   recentlyFiredRules?: Map<number, number>;
 }
 
-export default function BoardInfoPanel({ capabilities, isConnected, onSendCommand, onDisconnect, onConnect, rules, onEditRule, onDeleteRule, onClearAllRules, recentlyFiredRules }: BoardInfoPanelProps) {
+export default function BoardInfoPanel({ capabilities, isConnected, onSendCommand, onDisconnect, onConnect, rules, onEditRule, onDeleteRule, onClearAllRules, onCreateRule, recentlyFiredRules }: BoardInfoPanelProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [deviceName, setDeviceName] = useState('');
   const [filterCanId, setFilterCanId] = useState('');
@@ -178,6 +179,10 @@ export default function BoardInfoPanel({ capabilities, isConnected, onSendComman
     if (onSendCommand && deviceName.trim()) {
       try {
         await onSendCommand(`set:name:${deviceName.trim()}`);
+        // Wait a bit for firmware to process, then refresh capabilities
+        setTimeout(async () => {
+          await onSendCommand('get:capabilities');
+        }, 100);
         setIsEditingName(false);
       } catch (error) {
         console.error('Failed to set device name:', error);
@@ -389,30 +394,29 @@ Filters: ${capabilities.can.filters || 'N/A'}`}
         </div>
       )}
 
-      {/* Max Action Rules */}
-      <div className="bg-blue-600/10 border border-blue-500/30 rounded p-3">
-        <div className="text-xs text-blue-400 mb-1">Action Rules</div>
-        <div className="text-lg font-bold text-white">
-          {capabilities.max_rules !== undefined ? (
-            <>
-              {capabilities.max_rules} <span className="text-sm font-normal text-gray-400">maximum</span>
-            </>
-          ) : (
-            <span className="text-sm font-normal text-gray-400">Loading...</span>
-          )}
-        </div>
-      </div>
-
       {/* Active Rules List */}
-      {rules && rules.length > 0 && (
-        <div>
-          <div className="text-xs text-gray-500 mb-2 flex items-center justify-between">
-            <span>Active Rules</span>
+      {((rules && rules.length > 0) || onCreateRule) && (
+        <CollapsiblePanel
+          title={`Active Rules (${rules?.length || 0} / ${capabilities.max_rules || '?'})`}
+          icon="📋"
+          defaultCollapsed={false}
+          headerActions={
             <div className="flex items-center gap-2">
-              <span className="text-xs bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded">
-                {rules.length} / {capabilities.max_rules}
-              </span>
-              {onClearAllRules && (
+              {onCreateRule && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateRule();
+                  }}
+                  disabled={!isConnected}
+                  className="text-xs bg-green-600/20 hover:bg-green-600/30 disabled:bg-gray-700 disabled:cursor-not-allowed text-green-400 disabled:text-gray-500 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                  title="Create new rule"
+                >
+                  <span>+</span>
+                  <span>New</span>
+                </button>
+              )}
+              {onClearAllRules && rules && rules.length > 0 && (
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -420,16 +424,22 @@ Filters: ${capabilities.can.filters || 'N/A'}`}
                       await onClearAllRules();
                     }
                   }}
-                  className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-2 py-0.5 rounded transition-colors"
+                  className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-2 py-1 rounded transition-colors"
                   title="Clear all rules"
                 >
                   Clear All
                 </button>
               )}
             </div>
-          </div>
+          }
+        >
           <div className="space-y-1">
-            {rules.map((rule) => {
+            {(!rules || rules.length === 0) ? (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No active rules. Click "+ New" to create one.
+              </div>
+            ) : (
+              rules.map((rule) => {
               const isFiring = isRuleRecentlyFired(rule.id);
               const tooltipText = `Rule #${rule.id}: ${rule.actionType}
 ━━━━━━━━━━━━━━━━━━━━
@@ -498,9 +508,10 @@ ${rule.params ? `Params: ${rule.params.join(', ')}` : ''}`;
                   </div>
                 </Tooltip>
               );
-            })}
+            })
+            )}
           </div>
-        </div>
+        </CollapsiblePanel>
       )}
 
       {/* Features */}

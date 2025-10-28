@@ -51,21 +51,24 @@ export default function MessageLog({
     }
   }, [messages, autoScroll, reverseOrder]);
 
-  const handleMessageClick = (message: CANMessage) => {
+  const handleMessageClick = React.useCallback((message: CANMessage) => {
     if (onMessageSelect) {
       onMessageSelect(message.id);
     }
-  };
+  }, [onMessageSelect]);
 
-  const handleMessageRightClick = (e: React.MouseEvent, message: CANMessage) => {
+  const handleMessageRightClick = React.useCallback((e: React.MouseEvent, message: CANMessage) => {
     e.preventDefault();
     if (onContextMenu) {
       onContextMenu(message, e.clientX, e.clientY);
     }
-  };
+  }, [onContextMenu]);
 
-  // Apply reverse order if requested
-  const displayMessages = reverseOrder ? [...messages].reverse() : messages;
+  // Apply reverse order if requested - memoize to avoid re-computation
+  const displayMessages = React.useMemo(() =>
+    reverseOrder ? [...messages].reverse() : messages,
+    [messages, reverseOrder]
+  );
 
   if (messages.length === 0) {
     return (
@@ -176,7 +179,7 @@ interface MessageRowProps {
   onMouseLeave: () => void;
 }
 
-function MessageRow({
+const MessageRow = React.memo(function MessageRow({
   message,
   isSelected,
   isHovered,
@@ -269,7 +272,7 @@ function MessageRow({
       </div>
     </div>
   );
-}
+});
 
 /**
  * Hex dump message row
@@ -280,7 +283,7 @@ interface HexMessageRowProps {
   decodedMessage?: DecodedMessage;
 }
 
-function HexMessageRow({ message, showTimestamps, decodedMessage }: HexMessageRowProps) {
+const HexMessageRow = React.memo(function HexMessageRow({ message, showTimestamps, decodedMessage }: HexMessageRowProps) {
   const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
 
   // Get inline annotations if message is decoded
@@ -344,7 +347,7 @@ function HexMessageRow({ message, showTimestamps, decodedMessage }: HexMessageRo
       </div>
     </div>
   );
-}
+});
 
 /**
  * Detailed message view
@@ -489,7 +492,7 @@ interface DecodedMessageRowProps {
   decodedMessage?: DecodedMessage;
 }
 
-function DecodedMessageRow({ message, showTimestamps, decodedMessage }: DecodedMessageRowProps) {
+const DecodedMessageRow = React.memo(function DecodedMessageRow({ message, showTimestamps, decodedMessage }: DecodedMessageRowProps) {
   const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
 
   if (!decodedMessage) {
@@ -566,4 +569,4 @@ function DecodedMessageRow({ message, showTimestamps, decodedMessage }: DecodedM
       </div>
     </div>
   );
-}
+});

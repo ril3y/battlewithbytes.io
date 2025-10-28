@@ -41,6 +41,7 @@ import { protocolToCANMessage } from '../core/canProtocol';
 import { MessageBuffer, StatisticsEngine } from '../core/messageBuffer';
 import { exportMessages, exportStatsSummary } from '../utils/exporters';
 import { saveLastDevice } from '../utils/deviceStorage';
+import { importCSVFile } from '../utils/csvImporter';
 import { DefinitionManager } from '../overlays/decoder/definitionManager';
 import { decodeMessage, matchesDefinition, normalizeCANId } from '../overlays/decoder/messageDecoder';
 import type { DecodedMessage } from '../overlays/types';
@@ -150,6 +151,10 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       if (serialBridgeRef.current?.isConnected()) {
         serialBridgeRef.current.disconnect();
+      }
+      // Cleanup message buffer batch timer
+      if (messageBufferRef.current) {
+        messageBufferRef.current.destroy();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -404,16 +409,22 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       setStats(statsEngineRef.current.getStatistics());
     }
 
-    // Decode messages if a definition is active
-    if (activeDefinitionId && definitionManagerRef.current) {
+    // Decode messages if a definition is active AND overlay is visible
+    // This optimization prevents decoding when the overlay panel is closed
+    if (activeDefinitionId && isOverlayPanelVisible && definitionManagerRef.current) {
       const definition = definitionManagerRef.current.getDefinition(activeDefinitionId);
       if (definition) {
         const newDecodedMessages = new Map<string, DecodedMessage>();
 
-        // Decode recent messages (last 100 for performance)
-        const recentMessages = allMessages.slice(-100);
+        // Only decode last 20 messages for better performance (was 100)
+        // We only need the latest value for each CAN ID to display in widgets
+        const recentMessages = allMessages.slice(-20);
+
         for (const canMsg of recentMessages) {
           const canIdStr = normalizeCANId(canMsg.canId);
+
+          // Skip if already decoded (keep most recent)
+          if (newDecodedMessages.has(canIdStr)) continue;
 
           // Find message definition
           const messageDef = definition.messages.find(m => matchesDefinition(canIdStr, m));
@@ -427,15 +438,18 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               );
               newDecodedMessages.set(canIdStr, decoded);
             } catch (error) {
-              console.error(`Failed to decode message ${canIdStr}:`, error);
+              console.error(`[Decoder] Failed to decode message ${canIdStr}:`, error);
             }
           }
         }
 
         setDecodedMessages(newDecodedMessages);
       }
+    } else if (!isOverlayPanelVisible && decodedMessages.size > 0) {
+      // Clear decoded messages when panel is closed to free memory
+      setDecodedMessages(new Map());
     }
-  }, [activeDefinitionId]);
+  }, [activeDefinitionId, isOverlayPanelVisible, decodedMessages.size]);
 
   /**
    * Connect to serial port
@@ -507,6 +521,53 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
 
     exportMessages(filteredMessages, exportConfig, stats);
   };
+
+  /**
+   * Import CSV file
+   */
+  const handleImportCSV = useCallback(async () => {
+    // Create file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        console.log('[CSV Import] Loading file:', file.name);
+        const messages = await importCSVFile(file);
+        console.log('[CSV Import] Parsed', messages.length, 'messages');
+
+        // Add messages to buffer
+        if (messageBufferRef.current) {
+          // Pause if not already paused
+          const wasPaused = displayOptions.paused;
+          if (!wasPaused) {
+            setDisplayOptions(prev => ({ ...prev, paused: true }));
+          }
+
+          // Add all messages
+          for (const msg of messages) {
+            messageBufferRef.current.addMessage(msg);
+            statsEngineRef.current?.updateMessage(msg);
+          }
+
+          // Trigger update
+          updateMessagesAndStats();
+
+          console.log('[CSV Import] Import complete');
+          alert(`Successfully imported ${messages.length} CAN messages from ${file.name}`);
+        }
+      } catch (error) {
+        console.error('[CSV Import] Error:', error);
+        alert(`Failed to import CSV: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    input.click();
+  }, [displayOptions.paused, updateMessagesAndStats]);
 
   /**
    * Export statistics
@@ -885,6 +946,15 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Import CSV */}
+            <button
+              onClick={handleImportCSV}
+              className="px-4 py-1 text-sm bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 rounded transition-colors"
+              title="Import CAN messages from CSV file"
+            >
+              📥 Import CSV
+            </button>
+
             {/* Export */}
             <div className="flex gap-1 bg-gray-950 border border-gray-700 rounded p-1">
               <button

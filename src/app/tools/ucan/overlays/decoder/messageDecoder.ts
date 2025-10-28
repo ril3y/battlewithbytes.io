@@ -345,18 +345,21 @@ export function getInlineAnnotations(
 
 /**
  * Helper to normalize CAN ID format
+ * Always returns format: 0x### (lowercase prefix, uppercase hex digits, padded to 3 chars)
  */
 export function normalizeCANId(id: string | number): string {
   if (typeof id === 'number') {
     return `0x${id.toString(16).toUpperCase().padStart(3, '0')}`;
   }
 
-  // Ensure hex format with 0x prefix
-  if (!id.startsWith('0x')) {
-    return `0x${id.toUpperCase()}`;
-  }
+  // Remove any 0x or 0X prefix and convert hex digits to uppercase
+  const hexPart = id.replace(/^0[xX]/, '').toUpperCase();
 
-  return id.toUpperCase();
+  // Pad to 3 characters minimum
+  const paddedHex = hexPart.padStart(3, '0');
+
+  // Return with lowercase 0x prefix
+  return `0x${paddedHex}`;
 }
 
 /**

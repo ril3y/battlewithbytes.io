@@ -27,13 +27,16 @@ interface OverlayCanvasProps {
   decodedMessages: Map<string, DecodedMessage>;
 }
 
-export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
+const OverlayCanvasComponent: React.FC<OverlayCanvasProps> = ({
   layout,
   widgets,
   decodedMessages,
 }) => {
-  // Create widget lookup map
-  const widgetMap = new Map(widgets.map((w) => [w.id, w]));
+  // Create widget lookup map - memoize to avoid recreation
+  const widgetMap = React.useMemo(() =>
+    new Map(widgets.map((w) => [w.id, w])),
+    [widgets]
+  );
 
   // Grid style
   const gridStyle: React.CSSProperties = {
@@ -49,8 +52,9 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
 
   /**
    * Render a widget based on its type and current data
+   * Memoized to avoid re-rendering unchanged widgets
    */
-  const renderWidget = (widgetId: string) => {
+  const renderWidget = React.useCallback((widgetId: string) => {
     const widget = widgetMap.get(widgetId);
     if (!widget) {
       return (
@@ -63,9 +67,12 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
     // Get decoded message for this widget
     const decodedMsg = decodedMessages.get(widget.messageId);
     if (!decodedMsg) {
+      // Show more helpful waiting message with CAN ID and message name
+      const messageName = widget.config.label || widget.fieldName;
       return (
-        <div className="flex items-center justify-center text-gray-500 text-xs">
-          Waiting for {widget.messageId}
+        <div className="flex flex-col items-center justify-center text-gray-500 text-xs p-2 text-center">
+          <div className="font-semibold">{messageName}</div>
+          <div className="text-gray-600 mt-1">Waiting for {widget.messageId}</div>
         </div>
       );
     }
@@ -74,8 +81,9 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
     const field = decodedMsg.fields[widget.fieldName];
     if (!field) {
       return (
-        <div className="flex items-center justify-center text-yellow-400 text-xs">
-          Field {widget.fieldName} not found
+        <div className="flex flex-col items-center justify-center text-yellow-400 text-xs p-2 text-center">
+          <div className="font-semibold">{widget.config.label || widget.fieldName}</div>
+          <div className="text-yellow-500 mt-1">Field &quot;{widget.fieldName}&quot; not found in {widget.messageId}</div>
         </div>
       );
     }
@@ -202,7 +210,7 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
         </div>
       );
     }
-  };
+  }, [widgetMap, decodedMessages]);
 
   return (
     <div style={gridStyle}>
@@ -225,3 +233,7 @@ export const OverlayCanvas: React.FC<OverlayCanvasProps> = ({
     </div>
   );
 };
+
+// Memoize and export with display name
+OverlayCanvasComponent.displayName = 'OverlayCanvas';
+export const OverlayCanvas = React.memo(OverlayCanvasComponent);
