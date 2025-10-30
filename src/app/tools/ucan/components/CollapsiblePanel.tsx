@@ -28,20 +28,25 @@ export default function CollapsiblePanel({
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-800/50 transition-colors group"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <span className={`transition-transform text-gray-400 ${isCollapsed ? '' : 'rotate-90'}`}>▶</span>
           {icon && <span>{icon}</span>}
           <span>{title}</span>
         </h3>
 
-        {!isCollapsed && headerActions && (
-          <div onClick={(e) => e.stopPropagation()}>
-            {headerActions}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {!isCollapsed && headerActions && (
+            <div onClick={(e) => e.stopPropagation()}>
+              {headerActions}
+            </div>
+          )}
+          <div
+            className={`w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-green-400 group-hover:border-l-green-300 transition-all ${isCollapsed ? '-rotate-90' : 'rotate-90'}`}
+            style={{ transformOrigin: 'center' }}
+          />
+        </div>
       </div>
 
       {!isCollapsed && (

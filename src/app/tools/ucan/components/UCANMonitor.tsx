@@ -18,6 +18,8 @@ import SettingsModal from './SettingsModal';
 import RuleBuilderModal from './RuleBuilderModal';
 import ContextMenu from './ContextMenu';
 import CollapsiblePanel from './CollapsiblePanel';
+import { DefinitionManagerModal } from './DefinitionManagerModal';
+import { OverlayCanvas } from './OverlayCanvas';
 import {
   CANMessage,
   SerialConfig,
@@ -39,6 +41,10 @@ import { protocolToCANMessage } from '../core/canProtocol';
 import { MessageBuffer, StatisticsEngine } from '../core/messageBuffer';
 import { exportMessages, exportStatsSummary } from '../utils/exporters';
 import { saveLastDevice } from '../utils/deviceStorage';
+import { importCSVFile } from '../utils/csvImporter';
+import { DefinitionManager } from '../overlays/decoder/definitionManager';
+import { decodeMessage, matchesDefinition, normalizeCANId } from '../overlays/decoder/messageDecoder';
+import type { DecodedMessage } from '../overlays/types';
 
 interface UCANMonitorProps {
   isStandalone?: boolean;
@@ -91,15 +97,39 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
   const serialBridgeRef = useRef<SerialBridge | null>(null);
   const messageBufferRef = useRef<MessageBuffer | null>(null);
   const statsEngineRef = useRef<StatisticsEngine | null>(null);
+  const definitionManagerRef = useRef<DefinitionManager | null>(null);
+
+  // Decoder state
+  const [activeDefinitionId, setActiveDefinitionId] = useState<string | undefined>(undefined);
+  const [decodedMessages, setDecodedMessages] = useState<Map<string, DecodedMessage>>(new Map());
+
+  // Overlay UI state
+  const [isDefinitionModalOpen, setIsDefinitionModalOpen] = useState(false);
+  const [isOverlayPanelVisible, setIsOverlayPanelVisible] = useState(false);
+  const [activeLayoutId, setActiveLayoutId] = useState<string | undefined>(undefined);
+  const [isOverlayExpanded, setIsOverlayExpanded] = useState(false);
+
+  // Definition mismatch tracking
+  const [definitionMismatchWarning, setDefinitionMismatchWarning] = useState<{
+    show: boolean;
+    message: string;
+    suggestedDefinitionId?: string;
+  }>({ show: false, message: '' });
+
+  // Ref to track paused state for message callback (avoids stale closure)
+  const isPausedRef = useRef(displayOptions.paused);
+
+  // Update paused ref when displayOptions changes
+  useEffect(() => {
+    isPausedRef.current = displayOptions.paused;
+  }, [displayOptions.paused]);
 
   // Initialize core services
   useEffect(() => {
     serialBridgeRef.current = new SerialBridge();
     messageBufferRef.current = new MessageBuffer(displayOptions.maxMessages);
     statsEngineRef.current = new StatisticsEngine();
-
-    // Set up message callback
-    serialBridgeRef.current.setMessageCallback(handleProtocolMessage);
+    definitionManagerRef.current = new DefinitionManager();
 
     // Set up connection callback
     serialBridgeRef.current.setConnectionCallback((connected, error) => {
@@ -129,6 +159,10 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       if (serialBridgeRef.current?.isConnected()) {
         serialBridgeRef.current.disconnect();
+      }
+      // Cleanup message buffer batch timer
+      if (messageBufferRef.current) {
+        messageBufferRef.current.destroy();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -349,14 +383,23 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
 
     const canMessage = protocolToCANMessage(protocolMsg);
 
-    if (canMessage && !displayOptions.paused) {
+    // Use ref to check paused state (avoids stale closure)
+    if (canMessage && !isPausedRef.current) {
       // Add to buffer (only if not paused)
       messageBufferRef.current?.addMessage(canMessage);
 
       // Update statistics (client-side per-ID stats)
       statsEngineRef.current?.updateMessage(canMessage);
     }
-  }, [displayOptions.paused]);
+  }, []);
+
+  // Register message callback after handleProtocolMessage is defined
+  useEffect(() => {
+    if (serialBridgeRef.current) {
+      serialBridgeRef.current.setMessageCallback(handleProtocolMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once after initial render when handleProtocolMessage exists
 
   /**
    * Update messages and statistics from buffer
@@ -373,7 +416,132 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     if (statsEngineRef.current) {
       setStats(statsEngineRef.current.getStatistics());
     }
-  }, []);
+
+    // Decode messages if a definition is active AND overlay is visible
+    // This optimization prevents decoding when the overlay panel is closed
+    if (activeDefinitionId && isOverlayPanelVisible && definitionManagerRef.current) {
+      const definition = definitionManagerRef.current.getDefinition(activeDefinitionId);
+      if (definition) {
+        const newDecodedMessages = new Map<string, DecodedMessage>();
+
+        // Only decode last 20 messages for better performance (was 100)
+        // We only need the latest value for each CAN ID to display in widgets
+        const recentMessages = allMessages.slice(-20);
+
+        for (const canMsg of recentMessages) {
+          const canIdStr = normalizeCANId(canMsg.canId);
+
+          // Skip if already decoded (keep most recent)
+          if (newDecodedMessages.has(canIdStr)) continue;
+
+          // Find message definition
+          const messageDef = definition.messages.find(m => matchesDefinition(canIdStr, m));
+          if (messageDef) {
+            try {
+              const decoded = decodeMessage(
+                canIdStr,
+                Array.from(canMsg.data),
+                messageDef,
+                canMsg.timestamp.getTime()
+              );
+              newDecodedMessages.set(canIdStr, decoded);
+            } catch (error) {
+              console.error(`[Decoder] Failed to decode message ${canIdStr}:`, error);
+            }
+          }
+        }
+
+        setDecodedMessages(newDecodedMessages);
+      }
+    } else if (!isOverlayPanelVisible && decodedMessages.size > 0) {
+      // Clear decoded messages when panel is closed to free memory
+      setDecodedMessages(new Map());
+    }
+  }, [activeDefinitionId, isOverlayPanelVisible, decodedMessages.size]);
+
+  /**
+   * Check for definition mismatch - compares incoming CAN IDs with active definition
+   */
+  useEffect(() => {
+    if (!activeDefinitionId || !definitionManagerRef.current || !isOverlayPanelVisible) {
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    // Get unique CAN IDs from recent messages (last 50)
+    const recentMessages = messages.slice(-50);
+    const incomingCanIds = new Set(recentMessages.map(m => normalizeCANId(m.canId)));
+
+    if (incomingCanIds.size === 0) {
+      // No messages yet, no warning
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    // Get CAN IDs from active definition
+    const activeDefinition = definitionManagerRef.current.getDefinition(activeDefinitionId);
+    if (!activeDefinition) {
+      setDefinitionMismatchWarning({ show: false, message: '' });
+      return;
+    }
+
+    const definitionCanIds = new Set(activeDefinition.messages.map(m => m.id));
+
+    // Calculate match percentage
+    let matchCount = 0;
+    incomingCanIds.forEach(canId => {
+      if (definitionCanIds.has(canId)) {
+        matchCount++;
+      }
+    });
+
+    const matchPercentage = (matchCount / incomingCanIds.size) * 100;
+
+    // Show warning if less than 50% match
+    if (matchPercentage < 50) {
+      // Try to find a better matching definition
+      const allDefinitions = definitionManagerRef.current.getDefinitionMetadata();
+      let bestMatch: { id: string; score: number; name: string } | null = null;
+
+      for (const defMeta of allDefinitions) {
+        if (defMeta.id === activeDefinitionId) continue; // Skip current
+
+        const def = definitionManagerRef.current.getDefinition(defMeta.id);
+        if (!def) continue;
+
+        const defCanIds = new Set(def.messages.map(m => m.id));
+        let defMatchCount = 0;
+        incomingCanIds.forEach(canId => {
+          if (defCanIds.has(canId)) {
+            defMatchCount++;
+          }
+        });
+
+        const defMatchPercentage = (defMatchCount / incomingCanIds.size) * 100;
+
+        if (!bestMatch || defMatchPercentage > bestMatch.score) {
+          bestMatch = { id: defMeta.id, score: defMatchPercentage, name: defMeta.name };
+        }
+      }
+
+      if (bestMatch && bestMatch.score > matchPercentage) {
+        setDefinitionMismatchWarning({
+          show: true,
+          message: `Active definition '${activeDefinition.name}' only matches ${matchPercentage.toFixed(0)}% of incoming messages. Try '${bestMatch.name}' (${bestMatch.score.toFixed(0)}% match)?`,
+          suggestedDefinitionId: bestMatch.id
+        });
+      } else {
+        setDefinitionMismatchWarning({
+          show: true,
+          message: `Active definition '${activeDefinition.name}' only matches ${matchPercentage.toFixed(0)}% of incoming messages. You may need a different definition.`,
+          suggestedDefinitionId: undefined
+        });
+      }
+    } else {
+      // Good match, clear warning
+      setDefinitionMismatchWarning({ show: false, message: '' });
+    }
+  }, [messages, activeDefinitionId, isOverlayPanelVisible]);
 
   /**
    * Connect to serial port
@@ -445,6 +613,53 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
 
     exportMessages(filteredMessages, exportConfig, stats);
   };
+
+  /**
+   * Import CSV file
+   */
+  const handleImportCSV = useCallback(async () => {
+    // Create file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        console.log('[CSV Import] Loading file:', file.name);
+        const messages = await importCSVFile(file);
+        console.log('[CSV Import] Parsed', messages.length, 'messages');
+
+        // Add messages to buffer
+        if (messageBufferRef.current) {
+          // Pause if not already paused
+          const wasPaused = displayOptions.paused;
+          if (!wasPaused) {
+            setDisplayOptions(prev => ({ ...prev, paused: true }));
+          }
+
+          // Add all messages
+          for (const msg of messages) {
+            messageBufferRef.current.addMessage(msg);
+            statsEngineRef.current?.updateMessage(msg);
+          }
+
+          // Trigger update
+          updateMessagesAndStats();
+
+          console.log('[CSV Import] Import complete');
+          alert(`Successfully imported ${messages.length} CAN messages from ${file.name}`);
+        }
+      } catch (error) {
+        console.error('[CSV Import] Error:', error);
+        alert(`Failed to import CSV: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    input.click();
+  }, [displayOptions.paused, updateMessagesAndStats]);
 
   /**
    * Export statistics
@@ -680,6 +895,43 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
     }, 300);
   }, []);
 
+  /**
+   * Definition management handlers
+   */
+  const handleSelectDefinition = useCallback((id: string) => {
+    setActiveDefinitionId(id);
+    setIsDefinitionModalOpen(false);
+    setIsOverlayPanelVisible(true);
+
+    // Auto-select first layout if available
+    if (definitionManagerRef.current) {
+      const definition = definitionManagerRef.current.getDefinition(id);
+      if (definition && definition.layouts.length > 0) {
+        setActiveLayoutId(definition.layouts[0].id);
+      }
+    }
+  }, []);
+
+  const handleUploadDefinition = useCallback(async (file: File): Promise<{ success: boolean; error?: string }> => {
+    if (!definitionManagerRef.current) {
+      return { success: false, error: 'Definition manager not initialized' };
+    }
+
+    try {
+      const content = await file.text();
+      const parsed = JSON.parse(content);
+      const result = definitionManagerRef.current.addDefinition(parsed);
+
+      if (result.valid) {
+        return { success: true };
+      } else {
+        return { success: false, error: result.errors.join(', ') };
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Upload failed' };
+    }
+  }, []);
+
   return (
     <div className={`flex flex-col h-screen bg-gray-950 text-white`}>
       {/* Header - Always shown with logo */}
@@ -689,8 +941,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             <Image
               src="/uCAN/ucanlogo.png"
               alt="uCAN Logo"
-              width={77}
-              height={77}
+              width={92}
+              height={92}
               className="rounded"
             />
             <div>
@@ -745,6 +997,18 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               >
                 📊 Stats
               </button>
+              <button
+                onClick={() => setViewMode('decoded')}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  displayOptions.viewMode === 'decoded'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                disabled={!activeDefinitionId}
+                title={!activeDefinitionId ? 'Load a definition to enable decoded view' : 'Show decoded messages'}
+              >
+                🔍 Decoded
+              </button>
             </div>
 
             {/* Pause/Resume */}
@@ -774,6 +1038,15 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Import CSV */}
+            <button
+              onClick={handleImportCSV}
+              className="px-4 py-1 text-sm bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 rounded transition-colors"
+              title="Import CAN messages from CSV file"
+            >
+              📥 Import CSV
+            </button>
+
             {/* Export */}
             <div className="flex gap-1 bg-gray-950 border border-gray-700 rounded p-1">
               <button
@@ -800,6 +1073,19 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               🗑️ Clear
             </button>
 
+            {/* Overlays Button */}
+            <button
+              onClick={() => setIsDefinitionModalOpen(true)}
+              className={`px-4 py-1 text-sm rounded border transition-colors ${
+                activeDefinitionId
+                  ? 'bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30'
+                  : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+              }`}
+              title="Manage CAN overlay definitions"
+            >
+              🎨 Overlays
+            </button>
+
             {/* Settings */}
             <button
               onClick={() => setIsSettingsOpen(true)}
@@ -820,46 +1106,216 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         <div className="max-w-[1920px] mx-auto h-full p-4 px-4 flex gap-4">
           {/* Center - Message Log with integrated Send Panel */}
           <div className="flex-1 h-full flex flex-col bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <MessageLog
-                messages={filteredMessages}
-                onMessageSelect={setSelectedMessageId}
-                selectedMessageId={selectedMessageId}
-                autoScroll={displayOptions.autoScroll && !displayOptions.paused}
-                showTimestamps={displayOptions.showTimestamps}
-                viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
-                onContextMenu={handleMessageContextMenu}
-              />
-            </div>
-            {/* Send Panel - Collapsible */}
-            <div className="border-t border-gray-700">
-              <CollapsiblePanel
-                title="Send CAN Message"
-                icon="📤"
-                defaultCollapsed={false}
-              >
-                <SendPanel
-                  isConnected={isConnected}
-                  onSend={handleSendMessage}
+            {/* Message Log - hidden when overlay is expanded */}
+            {!isOverlayExpanded && (
+              <div className="flex-1 overflow-hidden">
+                <MessageLog
+                  messages={filteredMessages}
+                  onMessageSelect={setSelectedMessageId}
+                  selectedMessageId={selectedMessageId}
+                  autoScroll={displayOptions.autoScroll && !displayOptions.paused}
+                  showTimestamps={displayOptions.showTimestamps}
+                  viewMode={displayOptions.viewMode === 'stats' || displayOptions.viewMode === 'timeline' ? 'list' : displayOptions.viewMode}
+                  onContextMenu={handleMessageContextMenu}
+                  decodedMessages={decodedMessages}
+                  isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
                 />
-              </CollapsiblePanel>
-            </div>
+              </div>
+            )}
+            {/* Send Panel - Collapsible (hidden when overlay is expanded) */}
+            {!isOverlayExpanded && (
+              <div className="border-t border-gray-700">
+                <CollapsiblePanel
+                  title="Send CAN Message"
+                  icon="📤"
+                  defaultCollapsed={false}
+                >
+                  <SendPanel
+                    isConnected={isConnected}
+                    onSend={handleSendMessage}
+                  />
+                </CollapsiblePanel>
+              </div>
+            )}
 
-            {/* Create Rule Button */}
-            <div className="border-t border-gray-700 p-4">
-              <button
-                onClick={() => {
-                  setEditingRule(null);
-                  setIsRuleBuilderOpen(true);
-                }}
-                disabled={!isConnected}
-                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors flex items-center justify-center gap-2"
-              >
-                <span>⚡</span>
-                Create Action Rule
-                {!isConnected && <span className="text-xs">(Connect first)</span>}
-              </button>
-            </div>
+            {/* Overlay Panel - Collapsible or Full-Screen */}
+            {isOverlayPanelVisible && activeDefinitionId && definitionManagerRef.current && (
+              <div className={`border-t border-gray-700 ${isOverlayExpanded ? 'flex-1' : ''}`}>
+                {!isOverlayExpanded ? (
+                  <CollapsiblePanel
+                    title="CAN Overlay"
+                    icon="🎨"
+                    defaultCollapsed={false}
+                  >
+                    <div className="flex flex-col h-[400px]">
+                      {/* Layout Selector & Controls */}
+                      <div className="flex items-center gap-2 mb-2 p-2 bg-gray-800 border-b border-gray-700">
+                        <label className="text-sm text-gray-300">Layout:</label>
+                        <select
+                          value={activeLayoutId || ''}
+                          onChange={(e) => setActiveLayoutId(e.target.value)}
+                          className="flex-1 px-2 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
+                        >
+                          {definitionManagerRef.current.getDefinition(activeDefinitionId)?.layouts.map((layout) => (
+                            <option key={layout.id} value={layout.id}>
+                              {layout.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setIsOverlayExpanded(true)}
+                          className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded"
+                          title="Expand overlay to full-screen"
+                        >
+                          ⛶ Expand
+                        </button>
+                        <button
+                          onClick={() => setIsOverlayPanelVisible(false)}
+                          className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded"
+                        >
+                          Close
+                        </button>
+                      </div>
+
+                      {/* Definition Mismatch Warning */}
+                      {definitionMismatchWarning.show && (
+                        <div className="bg-yellow-900/30 border-b border-yellow-600/50 p-2 flex items-center gap-2 mb-2">
+                          <span className="text-yellow-400">⚠️</span>
+                          <p className="text-xs text-yellow-200 flex-1">{definitionMismatchWarning.message}</p>
+                          {definitionMismatchWarning.suggestedDefinitionId && (
+                            <button
+                              onClick={() => {
+                                handleSelectDefinition(definitionMismatchWarning.suggestedDefinitionId!);
+                                setDefinitionMismatchWarning({ show: false, message: '' });
+                              }}
+                              className="px-2 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                            >
+                              Switch
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setDefinitionMismatchWarning({ show: false, message: '' })}
+                            className="px-1 text-xs text-yellow-400 hover:text-yellow-200"
+                            title="Dismiss"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Overlay Canvas */}
+                      <div className="flex-1 overflow-auto">
+                        {activeLayoutId && (() => {
+                          const definition = definitionManagerRef.current?.getDefinition(activeDefinitionId);
+                          const layout = definition?.layouts.find((l) => l.id === activeLayoutId);
+                          if (layout && definition) {
+                            return (
+                              <OverlayCanvas
+                                layout={layout}
+                                widgets={definition.widgets}
+                                decodedMessages={decodedMessages}
+                                selectedMessageId={selectedMessageId}
+                                isFullScreen={false}
+                              />
+                            );
+                          }
+                          return (
+                            <div className="flex items-center justify-center h-full text-gray-500">
+                              Select a layout to display
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </CollapsiblePanel>
+                ) : (
+                  /* Full-Screen Overlay Mode */
+                  <div className="flex flex-col h-full">
+                    {/* Full-Screen Header */}
+                    <div className="flex items-center gap-2 p-3 bg-gray-800 border-b border-gray-700">
+                      <span className="text-lg font-semibold text-green-400">🎨 CAN Overlay</span>
+                      <span className="text-gray-500 mx-2">|</span>
+                      <label className="text-sm text-gray-300">Layout:</label>
+                      <select
+                        value={activeLayoutId || ''}
+                        onChange={(e) => setActiveLayoutId(e.target.value)}
+                        className="px-3 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-white"
+                      >
+                        {definitionManagerRef.current.getDefinition(activeDefinitionId)?.layouts.map((layout) => (
+                          <option key={layout.id} value={layout.id}>
+                            {layout.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex-1"></div>
+                      <button
+                        onClick={() => setIsOverlayExpanded(false)}
+                        className="px-3 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                        title="Collapse to split view"
+                      >
+                        ⛶ Collapse
+                      </button>
+                      <button
+                        onClick={() => setIsOverlayPanelVisible(false)}
+                        className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {/* Definition Mismatch Warning */}
+                    {definitionMismatchWarning.show && (
+                      <div className="bg-yellow-900/30 border-b border-yellow-600/50 p-3 flex items-center gap-3">
+                        <span className="text-yellow-400 text-lg">⚠️</span>
+                        <p className="text-sm text-yellow-200 flex-1">{definitionMismatchWarning.message}</p>
+                        {definitionMismatchWarning.suggestedDefinitionId && (
+                          <button
+                            onClick={() => {
+                              handleSelectDefinition(definitionMismatchWarning.suggestedDefinitionId!);
+                              setDefinitionMismatchWarning({ show: false, message: '' });
+                            }}
+                            className="px-3 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                          >
+                            Switch Definition
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDefinitionMismatchWarning({ show: false, message: '' })}
+                          className="px-2 py-1 text-xs text-yellow-400 hover:text-yellow-200"
+                          title="Dismiss warning"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Full-Screen Overlay Canvas */}
+                    <div className="flex-1 overflow-auto">
+                      {activeLayoutId && (() => {
+                        const definition = definitionManagerRef.current?.getDefinition(activeDefinitionId);
+                        const layout = definition?.layouts.find((l) => l.id === activeLayoutId);
+                        if (layout && definition) {
+                          return (
+                            <OverlayCanvas
+                              layout={layout}
+                              widgets={definition.widgets}
+                              decodedMessages={decodedMessages}
+                              selectedMessageId={selectedMessageId}
+                              isFullScreen={true}
+                            />
+                          );
+                        }
+                        return (
+                          <div className="flex items-center justify-center h-full text-gray-500 text-lg">
+                            Select a layout to display
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar - Board Info & Filters (200% wider: was 320px, now 640px) */}
@@ -876,6 +1332,10 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
               onDisconnect={handleDisconnect}
               onConnect={handleConnect}
               rules={actionRules}
+              onCreateRule={() => {
+                setEditingRule(null);
+                setIsRuleBuilderOpen(true);
+              }}
               onEditRule={(rule) => {
                 setEditingRule(rule);
                 setIsRuleBuilderOpen(true);
@@ -905,6 +1365,8 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
         onNavigate={handleNavigateMessage}
         hasPrev={hasPrevMessage}
         hasNext={hasNextMessage}
+        isOverlayActive={isOverlayPanelVisible && !!activeDefinitionId}
+        decodedMessages={decodedMessages}
       />
 
       {/* Status Bar with Statistics */}
@@ -1003,6 +1465,18 @@ export default function UCANMonitor({ }: UCANMonitorProps) {
             }
           ]}
           onClose={handleContextMenuClose}
+        />
+      )}
+
+      {/* Definition Manager Modal */}
+      {definitionManagerRef.current && (
+        <DefinitionManagerModal
+          isOpen={isDefinitionModalOpen}
+          onClose={() => setIsDefinitionModalOpen(false)}
+          definitions={definitionManagerRef.current.getDefinitionMetadata()}
+          activeDefinitionId={activeDefinitionId}
+          onSelectDefinition={handleSelectDefinition}
+          onUploadDefinition={handleUploadDefinition}
         />
       )}
     </div>

@@ -14,13 +14,16 @@ import {
 
 /**
  * Message Buffer
- * Circular buffer with filtering capabilities
+ * Circular buffer with filtering capabilities and batched updates
  */
 export class MessageBuffer {
   private messages: CANMessage[] = [];
   private maxMessages: number;
   private filter: MessageFilter;
   private onUpdate: (() => void) | null = null;
+  private batchTimer: NodeJS.Timeout | null = null;
+  private batchInterval: number = 50; // Update UI every 50ms (20 FPS max)
+  private hasPendingUpdate: boolean = false;
 
   constructor(maxMessages: number = 10000) {
     this.maxMessages = maxMessages;
@@ -43,6 +46,38 @@ export class MessageBuffer {
    */
   setUpdateCallback(callback: () => void): void {
     this.onUpdate = callback;
+    this.startBatchTimer();
+  }
+
+  /**
+   * Start batch update timer
+   */
+  private startBatchTimer(): void {
+    if (this.batchTimer) return;
+
+    this.batchTimer = setInterval(() => {
+      if (this.hasPendingUpdate && this.onUpdate) {
+        this.hasPendingUpdate = false;
+        this.onUpdate();
+      }
+    }, this.batchInterval);
+  }
+
+  /**
+   * Stop batch update timer
+   */
+  private stopBatchTimer(): void {
+    if (this.batchTimer) {
+      clearInterval(this.batchTimer);
+      this.batchTimer = null;
+    }
+  }
+
+  /**
+   * Trigger a batched update
+   */
+  private triggerBatchedUpdate(): void {
+    this.hasPendingUpdate = true;
   }
 
   /**
@@ -56,9 +91,8 @@ export class MessageBuffer {
       this.messages.shift();
     }
 
-    if (this.onUpdate) {
-      this.onUpdate();
-    }
+    // Mark for batched update instead of immediate update
+    this.triggerBatchedUpdate();
   }
 
   /**
@@ -74,9 +108,8 @@ export class MessageBuffer {
       this.messages.shift();
     }
 
-    if (this.onUpdate) {
-      this.onUpdate();
-    }
+    // Mark for batched update instead of immediate update
+    this.triggerBatchedUpdate();
   }
 
   /**
@@ -168,6 +201,7 @@ export class MessageBuffer {
   setFilter(filter: Partial<MessageFilter>): void {
     this.filter = { ...this.filter, ...filter };
 
+    // Filter changes should update immediately for user feedback
     if (this.onUpdate) {
       this.onUpdate();
     }
@@ -186,9 +220,17 @@ export class MessageBuffer {
   clear(): void {
     this.messages = [];
 
+    // Clear should update immediately
     if (this.onUpdate) {
       this.onUpdate();
     }
+  }
+
+  /**
+   * Cleanup timer when buffer is destroyed
+   */
+  destroy(): void {
+    this.stopBatchTimer();
   }
 
   /**

@@ -190,7 +190,7 @@ export interface DeviceInfo {
 // View Modes
 // ============================================================================
 
-export type ViewMode = 'list' | 'hex' | 'stats' | 'timeline';
+export type ViewMode = 'list' | 'hex' | 'decoded' | 'stats' | 'timeline';
 
 /**
  * Display options
