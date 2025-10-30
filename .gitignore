@@ -85,3 +85,6 @@ coverage/
 
 # Exclude static exports that are deployed
 /static-export/
+
+# Reference directories (root level only)
+/uCAN
