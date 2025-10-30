@@ -91,9 +91,9 @@ function csvRowToCANMessage(row: CSVRow, index: number): CANMessage | null {
       return null;
     }
 
-    const direction: MessageDirection = row.direction === 'RX' ? 'rx' : 'tx';
+    const direction: MessageDirection = row.direction === 'RX' ? 'RX' : 'TX';
     const isExtended = row.extended.toLowerCase() === 'yes';
-    const messageType: MessageType = direction === 'rx' ? 'CAN_RX' : 'CAN_TX';
+    const messageType: MessageType = direction === 'RX' ? 'CAN_RX' : 'CAN_TX';
 
     return {
       id: `${Date.now()}-${index}`,
@@ -103,9 +103,9 @@ function csvRowToCANMessage(row: CSVRow, index: number): CANMessage | null {
       canId,
       data,
       length: data.length,
-      extended: isExtended,
-      error: row.success.toLowerCase() !== 'yes',
-      raw: `${messageType};${canId.toString(16).toUpperCase()};${data.length};${Array.from(data).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}`
+      isExtended: isExtended,
+      success: row.success.toLowerCase() === 'yes',
+      error: row.error && row.error.trim() !== '' ? row.error : undefined
     };
   } catch (error) {
     console.error(`Error parsing row ${index + 2}:`, error);
