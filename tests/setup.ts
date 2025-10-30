@@ -28,13 +28,15 @@ jest.mock('next/link', () => ({
 }));
 
 // Mock Web Serial API
-global.navigator.serial = {
-  requestPort: jest.fn(),
-  getPorts: jest.fn().mockResolvedValue([]),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
+Object.defineProperty(global.navigator, 'serial', {
+  writable: true,
+  value: {
+    requestPort: jest.fn(),
+    getPorts: jest.fn().mockResolvedValue([]),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  },
+});
 
 // Mock window.matchMedia for responsive design tests
 Object.defineProperty(window, 'matchMedia', {
