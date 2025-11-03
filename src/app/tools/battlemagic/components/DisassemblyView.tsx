@@ -9,7 +9,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArmDisassembler, DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
+import { CapstoneDisassembler } from '../lib/disasm/CapstoneDisassembler';
+import type { DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
 import { GdbClient } from '../lib/gdb/GdbClient';
 import { ControlFlowGraphView } from './ControlFlowGraphView';
 
@@ -55,14 +56,45 @@ export default function DisassemblyView({
   const [rawInstructions, setRawInstructions] = useState<DisassembledInstruction[]>([]);
   // const [symbols, setSymbols] = useState<Map<number, string>>(new Map());
   const [breakpoints, setBreakpoints] = useState<Set<number>>(new Set());
+  const [disassemblerReady, setDisassemblerReady] = useState(false);
 
-  const disassembler = useRef(new ArmDisassembler());
+  const disassembler = useRef<CapstoneDisassembler | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Capstone disassembler
+  useEffect(() => {
+    const initDisassembler = async () => {
+      try {
+        const capstone = new CapstoneDisassembler();
+        await capstone.initialize();
+        disassembler.current = capstone;
+        setDisassemblerReady(true);
+        console.log('[DisassemblyView] Capstone disassembler initialized');
+      } catch (err) {
+        console.error('[DisassemblyView] Failed to initialize Capstone:', err);
+        setError('Failed to initialize disassembler');
+      }
+    };
+
+    initDisassembler();
+
+    return () => {
+      // Cleanup on unmount
+      if (disassembler.current) {
+        disassembler.current.dispose();
+      }
+    };
+  }, []);
 
   // Load disassembly
   const loadDisassembly = useCallback(async (address: number, length: number) => {
     if (!isConnected || !onReadMemory) {
       setError('Not connected to target');
+      return;
+    }
+
+    if (!disassemblerReady || !disassembler.current) {
+      setError('Disassembler not ready');
       return;
     }
 
@@ -78,9 +110,9 @@ export default function DisassemblyView({
         return;
       }
 
-      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling...`);
-      // Disassemble the data
-      const instructions = disassembler.current.disassemble(data, address, true);
+      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling with Capstone...`);
+      // Disassemble the data using Capstone
+      const instructions = await disassembler.current.disassemble(data, address, true);
       console.log(`[DisassemblyView] Disassembled ${instructions.length} instructions`);
 
       // Save raw instructions for CFG view
@@ -115,7 +147,7 @@ export default function DisassemblyView({
     } finally {
       setIsLoading(false);
     }
-  }, [isConnected, onReadMemory, breakpoints]); // Removed programCounter from dependencies
+  }, [isConnected, onReadMemory, breakpoints, disassemblerReady]);
 
   // Refresh button handler
   const handleRefresh = useCallback(() => {
