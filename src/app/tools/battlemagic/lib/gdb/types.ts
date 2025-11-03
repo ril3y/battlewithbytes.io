@@ -117,6 +117,8 @@ export interface QueuedCommand {
   timestamp: number;
   /** Optional timeout in ms */
   timeout?: number;
+  /** Timeout handle for cancellation */
+  timeoutHandle?: ReturnType<typeof setTimeout>;
 }
 
 /**

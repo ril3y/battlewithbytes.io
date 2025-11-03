@@ -100,6 +100,45 @@ export class SerialTransport {
     const fullConfig = { ...DEFAULT_SERIAL_CONFIG, ...config };
 
     try {
+      // Check if port is already open and close it if needed
+      // This can happen during hot-reload in development
+      if (port.readable || port.writable) {
+        console.warn('[SerialTransport] Port already open, attempting to close...');
+        try {
+          await port.close();
+          console.log('[SerialTransport] Port closed successfully, waiting for stabilization...');
+          // Give it a moment to fully close
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (closeError) {
+          console.warn('[SerialTransport] Error closing port:', closeError);
+          // Port might already be closing, wait longer
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Check again after waiting
+        if (port.readable || port.writable) {
+          console.error('[SerialTransport] Port still open after close attempt');
+          // One more attempt - try closing again
+          try {
+            await port.close();
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } catch {
+            // Final check
+            if (port.readable || port.writable) {
+              throw new Error('Port is locked (may be in use by another connection). Click "Clear" button and try reconnecting.');
+            }
+          }
+        }
+      }
+
+      console.log('[SerialTransport] Opening port with config:', {
+        baudRate: fullConfig.baudRate,
+        dataBits: fullConfig.dataBits,
+        stopBits: fullConfig.stopBits,
+        parity: fullConfig.parity,
+        flowControl: fullConfig.flowControl
+      });
+
       await port.open({
         baudRate: fullConfig.baudRate,
         dataBits: fullConfig.dataBits,
@@ -108,10 +147,19 @@ export class SerialTransport {
         flowControl: fullConfig.flowControl
       });
 
+      console.log('[SerialTransport] Port opened successfully');
       this.port = port;
       this.startReading();
     } catch (error) {
-      throw new Error(`Failed to open serial port: ${(error as Error).message}`);
+      const errorMessage = (error as Error).message;
+      console.error('[SerialTransport] Connection failed:', errorMessage);
+
+      // Provide helpful error message for common issues
+      if (errorMessage.includes('already open') || errorMessage.includes('locked') || errorMessage.includes('Failed to open')) {
+        throw new Error('Port is locked or unavailable. Click "Clear" button and try again, or disconnect/reconnect the hardware.');
+      }
+
+      throw new Error(`Failed to open serial port: ${errorMessage}`);
     }
   }
 
@@ -119,14 +167,22 @@ export class SerialTransport {
    * Disconnect from the serial port
    */
   async disconnect(): Promise<void> {
+    console.log('[SerialTransport] Disconnecting...');
     this.isReading = false;
 
-    // Cancel reader
+    // Cancel reader first
     if (this.reader) {
       try {
         await this.reader.cancel();
-      } catch {
-        // Ignore errors during cancel
+        console.log('[SerialTransport] Reader cancelled');
+      } catch (err) {
+        console.warn('[SerialTransport] Error cancelling reader:', err);
+      }
+      try {
+        this.reader.releaseLock();
+        console.log('[SerialTransport] Reader lock released');
+      } catch (err) {
+        console.warn('[SerialTransport] Error releasing reader lock:', err);
       }
       this.reader = null;
     }
@@ -135,21 +191,38 @@ export class SerialTransport {
     if (this.writer) {
       try {
         await this.writer.close();
-      } catch {
-        // Ignore errors during close
+        console.log('[SerialTransport] Writer closed');
+      } catch (err) {
+        console.warn('[SerialTransport] Error closing writer:', err);
+      }
+      try {
+        this.writer.releaseLock();
+        console.log('[SerialTransport] Writer lock released');
+      } catch (err) {
+        console.warn('[SerialTransport] Error releasing writer lock:', err);
       }
       this.writer = null;
     }
+
+    // Give readers/writers time to fully release
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // Close port
     if (this.port) {
       try {
         await this.port.close();
-      } catch {
-        // Ignore errors during close
+        console.log('[SerialTransport] Port closed successfully');
+        // Give port time to fully close
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (err) {
+        console.warn('[SerialTransport] Error closing port:', err);
+        // Even if close fails, wait before continuing
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       this.port = null;
     }
+
+    console.log('[SerialTransport] Disconnect complete');
   }
 
   /**

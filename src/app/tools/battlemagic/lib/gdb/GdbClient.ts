@@ -40,10 +40,10 @@ export interface GdbClientCallbacks {
  * Default configuration
  */
 const DEFAULT_CONFIG: Required<GdbClientConfig> = {
-  commandTimeout: 5000,
+  commandTimeout: 10000, // 10 seconds for monitor commands
   debug: false,
   maxQueueSize: 100,
-  ackMode: true
+  ackMode: false // Default to NoAckMode for faster communication
 };
 
 /**
@@ -62,6 +62,7 @@ export class GdbClient {
   private receiveBuffer = '';
   private ackMode = true;
   private pendingAck = false;
+  private accumulatedOutput = ''; // Accumulate O packets until OK/ERROR
 
   /**
    * Create a new GDB client instance
@@ -73,7 +74,9 @@ export class GdbClient {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.callbacks = callbacks;
     this.transport = new SerialTransport();
-    this.ackMode = this.config.ackMode;
+    // ALWAYS start in ACK mode - GDB protocol requires it initially
+    // Will be disabled during initializeConnection if config.ackMode is false
+    this.ackMode = true;
 
     // Setup transport event handlers
     this.transport.onData((data) => this.handleReceivedData(data));
@@ -125,6 +128,10 @@ export class GdbClient {
 
       // Connect transport
       await this.transport.connect(port, serialConfig);
+
+      // Give the port a moment to stabilize before sending commands
+      // This is especially important for ACK mode initialization
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Send initial handshake
       await this.initializeConnection();
@@ -184,9 +191,9 @@ export class GdbClient {
       throw new Error('Failed to scan for SWD targets');
     }
 
-    const decoded = BlackMagicCommands.decodeMonitorResponse(response.data);
-    const targets = BlackMagicCommands.parseScanResults(decoded);
-    const voltage = BlackMagicCommands.parseTargetVoltage(decoded);
+    // response.data is already decoded from O packets - don't decode again!
+    const targets = BlackMagicCommands.parseScanResults(response.data);
+    const voltage = BlackMagicCommands.parseTargetVoltage(response.data);
 
     return { targets, voltage };
   }
@@ -204,9 +211,9 @@ export class GdbClient {
       throw new Error('Failed to scan for JTAG targets');
     }
 
-    const decoded = BlackMagicCommands.decodeMonitorResponse(response.data);
-    const targets = BlackMagicCommands.parseScanResults(decoded);
-    const voltage = BlackMagicCommands.parseTargetVoltage(decoded);
+    // response.data is already decoded from O packets - don't decode again!
+    const targets = BlackMagicCommands.parseScanResults(response.data);
+    const voltage = BlackMagicCommands.parseTargetVoltage(response.data);
 
     return { targets, voltage };
   }
@@ -437,6 +444,11 @@ export class GdbClient {
     const response = await this.readRegisters();
     const registers = new Map<string, number>();
 
+    if (this.config.debug) {
+      console.log('[getFormattedRegisters] Raw response:', response);
+      console.log('[getFormattedRegisters] Response length:', response.length);
+    }
+
     // ARM Cortex-M register layout (each register is 8 hex chars = 32 bits)
     const regNames = [
       'r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
@@ -447,12 +459,18 @@ export class GdbClient {
     let offset = 0;
     for (const name of regNames) {
       if (offset + 8 <= response.length) {
-        const hexValue = response.substr(offset, 8);
+        const hexValue = response.substring(offset, offset + 8);
+        if (this.config.debug) {
+          console.log(`[getFormattedRegisters] ${name}: hexValue="${hexValue}" (offset=${offset})`);
+        }
         // Convert from little-endian hex string
         const bytes = hexValue.match(/.{2}/g);
         if (bytes) {
           const value = parseInt(bytes.reverse().join(''), 16);
           registers.set(name, value);
+          if (this.config.debug) {
+            console.log(`[getFormattedRegisters] ${name} = 0x${value.toString(16).padStart(8, '0')}`);
+          }
         }
         offset += 8;
       }
@@ -500,10 +518,23 @@ export class GdbClient {
    */
   async insertBreakpoint(address: number | string, hardware = false): Promise<void> {
     const cmd = BlackMagicCommands.buildInsertBreakpoint(address, hardware);
+
+    if (this.config.debug) {
+      console.log('[insertBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
+    }
+
     const response = await this.sendCommand(cmd);
 
+    if (this.config.debug) {
+      console.log('[insertBreakpoint] Response:', response);
+    }
+
+    if (response.type === 'error') {
+      throw new Error(`Failed to insert breakpoint: ${response.data}`);
+    }
+
     if (response.type !== 'ok') {
-      throw new Error('Failed to insert breakpoint');
+      throw new Error(`Unexpected response type: ${response.type}, data: ${response.data}`);
     }
   }
 
@@ -622,18 +653,45 @@ export class GdbClient {
    * Sends initial handshake and configuration commands.
    */
   private async initializeConnection(): Promise<void> {
-    // Query supported features
-    const cmd = BlackMagicCommands.buildQuerySupported();
-    const response = await this.sendCommand(cmd);
+    try {
+      // Query supported features
+      const cmd = BlackMagicCommands.buildQuerySupported();
 
-    if (this.config.debug) {
-      console.log('GDB supported features:', response);
-    }
+      if (this.config.debug) {
+        console.log('[GDB] Sending qSupported...');
+      }
 
-    // Optionally disable ACK mode for faster communication
-    if (!this.ackMode) {
-      await this.sendCommand('QStartNoAckMode');
-      this.ackMode = false;
+      const response = await this.sendCommand(cmd);
+
+      if (this.config.debug) {
+        console.log('[GDB] Supported features:', response);
+      }
+
+      // Optionally disable ACK mode for faster communication
+      if (!this.config.ackMode) {
+        if (this.config.debug) {
+          console.log('[GDB] Negotiating NoAckMode...');
+        }
+
+        const noAckResponse = await this.sendCommand('QStartNoAckMode');
+
+        if (this.config.debug) {
+          console.log('[GDB] NoAckMode response:', noAckResponse);
+        }
+
+        // Give a moment for the final ACK to be sent before disabling ACK mode
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // After successful negotiation, disable ACK mode
+        this.ackMode = false;
+
+        if (this.config.debug) {
+          console.log('[GDB] NoAckMode enabled');
+        }
+      }
+    } catch (error) {
+      console.error('[GDB] Initialization failed:', error);
+      throw error;
     }
   }
 
@@ -661,7 +719,7 @@ export class GdbClient {
 
     // Setup timeout
     if (this.currentCommand.timeout) {
-      setTimeout(() => {
+      this.currentCommand.timeoutHandle = setTimeout(() => {
         if (this.currentCommand) {
           const cmd = this.currentCommand;
           this.currentCommand = null;
@@ -755,11 +813,21 @@ export class GdbClient {
 
     // Send ACK if in ACK mode
     if (this.ackMode && packet !== RspProtocol.ACK && packet !== RspProtocol.NAK) {
-      this.transport.send(RspProtocol.ACK);
+      if (this.config.debug) {
+        console.log('[GDB] Sending ACK');
+      }
+      // Don't await - send ACK asynchronously but immediately
+      this.transport.send(RspProtocol.ACK).catch(err => {
+        console.error('[GDB] Failed to send ACK:', err);
+      });
     }
 
     // Parse response
     const response = RspProtocol.parseResponse(decoded.data);
+
+    if (this.config.debug) {
+      console.log('[GDB] Parsed response:', response, 'currentCommand:', !!this.currentCommand);
+    }
 
     // Handle notifications (async stop events, etc.)
     if (decoded.data.startsWith('%')) {
@@ -788,16 +856,38 @@ export class GdbClient {
     }
 
     // Console output (O packets - hex-encoded console output)
-    if (decoded.data.startsWith('O')) {
+    // Note: Must check for 'O' followed by hex, not just 'O' to avoid matching 'OK'
+    if (decoded.data.startsWith('O') && decoded.data.length > 1 && decoded.data !== 'OK') {
       const hexOutput = decoded.data.substring(1);
       const output = BlackMagicCommands.decodeMonitorResponse(hexOutput);
-      this.notifyTargetOutput(output);
+
+      // Accumulate output - DON'T notify yet, wait for OK packet
+      this.accumulatedOutput += output;
+
+      // Return without notifying - will notify once when command completes
       return;
     }
 
     // Regular command response
     if (this.currentCommand) {
-      this.currentCommand.resolve(response);
+      // Cancel timeout if active
+      if (this.currentCommand.timeoutHandle) {
+        clearTimeout(this.currentCommand.timeoutHandle);
+      }
+
+      // If we accumulated any O packet output, notify and resolve with that
+      if (this.accumulatedOutput.length > 0) {
+        // Notify UI with complete accumulated output
+        this.notifyTargetOutput(this.accumulatedOutput);
+
+        this.currentCommand.resolve({
+          type: 'data',
+          data: this.accumulatedOutput
+        });
+        this.accumulatedOutput = ''; // Reset accumulator
+      } else {
+        this.currentCommand.resolve(response);
+      }
       this.currentCommand = null;
       this.processQueue();
     }

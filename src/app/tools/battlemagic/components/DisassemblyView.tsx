@@ -96,10 +96,10 @@ export default function DisassemblyView({
         }
       }
 
-      // Create display lines
+      // Create display lines (don't include programCounter in this logic)
       const displayLines: DisassemblyLine[] = instructions.map((inst, index) => ({
         instruction: inst,
-        isCurrentPC: programCounter === inst.address,
+        isCurrentPC: false, // Will be updated separately when PC changes
         isBreakpoint: breakpoints.has(inst.address),
         isFunctionEntry: disassembler.current.isFunctionEntry(instructions, index),
         crossRefs: crossRefs.get(inst.address) || []
@@ -111,7 +111,7 @@ export default function DisassemblyView({
     } finally {
       setIsLoading(false);
     }
-  }, [isConnected, onReadMemory, programCounter, breakpoints]);
+  }, [isConnected, onReadMemory, breakpoints]); // Removed programCounter from dependencies
 
   // Refresh button handler
   const handleRefresh = useCallback(() => {
@@ -252,12 +252,22 @@ export default function DisassemblyView({
     return 'text-gray-300'; // Default
   };
 
-  // Auto-load when connected
+  // Update PC highlight when programCounter changes (without reloading disassembly)
   useEffect(() => {
-    if (isConnected && programCounter !== undefined && followPC) {
+    if (programCounter === undefined) return;
+
+    setLines(prevLines => prevLines.map(line => ({
+      ...line,
+      isCurrentPC: line.instruction.address === programCounter
+    })));
+  }, [programCounter]);
+
+  // Auto-load when connected (only on initial connect, not on every PC change)
+  useEffect(() => {
+    if (isConnected && programCounter !== undefined && followPC && lines.length === 0) {
       handleGoToPC();
     }
-  }, [isConnected, programCounter, followPC, handleGoToPC]);
+  }, [isConnected, programCounter, followPC, handleGoToPC, lines.length]);
 
   return (
     <div className="h-full flex flex-col bg-gray-950">
@@ -361,12 +371,12 @@ export default function DisassemblyView({
         ) : (
           <table className="w-full">
             <colgroup>
-              <col className="w-4" /> {/* PC indicator */}
-              <col className="w-24" /> {/* Address */}
-              {showBytes && <col className="w-32" />} {/* Bytes */}
-              <col className="w-20" /> {/* Mnemonic */}
-              <col /> {/* Operands */}
-              <col className="w-32" /> {/* Comments/Symbols */}
+              <col className="w-4" />
+              <col className="w-24" />
+              {showBytes && <col className="w-32" />}
+              <col className="w-20" />
+              <col />
+              <col className="w-32" />
             </colgroup>
             <tbody>
               {lines.map((line, index) => {

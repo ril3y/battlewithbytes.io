@@ -4,27 +4,60 @@
  * GDB Panel Component
  *
  * Provides GDB debugging interface for Black Magic Probe
- * Terminal-style interface for GDB commands and output
+ * Terminal-style interface for GDB commands and output with debug controls
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GdbClient } from '../lib/gdb/GdbClient';
-import { Target } from '../lib/gdb/types';
+import { Target, ConnectionState } from '../lib/gdb/types';
+import DebugControlToolbar, { ExecutionState } from './DebugControlToolbar';
 
 interface GdbPanelProps {
   gdbClient: GdbClient | null;
   output: string[];
   targets: Target[];
   onAttachTarget: (targetId: number) => void;
+  onScanSwd?: () => void;
+  onClearOutput?: () => void;
 }
 
-export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }: GdbPanelProps) {
+export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, onScanSwd, onClearOutput }: GdbPanelProps) {
   const [command, setCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [executionState, setExecutionState] = useState<ExecutionState>(ExecutionState.STOPPED);
+  const [currentPC, setCurrentPC] = useState<number | undefined>();
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+  const [selectedText, setSelectedText] = useState('');
   const outputRef = useRef<HTMLDivElement>(null);
 
   const isConnected = gdbClient?.isConnected() || false;
+  const isAttached = gdbClient?.getState() === ConnectionState.ATTACHED;
+
+  // Track execution state based on output
+  useEffect(() => {
+    if (output.length === 0) return;
+
+    const lastLine = output[output.length - 1].toLowerCase();
+
+    // Detect execution state changes from output
+    if (lastLine.includes('[target stopped]') || lastLine.includes('stopped at') || lastLine.includes('signal')) {
+      setExecutionState(ExecutionState.STOPPED);
+
+      // Extract PC from stop reply if available
+      try {
+        const pcMatch = lastLine.match(/pc[:\s]+0x([0-9a-f]+)/i);
+        if (pcMatch) {
+          setCurrentPC(parseInt(pcMatch[1], 16));
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    } else if (lastLine.includes('[state] running') || lastLine.includes('continuing')) {
+      setExecutionState(ExecutionState.RUNNING);
+    }
+  }, [output]);
 
   // Auto-scroll output
   useEffect(() => {
@@ -32,6 +65,22 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }:
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [output]);
+
+  const handleCommandExecuted = useCallback((command: string) => {
+    // Map command execution to state changes
+    switch (command) {
+      case 'continue':
+        setExecutionState(ExecutionState.RUNNING);
+        break;
+      case 'halt':
+        setExecutionState(ExecutionState.STOPPED);
+        break;
+      case 'step_over':
+      case 'step_into':
+        setExecutionState(ExecutionState.STEPPING);
+        break;
+    }
+  }, []);
 
   const handleSendCommand = async () => {
     if (!gdbClient || !command.trim()) return;
@@ -86,8 +135,30 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }:
           <span className={`text-xs font-mono ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </span>
+          {isAttached && (
+            <>
+              <span className="text-gray-500">|</span>
+              <span className="text-xs font-mono text-blue-400">Attached</span>
+            </>
+          )}
+          {currentPC !== undefined && (
+            <>
+              <span className="text-gray-500">|</span>
+              <span className="text-xs font-mono text-purple-400">PC: 0x{currentPC.toString(16).toUpperCase().padStart(8, '0')}</span>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Debug Control Toolbar - Show when connected */}
+      {isConnected && (
+        <DebugControlToolbar
+          gdbClient={gdbClient}
+          executionState={executionState}
+          onCommandExecuted={handleCommandExecuted}
+          isAttached={isAttached}
+        />
+      )}
 
       {/* Quick Actions - Show when connected */}
       {isConnected && (
@@ -100,8 +171,9 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }:
             Version
           </button>
           <button
-            onClick={() => gdbClient?.sendCommand('qRcmd,7377645f7363616e')}
-            className="px-2 py-1 text-xs rounded bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 transition-colors font-mono"
+            onClick={() => onScanSwd?.()}
+            disabled={!isConnected}
+            className="px-2 py-1 text-xs rounded bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 disabled:bg-gray-700 disabled:text-gray-500 disabled:border-gray-600 transition-colors font-mono"
             title="Scan for SWD targets"
           >
             Scan SWD
@@ -142,7 +214,28 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }:
       )}
 
       {/* Terminal Output */}
-      <div ref={outputRef} className="flex-1 overflow-auto p-4 font-mono text-sm bg-black">
+      <div
+        ref={outputRef}
+        className="flex-1 overflow-auto p-4 font-mono text-sm bg-black relative"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Get selected text BEFORE showing menu
+          const selection = window.getSelection();
+          const selected = selection?.toString() || '';
+          setSelectedText(selected);
+
+          setContextMenuPos({ x: e.clientX, y: e.clientY });
+          setShowContextMenu(true);
+        }}
+        onClick={(e) => {
+          // Only close menu if clicking outside, not on text
+          if (!e.defaultPrevented) {
+            setShowContextMenu(false);
+          }
+        }}
+      >
         {output.length === 0 ? (
           <div className="text-gray-400">
             <div className="mb-4">
@@ -162,6 +255,70 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget }:
                 {line}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Context Menu */}
+        {showContextMenu && (
+          <div
+            className="fixed bg-gray-800 border border-gray-600 rounded shadow-lg py-1 z-50"
+            style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {selectedText && (
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  try {
+                    await navigator.clipboard.writeText(selectedText);
+                    setShowContextMenu(false);
+                  } catch (err) {
+                    console.error('Failed to copy:', err);
+                    // Fallback: try using execCommand
+                    try {
+                      const textArea = document.createElement('textarea');
+                      textArea.value = selectedText;
+                      textArea.style.position = 'fixed';
+                      textArea.style.opacity = '0';
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(textArea);
+                      setShowContextMenu(false);
+                    } catch (fallbackErr) {
+                      console.error('Fallback copy also failed:', fallbackErr);
+                    }
+                  }
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 font-mono border-b border-gray-700"
+              >
+                Copy ({selectedText.length} chars)
+              </button>
+            )}
+            <button
+              onClick={async () => {
+                try {
+                  const allText = output.join('\n');
+                  await navigator.clipboard.writeText(allText);
+                  setShowContextMenu(false);
+                } catch (err) {
+                  console.error('Failed to copy all:', err);
+                }
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 font-mono border-b border-gray-700"
+            >
+              Copy All
+            </button>
+            <button
+              onClick={() => {
+                onClearOutput?.();
+                setShowContextMenu(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 font-mono"
+            >
+              Clear Console
+            </button>
           </div>
         )}
       </div>
