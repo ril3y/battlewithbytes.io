@@ -65,14 +65,20 @@ export default function DisassemblyView({
   useEffect(() => {
     const initDisassembler = async () => {
       try {
+        console.log('[DisassemblyView] Initializing Capstone disassembler...');
+        setIsLoading(true);
         const capstone = new CapstoneDisassembler();
         await capstone.initialize();
         disassembler.current = capstone;
         setDisassemblerReady(true);
-        console.log('[DisassemblyView] Capstone disassembler initialized');
+        setIsLoading(false);
+        console.log('[DisassemblyView] Capstone disassembler initialized successfully');
+        onOutput?.('[Capstone disassembler ready]');
       } catch (err) {
         console.error('[DisassemblyView] Failed to initialize Capstone:', err);
-        setError('Failed to initialize disassembler');
+        setError(`Failed to initialize disassembler: ${err}`);
+        setIsLoading(false);
+        onOutput?.(`[Error] Failed to initialize disassembler: ${err}`);
       }
     };
 
@@ -84,7 +90,7 @@ export default function DisassemblyView({
         disassembler.current.dispose();
       }
     };
-  }, []);
+  }, [onOutput]);
 
   // Load disassembly
   const loadDisassembly = useCallback(async (address: number, length: number) => {
@@ -430,9 +436,14 @@ export default function DisassemblyView({
       </div>
 
       {/* Status bar */}
-      {(error || isLoading) && (
+      {(error || isLoading || !disassemblerReady) && (
         <div className="px-3 py-1 bg-gray-900 border-b border-gray-700">
-          {isLoading && <span className="text-xs text-yellow-400">Loading...</span>}
+          {!disassemblerReady && !error && (
+            <span className="text-xs text-yellow-400">⚙️ Initializing Capstone disassembler...</span>
+          )}
+          {isLoading && disassemblerReady && (
+            <span className="text-xs text-yellow-400">Loading disassembly...</span>
+          )}
           {error && <span className="text-xs text-red-400">{error}</span>}
         </div>
       )}
