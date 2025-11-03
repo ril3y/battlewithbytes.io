@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ArmDisassembler, DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
 import { GdbClient } from '../lib/gdb/GdbClient';
+import { ControlFlowGraphView } from './ControlFlowGraphView';
 
 interface DisassemblyViewProps {
   onReadMemory: (address: number, length: number) => Promise<Uint8Array | null>;
@@ -19,6 +20,7 @@ interface DisassemblyViewProps {
   registers?: Map<string, number>;
   gdbClient?: GdbClient | null;
   onOutput?: (message: string) => void;
+  onAddressClick?: (address: number) => void; // Callback when address is clicked
 }
 
 interface DisassemblyLine {
@@ -29,38 +31,33 @@ interface DisassemblyLine {
   crossRefs: number[];
 }
 
+type ViewMode = 'linear' | 'graph';
+
 export default function DisassemblyView({
   onReadMemory,
   programCounter,
   isConnected,
   registers,
   gdbClient,
-  onOutput
+  onOutput,
+  onAddressClick
 }: DisassemblyViewProps) {
   const [lines, setLines] = useState<DisassemblyLine[]>([]);
   const [baseAddress, setBaseAddress] = useState<number>(0x08000000); // Default flash base
   const [addressInput, setAddressInput] = useState<string>('0x08000000');
-  const [bytesToRead, setBytesToRead] = useState<number>(256);
+  const [bytesToRead, setBytesToRead] = useState<number>(512); // Increased default for better initial view
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [followPC, setFollowPC] = useState(true);
   const [showBytes, setShowBytes] = useState(true);
   const [symbols] = useState<Map<number, string>>(new Map());  // TODO: Implement symbol loading
+  const [viewMode, setViewMode] = useState<ViewMode>('linear');
+  const [rawInstructions, setRawInstructions] = useState<DisassembledInstruction[]>([]);
   // const [symbols, setSymbols] = useState<Map<number, string>>(new Map());
   const [breakpoints, setBreakpoints] = useState<Set<number>>(new Set());
 
   const disassembler = useRef(new ArmDisassembler());
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to PC
-  useEffect(() => {
-    if (followPC && programCounter !== undefined && containerRef.current) {
-      const pcElement = containerRef.current.querySelector(`[data-address="${programCounter}"]`);
-      if (pcElement) {
-        pcElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [programCounter, followPC, lines]);
 
   // Load disassembly
   const loadDisassembly = useCallback(async (address: number, length: number) => {
@@ -73,14 +70,21 @@ export default function DisassemblyView({
     setError(null);
 
     try {
+      console.log(`[DisassemblyView] Reading ${length} bytes from 0x${address.toString(16)}`);
       const data = await onReadMemory(address, length);
       if (!data) {
         setError('Failed to read memory');
+        console.error('[DisassemblyView] Memory read returned null');
         return;
       }
 
+      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling...`);
       // Disassemble the data
       const instructions = disassembler.current.disassemble(data, address, true);
+      console.log(`[DisassemblyView] Disassembled ${instructions.length} instructions`);
+
+      // Save raw instructions for CFG view
+      setRawInstructions(instructions);
 
       // Analyze control flow
       const flowMap = disassembler.current.analyzeControlFlow(instructions);
@@ -151,6 +155,26 @@ export default function DisassemblyView({
       loadDisassembly(alignedAddr, bytesToRead);
     }
   }, [programCounter, bytesToRead, loadDisassembly]);
+
+  // Auto-scroll to PC and reload if PC goes out of range
+  useEffect(() => {
+    if (followPC && programCounter !== undefined) {
+      // Check if PC is in the current instruction list
+      const pcInView = lines.some(line => line.instruction.address === programCounter);
+
+      if (!pcInView && lines.length > 0) {
+        // PC is outside visible range, reload disassembly centered on PC
+        console.log('[DisassemblyView] PC out of range, reloading at', programCounter.toString(16));
+        handleGoToPC();
+      } else if (pcInView && containerRef.current) {
+        // PC is in view, just scroll to it
+        const pcElement = containerRef.current.querySelector(`[data-address="${programCounter}"]`);
+        if (pcElement) {
+          pcElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  }, [programCounter, followPC, lines, handleGoToPC]);
 
   // Toggle breakpoint at address
   const handleToggleBreakpoint = useCallback(async (address: number) => {
@@ -265,6 +289,7 @@ export default function DisassemblyView({
   // Auto-load when connected (only on initial connect, not on every PC change)
   useEffect(() => {
     if (isConnected && programCounter !== undefined && followPC && lines.length === 0) {
+      console.log('[DisassemblyView] Auto-loading disassembly at PC:', programCounter.toString(16));
       handleGoToPC();
     }
   }, [isConnected, programCounter, followPC, handleGoToPC, lines.length]);
@@ -311,6 +336,30 @@ export default function DisassemblyView({
           Go to PC
         </button>
 
+        {/* View Mode Tabs */}
+        <div className="flex items-center gap-1 ml-4">
+          <button
+            onClick={() => setViewMode('linear')}
+            className={`px-3 py-1 text-xs font-mono rounded ${
+              viewMode === 'linear'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Linear
+          </button>
+          <button
+            onClick={() => setViewMode('graph')}
+            className={`px-3 py-1 text-xs font-mono rounded ${
+              viewMode === 'graph'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Graph
+          </button>
+        </div>
+
         <div className="flex items-center gap-2 ml-auto">
           <label className="flex items-center gap-1 text-xs text-gray-400">
             <input
@@ -322,15 +371,17 @@ export default function DisassemblyView({
             Follow PC
           </label>
 
-          <label className="flex items-center gap-1 text-xs text-gray-400">
-            <input
-              type="checkbox"
-              checked={showBytes}
-              onChange={(e) => setShowBytes(e.target.checked)}
-              className="rounded"
-            />
-            Show Bytes
-          </label>
+          {viewMode === 'linear' && (
+            <label className="flex items-center gap-1 text-xs text-gray-400">
+              <input
+                type="checkbox"
+                checked={showBytes}
+                onChange={(e) => setShowBytes(e.target.checked)}
+                className="rounded"
+              />
+              Show Bytes
+            </label>
+          )}
 
           <select
             value={bytesToRead}
@@ -355,21 +406,64 @@ export default function DisassemblyView({
       )}
 
       {/* Disassembly display */}
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-auto font-mono text-xs p-2"
-        style={{ lineHeight: '1.4' }}
-      >
-        {!isConnected ? (
-          <div className="text-gray-500 text-center mt-4">
-            Connect to target to view disassembly
-          </div>
-        ) : lines.length === 0 ? (
-          <div className="text-gray-500 text-center mt-4">
-            No instructions loaded. Click Refresh or Go to PC to load.
-          </div>
-        ) : (
-          <table className="w-full">
+      {viewMode === 'graph' ? (
+        /* Graph View */
+        <div className="flex-1 overflow-hidden">
+          {!isConnected ? (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              Connect to target to view control flow graph
+            </div>
+          ) : rawInstructions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="text-lg mb-4">🔀 No Control Flow Graph</div>
+              <div className="text-sm text-center mb-4 max-w-md">
+                Load disassembly first:
+                <ul className="mt-2 text-left list-disc list-inside">
+                  <li>Switch to <span className="text-blue-400 font-bold">Linear</span> view</li>
+                  <li>Click <span className="text-green-400 font-bold">Go to PC</span> to load instructions</li>
+                  <li>Return to <span className="text-blue-400 font-bold">Graph</span> view</li>
+                </ul>
+              </div>
+              <div className="text-xs text-gray-500">
+                {programCounter !== undefined && `PC is at 0x${programCounter.toString(16).toUpperCase()}`}
+              </div>
+            </div>
+          ) : (
+            <ControlFlowGraphView
+              instructions={rawInstructions}
+              selectedAddress={programCounter}
+              onAddressClick={onAddressClick}
+            />
+          )}
+        </div>
+      ) : (
+        /* Linear View */
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-auto font-mono text-xs p-2"
+          style={{ lineHeight: '1.4' }}
+        >
+          {!isConnected ? (
+            <div className="text-gray-500 text-center mt-4">
+              Connect to target to view disassembly
+            </div>
+          ) : lines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="text-lg mb-4">📋 No Disassembly Loaded</div>
+              <div className="text-sm text-center mb-4 max-w-md">
+                To view disassembly:
+                <ul className="mt-2 text-left list-disc list-inside">
+                  <li>Click <span className="text-green-400 font-bold">Go to PC</span> to view code at program counter</li>
+                  <li>Enter an address and click <span className="text-green-400 font-bold">Go</span></li>
+                  <li>Or click <span className="text-green-400 font-bold">Refresh</span> to reload current view</li>
+                </ul>
+              </div>
+              <div className="text-xs text-gray-500">
+                {programCounter !== undefined && `PC is at 0x${programCounter.toString(16).toUpperCase()}`}
+              </div>
+            </div>
+          ) : (
+            <table className="w-full">
             <colgroup>
               <col className="w-4" />
               <col className="w-24" />
@@ -441,7 +535,11 @@ export default function DisassemblyView({
                       </td>
 
                       {/* Address */}
-                      <td className="text-gray-400 pr-2">
+                      <td
+                        className="text-gray-400 pr-2 cursor-pointer hover:text-green-400 hover:underline"
+                        onClick={() => onAddressClick?.(inst.address)}
+                        title="Jump to address in Memory view"
+                      >
                         {formatAddress(inst.address)}:
                       </td>
 
@@ -503,7 +601,8 @@ export default function DisassemblyView({
             </tbody>
           </table>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Status line */}
       <div className="px-3 py-1 bg-gray-900 border-t border-gray-700 text-xs text-gray-400">
