@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next'
-import remarkGfm from 'remark-gfm'
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -20,7 +19,7 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  webpack: (config, { dev, isServer }) => { 
+  webpack: (config, { dev }) => { 
     // Transpile react-console-emulator package
     config.module.rules.push({
       test: /\.js$/,
