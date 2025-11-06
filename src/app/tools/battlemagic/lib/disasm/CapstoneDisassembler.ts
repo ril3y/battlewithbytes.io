@@ -109,23 +109,22 @@ export class CapstoneDisassembler {
     this.initPromise = (async () => {
       try {
         // Dynamic import to avoid bundle bloat
-        // Capstone.js is a UMD module that exports `cs` globally
-        await import('@alexaltea/capstone-js/dist/capstone.min.js');
+        // Capstone.js exports MCapstone, and we need to initialize it first
+        const capstoneModule = await import('@alexaltea/capstone-js/dist/capstone.min.js');
 
-        // Access the global `cs` object (set by UMD module)
+        // The module exports MCapstone which needs to be initialized
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cs = (window as any).cs;
+        const MCapstone = (capstoneModule as any).default || capstoneModule;
 
-        if (!cs) {
-          throw new Error('Capstone module (cs) not found on window object');
+        // MCapstone is a promise that resolves when WASM is ready
+        console.log('[CapstoneDisassembler] Waiting for WebAssembly to initialize...');
+        const cs = await MCapstone;
+
+        if (!cs || !cs.Capstone) {
+          throw new Error('Capstone module did not initialize properly');
         }
 
-        // Wait for WebAssembly module to initialize (if using WASM build)
-        if (cs.MCapstone) {
-          await cs.MCapstone;
-          console.log('[CapstoneDisassembler] WebAssembly module initialized');
-        }
-
+        console.log('[CapstoneDisassembler] WebAssembly module initialized');
         this.cs = cs;
 
         // Create ARM Thumb disassembler instance
