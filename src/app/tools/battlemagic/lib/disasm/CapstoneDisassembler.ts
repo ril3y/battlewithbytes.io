@@ -133,8 +133,8 @@ export class CapstoneDisassembler {
         const mode = cs.MODE_THUMB | cs.MODE_MCLASS | (this.littleEndian ? 0 : cs.MODE_BIG_ENDIAN);
         this.capstone = new cs.Capstone(cs.ARCH_ARM, mode);
 
-        // Enable detailed instruction information
-        this.capstone.detail(true);
+        // Note: detail() method is not available in Capstone.js
+        // The JavaScript version provides basic disassembly without detailed operand info
 
         this.isInitialized = true;
         console.log('[CapstoneDisassembler] Initialized successfully');
