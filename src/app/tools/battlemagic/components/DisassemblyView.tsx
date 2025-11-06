@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CapstoneDisassembler } from '../lib/disasm/CapstoneDisassembler';
+import { ArmDisassembler } from '../lib/disasm/ArmDisassembler';
 import type { DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
 import { GdbClient } from '../lib/gdb/GdbClient';
 import { ControlFlowGraphView } from './ControlFlowGraphView';
@@ -58,10 +59,10 @@ export default function DisassemblyView({
   const [breakpoints, setBreakpoints] = useState<Set<number>>(new Set());
   const [disassemblerReady, setDisassemblerReady] = useState(false);
 
-  const disassembler = useRef<CapstoneDisassembler | null>(null);
+  const disassembler = useRef<CapstoneDisassembler | ArmDisassembler | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Capstone disassembler
+  // Initialize Capstone disassembler with fallback to ArmDisassembler
   useEffect(() => {
     const initDisassembler = async () => {
       try {
@@ -75,10 +76,14 @@ export default function DisassemblyView({
         console.log('[DisassemblyView] Capstone disassembler initialized successfully');
         onOutput?.('[Capstone disassembler ready]');
       } catch (err) {
-        console.error('[DisassemblyView] Failed to initialize Capstone:', err);
-        setError(`Failed to initialize disassembler: ${err}`);
+        console.error('[DisassemblyView] Failed to initialize Capstone, falling back to ArmDisassembler:', err);
+        // Fallback to custom ARM disassembler
+        disassembler.current = new ArmDisassembler();
+        setDisassemblerReady(true);
         setIsLoading(false);
-        onOutput?.(`[Error] Failed to initialize disassembler: ${err}`);
+        setError(null); // Clear error since we have a fallback
+        console.log('[DisassemblyView] Using ArmDisassembler fallback');
+        onOutput?.('[Using ArmDisassembler (Capstone failed to load)]');
       }
     };
 
@@ -86,7 +91,7 @@ export default function DisassemblyView({
 
     return () => {
       // Cleanup on unmount
-      if (disassembler.current) {
+      if (disassembler.current && 'dispose' in disassembler.current) {
         disassembler.current.dispose();
       }
     };
@@ -116,9 +121,10 @@ export default function DisassemblyView({
         return;
       }
 
-      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling with Capstone...`);
-      // Disassemble the data using Capstone
-      const instructions = await disassembler.current.disassemble(data, address, true);
+      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling...`);
+      // Disassemble the data (supports both Capstone async and ArmDisassembler sync)
+      const disasmResult = disassembler.current.disassemble(data, address, true);
+      const instructions = disasmResult instanceof Promise ? await disasmResult : disasmResult;
       console.log(`[DisassemblyView] Disassembled ${instructions.length} instructions`);
 
       // Save raw instructions for CFG view
