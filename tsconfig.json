@@ -6,6 +6,9 @@
       "path": "./apps/web"
     },
     {
+      "path": "./apps/battleterm-pwa"
+    },
+    {
       "path": "./packages/battleterm"
     }
   ]
