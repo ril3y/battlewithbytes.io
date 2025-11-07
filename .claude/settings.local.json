@@ -30,7 +30,11 @@
       "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
       "Bash(git stash:*)",
       "Bash(.gitignore)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(src/app/tools/battlemagic/lib/disasm/capstone.d.ts)"
     ],
     "deny": []
   },
