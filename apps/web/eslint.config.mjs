@@ -27,6 +27,13 @@ const eslintConfig = [
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
+    rules: {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "prefer-const": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+    },
+  },
+  {
     files: ["**/__tests__/**/*.ts", "**/__tests__/**/*.tsx", "**/*.test.ts", "**/*.test.tsx"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",

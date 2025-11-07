@@ -1,0 +1,54 @@
+.context-menu-container {
+  position: absolute;
+  z-index: 1000; /* High z-index to appear above other elements */
+  background-color: #1a202c; /* Dark background - consistent with dark theme */
+  border: 1px solid #2d3748; /* Slightly lighter border */
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 180px; /* Minimum width for the menu */
+  padding: 4px 0; /* Vertical padding for the list */
+  font-family: 'Roboto Mono', monospace; /* Terminal-like font */
+}
+
+.context-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.context-menu-option {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 16px; /* Padding for each option */
+  font-size: 0.875rem; /* 14px */
+  color: #a0aec0; /* Lighter gray text */
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.context-menu-option:hover:not(.disabled) {
+  background-color: #2d3748; /* Slightly lighter dark for hover */
+  color: #00ff9d; /* Green accent on hover */
+}
+
+.context-menu-option.danger {
+  color: #f56565; /* Red for danger options */
+}
+
+.context-menu-option.danger:hover:not(.disabled) {
+  background-color: #3b3030; /* Darker red background on hover */
+  color: #f56565; /* Keep red text color */
+}
+
+.context-menu-option.disabled {
+  color: #4a5568; /* Muted color for disabled options */
+  cursor: not-allowed;
+}
+
+.context-menu-option.disabled:hover {
+  background-color: transparent; /* No background change on hover for disabled */
+  color: #4a5568; /* Keep muted color */
+}

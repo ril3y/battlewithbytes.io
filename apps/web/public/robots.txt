@@ -1,0 +1,6 @@
+# robots.txt for Battle With Bytes
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://battlewithbytes.io/sitemap.xml

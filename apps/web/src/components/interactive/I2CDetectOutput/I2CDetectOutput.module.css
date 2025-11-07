@@ -1,0 +1,75 @@
+.container {
+  position: relative;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 1.5rem 0;
+  background-color: #0a0d11;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.output {
+  display: block;
+  margin: 0;
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.command {
+  display: block;
+  color: #ff851b;
+  margin-bottom: 0.5rem;
+}
+
+.header {
+  display: block;
+  color: #7fdbff;
+  margin-bottom: 0.25rem;
+}
+
+.row {
+  display: block;
+  color: #ff851b;
+}
+
+.highlight {
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.highlight:hover {
+  text-shadow: 0 0 8px currentColor;
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #00ff9d;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  max-width: 280px;
+  box-shadow: 0 2px 10px rgba(0, 255, 157, 0.3);
+  z-index: 10;
+  transform: translateX(-50%);
+  white-space: normal;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tooltipArrow {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  margin-left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #00ff9d;
+}
