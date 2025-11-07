@@ -1,0 +1,114 @@
+[
+  {
+    "id": "armv6-m",
+    "name": "ARMv6-M",
+    "description": "ARM Cortex-M0, M0+",
+    "family": "ARM",
+    "vendor": "ARM"
+  },
+  {
+    "id": "armv7-m",
+    "name": "ARMv7-M",
+    "description": "ARM Cortex-M3",
+    "family": "ARM",
+    "vendor": "ARM"
+  },
+  {
+    "id": "armv7e-m",
+    "name": "ARMv7E-M",
+    "description": "ARM Cortex-M4, M7 (with optional FPU)",
+    "family": "ARM",
+    "vendor": "ARM"
+  },
+  {
+    "id": "armv8-m-baseline",
+    "name": "ARMv8-M Baseline",
+    "description": "ARM Cortex-M23",
+    "family": "ARM",
+    "vendor": "ARM"
+  },
+  {
+    "id": "armv8-m-mainline",
+    "name": "ARMv8-M Mainline",
+    "description": "ARM Cortex-M33, M35P",
+    "family": "ARM",
+    "vendor": "ARM"
+  },
+  {
+    "id": "riscv32i",
+    "name": "RISC-V RV32I",
+    "description": "32-bit RISC-V base integer instruction set",
+    "family": "RISC-V",
+    "vendor": "RISC-V International"
+  },
+  {
+    "id": "riscv32e",
+    "name": "RISC-V RV32E",
+    "description": "32-bit RISC-V embedded variant (16 registers)",
+    "family": "RISC-V",
+    "vendor": "RISC-V International"
+  },
+  {
+    "id": "riscv32im",
+    "name": "RISC-V RV32IM",
+    "description": "RV32I + Integer Multiplication/Division",
+    "family": "RISC-V",
+    "vendor": "RISC-V International"
+  },
+  {
+    "id": "riscv32imc",
+    "name": "RISC-V RV32IMC",
+    "description": "RV32IM + Compressed Instructions",
+    "family": "RISC-V",
+    "vendor": "RISC-V International"
+  },
+  {
+    "id": "mips32r2",
+    "name": "MIPS32 Release 2",
+    "description": "MIPS32 architecture release 2",
+    "family": "MIPS",
+    "vendor": "MIPS Technologies"
+  },
+  {
+    "id": "mips32r5",
+    "name": "MIPS32 Release 5",
+    "description": "MIPS32 architecture release 5",
+    "family": "MIPS",
+    "vendor": "MIPS Technologies"
+  },
+  {
+    "id": "xtensa-lx6",
+    "name": "Xtensa LX6",
+    "description": "Tensilica Xtensa LX6 (ESP32)",
+    "family": "Xtensa",
+    "vendor": "Cadence/Tensilica"
+  },
+  {
+    "id": "xtensa-lx7",
+    "name": "Xtensa LX7",
+    "description": "Tensilica Xtensa LX7 (ESP32-S2/S3)",
+    "family": "Xtensa",
+    "vendor": "Cadence/Tensilica"
+  },
+  {
+    "id": "avr",
+    "name": "AVR",
+    "description": "8-bit AVR architecture (ATmega, ATtiny)",
+    "family": "AVR",
+    "vendor": "Microchip"
+  },
+  {
+    "id": "pic32",
+    "name": "PIC32",
+    "description": "32-bit PIC microcontroller",
+    "family": "PIC",
+    "vendor": "Microchip"
+  },
+  {
+    "id": "custom",
+    "name": "Custom/Other",
+    "description": "Custom or unlisted architecture",
+    "family": "Other",
+    "vendor": "Various"
+  }
+]

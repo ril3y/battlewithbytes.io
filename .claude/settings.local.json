@@ -27,7 +27,10 @@
       "Bash(gh run list:*)",
       "Bash(taskkill:*)",
       "Bash(if exist .next rmdir /s /q .next)",
-      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")"
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(git stash:*)",
+      "Bash(.gitignore)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   },

@@ -1,0 +1,98 @@
+{
+  "id": "stm32f407",
+  "name": "STM32F407VG",
+  "family": "ARM Cortex-M4F",
+  "vendor": "STMicroelectronics",
+  "architecture": "ARMv7-M",
+  "coreFrequency": 168000000,
+  "flashSize": 1048576,
+  "ramSize": 196608,
+  "memoryRegions": [
+    {
+      "name": "Main Flash",
+      "type": "flash",
+      "start": 134217728,
+      "end": 135266303,
+      "size": 1048576,
+      "permissions": {"read": true, "write": false, "execute": true},
+      "description": "1 MB main flash memory"
+    },
+    {
+      "name": "System Memory",
+      "type": "rom",
+      "start": 536805376,
+      "end": 536836095,
+      "size": 30720,
+      "permissions": {"read": true, "write": false, "execute": true},
+      "description": "Bootloader ROM"
+    },
+    {
+      "name": "SRAM1",
+      "type": "sram",
+      "start": 536870912,
+      "end": 536985599,
+      "size": 114688,
+      "permissions": {"read": true, "write": true, "execute": true},
+      "description": "112 KB main SRAM"
+    },
+    {
+      "name": "SRAM2",
+      "type": "sram",
+      "start": 536985600,
+      "end": 537001983,
+      "size": 16384,
+      "permissions": {"read": true, "write": true, "execute": true},
+      "description": "16 KB auxiliary SRAM"
+    },
+    {
+      "name": "CCM Data RAM",
+      "type": "sram",
+      "start": 268435456,
+      "end": 268500991,
+      "size": 65536,
+      "permissions": {"read": true, "write": true, "execute": false},
+      "description": "64 KB Core Coupled Memory (data only, no code execution)"
+    },
+    {
+      "name": "Peripherals",
+      "type": "peripheral",
+      "start": 1073741824,
+      "end": 1610612735,
+      "size": 536870912,
+      "permissions": {"read": true, "write": true, "execute": false},
+      "description": "Peripheral register space"
+    },
+    {
+      "name": "Cortex-M4 Peripherals",
+      "type": "system",
+      "start": 3758096384,
+      "end": 4026531839,
+      "size": 268435456,
+      "permissions": {"read": true, "write": true, "execute": false},
+      "description": "ARM Cortex-M4 core peripherals"
+    }
+  ],
+  "vectorTable": {
+    "address": 134217728,
+    "entries": [
+      {"offset": 0, "name": "Initial SP", "description": "Initial Stack Pointer"},
+      {"offset": 4, "name": "Reset", "description": "Reset Handler"},
+      {"offset": 8, "name": "NMI"},
+      {"offset": 12, "name": "HardFault"},
+      {"offset": 16, "name": "MemManage"},
+      {"offset": 20, "name": "BusFault"},
+      {"offset": 24, "name": "UsageFault"},
+      {"offset": 44, "name": "SVCall"},
+      {"offset": 56, "name": "PendSV"},
+      {"offset": 60, "name": "SysTick"}
+    ]
+  },
+  "breakpointCaps": {
+    "hardwareBreakpoints": 6,
+    "watchpoints": 4,
+    "supportsConditional": false,
+    "supportsDataBreakpoints": true
+  },
+  "debugInterface": ["SWD", "JTAG"],
+  "notes": "STM32F407 is a high-performance MCU with DSP and FPU, commonly used on STM32F4 Discovery boards"
+}
