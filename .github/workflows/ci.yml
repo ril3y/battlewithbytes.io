@@ -1,21 +1,21 @@
-name: Deploy to GitHub Pages
+name: CI
 
 on:
   push:
+    branches: ["master", "turborepo-migration"]
+  pull_request:
     branches: ["master"]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -53,31 +53,33 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: ${{ runner.os }}-turbo-deploy-${{ github.sha }}
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-deploy-
+            ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build web app with Turbo
-        run: pnpm run build:web
+      - name: Run linter
+        run: pnpm run lint
+        env:
+          TURBO_CACHE_DIR: .turbo
+
+      - name: Run build
+        run: pnpm run build
         env:
           TURBO_CACHE_DIR: .turbo
           NEXT_TELEMETRY_DISABLED: 1
 
-      - name: Upload artifact for deployment
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./apps/web/out
+      - name: Run tests
+        run: pnpm run test
+        env:
+          TURBO_CACHE_DIR: .turbo
+        continue-on-error: true
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Upload turbo cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
