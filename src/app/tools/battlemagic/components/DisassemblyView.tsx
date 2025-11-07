@@ -149,7 +149,7 @@ export default function DisassemblyView({
         instruction: inst,
         isCurrentPC: false, // Will be updated separately when PC changes
         isBreakpoint: breakpoints.has(inst.address),
-        isFunctionEntry: disassembler.current.isFunctionEntry(instructions, index),
+        isFunctionEntry: disassembler.current?.isFunctionEntry(instructions, index) ?? false,
         crossRefs: crossRefs.get(inst.address) || []
       }));
 

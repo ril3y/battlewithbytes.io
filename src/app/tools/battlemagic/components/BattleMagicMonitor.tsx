@@ -1081,18 +1081,11 @@ export default function BattleMagicMonitor() {
                     gdbClient={gdbClient}
                     isConnected={targetAttached}
                     onOutput={addGdbOutput}
-                    breakpoints={breakpoints}
-                    onBreakpointsChange={setBreakpoints}
                   />
                 )}
                 {activeRightPanel === 'memorymap' && (
                   <MemoryMapView
                     gdbClient={gdbClient}
-                    loadedBinary={loadedBinary}
-                    customRegions={customMemoryRegions}
-                    onCustomRegionsChange={setCustomMemoryRegions}
-                    selectedCpu={selectedMemoryMapCpu}
-                    onSelectedCpuChange={setSelectedMemoryMapCpu}
                     onRegionSelect={(region) => {
                       addGdbOutput(`[Selected memory region: ${region.name} at 0x${region.start.toString(16).toUpperCase()}]`);
                     }}

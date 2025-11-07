@@ -45,7 +45,7 @@ export abstract class BaseDecoder {
   protected observers: Set<IPacketObserver> = new Set();
 
   /** Decoder configuration */
-  protected readonly options: Required<DecoderOptions>;
+  protected readonly options: Required<Omit<DecoderOptions, 'portFilter'>> & Pick<DecoderOptions, 'portFilter'>;
 
   /** Statistics tracking */
   protected stats: SwoStatistics;

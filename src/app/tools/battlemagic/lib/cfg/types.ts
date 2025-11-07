@@ -143,6 +143,8 @@ export interface CFGLayout {
   bounds: {
     width: number;
     height: number;
+    minX: number;
+    minY: number;
   };
 }
 

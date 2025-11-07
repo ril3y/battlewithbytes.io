@@ -112,7 +112,7 @@ export class MockSerialPort implements ISerialPort {
   /**
    * Queue multiple mock responses
    */
-  mockResponses(responses: Uint8Array[]): void {
+  queueMockResponses(responses: Uint8Array[]): void {
     this.mockResponses.push(...responses);
   }
 

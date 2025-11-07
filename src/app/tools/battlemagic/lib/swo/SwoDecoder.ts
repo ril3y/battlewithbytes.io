@@ -387,11 +387,20 @@ export class SwoDecoder extends BaseDecoder {
       text = undefined;
     }
 
+    if (!this.currentHeader) {
+      this.emitError({
+        type: 'parse',
+        message: 'No current header for instrumentation packet',
+        timestamp: Date.now()
+      });
+      return;
+    }
+
     this.emitPacket({
       type: PacketType.INSTRUMENTATION,
       timestamp,
       raw,
-      port: this.currentHeader.port!,
+      port: this.currentHeader.port,
       data,
       text
     } as InstrumentationPacket);

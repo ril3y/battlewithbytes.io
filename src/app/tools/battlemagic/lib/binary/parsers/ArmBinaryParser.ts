@@ -15,6 +15,7 @@ import {
   CORTEX_M_VECTORS,
   CortexMException,
   BinaryInfo,
+  MemoryRegion,
   ElfMachine
 } from '../types';
 
@@ -203,7 +204,7 @@ export class ArmBinaryParser extends BinaryParser {
 
     // Add memory regions based on typical ARM Cortex-M layout
     if (!info.memoryMap || info.memoryMap.length === 0) {
-      info.memoryMap = this.generateArmMemoryMap(info);
+      info.memoryMap = this.generateArmMemoryMap();
     }
 
     return info;
@@ -401,8 +402,8 @@ export class ArmBinaryParser extends BinaryParser {
   /**
    * Generate ARM-specific memory map
    */
-  private generateArmMemoryMap(): unknown[] {
-    const regions = [];
+  private generateArmMemoryMap(): MemoryRegion[] {
+    const regions: MemoryRegion[] = [];
 
     // Typical STM32 memory layout
     regions.push({

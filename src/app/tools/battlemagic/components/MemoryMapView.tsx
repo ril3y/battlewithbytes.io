@@ -63,8 +63,8 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     try {
       // Try to get memory info from target
       const memInfo = await gdbClient.sendCommand('info mem');
-      if (memInfo.output) {
-        const parsedRegions = parser.parseGdbMemoryInfo(memInfo.output);
+      if (memInfo.type === 'data' && memInfo.data) {
+        const parsedRegions = parser.parseGdbMemoryInfo(memInfo.data);
         if (parsedRegions.length > 0) {
           setRegions(parsedRegions);
           setStatistics(parser.calculateStatistics(parsedRegions));
@@ -77,9 +77,10 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       setRegions(detectedRegions);
 
       // Try to update with runtime info
-      const sp = await gdbClient.readRegister('sp');
-      if (sp) {
-        parser.updateMemoryUsage(new Map(), parseInt(sp, 16));
+      const registers = await gdbClient.getFormattedRegisters();
+      const sp = registers.get('sp');
+      if (typeof sp === 'number') {
+        parser.updateMemoryUsage(new Map(), sp);
         setStatistics(parser.getStatistics());
       }
     } catch (error) {
@@ -282,7 +283,7 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
         setViewState(prev => ({ ...prev, hoveredRegion }));
       }
     }
-  }, [isDragging, dragStart, regions, viewState.zoom, viewState.offset]);
+  }, [isDragging, dragStart, regions, viewState.zoom, viewState.offset, viewState.hoveredRegion]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDragging(true);

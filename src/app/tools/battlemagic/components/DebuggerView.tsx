@@ -51,9 +51,6 @@ export default function DebuggerView({
   const [isDraggingTopVertical, setIsDraggingTopVertical] = useState(false);
   const [isDraggingBottomVertical, setIsDraggingBottomVertical] = useState(false);
 
-  // Memory jump state - address to jump to in memory view
-  const [memoryJumpAddress, setMemoryJumpAddress] = useState<number | undefined>();
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleMaximize = useCallback((panel: MaximizedPanel) => {
@@ -61,8 +58,9 @@ export default function DebuggerView({
   }, []);
 
   // Handle address click from disassembly - jump to memory view
-  const handleAddressClick = useCallback((address: number) => {
-    setMemoryJumpAddress(address);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleAddressClick = useCallback((_address: number) => {
+    // TODO: Implement memory jump functionality
   }, []);
 
   // Mouse handlers for horizontal divider (top/bottom split)
@@ -250,8 +248,6 @@ export default function DebuggerView({
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
-              jumpToAddress={memoryJumpAddress}
-              onOutput={onOutput}
             />
           )}
         </div>
@@ -323,8 +319,6 @@ export default function DebuggerView({
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
-              jumpToAddress={memoryJumpAddress}
-              onOutput={onOutput}
             />
           </div>
         </div>

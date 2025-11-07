@@ -39,7 +39,7 @@ export class CFGLayoutEngine {
       return {
         blocks: new Map(),
         edges: [],
-        bounds: { width: 0, height: 0 }
+        bounds: { width: 0, height: 0, minX: 0, minY: 0 }
       };
     }
 
@@ -378,7 +378,7 @@ export class CFGLayoutEngine {
   /**
    * Calculate bounding box for layout
    */
-  private calculateBounds(blockLayouts: Map<string, BlockLayout>): { width: number; height: number } {
+  private calculateBounds(blockLayouts: Map<string, BlockLayout>): { width: number; height: number; minX: number; minY: number } {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -395,7 +395,9 @@ export class CFGLayoutEngine {
 
     return {
       width: maxX - minX + padding * 2,
-      height: maxY - minY + padding * 2
+      height: maxY - minY + padding * 2,
+      minX,
+      minY
     };
   }
 }

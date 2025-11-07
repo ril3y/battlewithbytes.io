@@ -530,11 +530,12 @@ export class GdbClient {
     }
 
     if (response.type === 'error') {
-      throw new Error(`Failed to insert breakpoint: ${response.data}`);
+      throw new Error(`Failed to insert breakpoint: ${response.code || 'unknown error'}`);
     }
 
     if (response.type !== 'ok') {
-      throw new Error(`Unexpected response type: ${response.type}, data: ${response.data}`);
+      const details = response.type === 'data' ? `, data: ${response.data}` : '';
+      throw new Error(`Unexpected response type: ${response.type}${details}`);
     }
   }
 

@@ -4,5 +4,6 @@
  */
 
 export { SwoDecoder } from './SwoDecoder';
-export { BaseDecoder, IPacketObserver } from './BaseDecoder';
+export { BaseDecoder } from './BaseDecoder';
+export type { IPacketObserver } from './BaseDecoder';
 export * from './types';
