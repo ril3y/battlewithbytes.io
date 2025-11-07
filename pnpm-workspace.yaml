@@ -1,0 +1,7 @@
+# pnpm workspace configuration
+packages:
+  # Main Next.js application
+  - 'apps/*'
+
+  # Shared packages and extracted tools
+  - 'packages/*'

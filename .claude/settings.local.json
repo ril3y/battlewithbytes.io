@@ -30,7 +30,15 @@
       "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
       "Bash(git stash:*)",
       "Bash(.gitignore)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(git tag:*)",
+      "Bash(powershell -Command \"Measure-Command { pnpm run build } | Select-Object -Property TotalSeconds\")",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm turbo:*)",
+      "Bash(pnpm -r list:*)"
     ],
     "deny": []
   },
