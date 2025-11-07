@@ -89,3 +89,15 @@ coverage/
 # Reference directories (root level only)
 /uCAN
 nul
+
+# Turborepo
+.turbo
+dist/
+build/
+
+# Workspace
+apps/*/node_modules
+packages/*/node_modules
+apps/*/.next
+apps/*/out
+packages/*/dist
