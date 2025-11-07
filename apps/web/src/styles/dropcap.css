@@ -1,0 +1,18 @@
+.dropcap-paragraph::first-letter {
+  color: #7fdc7a;
+  background: rgba(127, 220, 122, 0.05);
+  border: 1px solid #7fdc7a;
+  border-radius: 3px;
+  font-size: 2.7em;
+  font-family: 'Fira Mono', 'JetBrains Mono', 'Consolas', monospace;
+  font-weight: 700;
+  float: left;
+  line-height: 0.9;
+  margin-right: 0.18em;
+  margin-bottom: 0.01em;
+  padding: 0.01em 0.10em 0.01em 0.10em;
+  box-shadow: 0 0 2px #7fdc7a33;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 1px #7fdc7a55;
+  transition: box-shadow 0.2s;
+}

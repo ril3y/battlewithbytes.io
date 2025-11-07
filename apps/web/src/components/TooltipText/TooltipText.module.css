@@ -1,0 +1,106 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+  margin: 1rem 0;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.content {
+  padding: 0.5rem;
+  background-color: #0a0d11;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.tooltipTarget {
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tooltipTarget:hover {
+  text-shadow: 0 0 8px currentColor;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 10;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #00ff9d;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  max-width: 300px;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+  pointer-events: none;
+  white-space: normal;
+  width: auto;
+  text-align: center;
+}
+
+/* Tooltip positions */
+.tooltip.top {
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltip.bottom {
+  top: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltip.left {
+  right: 125%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tooltip.right {
+  left: 125%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Tooltip arrows */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  border-style: solid;
+  border-width: 6px;
+}
+
+.tooltip.top::after {
+  bottom: -12px;
+  left: 50%;
+  margin-left: -6px;
+  border-color: #00ff9d transparent transparent transparent;
+}
+
+.tooltip.bottom::after {
+  top: -12px;
+  left: 50%;
+  margin-left: -6px;
+  border-color: transparent transparent #00ff9d transparent;
+}
+
+.tooltip.left::after {
+  right: -12px;
+  top: 50%;
+  margin-top: -6px;
+  border-color: transparent transparent transparent #00ff9d;
+}
+
+.tooltip.right::after {
+  left: -12px;
+  top: 50%;
+  margin-top: -6px;
+  border-color: transparent #00ff9d transparent transparent;
+}

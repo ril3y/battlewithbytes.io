@@ -1,0 +1,139 @@
+/**
+ * Custom Prism.js theme for Battle With Bytes
+ * Based on cyberpunk styling with green accents
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: "JetBrains Mono", Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  padding: 1em;
+  margin: .5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.1);
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: #1a1a1a;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: .1em;
+  border-radius: .3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6a9955;
+}
+
+.token.punctuation {
+  color: #9abdf5;
+}
+
+.token.namespace {
+  opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #ff79c6;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #00ff9d; /* Brand green color */
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #00aeff;
+}
+
+.token.function,
+.token.class-name {
+  color: #ffcb6b;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #f56565;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* Line highlighting */
+.line-highlight {
+  background: rgba(0, 255, 157, 0.08);
+  box-shadow: inset 5px 0 0 rgba(0, 255, 157, 0.5);
+}
+
+/* Line numbers */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #333;
+}
+
+.line-numbers-rows > span:before {
+  color: #666;
+}
+
+/* Line highlighting */
+.command-line-prompt {
+  border-right: 1px solid #333;
+}
+
+.command-line-prompt > span:before {
+  color: #666;
+}

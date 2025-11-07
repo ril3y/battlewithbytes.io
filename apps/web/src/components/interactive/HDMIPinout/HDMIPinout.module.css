@@ -1,0 +1,186 @@
+/* src/components/HDMIPinout.module.css */
+
+.hdmiContainer {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #0a0d11;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    color: #ffffff;
+  }
+  
+  .viewToggle {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .viewToggle button {
+    background-color: transparent;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .viewToggle button.activeView {
+    background-color: rgba(0, 255, 157, 0.2);
+    border-color: #00ff9d;
+    color: #00ff9d;
+  }
+  
+  .pinoutView {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .connectorShape {
+    position: relative;
+    height: 180px;
+    background-color: #222;
+    border-radius: 6px;
+    border: 2px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .pinContainer {
+    display: grid;
+    grid-template-columns: repeat(19, 1fr);
+    grid-gap: 5px;
+    justify-content: center;
+    padding: 1rem;
+    width: auto;
+  }
+  
+  .pin {
+    height: 30px;
+    width: 12px;
+    background-color: #333;
+    border: 1px solid #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  
+  .pin:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+  }
+  
+  .pin::after {
+    content: attr(data-pin);
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: #999;
+  }
+  
+  .activePin {
+    transform: translateY(-10px);
+    box-shadow: 0 0 15px currentColor;
+  }
+  
+  .highlightPin {
+    animation: pulse 2s infinite;
+  }
+  
+  .pinDetails {
+    padding: 1rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background-color: rgba(10, 13, 17, 0.8);
+  }
+  
+  .pinDetails h3 {
+    margin-top: 0;
+  }
+  
+  .hackingNote {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-left: 3px solid #00ff9d;
+    background-color: rgba(0, 255, 157, 0.1);
+  }
+  
+  .tableView table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .tableView th, .tableView td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+  
+  .tableView th {
+    background-color: #111;
+    color: #00ff9d;
+  }
+  
+  .highlightRow {
+    background-color: rgba(0, 255, 157, 0.1);
+    cursor: pointer;
+  }
+  
+  .highlightRow:hover {
+    background-color: rgba(0, 255, 157, 0.2);
+  }
+  
+  .legend {
+    margin-top: 2rem;
+  }
+  
+  .legend ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+  }
+  
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .colorBox {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(0, 255, 157, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 157, 0);
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .pinoutView {
+      flex-direction: row;
+    }
+    
+    .pinDetails {
+      width: 50%;
+    }
+    
+    .connectorShape {
+      width: 50%;
+    }
+  }
