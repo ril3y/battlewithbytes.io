@@ -8,7 +8,7 @@
  * - No branches in the middle
  */
 
-import type { DisassembledInstruction } from '../arm/ArmDisassembler';
+import type { DisassembledInstruction } from '../disasm/ArmDisassembler';
 import {
   BlockType,
   EdgeType

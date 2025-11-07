@@ -4,7 +4,7 @@
  * Core type definitions for control flow analysis and visualization
  */
 
-import type { DisassembledInstruction } from '../arm/ArmDisassembler';
+import type { DisassembledInstruction } from '../disasm/ArmDisassembler';
 
 /**
  * Type of basic block based on its terminating instruction
