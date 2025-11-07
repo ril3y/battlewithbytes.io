@@ -144,7 +144,8 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
   const formattedDate = format(new Date(metadata.date), 'MMMM d, yyyy');
 
   // Combine global MDX components with local ones
-  const mdxComponents = useMDXComponents(localComponents);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mdxComponents = useMDXComponents(localComponents as any);
 
   // Use useEffect to ensure the MDX content only renders on the client side
   // and to initialize Prism.js highlighting
@@ -202,7 +203,8 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
       {/* MDX Content */}
       <div className="prose prose-invert prose-green max-w-none bg-black/20 p-6 md:p-8 rounded-lg border border-gray-800/50 shadow-lg">
         {isClient ? (
-          <MDXRemote {...content} components={mdxComponents} />
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <MDXRemote {...content} components={mdxComponents as any} />
         ) : (
           <div className="animate-pulse">
             <div className="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>

@@ -1,0 +1,52 @@
+{
+  "name": "@battlewithbytes/battleterm",
+  "version": "1.2.2",
+  "description": "Web-based serial terminal with ANSI support and PWA capabilities",
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "dependencies": {
+    "xterm": "^5.0.0",
+    "xterm-addon-fit": "^0.7.0",
+    "xterm-addon-web-links": "^0.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/node": "^20.0.0",
+    "@types/w3c-web-serial": "^1.0.0"
+  },
+  "keywords": [
+    "terminal",
+    "serial",
+    "ansi",
+    "xterm",
+    "pwa",
+    "web-serial"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/battlewithbytes/battlewithbytes.io"
+  },
+  "bugs": {
+    "url": "https://github.com/battlewithbytes/battlewithbytes.io/issues"
+  },
+  "homepage": "https://battlewithbytes.io"
+}

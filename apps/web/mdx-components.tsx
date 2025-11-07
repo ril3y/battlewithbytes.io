@@ -4,8 +4,8 @@ import type { MDXComponents } from 'mdx/types';
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
-    RadixTabs,
-    ImageWidget,
+    RadixTabs: RadixTabs as any,
+    ImageWidget: ImageWidget as any,
     ...components,
   };
 }
