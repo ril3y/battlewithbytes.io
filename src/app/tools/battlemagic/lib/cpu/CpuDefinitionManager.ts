@@ -13,10 +13,10 @@ import nrf52832 from '../../data/cpu-definitions/nrf52832.json';
 import genericCortexM4 from '../../data/cpu-definitions/generic-cortex-m4.json';
 
 const BUILTIN_DEFINITIONS: CpuDefinition[] = [
-  mt7697 as CpuDefinition,
-  stm32f407 as CpuDefinition,
-  nrf52832 as CpuDefinition,
-  genericCortexM4 as CpuDefinition,
+  mt7697 as unknown as CpuDefinition,
+  stm32f407 as unknown as CpuDefinition,
+  nrf52832 as unknown as CpuDefinition,
+  genericCortexM4 as unknown as CpuDefinition,
 ];
 
 const CUSTOM_DEFINITIONS_KEY = 'battlemagic_custom_cpu_definitions';
