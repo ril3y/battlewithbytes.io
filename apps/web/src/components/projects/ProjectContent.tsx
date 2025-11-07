@@ -181,7 +181,8 @@ export default function ProjectContent({ content }: ProjectContentProps) {
           </div>
         ) : mdxSource ? (
           <div className="mdx-content">
-            <MDXRemote {...mdxSource} components={components} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <MDXRemote {...mdxSource} components={components as any} />
           </div>
         ) : (
           <div className="flex justify-center items-center p-12">

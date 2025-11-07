@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Client-side wrapper for SerialTerminal
+ * Client-side wrapper for BattleTerm
  * Uses dynamic import to prevent SSR issues with xterm.js
  */
 
@@ -11,7 +11,7 @@ interface SerialTerminalClientProps {
   isStandalone?: boolean;
 }
 
-const SerialTerminal = dynamic(() => import('./index'), {
+const BattleTerm = dynamic(() => import('@battlewithbytes/battleterm'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center p-12 bg-black/50 border border-gray-800 rounded-lg">
@@ -24,5 +24,5 @@ const SerialTerminal = dynamic(() => import('./index'), {
 });
 
 export default function SerialTerminalClient({ isStandalone = false }: SerialTerminalClientProps) {
-  return <SerialTerminal isStandalone={isStandalone} />;
+  return <BattleTerm isStandalone={isStandalone} />;
 }
