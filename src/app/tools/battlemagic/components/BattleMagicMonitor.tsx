@@ -1068,10 +1068,6 @@ export default function BattleMagicMonitor() {
                   <FlashProgrammer
                     gdbClient={gdbClient}
                     isConnected={targetAttached}
-                    onBinaryLoaded={(binaryInfo) => {
-                      setLoadedBinary(binaryInfo);
-                      addGdbOutput(`[Binary loaded: ${binaryInfo.architecture}]`);
-                    }}
                   />
                 )}
                 {activeRightPanel === 'extract' && (
