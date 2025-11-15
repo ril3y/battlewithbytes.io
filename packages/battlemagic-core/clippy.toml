@@ -1,0 +1,10 @@
+# Clippy configuration for BattleMagic Core
+
+# Warn on common mistakes
+cognitive-complexity-threshold = 30
+too-many-arguments-threshold = 8
+
+# Pedantic mode - catch more issues
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"

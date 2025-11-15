@@ -1,0 +1,11 @@
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock
+
+# WASM output
+/pkg
+
+# Build artifacts
+*.wasm
+*.wasm.d.ts
