@@ -3,8 +3,8 @@
 /**
  * BattleMagic Monitor - Main Application Component
  *
- * Provides a full-screen interface for Black Magic Probe debugging
- * with side-by-side GDB and UART panels
+ * Professional IDA Pro-inspired debugger interface for Black Magic Probe
+ * with menu bar, toolbar, and organized panels
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -13,7 +13,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { GdbClient, GdbClientCallbacks } from '../lib/gdb/GdbClient';
 import { ConnectionState, Target, StopReply, BmpVersion } from '../lib/gdb/types';
-import ConnectionBar from './ConnectionBar';
+import MenuBar from './MenuBar';
+import Toolbar from './Toolbar';
+import StatusBar from './StatusBar';
 import GdbPanel from './GdbPanel';
 import UartPanel from './UartPanel';
 import { RegisterValue } from './RegistersPanel';
@@ -28,12 +30,8 @@ import ProjectMenu from './ProjectMenu';
 import DebuggerView from './DebuggerView';
 import {
   saveGdbPort,
-  saveUartPort,
-  loadBMPInfo,
-  findMatchingPort,
-  clearBMPInfo
+  saveUartPort
 } from '../utils/deviceStorage';
-import { BinaryInfo } from '../lib/binary/types';
 import { MemoryRegion } from '../lib/memory/MemoryMapParser';
 import { ProjectManager } from '../lib/project/ProjectManager';
 
@@ -60,8 +58,6 @@ export default function BattleMagicMonitor() {
   const [uartReader, setUartReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
   const [uartOutput, setUartOutput] = useState<string[]>([]);
   const [baudRate, setBaudRate] = useState(230400); // Default to 230400 (safe for USB CDC)
-  const [hasStoredGdbPort, setHasStoredGdbPort] = useState(false);
-  const [hasStoredUartPort, setHasStoredUartPort] = useState(false);
   const [bmpVersion, setBmpVersion] = useState<BmpVersion | null>(null);
   const lastOutputRef = useRef<{text: string; timestamp: number} | null>(null);
 
@@ -70,15 +66,22 @@ export default function BattleMagicMonitor() {
   const [stackFrames, setStackFrames] = useState<StackFrame[]>([]);
   const [activeRightPanel, setActiveRightPanel] = useState<'debugger' | 'target' | 'flash' | 'extract' | 'breakpoints' | 'memorymap' | 'uart' | 'swo'>('debugger');
   const [programCounter, setProgramCounter] = useState<number | undefined>();
-  const [loadedBinary, setLoadedBinary] = useState<BinaryInfo | null>(null);
   const [customMemoryRegions, setCustomMemoryRegions] = useState<MemoryRegion[]>([]);
   const [selectedMemoryMapCpu, setSelectedMemoryMapCpu] = useState<string>('generic-cortex-m4');
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
 
   // Panel resize state
-  const [leftWidth, setLeftWidth] = useState(50);
+  const [consoleWidth, setConsoleWidth] = useState(25); // Console is now on the right, 25% width
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Panel visibility state
+  const [visiblePanels, setVisiblePanels] = useState({
+    console: true,
+    registers: true,
+    stack: true,
+    memory: true,
+  });
 
   // Project management state
   const projectManagerRef = useRef<ProjectManager | null>(null);
@@ -86,20 +89,14 @@ export default function BattleMagicMonitor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
+  // Execution state for status bar
+  const [executionState, setExecutionState] = useState<'running' | 'stopped' | 'stepping'>('stopped');
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [currentTarget, setCurrentTarget] = useState<Target | null>(null);
+
   // Ensure we're on the client side before rendering serial-dependent components
   useEffect(() => {
     setIsClient(true);
-
-    // Check for stored port info
-    const storedInfo = loadBMPInfo();
-    if (storedInfo?.gdbPort) {
-      setHasStoredGdbPort(true);
-      console.log('Found stored GDB port:', storedInfo.gdbPort);
-    }
-    if (storedInfo?.uartPort) {
-      setHasStoredUartPort(true);
-      console.log('Found stored UART port:', storedInfo.uartPort);
-    }
 
     // Initialize project manager
     const projectManager = new ProjectManager({
@@ -250,7 +247,7 @@ export default function BattleMagicMonitor() {
   }, []);
 
   // GDB Connection handlers
-  const handleConnectGdb = useCallback(async (event?: React.MouseEvent) => {
+  const handleConnectGdb = useCallback(async () => {
     if (!gdbClient || !isClient) return;
 
     // If already connected or connecting, disconnect first
@@ -265,79 +262,28 @@ export default function BattleMagicMonitor() {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    const storedInfo = loadBMPInfo();
-    let isUsingStoredPort = false;
-    const forceNewPort = event?.shiftKey || false;
-
     try {
-      let port: SerialPort | null = null;
+      // Always show port selection dialog
+      addGdbOutput('[Select Black Magic GDB port from the dialog]');
+      const port = await navigator.serial.requestPort({
+        filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }]
+      });
 
-      // Try quick connect first if we have a stored port and not forcing new port
-      if (!forceNewPort && storedInfo?.gdbPort && hasStoredGdbPort) {
-        addGdbOutput('[Attempting Quick Connect to last used port...]');
-
-        // Give any pending disconnects from hot-reload time to complete
-        // This prevents "port already open" errors during development
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        port = await findMatchingPort(storedInfo.gdbPort);
-        if (port) {
-          addGdbOutput('[Using last connected GDB port]');
-          addGdbOutput(`[Port info: VID=${storedInfo.gdbPort.vendorId?.toString(16)}, PID=${storedInfo.gdbPort.productId?.toString(16)}]`);
-          isUsingStoredPort = true;
-
-          // Check if port seems stuck/unresponsive by trying to get info
-          try {
-            const info = port.getInfo();
-            if (!info.usbVendorId) {
-              addGdbOutput('[Stored port appears disconnected, clearing...]');
-              setHasStoredGdbPort(false);
-              port = null;
-              isUsingStoredPort = false;
-            }
-          } catch {
-            addGdbOutput('[Stored port invalid, clearing...]');
-            setHasStoredGdbPort(false);
-            port = null;
-            isUsingStoredPort = false;
-          }
-        } else {
-          addGdbOutput('[Previously used port not available or locked]');
-          addGdbOutput('[Clearing saved port - please select port manually]');
-          setHasStoredGdbPort(false);
-          // Clear the saved port since it's not available
-          import('../utils/deviceStorage').then(({ clearGdbPort }) => {
-            clearGdbPort();
-          });
-        }
-      } else if (forceNewPort) {
-        addGdbOutput('[Manual port selection requested]');
-      }
-
-      // If no stored port or it wasn't found, request a new one
       if (!port) {
-        addGdbOutput('[Select Black Magic GDB port from the dialog]');
-        port = await navigator.serial.requestPort({
-          filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }]
-        });
-
-        if (!port) {
-          addGdbOutput('[Connection cancelled]');
-          return;
-        }
+        addGdbOutput('[Connection cancelled]');
+        return;
       }
 
       addGdbOutput('[Connecting to GDB port...]');
       await gdbClient.connect(port, { baudRate });
       addGdbOutput('[GDB Connected successfully]');
 
-      // Save the port info for quick connect
+      // Save the port info for reference
       const portInfo = port.getInfo();
       saveGdbPort({
         vendorId: portInfo.usbVendorId,
         productId: portInfo.usbProductId
       });
-      setHasStoredGdbPort(true);
 
       // Get version info
       try {
@@ -348,26 +294,9 @@ export default function BattleMagicMonitor() {
         addGdbOutput(`[Version query failed: ${error}]`);
       }
     } catch (error) {
-      const errorMsg = String(error);
       addGdbOutput(`[Connection failed: ${error}]`);
-
-      // If port is locked or we were using a stored port and it failed, clear it
-      if ((isUsingStoredPort && storedInfo?.gdbPort) || errorMsg.includes('locked') || errorMsg.includes('unavailable') || errorMsg.includes('in use')) {
-        addGdbOutput('[Clearing saved port due to connection failure]');
-        import('../utils/deviceStorage').then(({ clearGdbPort }) => {
-          clearGdbPort();
-          setHasStoredGdbPort(false);
-        });
-      }
-
-      // If port was locked, suggest trying again
-      if (errorMsg.includes('locked') || errorMsg.includes('unavailable') || errorMsg.includes('in use')) {
-        setTimeout(() => {
-          addGdbOutput('[Port cleared. Please click Connect again to select a new port.]');
-        }, 100);
-      }
     }
-  }, [gdbClient, isClient, baudRate, addGdbOutput, hasStoredGdbPort, gdbState]);
+  }, [gdbClient, isClient, baudRate, addGdbOutput, gdbState]);
 
   const handleDisconnectGdb = useCallback(async () => {
     if (!gdbClient || !gdbClient.isConnected()) return;
@@ -381,109 +310,92 @@ export default function BattleMagicMonitor() {
     }
   }, [gdbClient, addGdbOutput]);
 
+  // UART data reader
+  const readUartData = useCallback(async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        // Decode and add to UART output
+        const text = new TextDecoder().decode(value);
+        addUartOutput(text);
+      }
+    } catch (error) {
+      console.error('UART read error:', error);
+      addUartOutput(`[UART read error: ${error}]`);
+    } finally {
+      reader.releaseLock();
+    }
+  }, [addUartOutput]);
+
   // UART Connection handlers
   const handleConnectUart = useCallback(async () => {
     if (!isClient) return;
 
-    const storedInfo = loadBMPInfo();
-    let isUsingStoredPort = false;
-
     try {
-      let port: SerialPort | null = null;
+      addGdbOutput('[Select Black Magic UART port from the dialog]');
+      const port = await navigator.serial.requestPort({
+        filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }]
+      });
 
-      // Try quick connect first if we have a stored port
-      if (storedInfo?.uartPort) {
-        port = await findMatchingPort(storedInfo.uartPort);
-        if (port) {
-          addUartOutput('[Using last connected UART port]');
-          isUsingStoredPort = true;
-        } else {
-          addUartOutput('[Previously used port not found, select a new one]');
-        }
-      }
-
-      // If no stored port or it wasn't found, request a new one
       if (!port) {
-        port = await navigator.serial.requestPort({
-          filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }]
-        });
-
-        if (!port) {
-          addUartOutput('[Connection cancelled]');
-          return;
-        }
+        addGdbOutput('[UART connection cancelled]');
+        return;
       }
 
-      // UART connection - baudrate matters for actual UART, not for USB CDC
-      await port.open({ baudRate });
-
-      const reader = port.readable?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get reader');
-      }
-
+      // Open the port (default 115200 baud for UART)
+      await port.open({ baudRate: 115200 });
       setUartPort(port);
-      setUartReader(reader);
       setUartConnected(true);
-      addUartOutput('[UART Connected]');
+      addGdbOutput('[UART Connected]');
+      addUartOutput('[UART Connected - Ready to receive data]');
 
-      // Save the port info for quick connect
+      // Save the port info for reference
       const portInfo = port.getInfo();
       saveUartPort({
         vendorId: portInfo.usbVendorId,
         productId: portInfo.usbProductId
       });
-      setHasStoredUartPort(true);
 
-      // Switch to UART tab when connected
-      setActiveRightPanel('uart');
-
-      // Start reading
-      (async () => {
-        try {
-          while (port.readable && reader) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            if (value) {
-              const text = new TextDecoder().decode(value);
-              addUartOutput(text);
-            }
-          }
-        } catch (error) {
-          addUartOutput(`[Read error: ${error}]`);
-        }
-      })();
-    } catch (error) {
-      addUartOutput(`[Connection failed: ${error}]`);
-
-      // If we were using a stored port and it failed, clear it
-      if (isUsingStoredPort && storedInfo?.uartPort) {
-        addUartOutput('[Clearing saved port due to connection failure]');
-        import('../utils/deviceStorage').then(({ clearUartPort }) => {
-          clearUartPort();
-          setHasStoredUartPort(false);
-        });
+      // Set up reader for UART data
+      if (port.readable) {
+        const reader = port.readable.getReader();
+        setUartReader(reader);
+        readUartData(reader);
       }
+    } catch (error) {
+      addGdbOutput(`[UART connection failed: ${error}]`);
+      addUartOutput(`[UART connection failed: ${error}]`);
     }
-  }, [isClient, baudRate, addUartOutput]);
+  }, [isClient, addGdbOutput, addUartOutput, readUartData]);
 
   const handleDisconnectUart = useCallback(async () => {
+    if (!uartPort) return;
+
     try {
+      // Close the reader first
       if (uartReader) {
-        await uartReader.cancel();
-        uartReader.releaseLock();
+        try {
+          await uartReader.cancel();
+          uartReader.releaseLock();
+        } catch (error) {
+          console.error('Error releasing reader:', error);
+        }
+        setUartReader(null);
       }
-      if (uartPort) {
-        await uartPort.close();
-      }
+
+      // Close the port
+      await uartPort.close();
       setUartPort(null);
-      setUartReader(null);
       setUartConnected(false);
+      addGdbOutput('[UART Disconnected]');
       addUartOutput('[UART Disconnected]');
     } catch (error) {
-      addUartOutput(`[UART Disconnect failed: ${error}]`);
+      addGdbOutput(`[UART disconnect failed: ${error}]`);
+      addUartOutput(`[UART disconnect failed: ${error}]`);
     }
-  }, [uartPort, uartReader, addUartOutput]);
+  }, [uartPort, uartReader, addGdbOutput, addUartOutput]);
 
 
   // Debug panel handlers - Define these first before they're used in other handlers
@@ -563,6 +475,7 @@ export default function BattleMagicMonitor() {
       result.targets.forEach((t) => {
         addGdbOutput(`  ${t.id}: ${t.description}`);
       });
+      setLastUpdate(new Date());
     } catch (error) {
       addGdbOutput(`[Scan failed: ${error}]`);
     }
@@ -574,6 +487,8 @@ export default function BattleMagicMonitor() {
       addGdbOutput('> Ctrl+C (interrupt)');
       await gdbClient.halt();
       addGdbOutput('[Target halted]');
+      setExecutionState('stopped');
+      setLastUpdate(new Date());
 
       // Auto-refresh panels after halt
       try {
@@ -611,6 +526,8 @@ export default function BattleMagicMonitor() {
     try {
       addGdbOutput('> continue');
       addGdbOutput('[Target running...]');
+      setExecutionState('running');
+      setLastUpdate(new Date());
       gdbClient.continue();
     } catch (error) {
       addGdbOutput(`[Run failed: ${error}]`);
@@ -659,8 +576,11 @@ export default function BattleMagicMonitor() {
     if (!gdbClient || gdbState !== ConnectionState.ATTACHED) return;
     try {
       addGdbOutput('> stepi');
+      setExecutionState('stepping');
       await gdbClient.step();
       addGdbOutput('[Stepped one instruction]');
+      setExecutionState('stopped');
+      setLastUpdate(new Date());
 
       // Auto-refresh panels after step
       try {
@@ -690,30 +610,11 @@ export default function BattleMagicMonitor() {
       }
     } catch (error) {
       addGdbOutput(`[Step failed: ${error}]`);
+      setExecutionState('stopped');
     }
   }, [gdbClient, gdbState, addGdbOutput]);
 
-  // Clear saved ports handler
-  const handleClearSavedPorts = useCallback(() => {
-    clearBMPInfo();
-    setHasStoredGdbPort(false);
-    setHasStoredUartPort(false);
-    addGdbOutput('[Cleared saved port connections]');
-    addUartOutput('[Cleared saved port connections]');
-  }, [addGdbOutput, addUartOutput]);
-
-  // Check version handler
-  const handleCheckVersion = useCallback(async () => {
-    if (!gdbClient || !gdbClient.isConnected()) return;
-
-    try {
-      const version = await gdbClient.getVersion();
-      setBmpVersion(version);
-      addGdbOutput(`[BMP Version Updated] ${version.firmware}`);
-    } catch (error) {
-      addGdbOutput(`[Version check failed: ${error}]`);
-    }
-  }, [gdbClient, addGdbOutput]);
+  // Note: Version check and port management now handled by menu/toolbar
 
   // Project management handlers
   const updateProjectState = useCallback(() => {
@@ -802,6 +703,22 @@ export default function BattleMagicMonitor() {
     }
   }, [gdbState, handleRefreshRegisters, handleRefreshStack]);
 
+  // Panel visibility handlers
+  const handlePanelToggle = useCallback((panel: keyof typeof visiblePanels) => {
+    setVisiblePanels(prev => ({
+      ...prev,
+      [panel]: !prev[panel],
+    }));
+  }, []);
+
+  const handleViewToggle = useCallback((view: string) => {
+    setActiveRightPanel(view as typeof activeRightPanel);
+  }, []);
+
+  const handleToolSelect = useCallback((tool: string) => {
+    setActiveRightPanel(tool as typeof activeRightPanel);
+  }, []);
+
   // Panel resize handlers
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -812,9 +729,11 @@ export default function BattleMagicMonitor() {
       if (!isDragging || !containerRef.current) return;
       const containerRect = containerRef.current.getBoundingClientRect();
       const offsetX = e.clientX - containerRect.left;
-      const newLeftWidth = (offsetX / containerRect.width) * 100;
-      if (newLeftWidth >= 20 && newLeftWidth <= 80) {
-        setLeftWidth(newLeftWidth);
+      // Calculate console width from the right side
+      const newConsoleWidth = ((containerRect.width - offsetX) / containerRect.width) * 100;
+      // Console can be 15-40% of screen width
+      if (newConsoleWidth >= 15 && newConsoleWidth <= 40) {
+        setConsoleWidth(newConsoleWidth);
       }
     },
     [isDragging]
@@ -829,70 +748,86 @@ export default function BattleMagicMonitor() {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
     } else {
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  const gdbConnected = gdbState === ConnectionState.CONNECTED || gdbState === ConnectionState.ATTACHED;
   const targetAttached = gdbState === ConnectionState.ATTACHED;
 
   return (
-    <div className="battlemagic-container flex flex-col bg-gray-950 text-white">
-      {/* Header - Always shown with logo */}
-      <div className="bg-gray-900 border-b border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/battlemagiclogo.png"
-              alt="BattleMagic Logo"
-              width={100}
-              height={100}
-              className="rounded"
+    <div className="battlemagic-container flex flex-col h-screen bg-gray-950 text-white overflow-hidden">
+      {/* Header - Compact with logo and project menu */}
+      <div className="bg-gray-900 border-b border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/battlemagiclogo.png"
+            alt="BattleMagic Logo"
+            width={40}
+            height={40}
+            className="rounded"
+          />
+          <div>
+            <h1 className="text-lg font-bold font-mono leading-tight">
+              <span className="text-green-400">Battle</span>Magic
+            </h1>
+            <p className="text-[10px] text-gray-400">Black Magic Probe Debugger</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isClient && (
+            <ProjectMenu
+              projectName={projectName}
+              hasUnsavedChanges={hasUnsavedChanges}
+              autoSaveEnabled={autoSaveEnabled}
+              onNew={handleNewProject}
+              onSave={handleSaveProject}
+              onLoad={handleLoadProject}
+              onAutoSaveToggle={handleAutoSaveToggle}
+              onEditMetadata={handleEditMetadata}
             />
-            <div>
-              <h1 className="text-2xl font-bold font-mono">
-                <span className="text-green-400">Battle</span>Magic
-              </h1>
-              <p className="text-sm text-gray-400">Black Magic Probe Debugger</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {isClient && (
-              <ProjectMenu
-                projectName={projectName}
-                hasUnsavedChanges={hasUnsavedChanges}
-                autoSaveEnabled={autoSaveEnabled}
-                onNew={handleNewProject}
-                onSave={handleSaveProject}
-                onLoad={handleLoadProject}
-                onAutoSaveToggle={handleAutoSaveToggle}
-                onEditMetadata={handleEditMetadata}
-              />
-            )}
-            <Link
-              href="/tools"
-              className="text-gray-300 hover:text-green-400 transition-colors font-mono text-sm flex items-center gap-2"
-            >
-              <span>← Back to Tools</span>
-            </Link>
-          </div>
+          )}
+          <Link
+            href="/tools"
+            className="text-gray-300 hover:text-green-400 transition-colors font-mono text-xs flex items-center gap-1"
+          >
+            <span>← Tools</span>
+          </Link>
         </div>
       </div>
 
-      {/* Connection Bar */}
+      {/* Menu Bar - IDA Pro style */}
       {isClient && (
-        <ConnectionBar
+        <MenuBar
+          onNewProject={handleNewProject}
+          onSaveProject={handleSaveProject}
+          onLoadProject={handleLoadProject}
+          onDisconnect={handleDisconnectGdb}
+          onViewToggle={handleViewToggle}
+          onToolSelect={handleToolSelect}
+          activeView={activeRightPanel}
+          isConnected={gdbConnected}
+          isAttached={targetAttached}
+          visiblePanels={visiblePanels}
+          onPanelToggle={handlePanelToggle}
+        />
+      )}
+
+      {/* Toolbar - Quick actions */}
+      {isClient && (
+        <Toolbar
           gdbState={gdbState}
-          uartConnected={uartConnected}
           targetAttached={targetAttached}
-          baudRate={baudRate}
-          bmpVersion={bmpVersion}
-          onBaudRateChange={setBaudRate}
+          uartConnected={uartConnected}
           onConnectGdb={handleConnectGdb}
           onDisconnectGdb={handleDisconnectGdb}
           onConnectUart={handleConnectUart}
@@ -900,172 +835,36 @@ export default function BattleMagicMonitor() {
           onScanTargets={handleScanTargets}
           onHalt={handleHalt}
           onRun={handleRun}
-          onReset={handleReset}
           onStep={handleStep}
-          hasStoredGdbPort={hasStoredGdbPort}
-          onCheckVersion={handleCheckVersion}
-          hasStoredUartPort={hasStoredUartPort}
-          onClearSavedPorts={handleClearSavedPorts}
+          onReset={handleReset}
+          onRefreshRegisters={handleRefreshRegisters}
+          onRefreshMemory={async () => {
+            setLastUpdate(new Date());
+          }}
         />
       )}
 
-      {/* Main Content - Resizable Panels */}
-      <div ref={containerRef} className="flex flex-1 overflow-hidden">
+      {/* Main Content - IDA Pro-like Layout */}
+      <div ref={containerRef} className="flex-1 flex flex-col overflow-hidden">
         {isClient ? (
           <>
-            {/* GDB Panel */}
-            <div className="h-full overflow-hidden" style={{ width: `${leftWidth}%` }}>
-              <GdbPanel
-                gdbClient={gdbClient}
-                output={gdbOutput}
-                targets={targets}
-                onAttachTarget={async (targetId) => {
-                  if (!gdbClient) return;
-                  try {
-                    await gdbClient.attach(targetId);
-                    addGdbOutput(`[Attached to target ${targetId}]`);
-
-                    // Auto-halt target after attach so registers can be read
-                    addGdbOutput('> Ctrl+C (interrupt)');
-                    await gdbClient.halt();
-                    addGdbOutput('[Target halted]');
-
-                    // Auto-switch to debugger view when target attached
-                    setActiveRightPanel('debugger');
-                  } catch (error) {
-                    addGdbOutput(`[Attach failed: ${error}]`);
-                  }
-                }}
-                onScanSwd={handleScanTargets}
-                onClearOutput={clearGdbOutput}
-                onOutput={addGdbOutput}
-              />
-            </div>
-
-            {/* Divider */}
-            <ResizableDivider onMouseDown={handleMouseDown} />
-
-            {/* Right Panel - Debugger or Utility Views */}
-            <div className="h-full overflow-hidden flex flex-col" style={{ width: `${100 - leftWidth}%` }}>
-              {/* Tab Bar - Only show when NOT in debugger view or target not attached */}
-              {(!targetAttached || activeRightPanel !== 'debugger') && (
-                <div className="flex items-center gap-1 bg-gray-900 border-b border-gray-700 px-3 py-1">
-                  {targetAttached && (
-                    <button
-                      onClick={() => setActiveRightPanel('debugger')}
-                      className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                        activeRightPanel === 'debugger'
-                          ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                          : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                      }`}
-                    >
-                      Debug View
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setActiveRightPanel('target')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'target'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    Target Info
-                  </button>
-                  <button
-                    onClick={() => setActiveRightPanel('flash')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'flash'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    Flash
-                  </button>
-                  <button
-                    onClick={() => setActiveRightPanel('extract')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'extract'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    Extract
-                  </button>
-                  <button
-                    onClick={() => setActiveRightPanel('breakpoints')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'breakpoints'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    Breakpoints
-                  </button>
-                  <button
-                    onClick={() => setActiveRightPanel('memorymap')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'memorymap'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    Memory Map
-                  </button>
-                  {uartConnected && (
-                    <button
-                      onClick={() => setActiveRightPanel('uart')}
-                      className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                        activeRightPanel === 'uart'
-                          ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                          : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                      }`}
-                    >
-                      UART
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setActiveRightPanel('swo')}
-                    className={`px-3 py-1.5 text-xs font-mono rounded-t transition-colors ${
-                      activeRightPanel === 'swo'
-                        ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    SWO
-                  </button>
-                </div>
-              )}
-
-              {/* Main Content Area */}
-              <div className="flex-1 overflow-hidden">
+            {/* Main Horizontal Split: Content (70-85%) | Console (15-30%) */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left Side - Main Content (70-85%) */}
+              <div className="flex flex-col overflow-hidden" style={{ width: `${100 - consoleWidth}%` }}>
                 {/* Show DebuggerView by default when target is attached */}
                 {targetAttached && activeRightPanel === 'debugger' && (
-                  <div className="h-full flex flex-col">
-                    <div className="flex items-center justify-between bg-gray-900 border-b border-gray-700 px-3 py-1.5">
-                      <h3 className="text-xs font-mono text-green-400 font-bold">DEBUG VIEW</h3>
-                      <button
-                        onClick={() => setActiveRightPanel('target')}
-                        className="text-xs px-2 py-0.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded"
-                        title="Switch to utilities"
-                      >
-                        Utilities →
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <DebuggerView
-                        gdbClient={gdbClient}
-                        isConnected={targetAttached}
-                        registers={registers}
-                        stackFrames={stackFrames}
-                        programCounter={programCounter}
-                        onRefreshRegisters={handleRefreshRegisters}
-                        onRefreshStack={handleRefreshStack}
-                        onReadMemory={handleReadMemory}
-                        onOutput={addGdbOutput}
-                      />
-                    </div>
-                  </div>
+                  <DebuggerView
+                    gdbClient={gdbClient}
+                    isConnected={targetAttached}
+                    registers={registers}
+                    stackFrames={stackFrames}
+                    programCounter={programCounter}
+                    onRefreshRegisters={handleRefreshRegisters}
+                    onRefreshStack={handleRefreshStack}
+                    onReadMemory={handleReadMemory}
+                    onOutput={addGdbOutput}
+                  />
                 )}
                 {activeRightPanel === 'target' && (
                   <TargetInfoPanel
@@ -1103,6 +902,8 @@ export default function BattleMagicMonitor() {
                   <UartPanel
                     isConnected={uartConnected}
                     output={uartOutput}
+                    onConnect={handleConnectUart}
+                    onDisconnect={handleDisconnectUart}
                     onSendData={async (data: string) => {
                       if (!uartPort?.writable) return;
                       try {
@@ -1123,6 +924,55 @@ export default function BattleMagicMonitor() {
                   />
                 )}
               </div>
+
+              {/* Console Panel - Right side (15-30%), collapsible */}
+              {visiblePanels.console && (
+                <>
+                  <ResizableDivider onMouseDown={handleMouseDown} />
+                  <div className="h-full overflow-hidden flex flex-col bg-black" style={{ width: `${consoleWidth}%` }}>
+                    <div className="bg-gray-900 border-b border-gray-700 px-3 py-1.5 flex items-center justify-between">
+                      <h3 className="text-xs font-mono text-green-400 font-bold">CONSOLE</h3>
+                      <button
+                        onClick={() => handlePanelToggle('console')}
+                        className="text-xs px-2 py-0.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded"
+                        title="Close console"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <GdbPanel
+                        gdbClient={gdbClient}
+                        output={gdbOutput}
+                        targets={targets}
+                        onAttachTarget={async (targetId) => {
+                          if (!gdbClient) return;
+                          try {
+                            await gdbClient.attach(targetId);
+                            addGdbOutput(`[Attached to target ${targetId}]`);
+                            const target = targets.find(t => t.id === targetId);
+                            if (target) setCurrentTarget(target);
+
+                            // Auto-halt target after attach so registers can be read
+                            addGdbOutput('> Ctrl+C (interrupt)');
+                            await gdbClient.halt();
+                            addGdbOutput('[Target halted]');
+                            setExecutionState('stopped');
+
+                            // Auto-switch to debugger view when target attached
+                            setActiveRightPanel('debugger');
+                          } catch (error) {
+                            addGdbOutput(`[Attach failed: ${error}]`);
+                          }
+                        }}
+                        onScanSwd={handleScanTargets}
+                        onClearOutput={clearGdbOutput}
+                        onOutput={addGdbOutput}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </>
         ) : (
@@ -1131,6 +981,19 @@ export default function BattleMagicMonitor() {
           </div>
         )}
       </div>
+
+      {/* Status Bar - IDA Pro style */}
+      {isClient && (
+        <StatusBar
+          gdbState={gdbState}
+          uartConnected={uartConnected}
+          bmpVersion={bmpVersion}
+          currentTarget={currentTarget}
+          programCounter={programCounter}
+          executionState={executionState}
+          lastUpdate={lastUpdate}
+        />
+      )}
     </div>
   );
 }

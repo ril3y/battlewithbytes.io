@@ -71,7 +71,8 @@
       "Bash(node -p:*)",
       "Bash(pnpm dev)",
       "Bash(npx tsc:*)",
-      "Bash(where wasm-pack:*)"
+      "Bash(where wasm-pack:*)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": []
   },

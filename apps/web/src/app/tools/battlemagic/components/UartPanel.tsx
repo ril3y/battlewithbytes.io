@@ -13,9 +13,11 @@ interface UartPanelProps {
   isConnected: boolean;
   output: string[];
   onSendData: (data: string) => void;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
 }
 
-export default function UartPanel({ isConnected, output, onSendData }: UartPanelProps) {
+export default function UartPanel({ isConnected, output, onSendData, onConnect, onDisconnect }: UartPanelProps) {
   const [autoscroll, setAutoscroll] = useState(true);
   const [inputData, setInputData] = useState('');
   const outputRef = useRef<HTMLDivElement>(null);
@@ -51,6 +53,23 @@ export default function UartPanel({ isConnected, output, onSendData }: UartPanel
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {!isConnected ? (
+            <button
+              onClick={onConnect}
+              className="px-3 py-1 text-xs rounded border bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-colors font-mono"
+              title="Connect to UART port"
+            >
+              Connect
+            </button>
+          ) : (
+            <button
+              onClick={onDisconnect}
+              className="px-3 py-1 text-xs rounded border bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 transition-colors font-mono"
+              title="Disconnect from UART port"
+            >
+              Disconnect
+            </button>
+          )}
           <button
             onClick={() => setAutoscroll(!autoscroll)}
             className={`px-3 py-1 text-xs rounded border transition-colors ${
