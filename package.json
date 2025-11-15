@@ -6,12 +6,18 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:wasm": "turbo run build:wasm",
     "test": "turbo run test",
+    "test:rust": "turbo run test:rust",
     "lint": "turbo run lint",
+    "lint:rust": "turbo run lint:rust",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format:rust": "cargo fmt --all",
     "build:web": "turbo run build --filter=@battlewithbytes/web",
-    "build:battleterm": "turbo run build --filter=@battlewithbytes/battleterm"
+    "build:battleterm": "turbo run build --filter=@battlewithbytes/battleterm",
+    "build:battlemagic-core": "turbo run build:wasm --filter=@battlewithbytes/battlemagic-core",
+    "dev:battlemagic": "turbo run dev --filter=@battlewithbytes/battlemagic-core --filter=@battlewithbytes/battlemagic-ui"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.3",

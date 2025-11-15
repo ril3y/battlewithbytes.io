@@ -1,9 +1,11 @@
 //! ARM disassembly module
 //!
-//! Provides high-performance ARM/Thumb disassembly using Capstone
+//! Provides high-performance ARM/Thumb disassembly using yaxpeax-arm
 
 use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
+use yaxpeax_arm::armv7::InstDecoder;
+use yaxpeax_arch::{Decoder, LengthedInstruction, U8Reader};
 use crate::error::{Result, BattleMagicError};
 
 /// Disassembled instruction
@@ -12,58 +14,57 @@ use crate::error::{Result, BattleMagicError};
 pub struct Instruction {
     #[wasm_bindgen(readonly)]
     pub address: u32,
-    
+
     #[wasm_bindgen(readonly)]
     pub size: u8,
-    
+
     #[wasm_bindgen(skip)]
     pub bytes: Vec<u8>,
-    
-    mnemonic: String,
-    operands: String,
+
+    text: String,
 }
 
 #[wasm_bindgen]
 impl Instruction {
     #[wasm_bindgen(getter)]
     pub fn mnemonic(&self) -> String {
-        self.mnemonic.clone()
+        // Extract mnemonic from full text (first word)
+        self.text.split_whitespace().next().unwrap_or("").to_string()
     }
-    
+
     #[wasm_bindgen(getter)]
     pub fn operands(&self) -> String {
-        self.operands.clone()
+        // Extract operands from full text (everything after first word)
+        self.text
+            .split_once(' ')
+            .map(|(_, ops)| ops.to_string())
+            .unwrap_or_default()
     }
-    
+
     #[wasm_bindgen(getter)]
     pub fn bytes(&self) -> js_sys::Uint8Array {
         js_sys::Uint8Array::from(&self.bytes[..])
     }
-    
+
     /// Get full disassembly string
     pub fn to_string(&self) -> String {
-        if self.operands.is_empty() {
-            self.mnemonic.clone()
-        } else {
-            format!("{} {}", self.mnemonic, self.operands)
-        }
+        self.text.clone()
     }
-    
+
     /// Check if this is a branch instruction
     pub fn is_branch(&self) -> bool {
-        self.mnemonic.starts_with('b') || 
-        self.mnemonic == "bl" || 
-        self.mnemonic == "blx"
+        let mnem = self.mnemonic().to_lowercase();
+        mnem.starts_with('b') || mnem == "bl" || mnem == "blx"
     }
-    
+
     /// Check if this is a return instruction
     pub fn is_return(&self) -> bool {
-        self.mnemonic == "bx" && self.operands.contains("lr")
+        let text = self.text.to_lowercase();
+        text.contains("bx") && text.contains("lr")
     }
 }
 
-/// Simple ARM disassembler (proof of concept)
-/// In production, this would use Capstone library
+/// ARM disassembler using yaxpeax-arm
 #[wasm_bindgen]
 pub struct Disassembler {
     base_address: u32,
@@ -71,117 +72,145 @@ pub struct Disassembler {
 
 #[wasm_bindgen]
 impl Disassembler {
-    /// Create new disassembler
+    /// Create new disassembler for ARM Thumb mode
     #[wasm_bindgen(constructor)]
     pub fn new(base_address: u32) -> Self {
         Self { base_address }
     }
-    
-    /// Disassemble ARM Thumb instructions (proof of concept)
-    /// For now, this returns mock data to demonstrate the API
-    /// Real implementation would use Capstone
+
+    /// Disassemble ARM Thumb instructions using yaxpeax-arm
     pub fn disassemble_thumb(&self, data: &[u8], max_instructions: u32) -> Result<Vec<JsValue>> {
         if data.is_empty() {
             return Err(BattleMagicError::InvalidInput("Empty data".into()));
         }
-        
+
+        // Create Thumb decoder
+        let decoder = InstDecoder::default_thumb();
         let mut instructions = Vec::new();
-        let mut offset = 0u32;
+        let mut offset = 0usize;
         let mut count = 0u32;
-        
-        // Simple proof-of-concept: parse basic Thumb instructions
-        while offset < data.len() as u32 && count < max_instructions {
-            let remaining = &data[offset as usize..];
-            
-            if remaining.len() < 2 {
-                break;
+
+        while offset < data.len() && count < max_instructions {
+            let remaining = &data[offset..];
+            let mut reader = U8Reader::new(remaining);
+
+            // Try to decode instruction
+            match decoder.decode(&mut reader) {
+                Ok(instr) => {
+                    let len = instr.len().to_const() as usize;
+
+                    if len == 0 || len > remaining.len() {
+                        break;
+                    }
+
+                    let bytes = remaining[..len].to_vec();
+                    let text = format!("{}", instr);
+
+                    let instruction = Instruction {
+                        address: self.base_address + offset as u32,
+                        size: len as u8,
+                        bytes,
+                        text,
+                    };
+
+                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
+                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+
+                    offset += len;
+                    count += 1;
+                }
+                Err(_) => {
+                    // If we can't decode, try skipping 2 bytes (minimum Thumb instruction size)
+                    if remaining.len() >= 2 {
+                        let bytes = vec![remaining[0], remaining[1]];
+                        let instruction = Instruction {
+                            address: self.base_address + offset as u32,
+                            size: 2,
+                            bytes: bytes.clone(),
+                            text: format!("??? 0x{:02x}{:02x}", bytes[0], bytes[1]),
+                        };
+
+                        instructions.push(serde_wasm_bindgen::to_value(&instruction)
+                            .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+
+                        offset += 2;
+                        count += 1;
+                    } else {
+                        break;
+                    }
+                }
             }
-            
-            // Read 16-bit instruction (little-endian)
-            let instr_word = u16::from_le_bytes([remaining[0], remaining[1]]);
-            
-            let (mnemonic, operands, size) = decode_thumb_instruction(instr_word);
-            
-            let bytes = if size == 2 {
-                vec![remaining[0], remaining[1]]
-            } else if remaining.len() >= 4 {
-                vec![remaining[0], remaining[1], remaining[2], remaining[3]]
-            } else {
-                break;
-            };
-            
-            let instruction = Instruction {
-                address: self.base_address + offset,
-                size: size as u8,
-                bytes,
-                mnemonic,
-                operands,
-            };
-            
-            instructions.push(serde_wasm_bindgen::to_value(&instruction).unwrap());
-            offset += size;
-            count += 1;
         }
-        
+
         Ok(instructions)
     }
-}
 
-/// Decode a single Thumb instruction (simplified proof of concept)
-fn decode_thumb_instruction(instr: u16) -> (String, String, u32) {
-    // Check for 32-bit instruction (Thumb-2)
-    if (instr & 0xE000) == 0xE000 && (instr & 0x1800) != 0x0000 {
-        return ("(32-bit)".to_string(), "thumb2".to_string(), 4);
-    }
-    
-    // Simplified decoder for common 16-bit Thumb instructions
-    match instr {
-        0xBF00 => ("nop".to_string(), "".to_string(), 2),
-        0x4770 => ("bx".to_string(), "lr".to_string(), 2),
-        _ if (instr & 0xF800) == 0x2000 => {
-            // MOVS Rd, #imm8
-            let rd = (instr >> 8) & 0x7;
-            let imm = instr & 0xFF;
-            ("movs".to_string(), format!("r{}, #{}", rd, imm), 2)
+    /// Disassemble ARM (not Thumb) instructions
+    pub fn disassemble_arm(&self, data: &[u8], max_instructions: u32) -> Result<Vec<JsValue>> {
+        if data.is_empty() {
+            return Err(BattleMagicError::InvalidInput("Empty data".into()));
         }
-        _ if (instr & 0xF800) == 0x3000 => {
-            // ADDS Rd, #imm8
-            let rd = (instr >> 8) & 0x7;
-            let imm = instr & 0xFF;
-            ("adds".to_string(), format!("r{}, #{}", rd, imm), 2)
-        }
-        _ if (instr & 0xFE00) == 0xB400 => {
-            // PUSH/POP
-            let is_pop = (instr & 0x0800) != 0;
-            let reglist = instr & 0xFF;
-            let name = if is_pop { "pop" } else { "push" };
-            (name.to_string(), format_reglist(reglist), 2)
-        }
-        _ if (instr & 0xF000) == 0xD000 => {
-            // B<cond> (conditional branch)
-            let cond = (instr >> 8) & 0xF;
-            let offset = ((instr & 0xFF) as i8 as i32) * 2;
-            ("b".to_string(), format!("pc{:+#x}", offset), 2)
-        }
-        _ if (instr & 0xF800) == 0xE000 => {
-            // B (unconditional branch)
-            let offset = ((instr & 0x7FF) as i16) << 1;
-            ("b".to_string(), format!("pc{:+#x}", offset), 2)
-        }
-        _ => {
-            // Unknown instruction - return hex
-            ("???".to_string(), format!("0x{:04x}", instr), 2)
-        }
-    }
-}
 
-/// Format register list for PUSH/POP
-fn format_reglist(reglist: u16) -> String {
-    let mut regs = Vec::new();
-    for i in 0..8 {
-        if (reglist & (1 << i)) != 0 {
-            regs.push(format!("r{}", i));
+        // Create ARM decoder
+        let decoder = InstDecoder::default();
+        let mut instructions = Vec::new();
+        let mut offset = 0usize;
+        let mut count = 0u32;
+
+        while offset < data.len() && count < max_instructions {
+            let remaining = &data[offset..];
+
+            // Try to decode instruction (ARM instructions are always 4 bytes)
+            if remaining.len() < 4 {
+                break;
+            }
+
+            let mut reader = U8Reader::new(remaining);
+
+            match decoder.decode(&mut reader) {
+                Ok(instr) => {
+                    let len = instr.len().to_const() as usize;
+
+                    if len == 0 || len > remaining.len() {
+                        break;
+                    }
+
+                    let bytes = remaining[..len].to_vec();
+                    let text = format!("{}", instr);
+
+                    let instruction = Instruction {
+                        address: self.base_address + offset as u32,
+                        size: len as u8,
+                        bytes,
+                        text,
+                    };
+
+                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
+                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+
+                    offset += len;
+                    count += 1;
+                }
+                Err(_) => {
+                    // If we can't decode, skip 4 bytes
+                    let bytes = remaining[..4].to_vec();
+                    let instruction = Instruction {
+                        address: self.base_address + offset as u32,
+                        size: 4,
+                        bytes: bytes.clone(),
+                        text: format!("??? 0x{:02x}{:02x}{:02x}{:02x}",
+                            bytes[0], bytes[1], bytes[2], bytes[3]),
+                    };
+
+                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
+                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+
+                    offset += 4;
+                    count += 1;
+                }
+            }
         }
+
+        Ok(instructions)
     }
-    format!("{{{}}}", regs.join(", "))
 }

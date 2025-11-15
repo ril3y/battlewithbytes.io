@@ -2,8 +2,24 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
+    "build:wasm": {
+      "cache": true,
+      "inputs": [
+        "src/**/*.rs",
+        "Cargo.toml",
+        "Cargo.lock",
+        ".cargo/**"
+      ],
+      "outputs": [
+        "pkg/**",
+        "target/wasm32-unknown-unknown/release/*.wasm"
+      ],
+      "env": [
+        "WASM_PACK_PROFILE"
+      ]
+    },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^build:wasm"],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env.production.local",
@@ -23,10 +39,26 @@
         "NEXT_PUBLIC_*"
       ]
     },
+    "dev:wasm": {
+      "cache": false,
+      "persistent": true
+    },
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "^build:wasm"]
+    },
+    "test:rust": {
+      "cache": true,
+      "inputs": [
+        "src/**/*.rs",
+        "tests/**/*.rs",
+        "Cargo.toml",
+        "Cargo.lock"
+      ],
+      "outputs": [
+        "target/debug/**"
+      ]
     },
     "test": {
       "dependsOn": ["^build"],
@@ -42,6 +74,15 @@
         "coverage/**"
       ]
     },
+    "lint:rust": {
+      "cache": true,
+      "inputs": [
+        "src/**/*.rs",
+        "Cargo.toml",
+        "rustfmt.toml",
+        "clippy.toml"
+      ]
+    },
     "lint": {
       "dependsOn": ["^build"],
       "inputs": [
@@ -49,6 +90,9 @@
         ".eslintrc.json",
         "eslint.config.mjs"
       ]
+    },
+    "clean:wasm": {
+      "cache": false
     },
     "clean": {
       "cache": false
@@ -65,10 +109,12 @@
     }
   },
   "globalEnv": [
-    "NODE_ENV"
+    "NODE_ENV",
+    "RUSTFLAGS"
   ],
   "globalDependencies": [
     "tsconfig.json",
-    "pnpm-workspace.yaml"
+    "pnpm-workspace.yaml",
+    "rust-toolchain.toml"
   ]
 }

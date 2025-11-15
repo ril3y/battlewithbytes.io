@@ -1,3 +1,17 @@
+@import "tailwindcss";
+@import "../styles/design-system.css";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --accent-primary: #00ff9d;
+  --accent-secondary: #0088ff;
+  --accent-purple: #c084fc;
+  --grid-color: rgba(0, 255, 157, 0.05);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -6,10 +20,13 @@
 
 html,
 body {
-  max-width: 100vw;
+  height: 100vh;
+  width: 100%;
   overflow-x: hidden;
   background-color: #000;
   color: #10b981;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -20,13 +37,48 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* Selection styling */
+::selection {
+  background: var(--accent-primary);
+  color: #000000;
+}
+
+/* Button styling */
+button, .button {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-family-mono);
+  transition: all 0.2s ease;
+}
+
+button:hover, .button:hover, button:focus, .button:focus {
+  background: var(--accent-primary);
+  color: #000000;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+}
+
+/* Glowing text effect */
+.glow-text {
+  text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
 }
