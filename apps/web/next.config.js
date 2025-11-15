@@ -21,6 +21,7 @@ const nextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['@battlewithbytes/battlemagic-core'],
   webpack: (config, { isServer }) => {
     // Ignore Node.js-specific modules when bundling for the browser
     if (!isServer) {
@@ -31,10 +32,11 @@ const nextConfig = {
         crypto: false,
       };
 
-      // WASM support configuration
+      // WASM support - must be enabled for client-side
       config.experiments = {
         ...config.experiments,
         asyncWebAssembly: true,
+        syncWebAssembly: true,
         layers: true,
       };
 
@@ -44,8 +46,20 @@ const nextConfig = {
         type: 'webassembly/async',
       });
 
-      // Ensure proper WASM file handling
+      // Ensure WASM files are properly output
       config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
+
+      // Prevent WASM from being processed as asset
+      config.module.rules.forEach(rule => {
+        (rule.oneOf || []).forEach(oneOf => {
+          if (oneOf.type === 'asset/resource') {
+            oneOf.exclude = [
+              ...(Array.isArray(oneOf.exclude) ? oneOf.exclude : [oneOf.exclude].filter(Boolean)),
+              /\.wasm$/
+            ];
+          }
+        });
+      });
     }
     return config;
   },
