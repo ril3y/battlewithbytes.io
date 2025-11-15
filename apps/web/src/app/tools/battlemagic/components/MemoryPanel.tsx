@@ -164,13 +164,13 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
 
       lines.push(
         <div key={offset} className="flex font-mono text-xs hover:bg-gray-800 px-2 py-0.5">
-          <span className="text-blue-400 mr-4">
+          <span className="font-mono text-blue-400 mr-4">
             {lineAddr.toString(16).padStart(8, '0').toUpperCase()}
           </span>
-          <span className="text-gray-300 mr-4 flex-1">
+          <span className="font-mono text-gray-300 mr-4 flex-1">
             {hexBytes}
           </span>
-          <span className="text-yellow-400">
+          <span className="font-mono text-yellow-400">
             {ascii}
           </span>
         </div>
