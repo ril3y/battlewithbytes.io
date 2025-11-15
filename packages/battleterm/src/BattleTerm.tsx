@@ -501,9 +501,9 @@ export default function SerialTerminal({ isStandalone = false }: SerialTerminalP
   }
 
   return (
-    <div className="bg-gray-900/50 border-2 border-green-500/30 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.15)] overflow-hidden">
+    <div className={`bg-gray-900/50 border-2 border-green-500/30 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.15)] overflow-hidden flex flex-col ${isStandalone ? 'h-screen' : ''}`}>
       {/* Connection Panel with Toolbar */}
-      <div className="border-b border-green-500/20">
+      <div className="border-b border-green-500/20 flex-shrink-0">
         <ConnectionPanel
           isConnected={terminalState.isConnected}
           onConnect={handleConnect}
@@ -518,7 +518,7 @@ export default function SerialTerminal({ isStandalone = false }: SerialTerminalP
 
       {/* Terminal Display with Context Menu */}
       <div
-        className="bg-black"
+        className={`bg-black ${isStandalone ? 'flex-1 overflow-hidden' : ''}`}
         onContextMenu={handleContextMenu}
       >
         <TerminalDisplay
@@ -529,13 +529,15 @@ export default function SerialTerminal({ isStandalone = false }: SerialTerminalP
       </div>
 
       {/* Terminal Input Area - Fixed at Bottom */}
-      <TerminalInput
-        isConnected={terminalState.isConnected}
-        onCommand={handleCommand}
-      />
+      <div className="flex-shrink-0">
+        <TerminalInput
+          isConnected={terminalState.isConnected}
+          onCommand={handleCommand}
+        />
+      </div>
 
       {/* Status Bar */}
-      <div className="border-t border-green-500/20">
+      <div className="border-t border-green-500/20 flex-shrink-0">
         <StatusBar
           stats={stats}
           isConnected={terminalState.isConnected}

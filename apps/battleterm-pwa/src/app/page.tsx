@@ -1,29 +1,23 @@
 'use client';
 
-import { BattleTerm } from '@battlewithbytes/battleterm';
-import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const SerialTerminal = dynamic(() => import('@battlewithbytes/battleterm'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-screen bg-black">
+      <div className="text-center">
+        <div className="text-green-400 font-mono text-lg mb-2">Loading Terminal...</div>
+        <div className="text-gray-500 text-sm">Initializing xterm.js</div>
+      </div>
+    </div>
+  )
+});
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-black text-emerald-500">
-        <div className="text-center">
-          <div className="text-2xl font-mono mb-2">BattleTerm</div>
-          <div className="text-sm">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <main className="h-screen w-screen overflow-hidden bg-black">
-      <BattleTerm />
-    </main>
+    <div className="h-screen w-screen">
+      <SerialTerminal isStandalone={true} />
+    </div>
   );
 }

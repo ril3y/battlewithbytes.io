@@ -72,7 +72,7 @@ export function useWasmModule<T>(
         setState(prev => ({ ...prev, progress: 10 }));
       }
 
-      const module = await loader();
+      const wasmModule = await loader();
 
       if (signal.aborted) {
         log('Load aborted');
@@ -91,7 +91,7 @@ export function useWasmModule<T>(
       }
 
       setState({
-        module,
+        module: wasmModule,
         isLoading: false,
         isInitialized: true,
         error: null,

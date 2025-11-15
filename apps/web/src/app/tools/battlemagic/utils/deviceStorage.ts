@@ -156,6 +156,27 @@ export async function findMatchingPort(storedDevice: StoredPortInfo): Promise<Se
     const ports = await navigator.serial.getPorts();
     for (const port of ports) {
       if (isMatchingDevice(port, storedDevice)) {
+        // Check if port is already open/locked
+        // A port with readable or writable streams is already open
+        if (port.readable || port.writable) {
+          console.warn('[findMatchingPort] Port is already open, attempting to close...');
+          try {
+            await port.close();
+            // Give it time to fully close
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (closeError) {
+            console.warn('[findMatchingPort] Failed to close port:', closeError);
+            // Port is stuck, return null to force manual selection
+            return null;
+          }
+
+          // Verify it actually closed
+          if (port.readable || port.writable) {
+            console.warn('[findMatchingPort] Port still locked after close attempt');
+            return null;
+          }
+        }
+
         return port;
       }
     }

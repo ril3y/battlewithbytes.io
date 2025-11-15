@@ -533,7 +533,8 @@ export class GdbClient {
       throw new Error(`Failed to insert breakpoint: ${response.code || 'unknown error'}`);
     }
 
-    if (response.type !== 'ok') {
+    // Accept both 'ok' and 'empty' as success (some GDB servers return empty for success)
+    if (response.type !== 'ok' && response.type !== 'empty') {
       throw new Error(`Unexpected response type: ${response.type}`);
     }
   }
@@ -548,7 +549,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildRemoveBreakpoint(address, hardware);
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'ok') {
+    // Accept both 'ok' and 'empty' as success
+    if (response.type !== 'ok' && response.type !== 'empty') {
       throw new Error('Failed to remove breakpoint');
     }
   }

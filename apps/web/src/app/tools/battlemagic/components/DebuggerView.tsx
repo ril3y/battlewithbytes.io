@@ -54,15 +54,24 @@ export default function DebuggerView({
   // Memory jump state - address to jump to in memory view
   const [memoryJumpAddress, setMemoryJumpAddress] = useState<number | undefined>();
 
+  // Disassembly jump state - address to jump to in disassembly view
+  const [disassemblyJumpAddress, setDisassemblyJumpAddress] = useState<number | undefined>();
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleMaximize = useCallback((panel: MaximizedPanel) => {
     setMaximizedPanel(prev => prev === panel ? null : panel);
   }, []);
 
-  // Handle address click from disassembly - jump to memory view
-  const handleAddressClick = useCallback((address: number) => {
+  // Handle address click from disassembly address column - jump to memory view
+  const handleMemoryJump = useCallback((address: number) => {
     setMemoryJumpAddress(address);
+  }, []);
+
+  // Handle address click from registers - jump to disassembly
+  const handleDisassemblyJump = useCallback((address: number) => {
+    console.log('[DebuggerView] Jump request to:', address.toString(16));
+    setDisassemblyJumpAddress(address);
   }, []);
 
   // Mouse handlers for horizontal divider (top/bottom split)
@@ -229,7 +238,8 @@ export default function DebuggerView({
               registers={new Map(registers.map(r => [r.name, r.value]))}
               gdbClient={gdbClient}
               onOutput={onOutput}
-              onAddressClick={handleAddressClick}
+              onAddressClick={handleMemoryJump}
+              jumpToAddress={disassemblyJumpAddress}
             />
           )}
           {maximizedPanel === 'registers' && (
@@ -237,6 +247,7 @@ export default function DebuggerView({
               registers={registers}
               onRefresh={onRefreshRegisters}
               isConnected={isConnected}
+              onAddressClick={handleDisassemblyJump}
             />
           )}
           {maximizedPanel === 'stack' && (
@@ -250,6 +261,8 @@ export default function DebuggerView({
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
+              gdbClient={gdbClient}
+              onOutput={onOutput}
             />
           )}
         </div>
@@ -273,7 +286,8 @@ export default function DebuggerView({
               registers={new Map(registers.map(r => [r.name, r.value]))}
               gdbClient={gdbClient}
               onOutput={onOutput}
-              onAddressClick={handleAddressClick}
+              onAddressClick={handleMemoryJump}
+              jumpToAddress={disassemblyJumpAddress}
             />
           </div>
         </div>
@@ -289,6 +303,7 @@ export default function DebuggerView({
               registers={registers}
               onRefresh={onRefreshRegisters}
               isConnected={isConnected}
+              onAddressClick={handleDisassemblyJump}
             />
           </div>
         </div>
@@ -321,6 +336,8 @@ export default function DebuggerView({
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
+              gdbClient={gdbClient}
+              onOutput={onOutput}
             />
           </div>
         </div>

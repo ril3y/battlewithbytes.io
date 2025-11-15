@@ -1,0 +1,6 @@
+# TypeScript
+/dist
+*.tsbuildinfo
+
+# Testing
+/coverage

@@ -19,9 +19,10 @@ interface GdbPanelProps {
   onAttachTarget: (targetId: number) => void;
   onScanSwd?: () => void;
   onClearOutput?: () => void;
+  onOutput?: (text: string) => void;
 }
 
-export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, onScanSwd, onClearOutput }: GdbPanelProps) {
+export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, onScanSwd, onClearOutput, onOutput }: GdbPanelProps) {
   const [command, setCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -85,18 +86,61 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, o
   const handleSendCommand = async () => {
     if (!gdbClient || !command.trim()) return;
 
+    const cmd = command.trim();
+
     try {
       // Add to history
-      setCommandHistory((prev) => [...prev, command]);
+      setCommandHistory((prev) => [...prev, cmd]);
       setHistoryIndex(-1);
 
-      // Send command
-      await gdbClient.sendCommand(command);
+      // Echo the command to output
+      if (onOutput) {
+        onOutput(`> ${cmd}`);
+      }
+
+      // Send command and get response
+      const response = await gdbClient.sendCommand(cmd);
       setCommand('');
 
-      // Output is handled by the callbacks in BattleMagicMonitor
-    } catch {
-      // Error is handled by callbacks
+      // Display response based on type
+      if (onOutput) {
+        switch (response.type) {
+          case 'ok':
+            onOutput('OK');
+            break;
+          case 'error':
+            onOutput(`ERROR: ${response.code || 'Unknown error'}`);
+            break;
+          case 'data':
+            // Note: For monitor commands (O packets), output is also shown via onTargetOutput callback with [Target] prefix.
+            // This raw output helps users see the exact GDB response for debugging.
+            // For other commands (memory/register reads), this is the only output shown.
+            if (response.data && response.data.trim()) {
+              onOutput(response.data);
+            } else {
+              // Empty data - show OK
+              onOutput('(no data)');
+            }
+            break;
+          case 'signal':
+            onOutput(`Signal: ${response.signal}`);
+            break;
+          case 'empty':
+            // Empty response - GDB commands like 'i r' may return empty on RSP protocol
+            onOutput('(empty response - command not supported in RSP mode)');
+            if (cmd.startsWith('i ') || cmd.startsWith('info ')) {
+              onOutput('Tip: Use RSP commands instead: g (read all regs), p<N> (read reg N), m<addr>,<len> (read memory)');
+            }
+            break;
+          default:
+            onOutput(JSON.stringify(response));
+        }
+      }
+    } catch (error) {
+      // Show error to user
+      if (onOutput) {
+        onOutput(`Command failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   };
 

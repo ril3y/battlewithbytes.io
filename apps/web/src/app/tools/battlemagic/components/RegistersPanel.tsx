@@ -18,9 +18,10 @@ interface RegistersPanelProps {
   registers: RegisterValue[];
   onRefresh: () => void;
   isConnected: boolean;
+  onAddressClick?: (address: number) => void;
 }
 
-export default function RegistersPanel({ registers, onRefresh, isConnected }: RegistersPanelProps) {
+export default function RegistersPanel({ registers, onRefresh, isConnected, onAddressClick }: RegistersPanelProps) {
   // Debug log to see what we're receiving
   React.useEffect(() => {
     if (registers.length > 0) {
@@ -41,19 +42,44 @@ export default function RegistersPanel({ registers, onRefresh, isConnected }: Re
     return `0x${hexStr}`;
   };
 
-  const RegisterGroup = ({ title, regs }: { title: string; regs: RegisterValue[] }) => (
-    <div className="mb-4">
-      <h3 className="text-xs font-bold text-gray-400 mb-2 uppercase">{title}</h3>
-      <div className="grid grid-cols-2 gap-1 text-xs font-mono">
-        {regs.map((reg) => (
-          <div key={reg.name} className="flex items-center justify-between bg-gray-800 px-2 py-1 rounded">
-            <span className="text-green-400 font-bold">{reg.name.toUpperCase()}:</span>
-            <span className="text-gray-300">{formatValue(reg.value, reg.size)}</span>
-          </div>
-        ))}
+  const RegisterGroup = ({ title, regs }: { title: string; regs: RegisterValue[] }) => {
+    return (
+      <div className="mb-4">
+        <h3 className="text-xs font-bold text-gray-400 mb-2 uppercase">{title}</h3>
+        <div className="grid grid-cols-2 gap-1 text-xs font-mono">
+          {regs.map((reg) => {
+            // Determine if this register should be clickable (address registers)
+            const isAddressRegister = ['pc', 'sp', 'lr', 'msp', 'psp'].includes(reg.name.toLowerCase()) ||
+                                       reg.name.match(/^r\d+$/);
+
+            return (
+              <div
+                key={reg.name}
+                className="flex items-center justify-between bg-gray-800 px-2 py-1 rounded"
+              >
+                <span className="text-green-400 font-bold">{reg.name.toUpperCase()}:</span>
+                <span
+                  className={`text-gray-300 ${
+                    isAddressRegister && onAddressClick
+                      ? 'cursor-pointer hover:underline hover:text-cyan-400'
+                      : ''
+                  }`}
+                  onClick={() => {
+                    if (isAddressRegister && onAddressClick) {
+                      onAddressClick(reg.value);
+                    }
+                  }}
+                  title={isAddressRegister && onAddressClick ? 'Click to jump to address' : ''}
+                >
+                  {formatValue(reg.value, reg.size)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-950">

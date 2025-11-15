@@ -1,9 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Script from 'next/script';
 import { generateToolSchema } from '@/lib/utils/seo';
-import SerialTerminal from '@/components/tools/SerialTerminal/SerialTerminalClient';
+
+const SerialTerminal = dynamic(() => import('@battlewithbytes/battleterm'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-12 bg-black/50 border border-gray-800 rounded-lg">
+      <div className="text-center">
+        <div className="text-green-400 font-mono text-lg mb-2">Loading Terminal...</div>
+        <div className="text-gray-500 text-sm">Initializing xterm.js</div>
+      </div>
+    </div>
+  )
+});
 
 export default function SerialTerminalPage() {
   const [isStandalone, setIsStandalone] = useState(false);

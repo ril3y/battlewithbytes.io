@@ -9,11 +9,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CapstoneDisassembler } from '../lib/disasm/CapstoneDisassembler';
+import { WasmDisassembler } from '../lib/disasm/WasmDisassembler';
 import { ArmDisassembler } from '../lib/disasm/ArmDisassembler';
 import type { DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
 import { GdbClient } from '../lib/gdb/GdbClient';
 import { ControlFlowGraphView } from './ControlFlowGraphView';
+import { useDisassemblyNavigation } from '../lib/hooks/useDisassemblyNavigation';
 
 interface DisassemblyViewProps {
   onReadMemory: (address: number, length: number) => Promise<Uint8Array | null>;
@@ -23,6 +24,7 @@ interface DisassemblyViewProps {
   gdbClient?: GdbClient | null;
   onOutput?: (message: string) => void;
   onAddressClick?: (address: number) => void; // Callback when address is clicked
+  jumpToAddress?: number; // External request to jump to an address
 }
 
 interface DisassemblyLine {
@@ -42,7 +44,8 @@ export default function DisassemblyView({
   registers,
   gdbClient,
   onOutput,
-  onAddressClick
+  onAddressClick,
+  jumpToAddress
 }: DisassemblyViewProps) {
   const [lines, setLines] = useState<DisassemblyLine[]>([]);
   const [baseAddress, setBaseAddress] = useState<number>(0x08000000); // Default flash base
@@ -58,32 +61,38 @@ export default function DisassemblyView({
   // const [symbols, setSymbols] = useState<Map<number, string>>(new Map());
   const [breakpoints, setBreakpoints] = useState<Set<number>>(new Set());
   const [disassemblerReady, setDisassemblerReady] = useState(false);
+  const [showGoToModal, setShowGoToModal] = useState(false);
+  const [goToAddress, setGoToAddress] = useState('');
+  const [goToError, setGoToError] = useState<string | null>(null);
+  const [jumpedToAddress, setJumpedToAddress] = useState<number | null>(null); // Track jumped-to address for highlighting
+  const [isMouseOverPanel, setIsMouseOverPanel] = useState(false); // Track if mouse is over this panel
 
-  const disassembler = useRef<CapstoneDisassembler | ArmDisassembler | null>(null);
+  const disassembler = useRef<WasmDisassembler | ArmDisassembler | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const jumpHighlightTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize Capstone disassembler with fallback to ArmDisassembler
+  // Initialize WASM disassembler with fallback to ArmDisassembler
   useEffect(() => {
     const initDisassembler = async () => {
       try {
-        console.log('[DisassemblyView] Initializing Capstone disassembler...');
+        console.log('[DisassemblyView] Initializing WASM disassembler...');
         setIsLoading(true);
-        const capstone = new CapstoneDisassembler();
-        await capstone.initialize();
-        disassembler.current = capstone;
+        const wasm = new WasmDisassembler();
+        await wasm.initialize();
+        disassembler.current = wasm;
         setDisassemblerReady(true);
         setIsLoading(false);
-        console.log('[DisassemblyView] Capstone disassembler initialized successfully');
-        onOutput?.('[Capstone disassembler ready]');
+        console.log('[DisassemblyView] WASM disassembler initialized successfully');
+        onOutput?.('[WASM disassembler ready - 155KB (97% smaller than Capstone)]');
       } catch (err) {
-        console.error('[DisassemblyView] Failed to initialize Capstone, falling back to ArmDisassembler:', err);
+        console.error('[DisassemblyView] Failed to initialize WASM, falling back to ArmDisassembler:', err);
         // Fallback to custom ARM disassembler
         disassembler.current = new ArmDisassembler();
         setDisassemblerReady(true);
         setIsLoading(false);
         setError(null); // Clear error since we have a fallback
         console.log('[DisassemblyView] Using ArmDisassembler fallback');
-        onOutput?.('[Using ArmDisassembler (Capstone failed to load)]');
+        onOutput?.('[Using ArmDisassembler (WASM failed to load)]');
       }
     };
 
@@ -97,7 +106,7 @@ export default function DisassemblyView({
     };
   }, [onOutput]);
 
-  // Load disassembly
+  // Load disassembly - defined before navigation hook to avoid hoisting issues
   const loadDisassembly = useCallback(async (address: number, length: number) => {
     if (!isConnected || !onReadMemory) {
       setError('Not connected to target');
@@ -133,25 +142,35 @@ export default function DisassemblyView({
       // Analyze control flow
       const flowMap = disassembler.current.analyzeControlFlow(instructions);
 
-      // Build cross-reference map
+      // Build cross-reference map (only for branches, not sequential flow)
       const crossRefs = new Map<number, number[]>();
+      const instructionAddresses = new Set(instructions.map(i => i.address));
+
       for (const [source, targets] of flowMap.entries()) {
         for (const target of targets) {
-          if (!crossRefs.has(target)) {
-            crossRefs.set(target, []);
+          // Only add cross-reference if target is in our instruction list
+          // This prevents showing xrefs for every instruction
+          if (instructionAddresses.has(target)) {
+            if (!crossRefs.has(target)) {
+              crossRefs.set(target, []);
+            }
+            crossRefs.get(target)!.push(source);
           }
-          crossRefs.get(target)!.push(source);
         }
       }
 
-      // Create display lines (don't include programCounter in this logic)
+      console.log('[DisassemblyView] Cross-references found:', crossRefs.size, 'targets');
+
+      // Create display lines with PC highlighting
       const displayLines: DisassemblyLine[] = instructions.map((inst, index) => ({
         instruction: inst,
-        isCurrentPC: false, // Will be updated separately when PC changes
+        isCurrentPC: programCounter !== undefined && inst.address === programCounter,
         isBreakpoint: breakpoints.has(inst.address),
         isFunctionEntry: disassembler.current?.isFunctionEntry(instructions, index) ?? false,
         crossRefs: crossRefs.get(inst.address) || []
       }));
+
+      console.log(`[DisassemblyView] Loaded ${displayLines.length} lines, PC at 0x${programCounter?.toString(16) || 'unknown'}, PC line in view:`, displayLines.some(l => l.isCurrentPC));
 
       setLines(displayLines);
     } catch (err) {
@@ -159,7 +178,22 @@ export default function DisassemblyView({
     } finally {
       setIsLoading(false);
     }
-  }, [isConnected, onReadMemory, breakpoints, disassemblerReady]);
+  }, [isConnected, onReadMemory, breakpoints, disassemblerReady, programCounter]);
+
+  // Navigation history hook - placed after loadDisassembly to avoid hoisting issues
+  const navigation = useDisassemblyNavigation({
+    onNavigate: useCallback((address: number, mode: ViewMode) => {
+      console.log('[DisassemblyView] Navigation to:', address.toString(16));
+      setFollowPC(false); // Disable Follow PC during navigation
+      setViewMode(mode);
+      setBaseAddress(address);
+      setAddressInput(`0x${address.toString(16)}`);
+      loadDisassembly(address, bytesToRead);
+    }, [bytesToRead, loadDisassembly]),
+    onFollowPCChange: useCallback((enabled: boolean) => {
+      setFollowPC(enabled);
+    }, [])
+  });
 
   // Refresh button handler
   const handleRefresh = useCallback(() => {
@@ -269,10 +303,29 @@ export default function DisassemblyView({
 
   // Navigate to a branch target
   const handleNavigateToBranch = useCallback((targetAddress: number) => {
-    setBaseAddress(targetAddress & ~0xF);
-    setAddressInput(`0x${(targetAddress & ~0xF).toString(16)}`);
-    loadDisassembly(targetAddress & ~0xF, bytesToRead);
-  }, [bytesToRead, loadDisassembly]);
+    const alignedAddress = targetAddress & ~0xF;
+    // Add to history (this also disables Follow PC)
+    navigation.addToHistory(alignedAddress, viewMode);
+    // Navigate
+    setBaseAddress(alignedAddress);
+    setAddressInput(`0x${alignedAddress.toString(16)}`);
+    loadDisassembly(alignedAddress, bytesToRead);
+
+    // Set jumped-to address for temporary highlighting
+    setJumpedToAddress(targetAddress);
+
+    // Clear any existing highlight timeout
+    if (jumpHighlightTimeout.current) {
+      clearTimeout(jumpHighlightTimeout.current);
+    }
+
+    // Clear highlight after 2 seconds
+    jumpHighlightTimeout.current = setTimeout(() => {
+      setJumpedToAddress(null);
+    }, 2000);
+
+    console.log('[DisassemblyView] Manual jump to:', alignedAddress.toString(16), '(Follow PC disabled)');
+  }, [bytesToRead, loadDisassembly, viewMode, navigation]);
 
   // Format address for display
   const formatAddress = (addr: number): string => {
@@ -324,10 +377,16 @@ export default function DisassemblyView({
   useEffect(() => {
     if (programCounter === undefined) return;
 
-    setLines(prevLines => prevLines.map(line => ({
-      ...line,
-      isCurrentPC: line.instruction.address === programCounter
-    })));
+    console.log('[DisassemblyView] Updating PC highlight for', programCounter.toString(16));
+    setLines(prevLines => {
+      const updated = prevLines.map(line => ({
+        ...line,
+        isCurrentPC: line.instruction.address === programCounter
+      }));
+      const pcLine = updated.find(l => l.isCurrentPC);
+      console.log('[DisassemblyView] PC line found:', pcLine ? 'YES' : 'NO', 'Total lines:', updated.length);
+      return updated;
+    });
   }, [programCounter]);
 
   // Auto-load when connected (only on initial connect, not on every PC change)
@@ -338,8 +397,135 @@ export default function DisassemblyView({
     }
   }, [isConnected, programCounter, followPC, handleGoToPC, lines.length]);
 
+  // Clear jump highlight when PC changes (step/continue)
+  useEffect(() => {
+    if (programCounter !== undefined && jumpedToAddress !== null) {
+      setJumpedToAddress(null);
+      if (jumpHighlightTimeout.current) {
+        clearTimeout(jumpHighlightTimeout.current);
+      }
+    }
+  }, [programCounter, jumpedToAddress]);
+
+  // Handle external jump requests (e.g., from clicking PC register)
+  useEffect(() => {
+    if (jumpToAddress !== undefined) {
+      console.log('[DisassemblyView] External jump request to:', jumpToAddress.toString(16));
+      handleNavigateToBranch(jumpToAddress);
+    }
+  }, [jumpToAddress, handleNavigateToBranch]);
+
+  // Keyboard handler for "G" key to open Go To modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Only handle G key when mouse is over this panel and modal is not already open
+      if ((e.key === 'g' || e.key === 'G') && isMouseOverPanel && !showGoToModal) {
+        e.preventDefault();
+        setShowGoToModal(true);
+        setGoToAddress('');
+        setGoToError(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMouseOverPanel, showGoToModal]);
+
+  // Handle Go To address submission
+  const handleGoToSubmit = useCallback(async () => {
+    setGoToError(null);
+
+    try {
+      // Parse address
+      let addr = 0;
+      let input = goToAddress.trim();
+
+      if (!input) {
+        setGoToError('Please enter an address');
+        return;
+      }
+
+      // Handle $pc syntax
+      if (input.includes('$pc')) {
+        if (programCounter === undefined) {
+          setGoToError('PC not available - not connected or no program running');
+          return;
+        }
+
+        // Replace $pc with actual PC value
+        // Support: $pc, $pc+0x10, $pc-0x20, $pc+100, $pc-50
+        const pcMatch = input.match(/\$pc\s*([+\-])\s*(0x[0-9a-fA-F]+|[0-9]+)/);
+
+        if (pcMatch) {
+          // Has offset: $pc+offset or $pc-offset
+          const operator = pcMatch[1];
+          const offsetStr = pcMatch[2];
+          const offset = offsetStr.startsWith('0x')
+            ? parseInt(offsetStr, 16)
+            : parseInt(offsetStr, 10);
+
+          if (isNaN(offset)) {
+            setGoToError('Invalid offset value');
+            return;
+          }
+
+          addr = operator === '+' ? programCounter + offset : programCounter - offset;
+        } else if (input === '$pc') {
+          // Just $pc
+          addr = programCounter;
+        } else {
+          setGoToError('Invalid $pc syntax. Use: $pc, $pc+0x10, or $pc-0x20');
+          return;
+        }
+      } else {
+        // Regular address parsing
+        if (input.startsWith('0x') || input.startsWith('0X')) {
+          addr = parseInt(input, 16);
+        } else {
+          addr = parseInt(input, 10);
+        }
+      }
+
+      if (isNaN(addr) || addr < 0) {
+        setGoToError('Invalid address format');
+        return;
+      }
+
+      // Validate address range (ARM address space)
+      if (addr > 0xFFFFFFFF) {
+        setGoToError('Address out of range (max: 0xFFFFFFFF)');
+        return;
+      }
+
+      // Try to read a small amount of memory to validate the address
+      if (isConnected && onReadMemory) {
+        const testData = await onReadMemory(addr, 4);
+        if (!testData) {
+          setGoToError('Cannot read from this address - may be invalid or inaccessible');
+          return;
+        }
+      }
+
+      // Address is valid, navigate to it
+      setShowGoToModal(false);
+      setGoToAddress(''); // Clear input for next time
+      handleNavigateToBranch(addr);
+    } catch (err) {
+      setGoToError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  }, [goToAddress, programCounter, isConnected, onReadMemory, handleNavigateToBranch]);
+
   return (
-    <div className="h-full flex flex-col bg-gray-950">
+    <div
+      className="h-full flex flex-col bg-gray-950"
+      onMouseEnter={() => setIsMouseOverPanel(true)}
+      onMouseLeave={() => setIsMouseOverPanel(false)}
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-2 bg-gray-900 border-b border-gray-700">
         <button
@@ -349,6 +535,26 @@ export default function DisassemblyView({
         >
           Refresh
         </button>
+
+        {/* Navigation buttons */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={navigation.navigateBack}
+            disabled={!navigation.canGoBack}
+            className="px-2 py-1 text-xs font-mono bg-gray-800 text-green-400 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Back (Backspace or Left Arrow)"
+          >
+            ←
+          </button>
+          <button
+            onClick={navigation.navigateForward}
+            disabled={!navigation.canGoForward}
+            className="px-2 py-1 text-xs font-mono bg-gray-800 text-green-400 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Forward (Right Arrow)"
+          >
+            →
+          </button>
+        </div>
 
         <div className="flex items-center gap-1">
           <input
@@ -405,14 +611,14 @@ export default function DisassemblyView({
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
-          <label className="flex items-center gap-1 text-xs text-gray-400">
+          <label className={`flex items-center gap-1 text-xs ${followPC ? 'text-green-400' : 'text-yellow-400'}`}>
             <input
               type="checkbox"
               checked={followPC}
               onChange={(e) => setFollowPC(e.target.checked)}
               className="rounded"
             />
-            Follow PC
+            Follow PC {!followPC && '(Manual)'}
           </label>
 
           {viewMode === 'linear' && (
@@ -445,7 +651,7 @@ export default function DisassemblyView({
       {(error || isLoading || !disassemblerReady) && (
         <div className="px-3 py-1 bg-gray-900 border-b border-gray-700">
           {!disassemblerReady && !error && (
-            <span className="text-xs text-yellow-400">⚙️ Initializing Capstone disassembler...</span>
+            <span className="text-xs text-yellow-400">⚙️ Initializing WASM disassembler...</span>
           )}
           {isLoading && disassemblerReady && (
             <span className="text-xs text-yellow-400">Loading disassembly...</span>
@@ -512,14 +718,14 @@ export default function DisassemblyView({
               </div>
             </div>
           ) : (
-            <table className="w-full">
+            <table className="w-full table-fixed">
             <colgroup>
-              <col className="w-4" />
-              <col className="w-24" />
-              {showBytes && <col className="w-32" />}
-              <col className="w-20" />
-              <col />
-              <col className="w-32" />
+              <col style={{ width: '2rem' }} />
+              <col style={{ width: '7rem' }} />
+              {showBytes && <col style={{ width: '9rem' }} />}
+              <col style={{ width: '5rem' }} />
+              <col style={{ width: 'auto' }} />
+              <col style={{ width: '12rem' }} />
             </colgroup>
             <tbody>
               {lines.map((line, index) => {
@@ -528,31 +734,12 @@ export default function DisassemblyView({
 
                 return (
                   <React.Fragment key={index}>
-                    {/* Function entry separator */}
-                    {line.isFunctionEntry && (
-                      <tr>
-                        <td colSpan={showBytes ? 6 : 5} className="py-1">
-                          <div className="border-t border-gray-700"></div>
-                        </td>
-                      </tr>
-                    )}
-
                     {/* Symbol/Function name */}
                     {symbol && (
                       <tr>
                         <td></td>
                         <td colSpan={showBytes ? 5 : 4} className="text-green-400 font-bold py-1">
                           {symbol}:
-                        </td>
-                      </tr>
-                    )}
-
-                    {/* Cross-references */}
-                    {line.crossRefs.length > 0 && (
-                      <tr>
-                        <td></td>
-                        <td colSpan={showBytes ? 5 : 4} className="text-gray-500 text-xs">
-                          ; xref: {line.crossRefs.map(addr => formatAddress(addr)).join(', ')}
                         </td>
                       </tr>
                     )}
@@ -564,22 +751,19 @@ export default function DisassemblyView({
                         hover:bg-gray-800
                         ${line.isCurrentPC ? 'bg-green-900 bg-opacity-20' : ''}
                         ${line.isBreakpoint ? 'bg-red-900 bg-opacity-20' : ''}
+                        ${jumpedToAddress === inst.address ? 'bg-orange-600 bg-opacity-30 animate-pulse' : ''}
                       `}
                     >
-                      {/* PC indicator / Breakpoint toggle */}
+                      {/* Breakpoint toggle */}
                       <td
                         className="text-center cursor-pointer hover:bg-gray-700"
                         onClick={() => handleToggleBreakpoint(inst.address)}
                         title={line.isBreakpoint ? 'Remove breakpoint' : 'Set breakpoint'}
                       >
-                        {line.isCurrentPC && (
-                          <span className="text-green-400">▶</span>
-                        )}
-                        {line.isBreakpoint && (
-                          <span className="text-red-400">●</span>
-                        )}
-                        {!line.isCurrentPC && !line.isBreakpoint && (
-                          <span className="text-gray-600 hover:text-red-400">○</span>
+                        {line.isBreakpoint ? (
+                          <span className="text-red-500">●</span>
+                        ) : (
+                          <span className="text-gray-700 hover:text-red-400">○</span>
                         )}
                       </td>
 
@@ -627,7 +811,29 @@ export default function DisassemblyView({
                       </td>
 
                       {/* Comments */}
-                      <td className="text-gray-500 pl-4">
+                      <td className={`pl-4 whitespace-nowrap overflow-hidden text-ellipsis ${line.isCurrentPC ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {/* Show cross-references for branch targets */}
+                        {line.crossRefs && line.crossRefs.length > 0 && (
+                          <span className={`text-xs ${line.isCurrentPC ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
+                            xref:{' '}
+                            {line.crossRefs.map((addr, idx) => (
+                              <React.Fragment key={addr}>
+                                {idx > 0 && ', '}
+                                <span
+                                  className={`cursor-pointer hover:underline ${
+                                    line.isCurrentPC ? 'hover:text-cyan-700' : 'hover:text-cyan-400'
+                                  }`}
+                                  onClick={() => handleNavigateToBranch(addr)}
+                                  title={`Jump to ${formatAddress(addr)}`}
+                                >
+                                  {formatAddress(addr)}
+                                </span>
+                              </React.Fragment>
+                            ))}
+                            {inst.comment && ' '}
+                          </span>
+                        )}
+                        {/* Show comment if available */}
                         {inst.comment && `; ${inst.comment}`}
                         {/* Show register values for register-based branches */}
                         {inst.mnemonic === 'bx' && registers && inst.operands && (
@@ -668,6 +874,59 @@ export default function DisassemblyView({
           </span>
         )}
       </div>
+
+      {/* Go To Address Modal */}
+      {showGoToModal && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+          <div className="bg-gray-900 border-2 border-green-500 rounded-lg shadow-2xl p-4 w-96">
+            <h3 className="text-sm font-bold text-green-400 mb-3">Go To Address</h3>
+
+            <div className="mb-3">
+              <label className="block text-xs text-gray-400 mb-1">
+                Enter address (hex, decimal, or $pc±offset):
+              </label>
+              <input
+                type="text"
+                value={goToAddress}
+                onChange={(e) => setGoToAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleGoToSubmit();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setShowGoToModal(false);
+                  }
+                }}
+                placeholder="0x20000000, $pc, $pc-0x10"
+                className="w-full px-2 py-1.5 text-sm bg-gray-900 border border-gray-600 rounded text-gray-300 font-mono focus:outline-none focus:border-green-500"
+                autoFocus
+              />
+            </div>
+
+            {goToError && (
+              <div className="mb-3 px-2 py-1.5 bg-red-900 bg-opacity-30 border border-red-500 rounded text-red-400 text-xs">
+                {goToError}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowGoToModal(false)}
+                className="px-3 py-1.5 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+              >
+                Cancel (Esc)
+              </button>
+              <button
+                onClick={handleGoToSubmit}
+                className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-500"
+              >
+                Go (Enter)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

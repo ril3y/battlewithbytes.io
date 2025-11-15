@@ -274,6 +274,8 @@ export default function BattleMagicMonitor() {
 
       // Try quick connect first if we have a stored port and not forcing new port
       if (!forceNewPort && storedInfo?.gdbPort && hasStoredGdbPort) {
+        addGdbOutput('[Attempting Quick Connect to last used port...]');
+
         // Give any pending disconnects from hot-reload time to complete
         // This prevents "port already open" errors during development
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -300,8 +302,13 @@ export default function BattleMagicMonitor() {
             isUsingStoredPort = false;
           }
         } else {
-          addGdbOutput('[Previously used port not found, select a new one]');
+          addGdbOutput('[Previously used port not available or locked]');
+          addGdbOutput('[Clearing saved port - please select port manually]');
           setHasStoredGdbPort(false);
+          // Clear the saved port since it's not available
+          import('../utils/deviceStorage').then(({ clearGdbPort }) => {
+            clearGdbPort();
+          });
         }
       } else if (forceNewPort) {
         addGdbOutput('[Manual port selection requested]');
@@ -345,7 +352,7 @@ export default function BattleMagicMonitor() {
       addGdbOutput(`[Connection failed: ${error}]`);
 
       // If port is locked or we were using a stored port and it failed, clear it
-      if ((isUsingStoredPort && storedInfo?.gdbPort) || errorMsg.includes('locked') || errorMsg.includes('unavailable')) {
+      if ((isUsingStoredPort && storedInfo?.gdbPort) || errorMsg.includes('locked') || errorMsg.includes('unavailable') || errorMsg.includes('in use')) {
         addGdbOutput('[Clearing saved port due to connection failure]');
         import('../utils/deviceStorage').then(({ clearGdbPort }) => {
           clearGdbPort();
@@ -354,9 +361,9 @@ export default function BattleMagicMonitor() {
       }
 
       // If port was locked, suggest trying again
-      if (errorMsg.includes('locked') || errorMsg.includes('unavailable')) {
+      if (errorMsg.includes('locked') || errorMsg.includes('unavailable') || errorMsg.includes('in use')) {
         setTimeout(() => {
-          addGdbOutput('[Port cleared. You can now click Connect again.]');
+          addGdbOutput('[Port cleared. Please click Connect again to select a new port.]');
         }, 100);
       }
     }
@@ -931,6 +938,7 @@ export default function BattleMagicMonitor() {
                 }}
                 onScanSwd={handleScanTargets}
                 onClearOutput={clearGdbOutput}
+                onOutput={addGdbOutput}
               />
             </div>
 

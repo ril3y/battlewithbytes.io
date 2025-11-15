@@ -6,12 +6,12 @@
  */
 
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import type { Terminal } from 'xterm';
-import type { FitAddon } from 'xterm-addon-fit';
+import type { Terminal } from '@xterm/xterm';
+import type { FitAddon } from '@xterm/addon-fit';
 import type { TerminalOptions } from './serialTerminal.types';
 import { getXtermOptions } from './terminalUtils';
 import { VERSION, formatChangelogForTerminal, getLatestChangelog } from './version';
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 
 // Extended Terminal type with scroll interval
 interface TerminalWithAnimation extends Terminal {
@@ -50,9 +50,9 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
 
       // Dynamically import xterm modules (client-side only)
       const initTerminal = async () => {
-        const { Terminal } = await import('xterm');
-        const { FitAddon } = await import('xterm-addon-fit');
-        const { WebLinksAddon } = await import('xterm-addon-web-links');
+        const { Terminal } = await import('@xterm/xterm');
+        const { FitAddon } = await import('@xterm/addon-fit');
+        const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
         if (!mounted || !containerRef.current) return;
 
@@ -265,7 +265,7 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
     return (
       <div
         ref={containerRef}
-        className="terminal-container h-full min-h-[40vh] md:min-h-[50vh] lg:min-h-[55vh] rounded bg-black"
+        className="terminal-container h-full w-full rounded bg-black"
         style={{ padding: '8px' }}
       />
     );
