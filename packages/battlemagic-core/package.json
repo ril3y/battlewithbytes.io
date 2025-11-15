@@ -4,6 +4,13 @@
   "description": "Rust/WASM core for BattleMagic firmware analysis",
   "main": "pkg/battlemagic_core.js",
   "types": "pkg/battlemagic_core.d.ts",
+  "exports": {
+    ".": {
+      "import": "./pkg/battlemagic_core.js",
+      "types": "./pkg/battlemagic_core.d.ts"
+    },
+    "./pkg/*": "./pkg/*"
+  },
   "files": [
     "pkg/"
   ],
