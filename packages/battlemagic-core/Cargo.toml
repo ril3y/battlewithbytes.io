@@ -6,6 +6,9 @@ edition = "2021"
 description = "WebAssembly-powered GDB debugger core for embedded ARM development"
 license = "MIT"
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -17,11 +20,11 @@ serde_json = "1.0"
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
 
-# Binary parsing
-goblin = "0.8"
+# Binary parsing (requires C compiler - disabled for now)
+# goblin = "0.8"
 
-# Disassembly - using capstone for ARM
-capstone = { version = "0.12", default-features = false }
+# Disassembly - using capstone for ARM (requires C compiler - disabled for now)
+# capstone = { version = "0.12", default-features = false }
 
 [dependencies.web-sys]
 version = "0.3"
