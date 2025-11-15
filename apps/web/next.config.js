@@ -30,6 +30,22 @@ const nextConfig = {
         path: false,
         crypto: false,
       };
+
+      // WASM support configuration
+      config.experiments = {
+        ...config.experiments,
+        asyncWebAssembly: true,
+        layers: true,
+      };
+
+      // Handle .wasm files
+      config.module.rules.push({
+        test: /\.wasm$/,
+        type: 'webassembly/async',
+      });
+
+      // Ensure proper WASM file handling
+      config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
     }
     return config;
   },

@@ -39,6 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Rust/Cargo
+target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# WASM build output (will be generated during build)
+packages/battlemagic-core/pkg/
+packages/*/pkg/
 # Node modules
 /node_modules/
 
@@ -101,3 +111,12 @@ packages/*/node_modules
 apps/*/.next
 apps/*/out
 packages/*/dist
+
+# Rust
+**/target/
+**/*.rs.bk
+**/Cargo.lock
+
+# WASM
+**/pkg/
+**/*.wasm

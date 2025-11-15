@@ -1,0 +1,31 @@
+{
+  "name": "@battlewithbytes/battlemagic-core",
+  "version": "0.1.0",
+  "description": "Rust/WASM core for BattleMagic firmware analysis",
+  "main": "pkg/battlemagic_core.js",
+  "types": "pkg/battlemagic_core.d.ts",
+  "files": [
+    "pkg/"
+  ],
+  "scripts": {
+    "build": "bash build.sh",
+    "build:dev": "bash build.sh --dev",
+    "clean": "cargo clean && rm -rf pkg"
+  },
+  "sideEffects": [
+    "*.wasm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ril3y/battlewithbytes.io"
+  },
+  "keywords": [
+    "wasm",
+    "rust",
+    "firmware",
+    "disassembler",
+    "arm"
+  ],
+  "author": "ril3y",
+  "license": "MIT"
+}
