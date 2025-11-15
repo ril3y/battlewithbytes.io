@@ -24,6 +24,7 @@
   "dependencies": {
     "@alexaltea/capstone-js": "^3.0.5",
     "@babel/runtime": "^7.27.0",
+    "@battlewithbytes/battlemagic-core": "workspace:^",
     "@battlewithbytes/battleterm": "workspace:^",
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
