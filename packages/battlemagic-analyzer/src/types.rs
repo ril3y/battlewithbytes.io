@@ -48,11 +48,65 @@ impl CrossReference {
     }
 }
 
+/// Loop type classification
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub enum LoopType {
+    /// While loop (pre-test)
+    While,
+    /// Do-while loop (post-test)
+    DoWhile,
+    /// For loop (counter-based)
+    For,
+    /// Infinite loop
+    Infinite,
+}
+
+/// Detected loop structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Loop {
+    /// Address of the loop header (entry point)
+    pub header_addr: u32,
+
+    /// Address of the back edge (instruction that branches back)
+    pub back_edge_addr: u32,
+
+    /// All addresses in the loop body
+    pub body_addrs: Vec<u32>,
+
+    /// Loop type classification
+    pub loop_type: LoopType,
+
+    /// Nesting depth (1 = outermost)
+    pub nesting_level: u32,
+}
+
+impl Loop {
+    pub fn new(
+        header_addr: u32,
+        back_edge_addr: u32,
+        body_addrs: Vec<u32>,
+        loop_type: LoopType,
+        nesting_level: u32,
+    ) -> Self {
+        Self {
+            header_addr,
+            back_edge_addr,
+            body_addrs,
+            loop_type,
+            nesting_level,
+        }
+    }
+}
+
 /// Complete analysis results returned to JavaScript
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AnalysisResults {
     /// All cross-references found in the binary
     pub xrefs: Vec<CrossReference>,
+
+    /// Detected loops in the code
+    pub loops: Vec<Loop>,
 
     /// Total number of instructions analyzed
     pub total_instructions: usize,
@@ -71,6 +125,7 @@ pub struct AnalysisResults {
 impl AnalysisResults {
     pub fn new(
         xrefs: Vec<CrossReference>,
+        loops: Vec<Loop>,
         total_instructions: usize,
         analysis_time_ms: u64,
         start_address: u32,
@@ -84,6 +139,7 @@ impl AnalysisResults {
 
         Self {
             xrefs,
+            loops,
             total_instructions,
             analysis_time_ms,
             unique_targets,
