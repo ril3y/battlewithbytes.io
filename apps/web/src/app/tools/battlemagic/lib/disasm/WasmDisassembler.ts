@@ -79,6 +79,7 @@ const isReturnInstruction = (mnemonic: string, operands: string): boolean => {
 /**
  * Parse immediate value from operand string
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const parseImmediate = (operand: string): number | null => {
   // Match #0x1234, #1234, 0x1234
   const hexMatch = operand.match(/#?0x([0-9a-fA-F]+)/);

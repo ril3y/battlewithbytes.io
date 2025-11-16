@@ -10,7 +10,6 @@
 
 import React, { useEffect, useCallback, useRef } from 'react';
 import { useDisassemblyNavigation } from '../../lib/hooks/useDisassemblyNavigation';
-import { useXref } from '../../lib/context/XrefContext';
 import { useAnalysis } from '../../lib/context/AnalysisContext';
 import type {
   DisassemblyViewProps,
@@ -56,7 +55,6 @@ export default function DisassemblyView({
 }: DisassemblyViewProps) {
   // Initialize hooks
   const { disassembler, disassemblerReady, isLoading, error, setError } = useDisassembler(onOutput);
-  const { getXrefsTo, getXrefsFrom, isAnalyzed } = useXref();
   const { getComment, setComment, deleteComment } = useAnalysis();
   const memoryChunks = useMemoryChunks(5); // Keep max 5 chunks in memory
   const enrichedDisassembly = useEnrichedDisassembly();

@@ -9,11 +9,13 @@
  * Enhanced with cross-reference indicators from WASM analyzer.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { DisassemblyLine, JumpInfo } from '../types';
 import { formatAddress, formatBytes, getInstructionColor, isFunctionEnd, analyzeJumps } from '../utils';
 import { ArrowRight, Target } from 'lucide-react';
 import { useAnalysisOptional } from '../../../lib/context/AnalysisContext';
+import { detectLoops, generateLoopLines } from '../utils/loopAnalysis';
+import { LoopColumn, injectLoopStyles } from '../utils/loopRenderer';
 
 interface LinearViewProps {
   isConnected: boolean;
@@ -50,14 +52,37 @@ export function LinearView({
   onAddressClick,
   onNavigateToBranch,
   containerRef,
-  onLoadPrevious,
-  onLoadNext,
   infiniteScrollEnabled = false,
   topSentinelRef,
   bottomSentinelRef
 }: LinearViewProps) {
   const [hoveredAddress, setHoveredAddress] = useState<number | null>(null);
+  const [hoveredLoop, setHoveredLoop] = useState<number | null>(null);
   const analysisContext = useAnalysisOptional();
+
+  // Inject loop visualization styles on mount
+  useEffect(() => {
+    injectLoopStyles();
+  }, []);
+
+  // Detect loops in visible instructions
+  const loops = useMemo(() => {
+    if (lines.length === 0) return [];
+    const instructions = lines.map(line => line.instruction);
+    return detectLoops(instructions);
+  }, [lines]);
+
+  // Generate loop visualization for each line
+  const loopLines = useMemo(() => {
+    if (loops.length === 0) return new Map();
+    const instructions = lines.map(line => line.instruction);
+    return generateLoopLines(instructions, loops);
+  }, [lines, loops]);
+
+  // Calculate max nesting depth for column width
+  const maxLoopDepth = useMemo(() => {
+    return loops.reduce((max, loop) => Math.max(max, loop.nestingLevel), 0);
+  }, [loops]);
 
   if (!isConnected) {
     return (
@@ -99,6 +124,10 @@ export function LinearView({
         <colgroup>
           <col style={{ width: '2rem' }} />
           <col style={{ width: '3rem' }} />
+          {/* Loop visualization column - dynamic width based on nesting */}
+          {maxLoopDepth > 0 && (
+            <col style={{ width: `${maxLoopDepth * 32}px` }} />
+          )}
           <col style={{ width: '7rem' }} />
           {showBytes && <col style={{ width: '9rem' }} />}
           <col style={{ width: '5rem' }} />
@@ -110,7 +139,7 @@ export function LinearView({
           {/* Top sentinel for infinite scroll */}
           {infiniteScrollEnabled && topSentinelRef && (
             <tr>
-              <td colSpan={showBytes ? 8 : 7}>
+              <td colSpan={showBytes ? (maxLoopDepth > 0 ? 9 : 8) : (maxLoopDepth > 0 ? 8 : 7)}>
                 <div
                   ref={topSentinelRef}
                   className="h-1 w-full"
@@ -129,6 +158,12 @@ export function LinearView({
             const xrefsFrom = analysisContext?.getXrefsFrom(inst.address) || [];
             const userComment = analysisContext?.getComment(inst.address);
 
+            // Get loop visualization for this line
+            const loopLineInfo = loopLines.get(index);
+            const isLoopActive = hoveredLoop !== null && loopLineInfo?.activeLoops.includes(hoveredLoop);
+            const isLoopHeader = loops.some(loop => loop.headerLine === index && loop.nestingLevel === hoveredLoop);
+            const isLoopBackEdge = loops.some(loop => loop.backEdgeLine === index && loop.nestingLevel === hoveredLoop);
+
             return (
               <React.Fragment key={index}>
                 {/* Function Header - if this address is a detected function */}
@@ -136,6 +171,7 @@ export function LinearView({
                   <tr>
                     <td></td>
                     <td></td>
+                    {maxLoopDepth > 0 && <td></td>}
                     <td colSpan={showBytes ? 6 : 5} className="border-t border-gray-700 pt-2">
                       <div className="text-cyan-400 font-bold font-mono text-xs">
                         ;---- {functionInfo.name} ({functionInfo.callers.length} caller{functionInfo.callers.length !== 1 ? 's' : ''}) ----
@@ -149,6 +185,7 @@ export function LinearView({
                   <tr>
                     <td></td>
                     <td></td>
+                    {maxLoopDepth > 0 && <td></td>}
                     <td colSpan={showBytes ? 6 : 5} className="text-green-400 font-bold py-1">
                       {symbol}:
                     </td>
@@ -176,6 +213,9 @@ export function LinearView({
                         ? 'bg-blue-900 bg-opacity-20'
                         : ''
                     }
+                    ${isLoopActive ? 'loop-active' : ''}
+                    ${isLoopHeader ? 'loop-header' : ''}
+                    ${isLoopBackEdge ? 'loop-backedge' : ''}
                   `}
                 >
                   {/* Breakpoint toggle */}
@@ -225,6 +265,17 @@ export function LinearView({
                       )}
                     </div>
                   </td>
+
+                  {/* Loop visualization column */}
+                  {maxLoopDepth > 0 && (
+                    <td style={{ padding: 0, verticalAlign: 'middle' }}>
+                      <LoopColumn
+                        lineInfo={loopLineInfo}
+                        isHovered={isLoopActive}
+                        onLoopHover={setHoveredLoop}
+                      />
+                    </td>
+                  )}
 
                   {/* Address */}
                   <td
@@ -426,7 +477,7 @@ export function LinearView({
                 {/* Function separator - dashed line after return instructions */}
                 {isFunctionEnd(inst) && index < lines.length - 1 && (
                   <tr>
-                    <td colSpan={showBytes ? 9 : 8}>
+                    <td colSpan={showBytes ? (maxLoopDepth > 0 ? 10 : 9) : (maxLoopDepth > 0 ? 9 : 8)}>
                       <div className="border-t border-dashed border-gray-600 my-2" />
                     </td>
                   </tr>
@@ -438,7 +489,7 @@ export function LinearView({
           {/* Bottom sentinel for infinite scroll */}
           {infiniteScrollEnabled && bottomSentinelRef && (
             <tr>
-              <td colSpan={showBytes ? 8 : 7}>
+              <td colSpan={showBytes ? (maxLoopDepth > 0 ? 9 : 8) : (maxLoopDepth > 0 ? 8 : 7)}>
                 <div
                   ref={bottomSentinelRef}
                   className="h-1 w-full"

@@ -60,7 +60,7 @@ export function isWasmSupported(): boolean {
         return true;
       }
     }
-  } catch (_e) {
+  } catch {
     // WebAssembly not supported
   }
 
