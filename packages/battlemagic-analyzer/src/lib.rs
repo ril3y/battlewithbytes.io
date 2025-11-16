@@ -1,5 +1,7 @@
+pub mod analysis;
 pub mod arch;
 pub mod analyzer;
+pub mod cfg;
 pub mod chips;
 pub mod database;
 pub mod traits;
@@ -16,6 +18,7 @@ use types::{Instruction, XrefQueryResult};
 #[cfg(test)]
 use types::XrefType;
 use wasm_bindgen::prelude::*;
+use js_sys::Function as JsFunction;
 use std::collections::HashMap;
 
 /// Main binary analyzer that builds cross-reference database
@@ -146,6 +149,52 @@ impl ArmAnalyzer {
     #[wasm_bindgen]
     pub fn analyze_from_bytes(&mut self, bytes: &[u8]) -> Result<JsValue, JsValue> {
         let results = self.inner.analyze_from_bytes(bytes);
+
+        // Serialize to JavaScript
+        serde_wasm_bindgen::to_value(&results)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
+    }
+
+    /// Analyze binary with progress callbacks
+    ///
+    /// Similar to analyze_from_bytes but accepts an optional JavaScript callback
+    /// function that will be called with progress updates during analysis.
+    ///
+    /// # Arguments
+    /// * `bytes` - Raw firmware bytes from GDB memory dump
+    /// * `progress_callback` - Optional JavaScript function(stage: string, progress: number)
+    ///
+    /// # Example
+    /// ```javascript
+    /// const analyzer = new ArmAnalyzer(0x8000);
+    /// const firmwareBytes = new Uint8Array([...]);
+    /// const results = analyzer.analyze_from_bytes_with_progress(
+    ///     firmwareBytes,
+    ///     (stage, progress) => {
+    ///         console.log(`${stage}: ${progress}%`);
+    ///     }
+    /// );
+    /// ```
+    #[wasm_bindgen]
+    pub fn analyze_from_bytes_with_progress(
+        &mut self,
+        bytes: &[u8],
+        progress_callback: Option<JsFunction>,
+    ) -> Result<JsValue, JsValue> {
+        // Helper to call progress callback
+        let report_progress = |stage: &str, progress: f64| {
+            if let Some(ref callback) = progress_callback {
+                let this = JsValue::null();
+                let stage_val = JsValue::from_str(stage);
+                let progress_val = JsValue::from_f64(progress);
+                let _ = callback.call2(&this, &stage_val, &progress_val);
+            }
+        };
+
+        report_progress("Decoding instructions", 0.0);
+        let results = self.inner.analyze_from_bytes_with_progress(bytes, &report_progress);
+
+        report_progress("Analysis complete", 100.0);
 
         // Serialize to JavaScript
         serde_wasm_bindgen::to_value(&results)
