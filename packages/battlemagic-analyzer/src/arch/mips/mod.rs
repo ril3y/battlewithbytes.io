@@ -40,6 +40,61 @@ impl Architecture for MipsArchitecture {
     fn is_function_end(&self, inst: &Instruction) -> bool {
         is_mips_function_end(inst)
     }
+
+    // ========================================================================
+    // Control Flow Analysis Methods
+    // ========================================================================
+    // TODO: Stub implementations for MIPS architecture
+
+    fn is_conditional_branch(&self, _inst: &Instruction) -> bool {
+        // TODO: Implement MIPS conditional branch detection (BEQ, BNE, BGTZ, etc.)
+        false
+    }
+
+    fn is_unconditional_branch(&self, _inst: &Instruction) -> bool {
+        // TODO: Implement MIPS unconditional branch detection (B, J)
+        false
+    }
+
+    fn is_call(&self, _inst: &Instruction) -> bool {
+        // TODO: Implement MIPS call detection (JAL, JALR)
+        false
+    }
+
+    fn is_comparison(&self, _inst: &Instruction) -> bool {
+        // TODO: Implement MIPS comparison detection (SLT, SLTU, SLTI, etc.)
+        false
+    }
+
+    fn get_branch_target(&self, _inst: &Instruction) -> Option<u32> {
+        // TODO: Implement MIPS branch target extraction
+        // Must handle delay slots and PC-relative addressing
+        None
+    }
+
+    // ========================================================================
+    // Calling Convention Methods (MIPS O32 ABI)
+    // ========================================================================
+
+    fn arg_registers(&self) -> &[&str] {
+        // MIPS O32 ABI: Arguments in $a0-$a3
+        &["a0", "a1", "a2", "a3"]
+    }
+
+    fn return_register(&self) -> &str {
+        // MIPS O32 ABI: Return value in $v0
+        "v0"
+    }
+
+    fn link_register(&self) -> &str {
+        // MIPS: $ra (register 31) stores return address
+        "ra"
+    }
+
+    fn stack_pointer(&self) -> &str {
+        // MIPS: $sp (register 29) is stack pointer
+        "sp"
+    }
 }
 
 #[cfg(test)]

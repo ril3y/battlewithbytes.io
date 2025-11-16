@@ -14,8 +14,7 @@ import type { DisassemblyLine, JumpInfo } from '../types';
 import { formatAddress, formatBytes, getInstructionColor, isFunctionEnd, analyzeJumps } from '../utils';
 import { ArrowRight, Target } from 'lucide-react';
 import { useAnalysisOptional } from '../../../lib/context/AnalysisContext';
-import { detectLoops, generateLoopLines } from '../utils/loopAnalysis';
-import { LoopColumn, injectLoopStyles } from '../utils/loopRenderer';
+import { LoopColumn, injectLoopStyles, generateLoopVisualization } from '../utils/loopRenderer';
 
 interface LinearViewProps {
   isConnected: boolean;
@@ -59,30 +58,68 @@ export function LinearView({
   const [hoveredAddress, setHoveredAddress] = useState<number | null>(null);
   const [hoveredLoop, setHoveredLoop] = useState<number | null>(null);
   const analysisContext = useAnalysisOptional();
+  const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Inject loop visualization styles on mount
   useEffect(() => {
     injectLoopStyles();
   }, []);
 
-  // Detect loops in visible instructions
-  const loops = useMemo(() => {
-    if (lines.length === 0) return [];
-    const instructions = lines.map(line => line.instruction);
-    return detectLoops(instructions);
-  }, [lines]);
+  // Cleanup hover timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  // Generate loop visualization for each line
-  const loopLines = useMemo(() => {
-    if (loops.length === 0) return new Map();
-    const instructions = lines.map(line => line.instruction);
-    return generateLoopLines(instructions, loops);
-  }, [lines, loops]);
+  // Debounced hover handler for xrefs
+  const handleXrefHoverEnter = React.useCallback((address: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredAddress(address);
+    }, 300);
+  }, []);
 
-  // Calculate max nesting depth for column width
+  const handleXrefHoverLeave = React.useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setHoveredAddress(null);
+  }, []);
+
+  // Check if ANY loops exist in the entire analysis (for column rendering)
+  const hasLoopsGlobally = useMemo(() => {
+    if (!analysisContext) return false;
+    return analysisContext.loops.length > 0;
+  }, [analysisContext]);
+
+  // Calculate global max nesting depth for consistent column width
   const maxLoopDepth = useMemo(() => {
-    return loops.reduce((max, loop) => Math.max(max, loop.nestingLevel), 0);
-  }, [loops]);
+    if (!analysisContext || !hasLoopsGlobally) return 0;
+    return analysisContext.loops.reduce((max, loop) => Math.max(max, loop.nesting_level), 0);
+  }, [analysisContext, hasLoopsGlobally]);
+
+  // Get loops from database that overlap with visible range
+  const loopsInRange = useMemo(() => {
+    if (!analysisContext || lines.length === 0) return [];
+
+    const startAddr = lines[0].instruction.address;
+    const endAddr = lines[lines.length - 1].instruction.address;
+
+    return analysisContext.getLoopsInRange(startAddr, endAddr);
+  }, [analysisContext, lines]);
+
+  // Generate loop visualization for visible lines
+  const loopLines = useMemo(() => {
+    if (loopsInRange.length === 0 || lines.length === 0) return new Map();
+
+    const addresses = lines.map(line => line.instruction.address);
+    return generateLoopVisualization(addresses, loopsInRange);
+  }, [lines, loopsInRange]);
 
   if (!isConnected) {
     return (
@@ -161,8 +198,14 @@ export function LinearView({
             // Get loop visualization for this line
             const loopLineInfo = loopLines.get(index);
             const isLoopActive = hoveredLoop !== null && loopLineInfo?.activeLoops.includes(hoveredLoop);
-            const isLoopHeader = loops.some(loop => loop.headerLine === index && loop.nestingLevel === hoveredLoop);
-            const isLoopBackEdge = loops.some(loop => loop.backEdgeLine === index && loop.nestingLevel === hoveredLoop);
+
+            // Check if this line is a loop header or back edge based on address
+            const isLoopHeader = loopsInRange.some(loop =>
+              loop.header_addr === inst.address && loop.nesting_level === hoveredLoop
+            );
+            const isLoopBackEdge = loopsInRange.some(loop =>
+              loop.back_edge_addr === inst.address && loop.nesting_level === hoveredLoop
+            );
 
             return (
               <React.Fragment key={index}>
@@ -237,8 +280,8 @@ export function LinearView({
                   {/* Xref indicators */}
                   <td
                     className="text-center relative"
-                    onMouseEnter={() => setHoveredAddress(inst.address)}
-                    onMouseLeave={() => setHoveredAddress(null)}
+                    onMouseEnter={() => handleXrefHoverEnter(inst.address)}
+                    onMouseLeave={handleXrefHoverLeave}
                   >
                     <div className="flex items-center justify-center gap-0.5">
                       {/* Xrefs FROM this address (outgoing) */}

@@ -126,7 +126,6 @@ export default function DisassemblyView({
 
     // Check if this range is already loaded (for infinite scroll)
     if (memoryChunks.isRangeLoaded(address, address + length)) {
-      console.log(`[DisassemblyView] Range 0x${address.toString(16)}-0x${(address + length).toString(16)} already loaded, skipping`);
       return;
     }
 
@@ -137,7 +136,6 @@ export default function DisassemblyView({
     setError(null);
 
     try {
-      console.log(`[DisassemblyView] Reading ${length} bytes from 0x${address.toString(16)} (append: ${append})`);
       const data = await onReadMemory(address, length);
       if (!data) {
         // Remove chunk on failure to allow retry
@@ -147,11 +145,9 @@ export default function DisassemblyView({
         return;
       }
 
-      console.log(`[DisassemblyView] Read ${data.length} bytes, disassembling...`);
       // Disassemble the data (supports both Capstone async and ArmDisassembler sync)
       const disasmResult = disassembler.current.disassemble(data, address, true);
       const instructions = disasmResult instanceof Promise ? await disasmResult : disasmResult;
-      console.log(`[DisassemblyView] Disassembled ${instructions.length} instructions`);
 
       // Analyze control flow
       const flowMap = disassembler.current.analyzeControlFlow(instructions);
@@ -173,8 +169,6 @@ export default function DisassemblyView({
         }
       }
 
-      console.log('[DisassemblyView] Cross-references found:', crossRefs.size, 'targets');
-
       // Use enriched disassembly hook to merge database + UART data
       const displayLines = enrichedDisassembly.enrichInstructions(
         instructions,
@@ -184,8 +178,6 @@ export default function DisassemblyView({
         (insts: DisassembledInstruction[], idx: number) =>
           disassembler.current?.isFunctionEntry(insts, idx) ?? false
       );
-
-      console.log(`[DisassemblyView] Loaded ${displayLines.length} lines, PC at 0x${programCounter?.toString(16) || 'unknown'}, PC line in view:`, displayLines.some(l => l.isCurrentPC));
 
       // Append or replace lines based on mode
       if (append === 'top') {
@@ -217,7 +209,6 @@ export default function DisassemblyView({
   // Navigation history hook - placed after loadDisassembly to avoid hoisting issues
   const navigation = useDisassemblyNavigation({
     onNavigate: useCallback((address: number, mode: ViewMode) => {
-      console.log('[DisassemblyView] Navigation to:', address.toString(16));
       setViewMode(mode);
       setBaseAddress(address);
       setAddressInput(`0x${address.toString(16)}`);
@@ -225,7 +216,6 @@ export default function DisassemblyView({
     }, [bytesToRead, loadDisassembly, setViewMode, setBaseAddress, setAddressInput]),
     onFollowPCChange: useCallback((enabled: boolean) => {
       followPC.current = enabled;
-      console.log('[DisassemblyView] Follow PC:', enabled ? 'enabled' : 'disabled');
     }, [])
   });
 
@@ -235,13 +225,10 @@ export default function DisassemblyView({
 
     // Disable follow PC when user manually scrolls
     followPC.current = false;
-    console.log('[DisassemblyView] User scrolling up - disabling follow PC');
 
     const firstAddress = lines[0].instruction.address;
     const chunkSize = 512; // Load 512 bytes at a time
     const previousAddress = Math.max(0, firstAddress - chunkSize);
-
-    console.log(`[DisassemblyView] Loading previous chunk at 0x${previousAddress.toString(16)}`);
 
     await loadDisassembly(previousAddress, chunkSize, 'top');
 
@@ -256,13 +243,10 @@ export default function DisassemblyView({
 
     // Disable follow PC when user manually scrolls
     followPC.current = false;
-    console.log('[DisassemblyView] User scrolling down - disabling follow PC');
 
     const lastAddress = lines[lines.length - 1].instruction.address;
     const chunkSize = 512; // Load 512 bytes at a time
     const nextAddress = lastAddress + 4; // Start after last instruction (ARM is 2-4 bytes)
-
-    console.log(`[DisassemblyView] Loading next chunk at 0x${nextAddress.toString(16)}`);
 
     await loadDisassembly(nextAddress, chunkSize, 'bottom');
 
@@ -296,7 +280,6 @@ export default function DisassemblyView({
 
       // Disable follow PC when manually navigating
       followPC.current = false;
-      console.log('[DisassemblyView] Manual navigation to', addr.toString(16), '- disabling follow PC');
 
       setBaseAddress(addr);
       loadDisassembly(addr, bytesToRead);
@@ -311,12 +294,10 @@ export default function DisassemblyView({
     if (programCounter !== undefined) {
       // Re-enable follow PC when user explicitly goes to PC
       followPC.current = true;
-      console.log('[DisassemblyView] Go to PC - re-enabling follow PC');
 
       // Check if PC is already in the current view - don't reload if it is
       const pcInView = lines.some((line: DisassemblyLine) => line.instruction.address === programCounter);
       if (pcInView) {
-        console.log('[DisassemblyView] PC already in view, skipping reload');
         // Just scroll to PC
         const pcElement = containerRef.current?.querySelector(`[data-address="${programCounter}"]`);
         if (pcElement) {
@@ -337,7 +318,6 @@ export default function DisassemblyView({
   const handleNavigateToBranch = useCallback((targetAddress: number) => {
     // Prevent concurrent loads
     if (isLoading) {
-      console.log('[DisassemblyView] Ignoring jump request - already loading');
       return;
     }
 
@@ -361,8 +341,6 @@ export default function DisassemblyView({
     jumpHighlightTimeout.current = setTimeout(() => {
       setJumpedToAddress(null);
     }, 2000);
-
-    console.log('[DisassemblyView] Manual jump to:', alignedAddress.toString(16), '(Follow PC disabled)');
   }, [bytesToRead, loadDisassembly, viewMode, navigation, isLoading, setBaseAddress, setAddressInput, setJumpedToAddress]);
 
   // Handle Go To address submission
@@ -455,7 +433,6 @@ export default function DisassemblyView({
       setComment(selectedAddress, commentText.trim());
       setShowCommentModal(false);
       setCommentText('');
-      console.log(`[DisassemblyView] Added comment at 0x${selectedAddress.toString(16)}: ${commentText.trim()}`);
     }
   }, [selectedAddress, commentText, setComment, setShowCommentModal, setCommentText]);
 
@@ -465,7 +442,6 @@ export default function DisassemblyView({
       deleteComment(selectedAddress);
       setShowCommentModal(false);
       setCommentText('');
-      console.log(`[DisassemblyView] Deleted comment at 0x${selectedAddress.toString(16)}`);
     }
   }, [selectedAddress, deleteComment, setShowCommentModal, setCommentText]);
 
@@ -484,7 +460,6 @@ export default function DisassemblyView({
       return;
     }
 
-    console.log('[DisassemblyView] PC changed from', prevProgramCounter.current?.toString(16), 'to', programCounter?.toString(16), '- followPC:', followPC.current);
     prevProgramCounter.current = programCounter;
 
     if (programCounter !== undefined && followPC.current) {
@@ -493,7 +468,6 @@ export default function DisassemblyView({
 
       if (!pcInView && lines.length > 0) {
         // PC is outside visible range, reload disassembly centered on PC
-        console.log('[DisassemblyView] PC out of range, reloading at', programCounter.toString(16));
         handleGoToPC();
       } else if (pcInView && containerRef.current) {
         // PC is in view, just scroll to it
@@ -511,14 +485,11 @@ export default function DisassemblyView({
   useEffect(() => {
     if (programCounter === undefined) return;
 
-    console.log('[DisassemblyView] Updating PC highlight for', programCounter.toString(16));
     setLines((prevLines: DisassemblyLine[]) => {
       const updated = prevLines.map((line: DisassemblyLine) => ({
         ...line,
         isCurrentPC: line.instruction.address === programCounter
       }));
-      const pcLine = updated.find((l: DisassemblyLine) => l.isCurrentPC);
-      console.log('[DisassemblyView] PC line found:', pcLine ? 'YES' : 'NO', 'Total lines:', updated.length);
       return updated;
     });
   }, [programCounter, setLines]);
@@ -537,7 +508,6 @@ export default function DisassemblyView({
   // Enable follow PC when connection is established
   useEffect(() => {
     if (isConnected) {
-      console.log('[DisassemblyView] Connection established - enabling follow PC');
       followPC.current = true;
     }
   }, [isConnected]);
@@ -552,17 +522,7 @@ export default function DisassemblyView({
   // doesn't change. We use hasLoadedOnMount ref to detect this case and trigger reload.
   // CRITICAL: Reset the ref on unmount so it works correctly on remount.
   useEffect(() => {
-    console.log('[DisassemblyView] Auto-load effect check:', {
-      isConnected,
-      hasProgramCounter: programCounter !== undefined,
-      linesLength: lines.length,
-      disassemblerReady,
-      hasLoadedOnMount: hasLoadedOnMount.current,
-      followPC: followPC.current
-    });
-
     if (isConnected && programCounter !== undefined && disassemblerReady && !hasLoadedOnMount.current) {
-      console.log('[DisassemblyView] Auto-loading disassembly at PC:', programCounter.toString(16), '(first load on mount)');
       // Enable followPC when auto-loading on mount so PC tracking works
       followPC.current = true;
       handleGoToPC();
@@ -571,7 +531,6 @@ export default function DisassemblyView({
 
     // Reset flags and clear chunks on unmount
     return () => {
-      console.log('[DisassemblyView] Component unmounting, clearing memory chunks and resetting flags');
       memoryChunks.clearChunks();
       hasLoadedOnMount.current = false;
       // Also reset followPC so next mount starts fresh
@@ -595,15 +554,11 @@ export default function DisassemblyView({
   // Handle external jump requests (e.g., from clicking PC register)
   useEffect(() => {
     if (jumpToAddress !== undefined && !isLoading) {
-      console.log('[DisassemblyView] External jump request to:', jumpToAddress.toString(16));
-
       // If jumping to PC, use handleGoToPC which enables Follow PC
       // Otherwise use handleNavigateToBranch which disables Follow PC
       if (jumpToAddress === programCounter) {
-        console.log('[DisassemblyView] Jump target is PC - using handleGoToPC to enable Follow PC');
         handleGoToPC();
       } else {
-        console.log('[DisassemblyView] Jump target is not PC - using handleNavigateToBranch (disables Follow PC)');
         handleNavigateToBranch(jumpToAddress);
       }
 

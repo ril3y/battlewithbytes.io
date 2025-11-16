@@ -132,10 +132,8 @@ export class WasmDisassembler {
 
     this.initPromise = (async () => {
       try {
-        console.log('[WasmDisassembler] Loading WASM module...');
         this.wasmModule = await loadBattleMagicCore();
         this.isInitialized = true;
-        console.log('[WasmDisassembler] WASM module loaded successfully');
       } catch (err) {
         console.error('[WasmDisassembler] Failed to load WASM:', err);
         this.initPromise = null;
@@ -183,33 +181,16 @@ export class WasmDisassembler {
       const maxInstructions = 1000; // Limit to prevent infinite loops
       let rawInstructions;
       try {
-        console.log(`[WASM] Calling disassemble_${thumbMode ? 'thumb' : 'arm'} with ${data.length} bytes at 0x${baseAddress.toString(16)}`);
-        console.log(`[WASM] Data preview (first 16 bytes):`, Array.from(data.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
-
         const result = thumbMode
           ? disasm.disassemble_thumb(data, maxInstructions)
           : disasm.disassemble_arm(data, maxInstructions);
-
-        console.log(`[WASM] Disassembly result type:`, typeof result);
-        console.log(`[WASM] Disassembly result:`, result);
 
         if (!result) {
           throw new Error('WASM disassembler returned null/undefined');
         }
 
         rawInstructions = result;
-        console.log(`[WASM] Disassembly returned ${rawInstructions?.length || 0} instructions`);
       } catch (e) {
-        console.error('[WASM] Disassembly exception:', e);
-        console.error('[WASM] Exception type:', typeof e);
-        console.error('[WASM] Exception constructor:', e?.constructor?.name);
-        console.error('[WASM] Exception details:', {
-          message: e?.message,
-          stack: e?.stack,
-          name: e?.name,
-          toString: e?.toString?.()
-        });
-
         const errorMsg = e instanceof Error ? e.message : (e ? String(e) : 'Unknown WASM error (undefined exception)');
         console.error('[WASM] Disassembly failed:', errorMsg);
         throw new Error(`Failed to disassemble at 0x${baseAddress.toString(16)}: ${errorMsg}`);
@@ -246,12 +227,10 @@ export class WasmDisassembler {
             const offset = parseInt(pcRelMatch[1], 16);
             // yaxpeax already accounts for PC offset, just add to current address
             branchTarget = address + offset;
-            console.log(`[WASM] Branch at 0x${address.toString(16)}: ${mnemonic} ${operands} -> target: 0x${branchTarget.toString(16)}`);
           } else if (operands.startsWith('0x') || operands.startsWith('$0x')) {
             // Absolute address in operands
             const addrStr = operands.replace('$', '');
             branchTarget = parseInt(addrStr, 16);
-            console.log(`[WASM] Absolute branch at 0x${address.toString(16)}: ${mnemonic} ${operands} -> target: 0x${branchTarget.toString(16)}`);
           }
           // If we still don't have a target, don't try to calculate one
           // This prevents false positives from register-based branches

@@ -108,6 +108,9 @@ pub struct AnalysisResults {
     /// Detected loops in the code
     pub loops: Vec<Loop>,
 
+    /// Detected functions with complete analysis
+    pub functions: Vec<FunctionInfo>,
+
     /// Total number of instructions analyzed
     pub total_instructions: usize,
 
@@ -126,6 +129,7 @@ impl AnalysisResults {
     pub fn new(
         xrefs: Vec<CrossReference>,
         loops: Vec<Loop>,
+        functions: Vec<FunctionInfo>,
         total_instructions: usize,
         analysis_time_ms: u64,
         start_address: u32,
@@ -140,6 +144,7 @@ impl AnalysisResults {
         Self {
             xrefs,
             loops,
+            functions,
             total_instructions,
             analysis_time_ms,
             unique_targets,
@@ -189,6 +194,126 @@ impl Instruction {
             bytes,
             mnemonic,
             operands,
+        }
+    }
+}
+
+/// Stack access type for tracking reads and writes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StackAccessType {
+    /// Stack variable is read from
+    Read,
+    /// Stack variable is written to
+    Write,
+    /// Stack variable is both read and written
+    ReadWrite,
+}
+
+/// Represents a stack variable or saved register in a function's stack frame
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StackVariable {
+    /// Address where the function starts
+    pub function_start: u32,
+    /// Offset from stack pointer (negative = above SP, positive = below SP)
+    pub offset: i32,
+    /// Size of the variable in bytes
+    pub size: u8,
+    /// Type of access (read, write, or both)
+    pub access_type: StackAccessType,
+}
+
+impl StackVariable {
+    pub fn new(function_start: u32, offset: i32, size: u8, access_type: StackAccessType) -> Self {
+        Self {
+            function_start,
+            offset,
+            size,
+            access_type,
+        }
+    }
+
+    /// Merge access type with another access (e.g., Read + Write = ReadWrite)
+    pub fn merge_access(&mut self, other_access: StackAccessType) {
+        use StackAccessType::*;
+        self.access_type = match (self.access_type, other_access) {
+            (Read, Write) | (Write, Read) | (ReadWrite, _) | (_, ReadWrite) => ReadWrite,
+            (Read, Read) => Read,
+            (Write, Write) => Write,
+        };
+    }
+}
+
+/// Argument annotation for a function call
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArgAnnotation {
+    /// Address of the call instruction
+    pub call_address: u32,
+    /// Target function address being called
+    pub function_target: u32,
+    /// List of arguments with their locations (arg_number, location)
+    /// Location can be "r0", "r1", "stack+4", etc.
+    pub args: Vec<(u8, String)>,
+}
+
+impl ArgAnnotation {
+    pub fn new(call_address: u32, function_target: u32, args: Vec<(u8, String)>) -> Self {
+        Self {
+            call_address,
+            function_target,
+            args,
+        }
+    }
+}
+
+/// Detailed function information with analysis results
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FunctionInfo {
+    /// Function entry point address
+    pub start_address: u32,
+    /// Function end address (last instruction)
+    pub end_address: Option<u32>,
+    /// Function name (if known)
+    pub name: Option<String>,
+    /// Stack frame size in bytes
+    pub stack_frame_size: u32,
+    /// All stack variables in this function
+    pub stack_vars: Vec<StackVariable>,
+    /// All argument annotations for calls made by this function
+    pub arg_annotations: Vec<ArgAnnotation>,
+    /// List of addresses that call this function
+    pub callers: Vec<u32>,
+    /// List of addresses this function calls
+    pub callees: Vec<u32>,
+    /// Estimated complexity score
+    pub complexity: u32,
+}
+
+impl FunctionInfo {
+    pub fn new(start_address: u32) -> Self {
+        Self {
+            start_address,
+            end_address: None,
+            name: None,
+            stack_frame_size: 0,
+            stack_vars: Vec::new(),
+            arg_annotations: Vec::new(),
+            callers: Vec::new(),
+            callees: Vec::new(),
+            complexity: 0,
+        }
+    }
+
+    /// Add a caller to this function
+    pub fn add_caller(&mut self, caller_addr: u32) {
+        if !self.callers.contains(&caller_addr) {
+            self.callers.push(caller_addr);
+        }
+    }
+
+    /// Add a callee from this function
+    pub fn add_callee(&mut self, callee_addr: u32) {
+        if !self.callees.contains(&callee_addr) {
+            self.callees.push(callee_addr);
         }
     }
 }

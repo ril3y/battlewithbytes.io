@@ -14,7 +14,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { AnalysisResults, XrefResult, Loop, FunctionInfo as WasmFunctionInfo } from '../wasmAnalyzer';
+import type { AnalysisResults, XrefResult, Loop } from '../wasmAnalyzer';
 import { XrefType } from '../wasmAnalyzer';
 import { getAnalysisDatabase, type DbFunction, type DbComment, type DbXref } from '../db/AnalysisDatabase';
 
@@ -98,7 +98,6 @@ function buildIndexes(results: AnalysisResults) {
 
   // Use actual functions from WASM analyzer if available
   if (results.functions && results.functions.length > 0) {
-    console.log(`[AnalysisContext] Using ${results.functions.length} functions from WASM analyzer`);
     results.functions.forEach(func => {
       functions.set(func.start_address, {
         address: func.start_address,
@@ -110,7 +109,6 @@ function buildIndexes(results: AnalysisResults) {
     });
   } else {
     // Fallback: infer functions from call xrefs
-    console.log('[AnalysisContext] No functions from WASM, inferring from xrefs');
     results.xrefs.forEach(xref => {
       if (xref.xref_type === XrefType.Call) {
         if (!functions.has(xref.to_addr)) {
@@ -139,13 +137,6 @@ function buildIndexes(results: AnalysisResults) {
         .map(xref => xref.to_addr);
     });
   }
-
-  console.log('[AnalysisContext] Built indexes:', {
-    xrefs: results.xrefs.length,
-    functions: functions.size,
-    loops: results.loops?.length || 0,
-    totalInstructions: results.total_instructions,
-  });
 
   return { xrefsTo, xrefsFrom, functions };
 }
@@ -182,27 +173,12 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     baseAddr: number,
     size: number
   ) => {
-    console.log('[AnalysisContext] Setting analysis results:', {
-      xrefs: newResults.xrefs.length,
-      instructions: newResults.total_instructions,
-      loops: newResults.loops?.length || 0,
-      functions: newResults.functions?.length || 0,
-      baseAddress: `0x${baseAddr.toString(16)}`,
-      size,
-    });
-
-    // Debug: Log first few loops if they exist
-    if (newResults.loops && newResults.loops.length > 0) {
-      console.log('[AnalysisContext] First 3 loops:', newResults.loops.slice(0, 3));
-    }
-
     setResults(newResults);
     setBaseAddress(baseAddr);
     setFirmwareSize(size);
   }, []);
 
   const clearAnalysis = useCallback(() => {
-    console.log('[AnalysisContext] Clearing analysis');
     setResults(null);
     setBaseAddress(0);
     setFirmwareSize(0);
@@ -225,7 +201,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     const func = functions.get(address);
     if (func) {
       func.name = newName;
-      console.log(`[AnalysisContext] Renamed function at 0x${address.toString(16)} to ${newName}`);
     }
   }, [functions]);
 
@@ -237,7 +212,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     setComments(prev => {
       const newComments = new Map(prev);
       newComments.set(address, comment);
-      console.log(`[AnalysisContext] Added comment at 0x${address.toString(16)}: ${comment}`);
       return newComments;
     });
   }, []);
@@ -246,7 +220,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     setComments(prev => {
       const newComments = new Map(prev);
       newComments.delete(address);
-      console.log(`[AnalysisContext] Deleted comment at 0x${address.toString(16)}`);
       return newComments;
     });
   }, []);
@@ -282,14 +255,11 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
    */
   const saveToDatabase = useCallback(async () => {
     if (!results) {
-      console.log('[AnalysisContext] No analysis to save');
       return;
     }
 
     try {
       const db = dbRef.current;
-
-      console.log('[AnalysisContext] Saving analysis to database...');
 
       // Convert functions Map to array of DbFunction
       const dbFunctions: DbFunction[] = Array.from(functions.values()).map(func => ({
@@ -328,12 +298,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         db.setMetadata('analysisTime', results.analysis_time_ms),
         db.setMetadata('lastModified', Date.now()),
       ]);
-
-      console.log('[AnalysisContext] Analysis saved to database:', {
-        functions: dbFunctions.length,
-        comments: dbComments.length,
-        xrefs: dbXrefs.length,
-      });
     } catch (error) {
       console.error('[AnalysisContext] Failed to save to database:', error);
       throw error;
@@ -350,16 +314,12 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       // Check if database has any data
       const hasData = await db.hasAnalysis();
       if (!hasData) {
-        console.log('[AnalysisContext] No saved analysis found in database');
         setIsLoading(false);
         return false;
       }
 
-      console.log('[AnalysisContext] Loading analysis from database...');
-
       // Load all data from database
-      const [dbFunctions, dbComments, dbXrefs, dbBaseAddress, dbFirmwareSize, dbTotalInstructions, dbAnalysisTime] = await Promise.all([
-        db.getAllFunctions(),
+      const [dbComments, dbXrefs, dbBaseAddress, dbFirmwareSize, dbTotalInstructions, dbAnalysisTime] = await Promise.all([
         db.getAllComments(),
         db.getAllXrefs(),
         db.getMetadata<number>('baseAddress'),
@@ -407,13 +367,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       setFirmwareSize(dbFirmwareSize || 0);
       setComments(commentsMap);
 
-      console.log('[AnalysisContext] Analysis loaded from database:', {
-        functions: dbFunctions.length,
-        comments: dbComments.length,
-        xrefs: xrefs.length,
-        baseAddress: `0x${(dbBaseAddress || 0).toString(16)}`,
-      });
-
       setIsLoading(false);
       return true;
     } catch (error) {
@@ -432,7 +385,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
       const filename = `battlemagic_${timestamp}.mdb`;
       await db.downloadMdb(filename);
-      console.log(`[AnalysisContext] Database exported to ${filename}`);
     } catch (error) {
       console.error('[AnalysisContext] Failed to export database:', error);
       throw error;
@@ -446,7 +398,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     try {
       const db = dbRef.current;
       await db.uploadMdb(file);
-      console.log('[AnalysisContext] Database imported, reloading...');
 
       // Reload data from database
       await loadFromDatabase();
@@ -463,7 +414,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     try {
       const db = dbRef.current;
       await db.clear();
-      console.log('[AnalysisContext] Database cleared');
     } catch (error) {
       console.error('[AnalysisContext] Failed to clear database:', error);
       throw error;

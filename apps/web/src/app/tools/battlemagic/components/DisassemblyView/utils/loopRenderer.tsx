@@ -1,12 +1,32 @@
 /**
  * Loop Renderer for Linear Disassembly View
  *
- * Provides React components and styling for rendering loop visualization using SVG.
- * Simpler and cleaner than ASCII art - renders like IDA Pro.
+ * Provides React components and styling for rendering loop visualization.
+ * Uses pre-computed CFG loop data from WASM analyzer database.
  */
 
 import React from 'react';
-import type { LoopLineInfo, LoopCharType } from './loopAnalysis';
+
+/**
+ * Types of characters in loop visualization
+ */
+export type LoopCharType =
+  | 'empty'      // ' '
+  | 'vertical'   // '│'
+  | 'top'        // '┌'
+  | 'bottom'     // '└'
+  | 'branch';    // '├'
+
+/**
+ * Rendering information for a single line in the loop visualization
+ */
+export interface LoopLineInfo {
+  /** Character type for each nesting level */
+  columns: LoopCharType[];
+
+  /** Loops that this line participates in (for hover/highlighting) */
+  activeLoops: number[];
+}
 
 /**
  * Color palette for loop visualization (supports up to 6 nesting levels)
@@ -157,4 +177,84 @@ export function injectLoopStyles(): void {
   styleEl.id = styleId;
   styleEl.textContent = LOOP_VISUALIZATION_STYLES;
   document.head.appendChild(styleEl);
+}
+
+/**
+ * Generate loop visualization from database loops
+ *
+ * @param addresses - Array of instruction addresses in visible range
+ * @param loops - Array of loops from WASM analyzer (overlapping with visible range)
+ * @returns Map of address index to LoopLineInfo
+ */
+export function generateLoopVisualization(
+  addresses: number[],
+  loops: Array<{
+    header_addr: number;
+    back_edge_addr: number;
+    body_addrs: number[];
+    nesting_level: number;
+  }>
+): Map<number, LoopLineInfo> {
+  const lineInfo = new Map<number, LoopLineInfo>();
+
+  // Build address-to-index map
+  const addressToIndex = new Map<number, number>();
+  addresses.forEach((addr, idx) => {
+    addressToIndex.set(addr, idx);
+  });
+
+  // Determine maximum nesting depth
+  const maxDepth = loops.reduce((max, loop) => Math.max(max, loop.nesting_level), 0);
+
+  // Initialize all lines with empty columns
+  for (let i = 0; i < addresses.length; i++) {
+    lineInfo.set(i, {
+      columns: Array(maxDepth).fill('empty' as LoopCharType),
+      activeLoops: [],
+    });
+  }
+
+  // Build set of loop body addresses for fast lookup
+  const loopBodiesMap = new Map<number, Set<number>>();
+  loops.forEach((loop, loopIdx) => {
+    loopBodiesMap.set(loopIdx, new Set(loop.body_addrs));
+  });
+
+  // For each loop, render its contribution to each line
+  for (const loop of loops) {
+    const columnIndex = loop.nesting_level - 1; // 0-indexed
+
+    const headerIdx = addressToIndex.get(loop.header_addr);
+    const backEdgeIdx = addressToIndex.get(loop.back_edge_addr);
+    const bodySet = new Set(loop.body_addrs);
+
+    for (let i = 0; i < addresses.length; i++) {
+      const address = addresses[i];
+      const info = lineInfo.get(i)!;
+
+      // Determine character for this position
+      let charType: LoopCharType = 'empty';
+
+      if (i === headerIdx) {
+        // Loop header - show entry point
+        charType = 'top';
+        info.activeLoops.push(loop.nesting_level);
+      } else if (i === backEdgeIdx) {
+        // Back edge - show loop back
+        charType = 'bottom';
+        info.activeLoops.push(loop.nesting_level);
+      } else if (bodySet.has(address)) {
+        // Inside loop body
+        charType = 'vertical';
+        info.activeLoops.push(loop.nesting_level);
+      }
+
+      // Set character in appropriate column
+      if (charType !== 'empty') {
+        info.columns[columnIndex] = charType;
+      }
+    }
+  }
+
+  return lineInfo;
 }
