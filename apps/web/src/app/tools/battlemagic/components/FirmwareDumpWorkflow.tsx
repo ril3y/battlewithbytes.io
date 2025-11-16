@@ -271,9 +271,22 @@ export function FirmwareDumpWorkflow({
       setProgress({ stage: 'analyzing', message: 'Analyzing firmware binary...' });
       onOutput?.(`[Firmware Analysis] Decoding ${dump.data.length} bytes of ${archInfo?.architecture} code...`);
 
-      // Analyze firmware
+      // Analyze firmware with progress reporting
       const startTime = performance.now();
-      const results = analyzer.analyze_from_bytes(dump.data);
+      const results = analyzer.analyze_from_bytes_with_progress(dump.data, (stage: string, progress: number) => {
+        // Update progress state and output
+        const progressPercent = Math.round(progress);
+        setProgress({
+          stage: 'analyzing',
+          message: `${stage}...`,
+          progress: progressPercent
+        });
+
+        // Log detailed progress to console
+        if (progressPercent % 10 === 0 || stage !== 'Decoding instructions') {
+          onOutput?.(`[Firmware Analysis] ${stage}: ${progressPercent}%`);
+        }
+      });
       const endTime = performance.now();
       const actualTimeMs = Math.round(endTime - startTime);
       const displayTimeMs = results.analysis_time_ms > 0 ? results.analysis_time_ms : actualTimeMs;

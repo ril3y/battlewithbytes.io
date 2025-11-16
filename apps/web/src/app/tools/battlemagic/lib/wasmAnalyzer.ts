@@ -26,8 +26,50 @@ export enum XrefType {
   DataWrite = 4,
 }
 
+export enum LoopType {
+  While = 0,
+  DoWhile = 1,
+  For = 2,
+  Infinite = 3,
+}
+
+export interface Loop {
+  header_addr: number;
+  back_edge_addr: number;
+  body_addrs: number[];
+  loop_type: LoopType;
+  nesting_level: number;
+}
+
+export interface StackVariable {
+  function_start: number;
+  offset: number;
+  size: number;
+  access_type: number; // StackAccessType enum
+}
+
+export interface ArgAnnotation {
+  call_address: number;
+  function_target: number;
+  args: Array<[number, string]>; // (arg_number, location)
+}
+
+export interface FunctionInfo {
+  start_address: number;
+  end_address: number | null;
+  name: string | null;
+  stack_frame_size: number;
+  stack_vars: StackVariable[];
+  arg_annotations: ArgAnnotation[];
+  callers: number[];
+  callees: number[];
+  complexity: number;
+}
+
 export interface AnalysisResults {
   xrefs: XrefResult[];
+  loops: Loop[];
+  functions: FunctionInfo[];
   total_instructions: number;
   analysis_time_ms: number;
   unique_targets: number;
@@ -48,8 +90,14 @@ export interface DisasmData {
   }>;
 }
 
+export type ProgressCallback = (stage: string, progress: number) => void;
+
 export interface ArmAnalyzerInstance {
   analyze_from_bytes(bytes: Uint8Array): AnalysisResults;
+  analyze_from_bytes_with_progress(
+    bytes: Uint8Array,
+    progressCallback?: ProgressCallback
+  ): AnalysisResults;
   analyze_from_disasm(disasmData: DisasmData): AnalysisResults;
   get_xrefs_to(address: number): XrefResult[];
   get_xrefs_from(address: number): XrefResult[];
