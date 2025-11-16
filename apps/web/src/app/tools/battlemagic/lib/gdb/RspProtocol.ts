@@ -166,10 +166,14 @@ export class RspProtocol {
       return { type: 'ok' };
     }
 
-    // Error response: Enn (where nn is hex error code)
-    if (packet.startsWith('E')) {
-      const code = packet.substring(1);
-      return { type: 'error', code };
+    // Error response: Enn (where nn is exactly 2 hex digits)
+    // Important: Memory data can start with 'E' (e.g., E8120020...), so check exact format
+    if (packet.startsWith('E') && packet.length >= 3) {
+      const errorCode = packet.substring(1, 3);
+      // Check if it's a valid 2-digit hex error code followed by nothing or non-hex
+      if (/^[0-9A-Fa-f]{2}$/.test(errorCode) && (packet.length === 3 || !/^[0-9A-Fa-f]/.test(packet[3]))) {
+        return { type: 'error', code: errorCode };
+      }
     }
 
     // Signal/stop reply: Snn or Tnn...
