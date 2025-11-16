@@ -295,6 +295,8 @@ export function FirmwareDumpWorkflow({
         totalInstructions: results.total_instructions,
         xrefCount: results.xrefs?.length || 0,
         uniqueTargets: results.unique_targets,
+        loopsCount: results.loops?.length || 0,
+        functionsCount: results.functions?.length || 0,
         timeMs: displayTimeMs,
       });
 
@@ -305,6 +307,8 @@ export function FirmwareDumpWorkflow({
       onOutput?.(`   ✓ Decoded ${results.total_instructions.toLocaleString()} instructions`);
       onOutput?.(`   ✓ Found ${results.xrefs.length.toLocaleString()} cross-references`);
       onOutput?.(`   ✓ Detected ${results.unique_targets.toLocaleString()} unique targets`);
+      onOutput?.(`   ✓ Detected ${(results.loops?.length || 0).toLocaleString()} loops`);
+      onOutput?.(`   ✓ Detected ${(results.functions?.length || 0).toLocaleString()} functions`);
       onOutput?.(`   ✓ Analysis time: ${displayTimeMs}ms`);
       onOutput?.(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 

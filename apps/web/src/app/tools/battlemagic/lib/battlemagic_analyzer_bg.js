@@ -222,59 +222,6 @@ export function init() {
 }
 
 /**
- * Check if architecture name is supported (WASM export)
- *
- * Case-insensitive check against architecture names.
- *
- * # Arguments
- * * `arch_name` - Architecture name (e.g., "ArmCortexM4", "MIPS32")
- *
- * # Returns
- * true if architecture has a working decoder
- *
- * # Example (JavaScript)
- * ```javascript
- * import { is_architecture_supported } from './battlemagic_analyzer';
- *
- * console.log(is_architecture_supported("ArmCortexM4")); // true
- * console.log(is_architecture_supported("MIPS32"));      // false
- * ```
- * @param {string} arch_name
- * @returns {boolean}
- */
-export function is_architecture_supported_wasm(arch_name) {
-    const ptr0 = passStringToWasm0(arch_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.is_architecture_supported_wasm(ptr0, len0);
-    return ret !== 0;
-}
-
-/**
- * Get list of all supported chips (WASM export)
- *
- * Returns array of all chip families with working decoders.
- *
- * # Returns
- * JsValue containing array of ArchitectureInfo objects
- *
- * # Example (JavaScript)
- * ```javascript
- * import { get_supported_chips } from './battlemagic_analyzer';
- *
- * const chips = get_supported_chips();
- * console.log(`Supported chips: ${chips.length}`);
- * chips.forEach(chip => {
- *   console.log(`${chip.chipName} - ${chip.manufacturer}`);
- * });
- * ```
- * @returns {any}
- */
-export function get_supported_chips_wasm() {
-    const ret = wasm.get_supported_chips_wasm();
-    return takeObject(ret);
-}
-
-/**
  * Detect architecture from target description (WASM export)
  *
  * JavaScript-compatible wrapper for detect_architecture().
@@ -304,6 +251,81 @@ export function detect_architecture_wasm(target_description) {
     return takeObject(ret);
 }
 
+/**
+ * Get list of all supported chips (WASM export)
+ *
+ * Returns array of all chip families with working decoders.
+ *
+ * # Returns
+ * JsValue containing array of ArchitectureInfo objects
+ *
+ * # Example (JavaScript)
+ * ```javascript
+ * import { get_supported_chips } from './battlemagic_analyzer';
+ *
+ * const chips = get_supported_chips();
+ * console.log(`Supported chips: ${chips.length}`);
+ * chips.forEach(chip => {
+ *   console.log(`${chip.chipName} - ${chip.manufacturer}`);
+ * });
+ * ```
+ * @returns {any}
+ */
+export function get_supported_chips_wasm() {
+    const ret = wasm.get_supported_chips_wasm();
+    return takeObject(ret);
+}
+
+/**
+ * Check if architecture name is supported (WASM export)
+ *
+ * Case-insensitive check against architecture names.
+ *
+ * # Arguments
+ * * `arch_name` - Architecture name (e.g., "ArmCortexM4", "MIPS32")
+ *
+ * # Returns
+ * true if architecture has a working decoder
+ *
+ * # Example (JavaScript)
+ * ```javascript
+ * import { is_architecture_supported } from './battlemagic_analyzer';
+ *
+ * console.log(is_architecture_supported("ArmCortexM4")); // true
+ * console.log(is_architecture_supported("MIPS32"));      // false
+ * ```
+ * @param {string} arch_name
+ * @returns {boolean}
+ */
+export function is_architecture_supported_wasm(arch_name) {
+    const ptr0 = passStringToWasm0(arch_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.is_architecture_supported_wasm(ptr0, len0);
+    return ret !== 0;
+}
+
+/**
+ * Loop type classification
+ * @enum {0 | 1 | 2 | 3}
+ */
+export const LoopType = Object.freeze({
+    /**
+     * While loop (pre-test)
+     */
+    While: 0, "0": "While",
+    /**
+     * Do-while loop (post-test)
+     */
+    DoWhile: 1, "1": "DoWhile",
+    /**
+     * For loop (counter-based)
+     */
+    For: 2, "2": "For",
+    /**
+     * Infinite loop
+     */
+    Infinite: 3, "3": "Infinite",
+});
 /**
  * Type of cross-reference
  * @enum {0 | 1 | 2 | 3 | 4}
@@ -351,6 +373,49 @@ export class ArmAnalyzer {
         wasm.__wbg_armanalyzer_free(ptr, 0);
     }
     /**
+     * Add symbol at address
+     * @param {number} address
+     * @param {string} name
+     * @param {string} symbol_type_str
+     */
+    add_symbol(address, name, symbol_type_str) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(symbol_type_str, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len1 = WASM_VECTOR_LEN;
+            wasm.armanalyzer_add_symbol(retptr, this.__wbg_ptr, address, ptr0, len0, ptr1, len1);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Get symbol at address
+     * @param {number} address
+     * @returns {any}
+     */
+    get_symbol(address) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_symbol(retptr, this.__wbg_ptr, address);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Get total number of cross-references found
      * @returns {number}
      */
@@ -359,12 +424,94 @@ export class ArmAnalyzer {
         return ret >>> 0;
     }
     /**
+     * Add or update comment at address
+     * @param {number} address
+     * @param {string} text
+     * @param {string} comment_type_str
+     */
+    add_comment(address, text, comment_type_str) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(comment_type_str, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len1 = WASM_VECTOR_LEN;
+            wasm.armanalyzer_add_comment(retptr, this.__wbg_ptr, address, ptr0, len0, ptr1, len1);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Get comment at address
+     * @param {number} address
+     * @returns {any}
+     */
+    get_comment(address) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_comment(retptr, this.__wbg_ptr, address);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Check if binary has been analyzed
      * @returns {boolean}
      */
     is_analyzed() {
         const ret = wasm.armanalyzer_is_analyzed(this.__wbg_ptr);
         return ret !== 0;
+    }
+    /**
+     * Get function at specific address
+     * @param {number} address
+     * @returns {any}
+     */
+    get_function(address) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_function(retptr, this.__wbg_ptr, address);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Get project metadata
+     * @returns {any}
+     */
+    get_metadata() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_metadata(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
     }
     /**
      * Get all cross-references TO a specific address
@@ -387,6 +534,54 @@ export class ArmAnalyzer {
         }
     }
     /**
+     * Set project metadata
+     * @param {any} metadata_js
+     */
+    set_metadata(metadata_js) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_set_metadata(retptr, this.__wbg_ptr, addHeapObject(metadata_js));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Initialize metadata with basic info
+     * @param {string} project_name
+     * @param {string} architecture
+     * @param {number} base_address
+     * @param {number} firmware_size
+     */
+    init_metadata(project_name, architecture, base_address, firmware_size) {
+        const ptr0 = passStringToWasm0(project_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(architecture, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.armanalyzer_init_metadata(this.__wbg_ptr, ptr0, len0, ptr1, len1, base_address, firmware_size);
+    }
+    /**
+     * Delete comment at address
+     * @param {number} address
+     */
+    delete_comment(address) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_delete_comment(retptr, this.__wbg_ptr, address);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Get all cross-references FROM a specific address
      * @param {number} address
      * @returns {any}
@@ -395,6 +590,98 @@ export class ArmAnalyzer {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
             wasm.armanalyzer_get_xrefs_from(retptr, this.__wbg_ptr, address);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Export complete analysis database as JSON string
+     *
+     * This serializes all analysis data (xrefs, functions, comments, etc.)
+     * for storage in IndexedDB. Returns JSON string that can be saved.
+     * @returns {string}
+     */
+    export_database() {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_export_database(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
+            var ptr1 = r0;
+            var len1 = r1;
+            if (r3) {
+                ptr1 = 0; len1 = 0;
+                throw takeObject(r2);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export4(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Import analysis database from JSON string
+     *
+     * This loads a previously saved database and restores all analysis state.
+     * Validates schema version and applies migrations if needed.
+     * @param {string} json
+     */
+    import_database(json) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.armanalyzer_import_database(retptr, this.__wbg_ptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Rename function (marks as user-defined)
+     * @param {number} address
+     * @param {string} new_name
+     */
+    rename_function(address, new_name) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(new_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.armanalyzer_rename_function(retptr, this.__wbg_ptr, address, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Get all functions
+     * @returns {any}
+     */
+    get_all_functions() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_all_functions(retptr, this.__wbg_ptr);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -445,6 +732,25 @@ export class ArmAnalyzer {
         }
     }
     /**
+     * Get database statistics (for UI display)
+     * @returns {any}
+     */
+    get_database_stats() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_database_stats(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Analyze binary from disassembly data
      * @param {any} disasm_data
      * @returns {any}
@@ -453,6 +759,48 @@ export class ArmAnalyzer {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
             wasm.armanalyzer_analyze_from_disasm(retptr, this.__wbg_ptr, addHeapObject(disasm_data));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Analyze binary with progress callbacks
+     *
+     * Similar to analyze_from_bytes but accepts an optional JavaScript callback
+     * function that will be called with progress updates during analysis.
+     *
+     * # Arguments
+     * * `bytes` - Raw firmware bytes from GDB memory dump
+     * * `progress_callback` - Optional JavaScript function(stage: string, progress: number)
+     *
+     * # Example
+     * ```javascript
+     * const analyzer = new ArmAnalyzer(0x8000);
+     * const firmwareBytes = new Uint8Array([...]);
+     * const results = analyzer.analyze_from_bytes_with_progress(
+     *     firmwareBytes,
+     *     (stage, progress) => {
+     *         console.log(`${stage}: ${progress}%`);
+     *     }
+     * );
+     * ```
+     * @param {Uint8Array} bytes
+     * @param {Function | null} [progress_callback]
+     * @returns {any}
+     */
+    analyze_from_bytes_with_progress(bytes, progress_callback) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_export);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.armanalyzer_analyze_from_bytes_with_progress(retptr, this.__wbg_ptr, ptr0, len0, isLikeNone(progress_callback) ? 0 : addHeapObject(progress_callback));
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -501,6 +849,13 @@ export function __wbg_String_8f0eb39a4a4c2f66(arg0, arg1) {
     getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 };
 
+export function __wbg___wbindgen_bigint_get_as_i64_f3ebc5a755000afd(arg0, arg1) {
+    const v = getObject(arg1);
+    const ret = typeof(v) === 'bigint' ? v : undefined;
+    getDataViewMemory0().setBigInt64(arg0 + 8 * 1, isLikeNone(ret) ? BigInt(0) : ret, true);
+    getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
+};
+
 export function __wbg___wbindgen_boolean_get_6d5a1ee65bab5f68(arg0) {
     const v = getObject(arg0);
     const ret = typeof(v) === 'boolean' ? v : undefined;
@@ -520,6 +875,11 @@ export function __wbg___wbindgen_in_bb933bd9e1b3bc0f(arg0, arg1) {
     return ret;
 };
 
+export function __wbg___wbindgen_is_bigint_cb320707dcd35f0b(arg0) {
+    const ret = typeof(getObject(arg0)) === 'bigint';
+    return ret;
+};
+
 export function __wbg___wbindgen_is_function_ee8a6c5833c90377(arg0) {
     const ret = typeof(getObject(arg0)) === 'function';
     return ret;
@@ -533,6 +893,11 @@ export function __wbg___wbindgen_is_object_c818261d21f283a4(arg0) {
 
 export function __wbg___wbindgen_is_undefined_2d472862bd29a478(arg0) {
     const ret = getObject(arg0) === undefined;
+    return ret;
+};
+
+export function __wbg___wbindgen_jsval_eq_6b13ab83478b1c50(arg0, arg1) {
+    const ret = getObject(arg0) === getObject(arg1);
     return ret;
 };
 
@@ -560,6 +925,11 @@ export function __wbg___wbindgen_string_get_e4f06c90489ad01b(arg0, arg1) {
 export function __wbg___wbindgen_throw_b855445ff6a94295(arg0, arg1) {
     throw new Error(getStringFromWasm0(arg0, arg1));
 };
+
+export function __wbg_call_e45d2cf9fc925fcf() { return handleError(function (arg0, arg1, arg2, arg3) {
+    const ret = getObject(arg0).call(getObject(arg1), getObject(arg2), getObject(arg3));
+    return addHeapObject(ret);
+}, arguments) };
 
 export function __wbg_call_e762c39fa8ea36bf() { return handleError(function (arg0, arg1) {
     const ret = getObject(arg0).call(getObject(arg1));

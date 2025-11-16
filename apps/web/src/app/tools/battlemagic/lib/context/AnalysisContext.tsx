@@ -14,7 +14,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { AnalysisResults, XrefResult } from '../wasmAnalyzer';
+import type { AnalysisResults, XrefResult, Loop, FunctionInfo as WasmFunctionInfo } from '../wasmAnalyzer';
 import { XrefType } from '../wasmAnalyzer';
 import { getAnalysisDatabase, type DbFunction, type DbComment, type DbXref } from '../db/AnalysisDatabase';
 
@@ -45,6 +45,7 @@ interface AnalysisContextState {
   xrefsFrom: Map<number, XrefResult[]>;    // address → xrefs FROM this address
   functions: Map<number, FunctionInfo>;     // address → function info
   comments: Map<number, string>;            // address → user comment
+  loops: Loop[];                            // all detected loops from CFG analysis
 
   // Methods
   setAnalysisResults: (results: AnalysisResults, baseAddr: number, size: number) => void;
@@ -56,6 +57,7 @@ interface AnalysisContextState {
   getComment: (address: number) => string | null;
   setComment: (address: number, comment: string) => void;
   deleteComment: (address: number) => void;
+  getLoopsInRange: (startAddr: number, endAddr: number) => Loop[];
   isAnalyzed: () => boolean;
 
   // Database operations
@@ -92,39 +94,56 @@ function buildIndexes(results: AnalysisResults) {
       xrefsTo.set(xref.to_addr, []);
     }
     xrefsTo.get(xref.to_addr)!.push(xref);
-
-    // Detect functions from call targets
-    // Any address that is called is likely a function
-    if (xref.xref_type === XrefType.Call) {
-      if (!functions.has(xref.to_addr)) {
-        functions.set(xref.to_addr, {
-          address: xref.to_addr,
-          name: `sub_${xref.to_addr.toString(16).toUpperCase()}`,
-          callers: [],
-          callees: [],
-          xref_count: 0,
-        });
-      }
-
-      const func = functions.get(xref.to_addr)!;
-      if (!func.callers.includes(xref.from_addr)) {
-        func.callers.push(xref.from_addr);
-      }
-      func.xref_count++;
-    }
   });
 
-  // Build callees list for each function
-  functions.forEach((func, funcAddr) => {
-    const callsFrom = xrefsFrom.get(funcAddr) || [];
-    func.callees = callsFrom
-      .filter(xref => xref.xref_type === XrefType.Call)
-      .map(xref => xref.to_addr);
-  });
+  // Use actual functions from WASM analyzer if available
+  if (results.functions && results.functions.length > 0) {
+    console.log(`[AnalysisContext] Using ${results.functions.length} functions from WASM analyzer`);
+    results.functions.forEach(func => {
+      functions.set(func.start_address, {
+        address: func.start_address,
+        name: func.name || `sub_${func.start_address.toString(16).toUpperCase()}`,
+        callers: func.callers,
+        callees: func.callees,
+        xref_count: func.callers.length,
+      });
+    });
+  } else {
+    // Fallback: infer functions from call xrefs
+    console.log('[AnalysisContext] No functions from WASM, inferring from xrefs');
+    results.xrefs.forEach(xref => {
+      if (xref.xref_type === XrefType.Call) {
+        if (!functions.has(xref.to_addr)) {
+          functions.set(xref.to_addr, {
+            address: xref.to_addr,
+            name: `sub_${xref.to_addr.toString(16).toUpperCase()}`,
+            callers: [],
+            callees: [],
+            xref_count: 0,
+          });
+        }
+
+        const func = functions.get(xref.to_addr)!;
+        if (!func.callers.includes(xref.from_addr)) {
+          func.callers.push(xref.from_addr);
+        }
+        func.xref_count++;
+      }
+    });
+
+    // Build callees list for each function
+    functions.forEach((func, funcAddr) => {
+      const callsFrom = xrefsFrom.get(funcAddr) || [];
+      func.callees = callsFrom
+        .filter(xref => xref.xref_type === XrefType.Call)
+        .map(xref => xref.to_addr);
+    });
+  }
 
   console.log('[AnalysisContext] Built indexes:', {
     xrefs: results.xrefs.length,
     functions: functions.size,
+    loops: results.loops?.length || 0,
     totalInstructions: results.total_instructions,
   });
 
@@ -166,9 +185,16 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     console.log('[AnalysisContext] Setting analysis results:', {
       xrefs: newResults.xrefs.length,
       instructions: newResults.total_instructions,
+      loops: newResults.loops?.length || 0,
+      functions: newResults.functions?.length || 0,
       baseAddress: `0x${baseAddr.toString(16)}`,
       size,
     });
+
+    // Debug: Log first few loops if they exist
+    if (newResults.loops && newResults.loops.length > 0) {
+      console.log('[AnalysisContext] First 3 loops:', newResults.loops.slice(0, 3));
+    }
 
     setResults(newResults);
     setBaseAddress(baseAddr);
@@ -224,6 +250,24 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       return newComments;
     });
   }, []);
+
+  const getLoopsInRange = useCallback((startAddr: number, endAddr: number): Loop[] => {
+    if (!results || !results.loops) {
+      return [];
+    }
+
+    // Return loops that overlap with the visible range
+    return results.loops.filter(loop => {
+      // Check if loop header or back edge is in range
+      const headerInRange = loop.header_addr >= startAddr && loop.header_addr <= endAddr;
+      const backEdgeInRange = loop.back_edge_addr >= startAddr && loop.back_edge_addr <= endAddr;
+
+      // Or check if any body address is in range
+      const bodyOverlaps = loop.body_addrs.some(addr => addr >= startAddr && addr <= endAddr);
+
+      return headerInRange || backEdgeInRange || bodyOverlaps;
+    });
+  }, [results]);
 
   const isAnalyzed = useCallback(() => {
     return results !== null;
@@ -478,6 +522,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     xrefsFrom,
     functions,
     comments,
+    loops: results?.loops || [],
     setAnalysisResults,
     clearAnalysis,
     getXrefsTo,
@@ -487,6 +532,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     getComment,
     setComment,
     deleteComment,
+    getLoopsInRange,
     isAnalyzed,
     saveToDatabase,
     loadFromDatabase,
