@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WASM Analyzer Browser Test</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1a1a1a;
+      color: #00ff00;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 { color: #00ffff; }
+    .test {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #333;
+      background: #222;
+    }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; }
+    .info { color: #ffff00; }
+    pre {
+      background: #111;
+      padding: 10px;
+      overflow-x: auto;
+      border-left: 3px solid #00ff00;
+    }
+    button {
+      background: #333;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 5px;
+      font-family: inherit;
+    }
+    button:hover {
+      background: #00ff00;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>🦀 BattleMagic WASM Analyzer - Browser Test</h1>
+
+  <div class="test">
+    <h2>Test 1: Load WASM Module</h2>
+    <button onclick="testLoadWasm()">Run Test</button>
+    <div id="test1-result"></div>
+  </div>
+
+  <div class="test">
+    <h2>Test 2: Create Analyzer Instance</h2>
+    <button onclick="testCreateAnalyzer()">Run Test</button>
+    <div id="test2-result"></div>
+  </div>
+
+  <div class="test">
+    <h2>Test 3: Analyze Real ARM Firmware</h2>
+    <button onclick="testAnalyzeFirmware()">Run Test</button>
+    <div id="test3-result"></div>
+  </div>
+
+  <div class="test">
+    <h2>Test 4: Query Cross-References</h2>
+    <button onclick="testQueryXrefs()">Run Test</button>
+    <div id="test4-result"></div>
+  </div>
+
+  <script type="module">
+    import init, { ArmAnalyzer, XrefType } from './pkg/battlemagic_analyzer.js';
+
+    window.wasmModule = null;
+    window.analyzer = null;
+
+    window.testLoadWasm = async function() {
+      const resultDiv = document.getElementById('test1-result');
+      try {
+        resultDiv.innerHTML = '<p class="info">Loading WASM module...</p>';
+
+        await init();
+        window.wasmModule = { ArmAnalyzer, XrefType };
+
+        resultDiv.innerHTML = `
+          <p class="pass">✓ WASM module loaded successfully</p>
+          <pre>Available exports:
+- ArmAnalyzer (class)
+- XrefType (enum)
+  Call = ${XrefType.Call}
+  Branch = ${XrefType.Branch}
+  ConditionalBranch = ${XrefType.ConditionalBranch}
+  DataRead = ${XrefType.DataRead}
+  DataWrite = ${XrefType.DataWrite}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="fail">✗ Failed: ${error.message}</p>`;
+      }
+    };
+
+    window.testCreateAnalyzer = async function() {
+      const resultDiv = document.getElementById('test2-result');
+      try {
+        if (!window.wasmModule) {
+          await window.testLoadWasm();
+        }
+
+        resultDiv.innerHTML = '<p class="info">Creating analyzer instance...</p>';
+
+        const baseAddress = 0x8000;
+        window.analyzer = new window.wasmModule.ArmAnalyzer(baseAddress);
+
+        resultDiv.innerHTML = `
+          <p class="pass">✓ Analyzer instance created</p>
+          <pre>Base Address: 0x${baseAddress.toString(16)}
+Analyzed: ${window.analyzer.is_analyzed()}
+XRef Count: ${window.analyzer.xref_count()}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="fail">✗ Failed: ${error.message}</p>`;
+      }
+    };
+
+    window.testAnalyzeFirmware = async function() {
+      const resultDiv = document.getElementById('test3-result');
+      try {
+        if (!window.analyzer) {
+          await window.testCreateAnalyzer();
+        }
+
+        resultDiv.innerHTML = '<p class="info">Analyzing real ARM firmware...</p>';
+
+        // Real nRF52 firmware pattern (from test suite)
+        const firmware = new Uint8Array([
+          0x10, 0xB5,             // push {r4, lr}
+          0x04, 0x48,             // ldr r0, [pc, #16]  ; Load GPIO base
+          0x01, 0x21,             // mov r1, #1
+          0x01, 0x61,             // str r1, [r0, #16]  ; Set PIN_CNF
+          0x00, 0xF0, 0x04, 0xF8, // bl delay_ms
+          0x10, 0xBD,             // pop {r4, pc}
+          0x00, 0xBF,             // nop
+          0x00, 0x00, 0x00, 0x50, // Constant pool (GPIO base: 0x50000000)
+        ]);
+
+        const results = window.analyzer.analyze_from_bytes(firmware);
+
+        resultDiv.innerHTML = `
+          <p class="pass">✓ Firmware analyzed successfully</p>
+          <pre>Total XRefs: ${results.total_xrefs}
+Analyzed: ${results.analyzed}
+
+Cross-References Found:
+${results.xrefs.map((xref, i) => `  ${i + 1}. 0x${xref.from.toString(16)} → 0x${xref.to.toString(16)}
+     Type: ${Object.keys(window.wasmModule.XrefType).find(k => window.wasmModule.XrefType[k] === xref.xref_type)}
+     Instruction: ${xref.instruction || 'N/A'}`).join('\n\n')}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="fail">✗ Failed: ${error.message}</p><pre>${error.stack}</pre>`;
+      }
+    };
+
+    window.testQueryXrefs = async function() {
+      const resultDiv = document.getElementById('test4-result');
+      try {
+        if (!window.analyzer || !window.analyzer.is_analyzed()) {
+          await window.testAnalyzeFirmware();
+        }
+
+        resultDiv.innerHTML = '<p class="info">Querying cross-references...</p>';
+
+        // Query xrefs from first instruction (0x8000)
+        const xrefsFrom8000 = window.analyzer.get_xrefs_from(0x8000);
+
+        // Query xrefs from BL instruction (0x8008)
+        const xrefsFrom8008 = window.analyzer.get_xrefs_from(0x8008);
+
+        resultDiv.innerHTML = `
+          <p class="pass">✓ XRef queries successful</p>
+          <pre>Query: get_xrefs_from(0x8000)
+Results: ${xrefsFrom8000.length} xrefs
+${xrefsFrom8000.map(x => `  → 0x${x.to.toString(16)} (${Object.keys(window.wasmModule.XrefType).find(k => window.wasmModule.XrefType[k] === x.xref_type)})`).join('\n')}
+
+Query: get_xrefs_from(0x8008)
+Results: ${xrefsFrom8008.length} xrefs
+${xrefsFrom8008.map(x => `  → 0x${x.to.toString(16)} (${Object.keys(window.wasmModule.XrefType).find(k => window.wasmModule.XrefType[k] === x.xref_type)})`).join('\n')}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="fail">✗ Failed: ${error.message}</p><pre>${error.stack}</pre>`;
+      }
+    };
+
+    // Auto-run all tests
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('Running automated WASM tests...');
+      try {
+        await window.testLoadWasm();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await window.testCreateAnalyzer();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await window.testAnalyzeFirmware();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await window.testQueryXrefs();
+        console.log('All tests completed!');
+      } catch (error) {
+        console.error('Test suite failed:', error);
+      }
+    });
+  </script>
+</body>
+</html>
