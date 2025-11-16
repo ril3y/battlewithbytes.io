@@ -22,7 +22,6 @@
     "clean": "rm -rf .next out node_modules"
   },
   "dependencies": {
-    "@alexaltea/capstone-js": "^3.0.5",
     "@babel/runtime": "^7.27.0",
     "@battlewithbytes/battlemagic-core": "workspace:^",
     "@battlewithbytes/battleterm": "workspace:^",
@@ -37,6 +36,7 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
+    "battlemagic-analyzer": "workspace:^",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",
@@ -48,6 +48,7 @@
     "immer": "^10.1.1",
     "jspdf": "^3.0.1",
     "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.553.0",
     "nanoid": "^5.1.5",
     "next": "15.3.0",
     "next-mdx-remote": "^5.0.0",

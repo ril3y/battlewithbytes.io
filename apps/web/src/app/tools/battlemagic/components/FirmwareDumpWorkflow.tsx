@@ -21,6 +21,7 @@
 import React, { useState, useCallback } from 'react';
 import { GdbClient } from '../lib/gdb/GdbClient';
 import { ConnectionState } from '../lib/gdb/types';
+import { createAnalyzer, type AnalysisResults as WasmAnalysisResults, type XrefResult } from '../lib/wasmAnalyzer';
 
 interface DumpProgress {
   stage: 'idle' | 'connecting' | 'scanning' | 'attaching' | 'dumping' | 'parsing' | 'analyzing' | 'complete' | 'error';
@@ -52,7 +53,7 @@ export function FirmwareDumpWorkflow() {
   const [gdbClient] = useState(() => new GdbClient({ debug: true }));
   const [progress, setProgress] = useState<DumpProgress>({ stage: 'idle', message: 'Ready to start' });
   const [dump, setDump] = useState<FirmwareDump | null>(null);
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [analysisResults, setAnalysisResults] = useState<WasmAnalysisResults | null>(null);
 
   /**
    * Parse ARM Cortex-M vector table from dumped firmware
@@ -206,7 +207,11 @@ export function FirmwareDumpWorkflow() {
 
   /**
    * Analyze dumped firmware with WASM analyzer
-   * TODO: Integrate battlemagic-analyzer WASM module
+   *
+   * Uses the battlemagic-analyzer WASM module to perform:
+   * 1. ARM Thumb-2 instruction decoding
+   * 2. Cross-reference analysis (calls, branches, data refs)
+   * 3. Function detection
    */
   const handleAnalyzeFirmware = useCallback(async () => {
     if (!dump) {
@@ -215,27 +220,33 @@ export function FirmwareDumpWorkflow() {
     }
 
     try {
-      setProgress({ stage: 'analyzing', message: 'Analyzing firmware with WASM...' });
+      setProgress({ stage: 'analyzing', message: 'Loading WASM analyzer...' });
 
-      // TODO: Integrate WASM analyzer
-      // 1. Load battlemagic-analyzer WASM module
-      // 2. Disassemble firmware (use Capstone.js or WASM decoder)
-      // 3. Pass disassembly to WASM analyzer
-      // 4. Get cross-references, functions, CFG
-      // 5. Display in UI
+      // Create analyzer instance with base address
+      const analyzer = await createAnalyzer(dump.baseAddress);
 
-      console.log('WASM analysis placeholder - to be implemented');
-      console.log('Firmware ready for analysis:', {
-        size: dump.size,
-        baseAddress: `0x${dump.baseAddress.toString(16)}`,
-        resetAddress: `0x${dump.vectorTable.resetAddress.toString(16)}`
+      setProgress({ stage: 'analyzing', message: 'Analyzing firmware binary...' });
+
+      // Analyze firmware directly from bytes (no Capstone needed!)
+      // The WASM module includes a complete ARM Thumb-2 decoder
+      const results = analyzer.analyze_from_bytes(dump.data);
+
+      console.log('WASM analysis complete:', {
+        totalXrefs: results.total_xrefs,
+        xrefCount: results.xrefs?.length || 0,
+        analyzed: results.analyzed
       });
+
+      setAnalysisResults(results);
 
       setProgress({
         stage: 'complete',
-        message: 'Analysis complete (placeholder)',
+        message: `Analysis complete: Found ${results.total_xrefs} cross-references`,
         progress: 100
       });
+
+      // Clean up analyzer
+      analyzer.free();
 
     } catch (error) {
       console.error('Analysis error:', error);
@@ -397,12 +408,67 @@ export function FirmwareDumpWorkflow() {
           </div>
         )}
 
-        {/* Analysis Results Placeholder */}
+        {/* Analysis Results */}
         {analysisResults && (
           <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <h3 className="text-sm font-semibold mb-3">Analysis Results</h3>
-            <div className="text-sm text-gray-400">
-              TODO: Display cross-references, functions, control flow graph
+
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Total Cross-References:</span>
+                  <span className="font-mono text-green-400">{analysisResults.total_xrefs}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Analysis Status:</span>
+                  <span className={analysisResults.analyzed ? 'text-green-400' : 'text-yellow-400'}>
+                    {analysisResults.analyzed ? 'Complete' : 'Incomplete'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cross-References Table */}
+              {analysisResults.xrefs && analysisResults.xrefs.length > 0 && (
+                <div className="border-t border-gray-700 pt-3">
+                  <h4 className="text-xs font-semibold text-gray-400 mb-2">Cross-References (showing first 20)</h4>
+                  <div className="max-h-64 overflow-y-auto">
+                    <table className="w-full text-xs font-mono">
+                      <thead className="sticky top-0 bg-gray-800">
+                        <tr className="text-gray-400 border-b border-gray-700">
+                          <th className="text-left py-1 px-2">From</th>
+                          <th className="text-left py-1 px-2">To</th>
+                          <th className="text-left py-1 px-2">Type</th>
+                          <th className="text-left py-1 px-2">Instruction</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analysisResults.xrefs.slice(0, 20).map((xref: XrefResult, idx: number) => (
+                          <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30">
+                            <td className="py-1 px-2 text-blue-400">
+                              0x{xref.from.toString(16).toUpperCase().padStart(8, '0')}
+                            </td>
+                            <td className="py-1 px-2 text-green-400">
+                              0x{xref.to.toString(16).toUpperCase().padStart(8, '0')}
+                            </td>
+                            <td className="py-1 px-2 text-yellow-400">
+                              {['Call', 'Branch', 'CondBranch', 'DataRead', 'DataWrite'][xref.xref_type] || 'Unknown'}
+                            </td>
+                            <td className="py-1 px-2 text-gray-300 truncate max-w-xs">
+                              {xref.instruction || ''}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {analysisResults.xrefs.length > 20 && (
+                      <div className="text-center text-xs text-gray-500 py-2">
+                        ... and {analysisResults.xrefs.length - 20} more cross-references
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

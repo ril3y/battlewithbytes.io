@@ -13,6 +13,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { GdbClient, GdbClientCallbacks } from '../lib/gdb/GdbClient';
 import { ConnectionState, Target, StopReply, BmpVersion } from '../lib/gdb/types';
+import { XrefProvider } from '../lib/context/XrefContext';
 import MenuBar from './MenuBar';
 import Toolbar from './Toolbar';
 import StatusBar from './StatusBar';
@@ -28,6 +29,9 @@ import { MemoryMapView } from './MemoryMapView';
 import SwoViewer from './SwoViewer';
 import ProjectMenu from './ProjectMenu';
 import DebuggerView from './DebuggerView';
+import AnalysisPanel, { AnalysisResults } from './AnalysisPanel';
+import XrefPanel from './XrefPanel';
+import { FirmwareDumpWorkflow } from './FirmwareDumpWorkflow';
 import {
   saveGdbPort,
   saveUartPort
@@ -64,11 +68,25 @@ export default function BattleMagicMonitor() {
   // Debug panels state
   const [registers, setRegisters] = useState<RegisterValue[]>([]);
   const [stackFrames, setStackFrames] = useState<StackFrame[]>([]);
-  const [activeRightPanel, setActiveRightPanel] = useState<'debugger' | 'target' | 'flash' | 'extract' | 'breakpoints' | 'memorymap' | 'uart' | 'swo'>('debugger');
+  const [activeRightPanel, setActiveRightPanel] = useState<'debugger' | 'target' | 'flash' | 'extract' | 'breakpoints' | 'memorymap' | 'uart' | 'swo' | 'analysis' | 'xrefs' | 'firmware-dump'>('debugger');
   const [programCounter, setProgramCounter] = useState<number | undefined>();
   const [customMemoryRegions, setCustomMemoryRegions] = useState<MemoryRegion[]>([]);
   const [selectedMemoryMapCpu, setSelectedMemoryMapCpu] = useState<string>('generic-cortex-m4');
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
+  const [selectedDisassemblyAddress] = useState<number | null>(null);
+
+  // Convert breakpoints to Set<number> for DisassemblyView
+  const breakpointAddresses = new Set<number>(
+    breakpoints
+      .filter(bp => bp.enabled)
+      .map(bp => {
+        const addr = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+          ? parseInt(bp.address, 16)
+          : parseInt(bp.address, 10);
+        return isNaN(addr) ? 0 : addr;
+      })
+      .filter(addr => addr !== 0)
+  );
 
   // Panel resize state
   const [consoleWidth, setConsoleWidth] = useState(25); // Console is now on the right, 25% width
@@ -616,6 +634,52 @@ export default function BattleMagicMonitor() {
 
   // Note: Version check and port management now handled by menu/toolbar
 
+  // Breakpoint management - unified handler for both DisassemblyView and BreakpointsManager
+  const handleToggleBreakpoint = useCallback(async (address: number) => {
+    if (!gdbClient || gdbState !== ConnectionState.ATTACHED) {
+      addGdbOutput('[Error] Not connected to target');
+      return;
+    }
+
+    const addressStr = `0x${address.toString(16).toUpperCase()}`;
+    const existingBp = breakpoints.find(bp => {
+      const bpAddr = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+        ? parseInt(bp.address, 16)
+        : parseInt(bp.address, 10);
+      return bpAddr === address;
+    });
+
+    try {
+      if (existingBp) {
+        // Remove breakpoint
+        await gdbClient.removeBreakpoint(address);
+        setBreakpoints(prev => prev.filter(bp => bp.id !== existingBp.id));
+        addGdbOutput(`[Breakpoint removed at ${addressStr}]`);
+      } else {
+        // Add breakpoint
+        await gdbClient.insertBreakpoint(address);
+        const newBreakpoint: Breakpoint = {
+          id: `bp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          address: addressStr,
+          type: 'software',
+          enabled: true,
+          description: `Address: ${addressStr}`,
+          hitCount: 0
+        };
+        setBreakpoints(prev => [...prev, newBreakpoint]);
+        addGdbOutput(`[Breakpoint set at ${addressStr}]`);
+      }
+    } catch (error) {
+      addGdbOutput(`[Failed to ${existingBp ? 'remove' : 'set'} breakpoint: ${error}]`);
+    }
+  }, [gdbClient, gdbState, breakpoints, addGdbOutput]);
+
+  // Analysis handler
+  const handleAnalysisComplete = useCallback((results: AnalysisResults) => {
+    addGdbOutput('[Analysis] Binary analysis completed successfully');
+    addGdbOutput(`[Analysis] Results: ${results.totalInstructions} instructions, ${results.functionsDetected} functions`);
+  }, [addGdbOutput]);
+
   // Project management handlers
   const updateProjectState = useCallback(() => {
     const projectManager = projectManagerRef.current;
@@ -765,6 +829,7 @@ export default function BattleMagicMonitor() {
   const targetAttached = gdbState === ConnectionState.ATTACHED;
 
   return (
+    <XrefProvider>
     <div className="battlemagic-container flex flex-col h-screen bg-gray-950 text-white overflow-hidden">
       {/* Header - Compact with logo and project menu */}
       <div className="bg-gray-900 border-b border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
@@ -772,15 +837,15 @@ export default function BattleMagicMonitor() {
           <Image
             src="/battlemagiclogo.png"
             alt="BattleMagic Logo"
-            width={40}
-            height={40}
+            width={60}
+            height={60}
             className="rounded"
           />
           <div>
-            <h1 className="text-lg font-bold font-mono leading-tight">
+            <h1 className="text-2xl font-bold font-mono leading-tight">
               <span className="text-green-400">Battle</span>Magic
             </h1>
-            <p className="text-[10px] text-gray-400">Black Magic Probe Debugger</p>
+            <p className="text-xs text-gray-400">Black Magic Probe Debugger</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -850,8 +915,8 @@ export default function BattleMagicMonitor() {
           <>
             {/* Main Horizontal Split: Content (70-85%) | Console (15-30%) */}
             <div className="flex-1 flex overflow-hidden">
-              {/* Left Side - Main Content (70-85%) */}
-              <div className="flex flex-col overflow-hidden" style={{ width: `${100 - consoleWidth}%` }}>
+              {/* Left Side - Main Content (70-85% when console visible, 100% when hidden) */}
+              <div className="flex flex-col overflow-hidden" style={{ width: visiblePanels.console ? `${100 - consoleWidth}%` : '100%' }}>
                 {/* Show DebuggerView by default when target is attached */}
                 {targetAttached && activeRightPanel === 'debugger' && (
                   <DebuggerView
@@ -864,6 +929,13 @@ export default function BattleMagicMonitor() {
                     onRefreshStack={handleRefreshStack}
                     onReadMemory={handleReadMemory}
                     onOutput={addGdbOutput}
+                    breakpoints={breakpointAddresses}
+                    onToggleBreakpoint={handleToggleBreakpoint}
+                    visiblePanels={{
+                      registers: visiblePanels.registers,
+                      stack: visiblePanels.stack,
+                      memory: visiblePanels.memory
+                    }}
                   />
                 )}
                 {activeRightPanel === 'target' && (
@@ -888,6 +960,8 @@ export default function BattleMagicMonitor() {
                     gdbClient={gdbClient}
                     isConnected={targetAttached}
                     onOutput={addGdbOutput}
+                    breakpoints={breakpoints}
+                    setBreakpoints={setBreakpoints}
                   />
                 )}
                 {activeRightPanel === 'memorymap' && (
@@ -922,6 +996,28 @@ export default function BattleMagicMonitor() {
                     isConnected={targetAttached}
                     onOutput={addGdbOutput}
                   />
+                )}
+                {activeRightPanel === 'analysis' && (
+                  <AnalysisPanel
+                    gdbClient={gdbClient}
+                    isConnected={targetAttached}
+                    onAnalysisComplete={handleAnalysisComplete}
+                    onOutput={addGdbOutput}
+                  />
+                )}
+                {activeRightPanel === 'xrefs' && (
+                  <XrefPanel
+                    selectedAddress={selectedDisassemblyAddress}
+                    onNavigateToAddress={() => {
+                      // Switch to debugger view and navigate
+                      setActiveRightPanel('debugger');
+                      // The navigation will be handled by DisassemblyView internally
+                      // We just need to ensure we're on the debugger view
+                    }}
+                  />
+                )}
+                {activeRightPanel === 'firmware-dump' && (
+                  <FirmwareDumpWorkflow />
                 )}
               </div>
 
@@ -995,5 +1091,6 @@ export default function BattleMagicMonitor() {
         />
       )}
     </div>
+    </XrefProvider>
   );
 }

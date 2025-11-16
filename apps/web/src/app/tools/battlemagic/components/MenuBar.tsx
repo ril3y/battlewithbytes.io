@@ -25,7 +25,7 @@ interface MenuBarProps {
     stack: boolean;
     memory: boolean;
   };
-  onPanelToggle?: (panel: keyof typeof visiblePanels) => void;
+  onPanelToggle?: (panel: 'registers' | 'stack' | 'memory' | 'console') => void;
 }
 
 type MenuKey = 'file' | 'view' | 'debug' | 'tools' | 'help' | null;
@@ -82,13 +82,13 @@ export default function MenuBar({
   };
 
   return (
-    <div ref={menuRef} className="bg-gray-900 border-b border-gray-700 flex items-center text-sm font-mono relative z-50">
+    <div ref={menuRef} className="bg-gray-900 border-b border-gray-700 flex items-center text-sm font-mono relative z-50 h-8">
       {/* File Menu */}
       <div className="relative">
         <button
           onClick={() => handleMenuClick('file')}
-          className={`px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-            openMenu === 'file' ? 'bg-gray-700 text-green-400' : ''
+          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+            openMenu === 'file' ? 'bg-gray-800 text-white' : ''
           }`}
         >
           File
@@ -145,8 +145,8 @@ export default function MenuBar({
       <div className="relative">
         <button
           onClick={() => handleMenuClick('view')}
-          className={`px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-            openMenu === 'view' ? 'bg-gray-700 text-green-400' : ''
+          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+            openMenu === 'view' ? 'bg-gray-800 text-white' : ''
           }`}
         >
           View
@@ -170,6 +170,15 @@ export default function MenuBar({
             >
               <span>{activeView === 'memory' ? '✓' : ' '}</span>
               <span>Memory View</span>
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onViewToggle?.('analysis'))}
+              className={`w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center gap-2 ${
+                activeView === 'analysis' ? 'text-green-400' : ''
+              }`}
+            >
+              <span>{activeView === 'analysis' ? '✓' : ' '}</span>
+              <span>Analysis</span>
             </button>
             <div className="border-t border-gray-700 my-1" />
             <div className="px-4 py-1 text-xs text-gray-500">Panels</div>
@@ -209,8 +218,8 @@ export default function MenuBar({
       <div className="relative">
         <button
           onClick={() => handleMenuClick('debug')}
-          className={`px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            openMenu === 'debug' ? 'bg-gray-700 text-green-400' : ''
+          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+            openMenu === 'debug' ? 'bg-gray-800 text-white' : ''
           }`}
           disabled={!isAttached}
         >
@@ -254,8 +263,8 @@ export default function MenuBar({
       <div className="relative">
         <button
           onClick={() => handleMenuClick('tools')}
-          className={`px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-            openMenu === 'tools' ? 'bg-gray-700 text-green-400' : ''
+          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+            openMenu === 'tools' ? 'bg-gray-800 text-white' : ''
           }`}
         >
           Tools
@@ -273,6 +282,12 @@ export default function MenuBar({
               className="w-full text-left px-4 py-2 hover:bg-gray-700"
             >
               Firmware Extractor
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onToolSelect?.('firmware-dump'))}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Firmware Dump & Analysis
             </button>
             <button
               onClick={() => handleMenuItemClick(() => onToolSelect?.('memorymap'))}
@@ -293,6 +308,19 @@ export default function MenuBar({
             >
               SWO Viewer
             </button>
+            <div className="border-t border-gray-700 my-1" />
+            <button
+              onClick={() => handleMenuItemClick(() => onToolSelect?.('analysis'))}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Binary Analysis
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onToolSelect?.('xrefs'))}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Cross-References
+            </button>
           </div>
         )}
       </div>
@@ -301,8 +329,8 @@ export default function MenuBar({
       <div className="relative">
         <button
           onClick={() => handleMenuClick('help')}
-          className={`px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-            openMenu === 'help' ? 'bg-gray-700 text-green-400' : ''
+          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+            openMenu === 'help' ? 'bg-gray-800 text-white' : ''
           }`}
         >
           Help
