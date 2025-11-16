@@ -226,16 +226,22 @@ export function FirmwareDumpWorkflow() {
     try {
       setProgress({ stage: 'analyzing', message: 'Loading WASM analyzer...' });
 
+      console.log('[FirmwareDump] Creating analyzer with base address:', `0x${dump.baseAddress.toString(16)}`);
+      console.log('[FirmwareDump] Firmware size:', dump.data.length, 'bytes');
+
       // Create analyzer instance with base address
       const analyzer = await createAnalyzer(dump.baseAddress);
+
+      console.log('[FirmwareDump] Analyzer created successfully');
 
       setProgress({ stage: 'analyzing', message: 'Analyzing firmware binary...' });
 
       // Analyze firmware directly from bytes (no Capstone needed!)
       // The WASM module includes a complete ARM Thumb-2 decoder
+      console.log('[FirmwareDump] Calling analyze_from_bytes...');
       const results = analyzer.analyze_from_bytes(dump.data);
 
-      console.log('WASM analysis complete:', {
+      console.log('[FirmwareDump] WASM analysis complete:', {
         totalXrefs: results.total_xrefs,
         xrefCount: results.xrefs?.length || 0,
         analyzed: results.analyzed
@@ -250,13 +256,18 @@ export function FirmwareDumpWorkflow() {
       });
 
       // Clean up analyzer
+      console.log('[FirmwareDump] Cleaning up analyzer...');
       analyzer.free();
 
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error('[FirmwareDump] Analysis error:', error);
+      // Log stack trace if available
+      if (error instanceof Error && error.stack) {
+        console.error('[FirmwareDump] Stack trace:', error.stack);
+      }
       setProgress({
         stage: 'error',
-        message: `Analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Analysis error: ${error instanceof Error ? error.message : String(error)}`
       });
     }
   }, [dump]);
