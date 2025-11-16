@@ -3,7 +3,6 @@
 use crate::traits::{Architecture, Instruction as TraitInstruction};
 use crate::types::{AnalysisResults, CrossReference as TypesXref, Instruction};
 use crate::xref::XrefDatabase;
-use std::time::Instant;
 
 /// Generic binary analyzer supporting multiple architectures
 ///
@@ -42,8 +41,6 @@ impl<A: Architecture> BinaryAnalyzer<A> {
     /// and performs cross-reference extraction using the architecture-specific
     /// implementation.
     pub fn analyze_from_disasm(&mut self, instructions: &[Instruction]) -> AnalysisResults {
-        let start_time = Instant::now();
-
         // Clear previous analysis
         self.xref_db.clear();
 
@@ -80,8 +77,6 @@ impl<A: Architecture> BinaryAnalyzer<A> {
 
         self.is_analyzed = true;
 
-        let elapsed = start_time.elapsed();
-
         // Convert trait xrefs to types xrefs for serialization
         let xrefs: Vec<TypesXref> = self.xref_db.get_all_xrefs().iter().map(|xref| {
             TypesXref::new(
@@ -94,10 +89,11 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         }).collect();
 
         // Create results
+        // Note: elapsed_ms set to 0 in WASM (timing not available)
         AnalysisResults::new(
             xrefs,
             instructions.len(),
-            elapsed.as_millis() as u64,
+            0, // elapsed_ms
             instructions.first().map(|i| i.address).unwrap_or(self.base_address),
             instructions.last().map(|i| i.address).unwrap_or(self.base_address),
         )
@@ -172,8 +168,6 @@ impl<A: Architecture> BinaryAnalyzer<A> {
     /// let results = analyzer.analyze_from_bytes(firmware_bytes);
     /// ```
     pub fn analyze_from_bytes(&mut self, bytes: &[u8]) -> AnalysisResults {
-        let start_time = Instant::now();
-
         // Clear previous analysis
         self.xref_db.clear();
 
@@ -219,8 +213,6 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         self.xref_db.build_indices();
         self.is_analyzed = true;
 
-        let elapsed = start_time.elapsed();
-
         // Convert trait xrefs to types xrefs for serialization
         let xrefs: Vec<TypesXref> = self.xref_db.get_all_xrefs().iter().map(|xref| {
             TypesXref::new(
@@ -233,10 +225,11 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         }).collect();
 
         // Create results
+        // Note: elapsed_ms set to 0 in WASM (timing not available)
         AnalysisResults::new(
             xrefs,
             instructions.len(),
-            elapsed.as_millis() as u64,
+            0, // elapsed_ms
             instructions.first().map(|i| i.address).unwrap_or(self.base_address),
             instructions.last().map(|i| i.address).unwrap_or(self.base_address),
         )
