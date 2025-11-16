@@ -17,9 +17,12 @@ interface MemoryPanelProps {
   isConnected: boolean;
   gdbClient?: GdbClient | null;
   onOutput?: (message: string) => void;
+  autoReadAddress?: number; // External trigger to read memory at this address
 }
 
-export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOutput }: MemoryPanelProps) {
+type DataWidth = 8 | 16 | 32;
+
+export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOutput, autoReadAddress }: MemoryPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('memory');
   const [address, setAddress] = useState('0x20000000'); // Default to RAM region
   const [length, setLength] = useState(256);
@@ -30,6 +33,32 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
   const [goToAddress, setGoToAddress] = useState('');
   const [goToError, setGoToError] = useState<string | null>(null);
   const [isMouseOverPanel, setIsMouseOverPanel] = useState(false);
+  const [followPC, setFollowPC] = useState(true); // Follow PC by default
+  const [dataWidth, setDataWidth] = useState<DataWidth>(8); // 8-bit bytes by default
+
+  // Auto-read memory when external trigger changes (only if followPC is enabled)
+  useEffect(() => {
+    if (autoReadAddress !== undefined && isConnected && followPC) {
+      const readAddr = autoReadAddress;
+      setAddress(`0x${readAddr.toString(16).toUpperCase()}`);
+
+      // Auto-read memory at the new address
+      (async () => {
+        try {
+          setLoading(true);
+          const data = await onReadMemory(readAddr, length);
+          if (data) {
+            setMemoryData(data);
+            setError(null);
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to read memory');
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [autoReadAddress, isConnected, onReadMemory, length, followPC]);
 
   const handleRead = useCallback(async () => {
     if (!isConnected) return;
@@ -144,7 +173,7 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
     }
   }, [goToAddress, isConnected, onReadMemory, length, loading]);
 
-  const formatHexView = (data: Uint8Array, baseAddress: number): ReactElement[] => {
+  const formatHexView = (data: Uint8Array, baseAddress: number, width: DataWidth): ReactElement[] => {
     const lines: ReactElement[] = [];
     const bytesPerLine = 16;
 
@@ -152,10 +181,43 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
       const lineAddr = baseAddress + offset;
       const lineData = data.slice(offset, offset + bytesPerLine);
 
-      // Create hex representation
-      const hexBytes = Array.from(lineData)
-        .map(byte => byte.toString(16).padStart(2, '0').toUpperCase())
-        .join(' ');
+      // Create hex representation based on data width
+      let hexBytes: string;
+      if (width === 8) {
+        // 8-bit bytes
+        hexBytes = Array.from(lineData)
+          .map(byte => byte.toString(16).padStart(2, '0').toUpperCase())
+          .join(' ');
+      } else if (width === 16) {
+        // 16-bit words (little-endian)
+        const words: string[] = [];
+        for (let i = 0; i < lineData.length; i += 2) {
+          if (i + 1 < lineData.length) {
+            const word = (lineData[i + 1] << 8) | lineData[i];
+            words.push(word.toString(16).padStart(4, '0').toUpperCase());
+          } else {
+            words.push(lineData[i].toString(16).padStart(2, '0').toUpperCase() + '  ');
+          }
+        }
+        hexBytes = words.join(' ');
+      } else {
+        // 32-bit dwords (little-endian)
+        const dwords: string[] = [];
+        for (let i = 0; i < lineData.length; i += 4) {
+          if (i + 3 < lineData.length) {
+            const dword = (lineData[i + 3] << 24) | (lineData[i + 2] << 16) | (lineData[i + 1] << 8) | lineData[i];
+            dwords.push(dword.toString(16).padStart(8, '0').toUpperCase());
+          } else {
+            // Partial dword
+            let partial = '';
+            for (let j = i; j < lineData.length && j < i + 4; j++) {
+              partial = lineData[j].toString(16).padStart(2, '0').toUpperCase() + partial;
+            }
+            dwords.push(partial.padStart(8, ' '));
+          }
+        }
+        hexBytes = dwords.join(' ');
+      }
 
       // Create ASCII representation
       const ascii = Array.from(lineData)
@@ -163,14 +225,14 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
         .join('');
 
       lines.push(
-        <div key={offset} className="flex font-mono text-xs hover:bg-gray-800 px-2 py-0.5">
-          <span className="font-mono text-blue-400 mr-4">
+        <div key={offset} className="font-mono text-xs hover:bg-gray-800 px-2 py-0.5" style={{ display: 'flex', fontFamily: 'Monaco, "Courier New", Courier, monospace' }}>
+          <span className="text-blue-400" style={{ width: '72px', flexShrink: 0 }}>
             {lineAddr.toString(16).padStart(8, '0').toUpperCase()}
           </span>
-          <span className="font-mono text-gray-300 mr-4 flex-1">
-            {hexBytes}
+          <span className="text-gray-300" style={{ width: '400px', flexShrink: 0, marginLeft: '16px' }}>
+            {hexBytes.padEnd(47, ' ')}
           </span>
-          <span className="font-mono text-yellow-400">
+          <span className="text-yellow-400" style={{ marginLeft: '16px' }}>
             {ascii}
           </span>
         </div>
@@ -248,6 +310,25 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
             step="16"
             className="w-16 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-300 focus:outline-none focus:border-green-500"
           />
+          <select
+            value={dataWidth}
+            onChange={(e) => setDataWidth(parseInt(e.target.value) as DataWidth)}
+            className="px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-300 focus:outline-none focus:border-green-500"
+            title="Data width"
+          >
+            <option value={8}>8-bit</option>
+            <option value={16}>16-bit</option>
+            <option value={32}>32-bit</option>
+          </select>
+          <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer" title="Auto-follow program counter">
+            <input
+              type="checkbox"
+              checked={followPC}
+              onChange={(e) => setFollowPC(e.target.checked)}
+              className="rounded border-gray-600 bg-gray-800 text-green-500 focus:ring-green-500 focus:ring-offset-gray-900"
+            />
+            <span>Follow PC</span>
+          </label>
           <button
             onClick={handleRead}
             disabled={!isConnected || loading}
@@ -274,7 +355,7 @@ export default function MemoryPanel({ onReadMemory, isConnected, gdbClient, onOu
               </div>
             ) : memoryData ? (
               <div className="py-2">
-                {formatHexView(memoryData, parseInt(address, 16))}
+                {formatHexView(memoryData, parseInt(address, 16), dataWidth)}
               </div>
             ) : (
               <div className="text-gray-500 text-xs text-center mt-4">

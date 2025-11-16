@@ -20,9 +20,13 @@ interface GdbPanelProps {
   onScanSwd?: () => void;
   onClearOutput?: () => void;
   onOutput?: (text: string) => void;
+  onClearAllBreakpoints?: () => void;
+  breakpoints?: Array<{ id: string; address: string; type: string; enabled: boolean }>;
+  registers?: Array<{ name: string; value: number; size: number }>;
+  programCounter?: number;
 }
 
-export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, onScanSwd, onClearOutput, onOutput }: GdbPanelProps) {
+export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, onScanSwd, onClearOutput, onOutput, onClearAllBreakpoints, breakpoints, registers, programCounter }: GdbPanelProps) {
   const [command, setCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -83,6 +87,122 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, o
     }
   }, []);
 
+  // Handle custom commands before sending to GDB
+  const handleCustomCommand = async (cmd: string): Promise<boolean> => {
+    if (!onOutput) return false;
+
+    const lowerCmd = cmd.toLowerCase();
+
+    // Help command
+    if (lowerCmd === 'help' || lowerCmd === '?') {
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      onOutput('📖 BattleMagic Custom Commands:');
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      onOutput('  bp, breakpoints    - List all breakpoints');
+      onOutput('  bpclear            - Clear all breakpoints (GDB + UI)');
+      onOutput('  regs, registers    - Show all registers');
+      onOutput('  pc                 - Show program counter');
+      onOutput('  clear              - Clear console output');
+      onOutput('  help, ?            - Show this help message');
+      onOutput('');
+      onOutput('💡 GDB RSP Commands:');
+      onOutput('  g                  - Read all registers');
+      onOutput('  c                  - Continue execution');
+      onOutput('  s                  - Single step');
+      onOutput('  m<addr>,<len>      - Read memory');
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return true;
+    }
+
+    // List breakpoints
+    if (lowerCmd === 'bp' || lowerCmd === 'breakpoints') {
+      if (!breakpoints || breakpoints.length === 0) {
+        onOutput('No breakpoints set');
+        onOutput('💡 Tip: ARM Cortex-M supports ~4-6 hardware breakpoints');
+        return true;
+      }
+
+      const hwBpCount = breakpoints.filter(bp => bp.type === 'hardware').length;
+      const swBpCount = breakpoints.filter(bp => bp.type === 'software').length;
+
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      onOutput('🔴 Breakpoints:');
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      breakpoints.forEach((bp, index) => {
+        const status = bp.enabled ? '✓' : '✗';
+        const type = bp.type === 'hardware' ? 'HW' : 'SW';
+        onOutput(`  ${status} #${index + 1}: ${bp.address} (${type})`);
+      });
+      onOutput('');
+      onOutput(`Total: ${breakpoints.length} breakpoint(s)`);
+      onOutput(`  Hardware: ${hwBpCount}/~6 (ARM Cortex-M limit)`);
+      if (swBpCount > 0) {
+        onOutput(`  Software: ${swBpCount} (⚠️ may not work with Flash)`);
+      }
+      if (hwBpCount >= 4) {
+        onOutput('');
+        onOutput('⚠️  Warning: Approaching hardware breakpoint limit!');
+      }
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return true;
+    }
+
+    // Show registers
+    if (lowerCmd === 'regs' || lowerCmd === 'registers') {
+      if (!registers || registers.length === 0) {
+        onOutput('No register data available - attach to target first');
+        return true;
+      }
+
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      onOutput('📊 Registers:');
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // Display in columns (4 per row)
+      for (let i = 0; i < registers.length; i += 4) {
+        const row = registers.slice(i, i + 4);
+        const line = row.map(r =>
+          `${r.name.padEnd(8)} 0x${r.value.toString(16).toUpperCase().padStart(8, '0')}`
+        ).join('  ');
+        onOutput(`  ${line}`);
+      }
+      onOutput('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return true;
+    }
+
+    // Show PC
+    if (lowerCmd === 'pc') {
+      if (programCounter === undefined) {
+        onOutput('PC not available - attach to target first');
+        return true;
+      }
+      onOutput(`Program Counter: 0x${programCounter.toString(16).toUpperCase().padStart(8, '0')}`);
+      return true;
+    }
+
+    // Clear all breakpoints
+    if (lowerCmd === 'bpclear') {
+      if (!onClearAllBreakpoints) {
+        onOutput('Command not available');
+        return true;
+      }
+      if (!breakpoints || breakpoints.length === 0) {
+        onOutput('No breakpoints to clear');
+        return true;
+      }
+      await onClearAllBreakpoints();
+      return true;
+    }
+
+    // Clear console
+    if (lowerCmd === 'clear' || lowerCmd === 'cls') {
+      onClearOutput?.();
+      return true;
+    }
+
+    return false;
+  };
+
   const handleSendCommand = async () => {
     if (!gdbClient || !command.trim()) return;
 
@@ -96,6 +216,12 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, o
       // Echo the command to output
       if (onOutput) {
         onOutput(`> ${cmd}`);
+      }
+
+      // Check if this is a custom command first
+      if (await handleCustomCommand(cmd)) {
+        setCommand('');
+        return;
       }
 
       // Send command and get response
@@ -129,7 +255,7 @@ export default function GdbPanel({ gdbClient, output, targets, onAttachTarget, o
             // Empty response - GDB commands like 'i r' may return empty on RSP protocol
             onOutput('(empty response - command not supported in RSP mode)');
             if (cmd.startsWith('i ') || cmd.startsWith('info ')) {
-              onOutput('Tip: Use RSP commands instead: g (read all regs), p<N> (read reg N), m<addr>,<len> (read memory)');
+              onOutput('Tip: Use RSP commands instead, or try "help" for custom commands');
             }
             break;
           default:

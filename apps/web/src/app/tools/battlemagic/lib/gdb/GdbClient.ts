@@ -302,23 +302,38 @@ export class GdbClient {
   }
 
   /**
-   * Continue execution
+   * Continue execution (non-blocking)
    *
-   * Resumes target execution. Will return when target stops.
+   * Resumes target execution. The target will run until it hits a breakpoint,
+   * receives a signal, or is halted. The stop notification will be sent via
+   * the stopped callback when execution stops.
+   *
+   * NOTE: This method returns immediately after sending the continue command.
+   * It does NOT wait for the target to stop. Use the onStopped callback to
+   * be notified when execution stops.
    */
-  async continue(): Promise<StopReply> {
-    const cmd = BlackMagicCommands.buildContinue();
-    const response = await this.sendCommand(cmd);
-
-    if (response.type === 'signal') {
-      const stopReply: StopReply = {
-        signal: response.signal
-      };
-      this.notifyStopped(stopReply);
-      return stopReply;
+  async continue(): Promise<void> {
+    if (!this.transport.isConnected()) {
+      throw new Error('Not connected');
     }
 
-    throw new Error('Unexpected response to continue command');
+    // Wait for any pending commands to complete
+    while (this.currentCommand !== null || this.commandQueue.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    const cmd = BlackMagicCommands.buildContinue();
+    console.log('[GdbClient] Sending continue command (non-blocking)');
+
+    // Encode the command as a proper GDB packet ($cmd#checksum)
+    const packet = RspProtocol.encodePacket(cmd);
+
+    // Send the command directly without waiting for response
+    // The stop reply (T packet) will come asynchronously and be handled
+    // by handleReceivedData() which will call notifyStopped()
+    await this.transport.send(packet);
+
+    console.log('[GdbClient] Continue command sent, target is now running');
   }
 
   /**
@@ -362,14 +377,44 @@ export class GdbClient {
    * @returns Memory data as byte array
    */
   async readMemory(address: number | string, length: number): Promise<Uint8Array> {
-    const cmd = BlackMagicCommands.buildMemoryRead(address, length);
-    const response = await this.sendCommand(cmd);
+    // Black Magic Probe has GDB packet size limitations
+    // Read in chunks to avoid E02 errors
+    const CHUNK_SIZE = 256; // Safe size that works reliably
 
-    if (response.type !== 'data') {
-      throw new Error('Failed to read memory');
+    if (length <= CHUNK_SIZE) {
+      // Small read - do it in one go
+      const cmd = BlackMagicCommands.buildMemoryRead(address, length);
+      const response = await this.sendCommand(cmd);
+
+      if (response.type !== 'data') {
+        throw new Error('Failed to read memory');
+      }
+
+      return RspProtocol.parseMemoryData(response.data);
     }
 
-    return RspProtocol.parseMemoryData(response.data);
+    // Large read - split into chunks
+    const baseAddr = typeof address === 'number' ? address : parseInt(address, 16);
+    const result = new Uint8Array(length);
+    let offset = 0;
+
+    while (offset < length) {
+      const chunkSize = Math.min(CHUNK_SIZE, length - offset);
+      const chunkAddr = baseAddr + offset;
+
+      const cmd = BlackMagicCommands.buildMemoryRead(chunkAddr, chunkSize);
+      const response = await this.sendCommand(cmd);
+
+      if (response.type !== 'data') {
+        throw new Error(`Failed to read memory at 0x${chunkAddr.toString(16)}`);
+      }
+
+      const chunkData = RspProtocol.parseMemoryData(response.data);
+      result.set(chunkData, offset);
+      offset += chunkData.length;
+    }
+
+    return result;
   }
 
   /**
@@ -519,22 +564,35 @@ export class GdbClient {
   async insertBreakpoint(address: number | string, hardware = false): Promise<void> {
     const cmd = BlackMagicCommands.buildInsertBreakpoint(address, hardware);
 
-    if (this.config.debug) {
-      console.log('[insertBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
-    }
+    console.log('[insertBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
 
     const response = await this.sendCommand(cmd);
 
-    if (this.config.debug) {
-      console.log('[insertBreakpoint] Response:', response);
-    }
+    console.log('[insertBreakpoint] Response:', response);
 
     if (response.type === 'error') {
-      throw new Error(`Failed to insert breakpoint: ${response.code || 'unknown error'}`);
+      const errorCode = response.code || 'unknown';
+
+      // Provide specific error messages based on GDB error codes
+      if (errorCode === 'E01' || errorCode === '01') {
+        // E01 is often "no more resources" (e.g., out of hardware breakpoint units)
+        throw new Error(`E01 - No more hardware breakpoint units available (ARM Cortex-M limit: 4-6)`);
+      } else if (errorCode === 'E02' || errorCode === '02') {
+        throw new Error(`E02 - Invalid breakpoint command format`);
+      } else {
+        throw new Error(`Failed to insert breakpoint: ${errorCode}`);
+      }
     }
 
-    // Accept both 'ok' and 'empty' as success (some GDB servers return empty for success)
-    if (response.type !== 'ok' && response.type !== 'empty') {
+    // Check for unsupported command (empty response might mean not supported)
+    if (response.type === 'empty') {
+      console.warn('[insertBreakpoint] Got empty response - command may not be supported');
+      console.warn('[insertBreakpoint] This usually means the breakpoint was NOT set');
+      throw new Error('Breakpoint command returned empty response (likely not supported by target)');
+    }
+
+    // Only accept 'ok' as true success
+    if (response.type !== 'ok') {
       throw new Error(`Unexpected response type: ${response.type}`);
     }
   }
@@ -547,12 +605,28 @@ export class GdbClient {
    */
   async removeBreakpoint(address: number | string, hardware = false): Promise<void> {
     const cmd = BlackMagicCommands.buildRemoveBreakpoint(address, hardware);
+
+    if (this.config.debug) {
+      console.log('[removeBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
+    }
+
     const response = await this.sendCommand(cmd);
 
-    // Accept both 'ok' and 'empty' as success
-    if (response.type !== 'ok' && response.type !== 'empty') {
-      throw new Error('Failed to remove breakpoint');
+    if (this.config.debug) {
+      console.log('[removeBreakpoint] Response:', response);
     }
+
+    // Accept both 'ok' and 'empty' as success
+    if (response.type === 'ok' || response.type === 'empty') {
+      return;
+    }
+
+    // Provide detailed error message
+    if (response.type === 'error') {
+      throw new Error(`Failed to remove breakpoint: ${response.code || 'unknown error'}`);
+    }
+
+    throw new Error(`Unexpected response type: ${response.type}`);
   }
 
   /**
@@ -585,6 +659,63 @@ export class GdbClient {
     }
 
     return '';
+  }
+
+  /**
+   * Get target information (for MCU detection)
+   */
+  async getTargetInfo(): Promise<string> {
+    try {
+      // Try multiple methods to get target info
+      const methods = [
+        async () => await this.sendMonitorCommand('version'),
+        async () => {
+          const response = await this.sendCommand('qAttached');
+          return typeof response === 'string' ? response : '';
+        },
+        async () => {
+          const response = await this.sendCommand('qSupported');
+          return response.type === 'data' ? response.data : '';
+        }
+      ];
+
+      for (const method of methods) {
+        try {
+          const info = await method();
+          if (info) return info;
+        } catch {
+          continue;
+        }
+      }
+
+      return '';
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Query memory regions from target
+   */
+  async queryMemoryRegions(): Promise<string> {
+    try {
+      // Try 'info mem' via monitor command
+      return await this.sendMonitorCommand('info mem');
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Test if memory address is readable
+   */
+  async testMemoryAccess(address: number, length = 4): Promise<boolean> {
+    try {
+      const data = await this.readMemory(address, length);
+      return data && data.length > 0;
+    } catch {
+      return false;
+    }
   }
 
   /**

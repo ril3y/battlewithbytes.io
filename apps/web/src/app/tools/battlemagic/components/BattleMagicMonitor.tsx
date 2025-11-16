@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { GdbClient, GdbClientCallbacks } from '../lib/gdb/GdbClient';
 import { ConnectionState, Target, StopReply, BmpVersion } from '../lib/gdb/types';
 import { XrefProvider } from '../lib/context/XrefContext';
+import { useAnalysisOptional } from '../lib/context/AnalysisContext';
 import MenuBar from './MenuBar';
 import Toolbar from './Toolbar';
 import StatusBar from './StatusBar';
@@ -55,6 +56,9 @@ function ResizableDivider({ onMouseDown }: { onMouseDown: () => void }) {
 export default function BattleMagicMonitor() {
   const [isClient, setIsClient] = useState(false);
   const [gdbClient, setGdbClient] = useState<GdbClient | null>(null);
+
+  // Analysis context for database operations
+  const analysisContext = useAnalysisOptional();
   const [gdbState, setGdbState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const [uartConnected, setUartConnected] = useState(false);
   const [targets, setTargets] = useState<Target[]>([]);
@@ -75,6 +79,7 @@ export default function BattleMagicMonitor() {
   const [selectedMemoryMapCpu, setSelectedMemoryMapCpu] = useState<string>('generic-cortex-m4');
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
   const [selectedDisassemblyAddress] = useState<number | null>(null);
+  const [jumpToPCTrigger, setJumpToPCTrigger] = useState<number>(0); // Increment to trigger jump to PC
 
   // Convert breakpoints to Set<number> for DisassemblyView
   const breakpointAddresses = new Set<number>(
@@ -116,6 +121,7 @@ export default function BattleMagicMonitor() {
   // Auto-analysis prompt state
   const [showAnalysisPrompt, setShowAnalysisPrompt] = useState(false);
   const [detectedArchInfo, setDetectedArchInfo] = useState<ArchitectureInfo | null>(null);
+  const [shouldAutoStartAnalysis, setShouldAutoStartAnalysis] = useState(false);
 
   // Ensure we're on the client side before rendering serial-dependent components
   useEffect(() => {
@@ -181,11 +187,9 @@ export default function BattleMagicMonitor() {
         addGdbOutput(`[State] ${state}`);
       },
       onStopped: async (reply: StopReply) => {
-        addGdbOutput(`[Target stopped] Signal: ${reply.signal}`);
-
         // Auto-refresh registers and stack after target stops (e.g., after stepping)
         try {
-          // Refresh registers
+          // Refresh registers first to get PC
           const regs = await client.getFormattedRegisters();
           const regValues: RegisterValue[] = Array.from(regs.entries()).map(([name, value]) => ({
             name,
@@ -198,6 +202,55 @@ export default function BattleMagicMonitor() {
           const pc = regs.get('pc');
           if (pc !== undefined) {
             setProgramCounter(pc);
+          }
+
+          // Check if this was a breakpoint hit
+          // Signal 5 = SIGTRAP (breakpoint or single-step)
+          if (reply.signal === 5 && pc !== undefined) {
+            // Check if PC matches a breakpoint
+            // Normalize addresses for comparison (remove 0x prefix, uppercase)
+            const normalizeAddress = (addr: string | number): string => {
+              const addrStr = typeof addr === 'number' ? addr.toString(16) : addr;
+              return addrStr.replace(/^0x/i, '').toUpperCase();
+            };
+
+            const pcHex = pc.toString(16).toUpperCase();
+            const pcNormalized = normalizeAddress(pc);
+
+            // Debug logging for breakpoint detection
+            console.log('[Breakpoint Detection] PC:', `0x${pcHex}`, 'Normalized:', pcNormalized);
+            console.log('[Breakpoint Detection] Breakpoints in state:', breakpoints.map(bp => ({
+              address: bp.address,
+              normalized: normalizeAddress(bp.address),
+              enabled: bp.enabled,
+              type: bp.type
+            })));
+
+            const hitBreakpoint = breakpoints.find(bp =>
+              bp.enabled && normalizeAddress(bp.address) === pcNormalized
+            );
+
+            if (hitBreakpoint) {
+              // Find the breakpoint number (1-based index)
+              const bpIndex = breakpoints.indexOf(hitBreakpoint);
+
+              // Log to GDB output console (in the UI)
+              addGdbOutput(`[Target stopped] Signal: ${reply.signal}`);
+              addGdbOutput(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+              addGdbOutput(`🎯 BREAKPOINT #${bpIndex + 1} HIT!`);
+              addGdbOutput(`   Address: 0x${pcHex}`);
+              addGdbOutput(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            } else {
+              // SIGTRAP but not at a breakpoint (show PC to help debug)
+              addGdbOutput(`[Target stopped] Signal: ${reply.signal} (PC: 0x${pcHex})`);
+              if (breakpoints.length > 0) {
+                addGdbOutput(`[Debug] Active breakpoints: ${breakpoints.filter(bp => bp.enabled).map(bp => bp.address).join(', ')}`);
+              }
+            }
+          } else {
+            // Other signal (or no PC available)
+            const pcInfo = pc !== undefined ? ` (PC: 0x${pc.toString(16).toUpperCase()})` : '';
+            addGdbOutput(`[Target stopped] Signal: ${reply.signal}${pcInfo}`);
           }
 
           // Refresh stack
@@ -499,27 +552,6 @@ export default function BattleMagicMonitor() {
         addGdbOutput(`  ${t.id}: ${t.description}`);
       });
       setLastUpdate(new Date());
-
-      // Detect architecture and prompt for analysis if supported
-      if (result.targets.length > 0) {
-        const target = result.targets[0];
-        try {
-          const archInfo = await detectArchitecture(target.description);
-          setDetectedArchInfo(archInfo);
-
-          addGdbOutput(`[Architecture: ${archInfo.architecture}]`);
-          addGdbOutput(`[Manufacturer: ${archInfo.manufacturer}]`);
-          addGdbOutput(`[Analysis Support: ${archInfo.supported ? '✅ Supported' : '❌ Not Supported'}]`);
-          addGdbOutput(`[Match Confidence: ${(archInfo.confidence * 100).toFixed(1)}%]`);
-
-          // If architecture is supported, prompt user for auto-analysis
-          if (archInfo.supported) {
-            setShowAnalysisPrompt(true);
-          }
-        } catch (error) {
-          addGdbOutput(`[Architecture detection failed: ${error}]`);
-        }
-      }
     } catch (error) {
       addGdbOutput(`[Scan failed: ${error}]`);
     }
@@ -667,6 +699,13 @@ export default function BattleMagicMonitor() {
       return;
     }
 
+    // Warn if target is running (software breakpoints require target to be halted)
+    if (executionState === 'running') {
+      addGdbOutput('[Warning] Target is running - halt it first before setting breakpoints');
+      addGdbOutput('[Tip] Click the Pause (⏸) button to halt the target');
+      return;
+    }
+
     const addressStr = `0x${address.toString(16).toUpperCase()}`;
     const existingBp = breakpoints.find(bp => {
       const bpAddr = bp.address.startsWith('0x') || bp.address.startsWith('0X')
@@ -677,28 +716,104 @@ export default function BattleMagicMonitor() {
 
     try {
       if (existingBp) {
-        // Remove breakpoint
+        // Remove breakpoint from GDB first
         await gdbClient.removeBreakpoint(address);
+        // Only remove from UI state if GDB command succeeded
         setBreakpoints(prev => prev.filter(bp => bp.id !== existingBp.id));
         addGdbOutput(`[Breakpoint removed at ${addressStr}]`);
       } else {
-        // Add breakpoint
-        await gdbClient.insertBreakpoint(address);
+        // Insert breakpoint in GDB first
+        // Use hardware breakpoints for ARM Cortex-M (software breakpoints don't work with Flash)
+
+        // Warn if approaching hardware breakpoint limit (ARM Cortex-M typically has 4-6 HW breakpoints)
+        const currentHwBpCount = breakpoints.filter(bp => bp.type === 'hardware').length;
+        if (currentHwBpCount >= 4) {
+          addGdbOutput(`[⚠️ Warning] Already have ${currentHwBpCount} hardware breakpoints set`);
+          addGdbOutput(`[⚠️ Warning] ARM Cortex-M typically supports 4-6 hardware breakpoints max`);
+        }
+
+        addGdbOutput(`[Debug] Attempting to set hardware breakpoint at ${addressStr}...`);
+        addGdbOutput(`[Debug] Current hardware breakpoints: ${currentHwBpCount}/~6`);
+
+        try {
+          await gdbClient.insertBreakpoint(address, true); // true = hardware breakpoint
+          addGdbOutput(`[Debug] GDB insertBreakpoint command completed`);
+        } catch (insertError) {
+          // Re-throw to be caught by outer catch
+          addGdbOutput(`[Debug] GDB insertBreakpoint threw error: ${insertError}`);
+          throw insertError;
+        }
+        // Only add to UI state if GDB command succeeded
         const newBreakpoint: Breakpoint = {
           id: `bp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           address: addressStr,
-          type: 'software',
+          type: 'hardware',
           enabled: true,
           description: `Address: ${addressStr}`,
           hitCount: 0
         };
         setBreakpoints(prev => [...prev, newBreakpoint]);
-        addGdbOutput(`[Breakpoint set at ${addressStr}]`);
+        addGdbOutput(`[✓ Breakpoint set at ${addressStr}] (HW #${currentHwBpCount + 1})`);
+        setHasUnsavedChanges(true);
       }
     } catch (error) {
-      addGdbOutput(`[Failed to ${existingBp ? 'remove' : 'set'} breakpoint: ${error}]`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      // Provide more specific error messages
+      if (errorMsg.includes('empty response')) {
+        addGdbOutput(`[❌ Failed to ${existingBp ? 'remove' : 'set'} breakpoint]`);
+        addGdbOutput(`   Hardware breakpoint command not supported by target`);
+      } else if (errorMsg.includes('E01') || errorMsg.toLowerCase().includes('no more')) {
+        addGdbOutput(`[❌ Failed to set breakpoint - out of hardware breakpoint units]`);
+        addGdbOutput(`   ARM Cortex-M has limited hardware breakpoints (typically 4-6)`);
+        addGdbOutput(`   Current breakpoints set: ${breakpoints.length}`);
+        addGdbOutput(`   Tip: Remove unused breakpoints to free up hardware units`);
+      } else {
+        addGdbOutput(`[❌ Failed to ${existingBp ? 'remove' : 'set'} breakpoint: ${errorMsg}]`);
+      }
+      // Don't modify state if GDB command failed
     }
-  }, [gdbClient, gdbState, breakpoints, addGdbOutput]);
+  }, [gdbClient, gdbState, breakpoints, addGdbOutput, executionState]);
+
+  // Clear all breakpoints from both GDB and UI state
+  const handleClearAllBreakpoints = useCallback(async () => {
+    if (!gdbClient) {
+      // No GDB client, just clear UI state
+      setBreakpoints([]);
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    const totalCount = breakpoints.length;
+    let removedCount = 0;
+    let failedCount = 0;
+
+    addGdbOutput(`[Breakpoint] Clearing ${totalCount} breakpoint(s)...`);
+
+    // Try to remove each breakpoint from GDB
+    for (const bp of breakpoints) {
+      try {
+        const address = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+          ? parseInt(bp.address, 16)
+          : parseInt(bp.address, 10);
+
+        const isHardware = bp.type === 'hardware';
+        await gdbClient.removeBreakpoint(address, isHardware);
+        removedCount++;
+      } catch {
+        // Breakpoint might not actually exist in GDB (ghost breakpoint)
+        failedCount++;
+      }
+    }
+
+    // Clear UI state
+    setBreakpoints([]);
+    setHasUnsavedChanges(true);
+
+    // Show summary
+    addGdbOutput(`[Breakpoint] Cleared: ${removedCount} removed from GDB, ${failedCount} were ghost breakpoints`);
+    addGdbOutput(`[Breakpoint] UI state cleared: ${totalCount} breakpoint(s)`);
+  }, [gdbClient, breakpoints, addGdbOutput]);
 
   // Analysis handler
   const handleAnalysisComplete = useCallback((results: AnalysisResults) => {
@@ -784,6 +899,31 @@ export default function BattleMagicMonitor() {
     setHasUnsavedChanges(true);
     addGdbOutput(`[Project renamed: ${name}]`);
   }, [addGdbOutput]);
+
+  // Database operation handlers
+  const handleExportDatabase = useCallback(async () => {
+    if (!analysisContext) return;
+
+    try {
+      addGdbOutput('[Exporting analysis database...]');
+      await analysisContext.exportDatabase();
+      addGdbOutput('[Database exported successfully]');
+    } catch (error) {
+      addGdbOutput(`[Database export failed: ${error}]`);
+    }
+  }, [analysisContext, addGdbOutput]);
+
+  const handleImportDatabase = useCallback(async (file: File) => {
+    if (!analysisContext) return;
+
+    try {
+      addGdbOutput(`[Importing analysis database: ${file.name}]`);
+      await analysisContext.importDatabase(file);
+      addGdbOutput('[Database imported successfully]');
+    } catch (error) {
+      addGdbOutput(`[Database import failed: ${error}]`);
+    }
+  }, [analysisContext, addGdbOutput]);
 
   // Auto-refresh registers when attached to target
   useEffect(() => {
@@ -910,6 +1050,8 @@ export default function BattleMagicMonitor() {
           isAttached={targetAttached}
           visiblePanels={visiblePanels}
           onPanelToggle={handlePanelToggle}
+          onExportDatabase={handleExportDatabase}
+          onImportDatabase={handleImportDatabase}
         />
       )}
 
@@ -962,6 +1104,7 @@ export default function BattleMagicMonitor() {
                       stack: visiblePanels.stack,
                       memory: visiblePanels.memory
                     }}
+                    jumpToPCTrigger={jumpToPCTrigger}
                   />
                 )}
                 {activeRightPanel === 'target' && (
@@ -1042,8 +1185,24 @@ export default function BattleMagicMonitor() {
                     }}
                   />
                 )}
-                {activeRightPanel === 'firmware-dump' && gdbClient && (
-                  <FirmwareDumpWorkflow gdbClient={gdbClient} />
+                {/* Firmware dump workflow - rendered in background for auto-analysis */}
+                {gdbClient && (
+                  <div style={{ display: activeRightPanel === 'firmware-dump' ? 'block' : 'none' }}>
+                    <FirmwareDumpWorkflow
+                      gdbClient={gdbClient}
+                      autoStart={shouldAutoStartAnalysis}
+                      onOutput={addGdbOutput}
+                      detectedArchInfo={detectedArchInfo || undefined}
+                      onAnalysisComplete={() => {
+                        // Switch to debugger view when analysis completes
+                        // This will show the disassembly and auto-scroll to PC
+                        setActiveRightPanel('debugger');
+                        addGdbOutput('[Analysis] 🎯 Switching to debugger view and jumping to PC...');
+                        // Trigger jump to PC by incrementing the trigger
+                        setJumpToPCTrigger(prev => prev + 1);
+                      }}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -1081,6 +1240,26 @@ export default function BattleMagicMonitor() {
                             addGdbOutput('[Target halted]');
                             setExecutionState('stopped');
 
+                            // Detect architecture and prompt for analysis if supported
+                            if (target) {
+                              try {
+                                const archInfo = await detectArchitecture(target.description);
+                                setDetectedArchInfo(archInfo);
+
+                                addGdbOutput(`[Architecture: ${archInfo.architecture}]`);
+                                addGdbOutput(`[Manufacturer: ${archInfo.manufacturer}]`);
+                                addGdbOutput(`[Analysis Support: ${archInfo.supported ? '✅ Supported' : '❌ Not Supported'}]`);
+                                addGdbOutput(`[Match Confidence: ${(archInfo.confidence * 100).toFixed(1)}%]`);
+
+                                // If architecture is supported, prompt user for auto-analysis
+                                if (archInfo.supported) {
+                                  setShowAnalysisPrompt(true);
+                                }
+                              } catch (error) {
+                                addGdbOutput(`[Architecture detection failed: ${error}]`);
+                              }
+                            }
+
                             // Auto-switch to debugger view when target attached
                             setActiveRightPanel('debugger');
                           } catch (error) {
@@ -1090,6 +1269,10 @@ export default function BattleMagicMonitor() {
                         onScanSwd={handleScanTargets}
                         onClearOutput={clearGdbOutput}
                         onOutput={addGdbOutput}
+                        onClearAllBreakpoints={handleClearAllBreakpoints}
+                        breakpoints={breakpoints}
+                        registers={registers}
+                        programCounter={programCounter}
                       />
                     </div>
                   </div>
@@ -1136,9 +1319,10 @@ export default function BattleMagicMonitor() {
               <button
                 onClick={() => {
                   setShowAnalysisPrompt(false);
-                  setActiveRightPanel('firmware-dump');
-                  addGdbOutput('[Auto-analysis starting...]');
-                  addGdbOutput('[Opening firmware dump workflow - analysis will begin automatically]');
+                  setShouldAutoStartAnalysis(true);
+                  // Don't switch panels - keep user on debugger view
+                  addGdbOutput('[Auto-analysis] Starting firmware dump & analysis in background...');
+                  addGdbOutput('[Auto-analysis] Check console output for progress');
                 }}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded font-mono transition-colors"
               >

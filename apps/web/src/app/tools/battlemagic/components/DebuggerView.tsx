@@ -24,6 +24,14 @@ interface DebuggerViewProps {
   onRefreshStack: () => Promise<void>;
   onReadMemory: (address: number, length: number) => Promise<Uint8Array | null>;
   onOutput: (text: string) => void;
+  breakpoints?: Set<number>;
+  onToggleBreakpoint?: (address: number) => Promise<void>;
+  visiblePanels?: {
+    registers: boolean;
+    stack: boolean;
+    memory: boolean;
+  };
+  jumpToPCTrigger?: number; // Increment this to trigger a jump to PC
 }
 
 type MaximizedPanel = 'disasm' | 'registers' | 'stack' | 'memory' | null;
@@ -37,7 +45,11 @@ export default function DebuggerView({
   onRefreshRegisters,
   onRefreshStack,
   onReadMemory,
-  onOutput
+  onOutput,
+  breakpoints,
+  onToggleBreakpoint,
+  visiblePanels = { registers: true, stack: true, memory: true },
+  jumpToPCTrigger
 }: DebuggerViewProps) {
   const [maximizedPanel, setMaximizedPanel] = useState<MaximizedPanel>(null);
 
@@ -59,6 +71,13 @@ export default function DebuggerView({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-read memory around PC when it changes
+  useEffect(() => {
+    if (programCounter !== undefined) {
+      setMemoryJumpAddress(programCounter);
+    }
+  }, [programCounter]);
+
   const toggleMaximize = useCallback((panel: MaximizedPanel) => {
     setMaximizedPanel(prev => prev === panel ? null : panel);
   }, []);
@@ -73,6 +92,19 @@ export default function DebuggerView({
     console.log('[DebuggerView] Jump request to:', address.toString(16));
     setDisassemblyJumpAddress(address);
   }, []);
+
+  // Clear disassembly jump address after jump is complete
+  const handleDisassemblyJumpComplete = useCallback(() => {
+    setDisassemblyJumpAddress(undefined);
+  }, []);
+
+  // Jump to PC when trigger changes (e.g., after analysis completes)
+  useEffect(() => {
+    if (jumpToPCTrigger !== undefined && jumpToPCTrigger > 0 && programCounter !== undefined) {
+      console.log('[DebuggerView] Jump to PC triggered:', programCounter.toString(16));
+      setDisassemblyJumpAddress(programCounter);
+    }
+  }, [jumpToPCTrigger, programCounter]);
 
   // Mouse handlers for horizontal divider (top/bottom split)
   const handleHorizontalMouseDown = useCallback(() => {
@@ -240,9 +272,12 @@ export default function DebuggerView({
               onOutput={onOutput}
               onAddressClick={handleMemoryJump}
               jumpToAddress={disassemblyJumpAddress}
+              onJumpComplete={handleDisassemblyJumpComplete}
+              breakpoints={breakpoints}
+              onToggleBreakpoint={onToggleBreakpoint}
             />
           )}
-          {maximizedPanel === 'registers' && (
+          {maximizedPanel === 'registers' && visiblePanels.registers && (
             <RegistersPanel
               registers={registers}
               onRefresh={onRefreshRegisters}
@@ -250,19 +285,20 @@ export default function DebuggerView({
               onAddressClick={handleDisassemblyJump}
             />
           )}
-          {maximizedPanel === 'stack' && (
+          {maximizedPanel === 'stack' && visiblePanels.stack && (
             <StackPanel
               frames={stackFrames}
               onRefresh={onRefreshStack}
               isConnected={isConnected}
             />
           )}
-          {maximizedPanel === 'memory' && (
+          {maximizedPanel === 'memory' && visiblePanels.memory && (
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
               gdbClient={gdbClient}
               onOutput={onOutput}
+              autoReadAddress={memoryJumpAddress}
             />
           )}
         </div>
@@ -276,7 +312,7 @@ export default function DebuggerView({
       {/* Top Row: Disassembly | Registers */}
       <div className="flex" style={{ height: `${horizontalSplit}%` }}>
         {/* Disassembly Panel */}
-        <div className="flex flex-col" style={{ width: `${topRowVerticalSplit}%` }}>
+        <div className="flex flex-col" style={{ width: visiblePanels.registers ? `${topRowVerticalSplit}%` : '100%' }}>
           <PanelHeader title="DISASSEMBLY" panelKey="disasm" />
           <div className="flex-1 overflow-hidden">
             <DisassemblyView
@@ -288,60 +324,76 @@ export default function DebuggerView({
               onOutput={onOutput}
               onAddressClick={handleMemoryJump}
               jumpToAddress={disassemblyJumpAddress}
+              onJumpComplete={handleDisassemblyJumpComplete}
+              breakpoints={breakpoints}
+              onToggleBreakpoint={onToggleBreakpoint}
             />
           </div>
         </div>
 
-        {/* Vertical Divider */}
-        <VerticalDivider onMouseDown={handleTopVerticalMouseDown} />
+        {/* Vertical Divider - only show if registers panel is visible */}
+        {visiblePanels.registers && <VerticalDivider onMouseDown={handleTopVerticalMouseDown} />}
 
         {/* Registers Panel */}
-        <div className="flex flex-col" style={{ width: `${100 - topRowVerticalSplit}%` }}>
-          <PanelHeader title="REGISTERS" panelKey="registers" onRefresh={onRefreshRegisters} />
-          <div className="flex-1 overflow-hidden">
-            <RegistersPanel
-              registers={registers}
-              onRefresh={onRefreshRegisters}
-              isConnected={isConnected}
-              onAddressClick={handleDisassemblyJump}
-            />
+        {visiblePanels.registers && (
+          <div className="flex flex-col" style={{ width: `${100 - topRowVerticalSplit}%` }}>
+            <PanelHeader title="REGISTERS" panelKey="registers" onRefresh={onRefreshRegisters} />
+            <div className="flex-1 overflow-hidden">
+              <RegistersPanel
+                registers={registers}
+                onRefresh={onRefreshRegisters}
+                isConnected={isConnected}
+                onAddressClick={handleDisassemblyJump}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Horizontal Divider */}
-      <HorizontalDivider onMouseDown={handleHorizontalMouseDown} />
+      {/* Horizontal Divider - only show if bottom row has any visible panels */}
+      {(visiblePanels.stack || visiblePanels.memory) && (
+        <HorizontalDivider onMouseDown={handleHorizontalMouseDown} />
+      )}
 
       {/* Bottom Row: Stack | Memory */}
-      <div className="flex" style={{ height: `${100 - horizontalSplit}%` }}>
-        {/* Stack Panel */}
-        <div className="flex flex-col" style={{ width: `${bottomRowVerticalSplit}%` }}>
-          <PanelHeader title="STACK" panelKey="stack" onRefresh={onRefreshStack} />
-          <div className="flex-1 overflow-hidden">
-            <StackPanel
-              frames={stackFrames}
-              onRefresh={onRefreshStack}
-              isConnected={isConnected}
-            />
-          </div>
-        </div>
+      {(visiblePanels.stack || visiblePanels.memory) && (
+        <div className="flex" style={{ height: `${100 - horizontalSplit}%` }}>
+          {/* Stack Panel */}
+          {visiblePanels.stack && (
+            <div className="flex flex-col" style={{ width: visiblePanels.memory ? `${bottomRowVerticalSplit}%` : '100%' }}>
+              <PanelHeader title="STACK" panelKey="stack" onRefresh={onRefreshStack} />
+              <div className="flex-1 overflow-hidden">
+                <StackPanel
+                  frames={stackFrames}
+                  onRefresh={onRefreshStack}
+                  isConnected={isConnected}
+                />
+              </div>
+            </div>
+          )}
 
-        {/* Vertical Divider */}
-        <VerticalDivider onMouseDown={handleBottomVerticalMouseDown} />
+          {/* Vertical Divider - only show if both stack and memory are visible */}
+          {visiblePanels.stack && visiblePanels.memory && (
+            <VerticalDivider onMouseDown={handleBottomVerticalMouseDown} />
+          )}
 
-        {/* Memory Panel */}
-        <div className="flex flex-col" style={{ width: `${100 - bottomRowVerticalSplit}%` }}>
-          <PanelHeader title="MEMORY" panelKey="memory" />
-          <div className="flex-1 overflow-hidden">
-            <MemoryPanel
-              onReadMemory={onReadMemory}
-              isConnected={isConnected}
-              gdbClient={gdbClient}
-              onOutput={onOutput}
-            />
-          </div>
+          {/* Memory Panel */}
+          {visiblePanels.memory && (
+            <div className="flex flex-col" style={{ width: visiblePanels.stack ? `${100 - bottomRowVerticalSplit}%` : '100%' }}>
+              <PanelHeader title="MEMORY" panelKey="memory" />
+              <div className="flex-1 overflow-hidden">
+                <MemoryPanel
+                  onReadMemory={onReadMemory}
+                  isConnected={isConnected}
+                  gdbClient={gdbClient}
+                  onOutput={onOutput}
+                  autoReadAddress={memoryJumpAddress}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
