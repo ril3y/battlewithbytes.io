@@ -1,0 +1,23 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# WASM build output
+/pkg/
+*.wasm
+*_bg.js
+*_bg.wasm.d.ts
+
+# Node modules (if using npm link)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

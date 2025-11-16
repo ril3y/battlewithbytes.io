@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BattleMagic Analyzer Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 {
+            color: #4fc3f7;
+        }
+        button {
+            background-color: #4fc3f7;
+            color: #1e1e1e;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #29b6f6;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        .stats {
+            background-color: #252526;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .stats span {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 5px 10px;
+            background-color: #3c3c3c;
+            border-radius: 3px;
+        }
+        .xref-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #252526;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .xref-item {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #2d2d30;
+            border-left: 3px solid #4fc3f7;
+            font-family: 'Courier New', monospace;
+        }
+        .xref-type {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .xref-call { background-color: #3b82f6; }
+        .xref-branch { background-color: #8b5cf6; }
+        .xref-conditionalbranch { background-color: #a855f7; }
+        .xref-dataread { background-color: #10b981; }
+        .xref-datawrite { background-color: #ef4444; }
+        pre {
+            background-color: #252526;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .error {
+            color: #f48771;
+            background-color: #3c2121;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BattleMagic Binary Analyzer Demo</h1>
+    <p>Demonstration of Rust WASM binary analysis module for ARM cross-references.</p>
+
+    <button id="analyzeBtn" onclick="runAnalysis()">Analyze Sample Binary</button>
+    <button id="queryBtn" onclick="queryXrefs()" disabled>Query Xrefs to 0x8100</button>
+
+    <div id="stats" class="stats" style="display: none;"></div>
+    <div id="results" class="xref-list" style="display: none;"></div>
+    <div id="error" class="error" style="display: none;"></div>
+
+    <h2>Sample ARM Instructions</h2>
+    <pre id="sampleCode"></pre>
+
+    <script type="module">
+        import init, { BinaryAnalyzer } from './pkg/battlemagic_analyzer.js';
+
+        let analyzer = null;
+        let analysisResults = null;
+
+        // Sample ARM disassembly data
+        const sampleInstructions = [
+            { address: 0x8000, bytes: [0x00, 0x48, 0x00, 0x47], mnemonic: 'bl', operands: '#0x8100' },
+            { address: 0x8004, bytes: [0x01, 0x20], mnemonic: 'mov', operands: 'r0, #1' },
+            { address: 0x8008, bytes: [0x00, 0x21], mnemonic: 'mov', operands: 'r1, #0' },
+            { address: 0x800c, bytes: [0x08, 0x44], mnemonic: 'add', operands: 'r0, r1' },
+            { address: 0x8010, bytes: [0xfe, 0xe7], mnemonic: 'b', operands: '#0x8010' },
+            { address: 0x8014, bytes: [0x00, 0x48, 0x00, 0x47], mnemonic: 'bl', operands: '#0x8100' },
+            { address: 0x8018, bytes: [0x70, 0x47], mnemonic: 'bx', operands: 'lr' },
+            { address: 0x8100, bytes: [0x01, 0xb4], mnemonic: 'push', operands: '{r0}' },
+            { address: 0x8104, bytes: [0x00, 0x20], mnemonic: 'mov', operands: 'r0, #0' },
+            { address: 0x8108, bytes: [0x01, 0xbc], mnemonic: 'pop', operands: '{r0}' },
+            { address: 0x810c, bytes: [0x70, 0x47], mnemonic: 'bx', operands: 'lr' },
+            { address: 0x8200, bytes: [0x00, 0x48, 0x00, 0x47], mnemonic: 'bl', operands: '#0x8100' },
+            { address: 0x8204, bytes: [0x01, 0x28], mnemonic: 'cmp', operands: 'r0, #1' },
+            { address: 0x8208, bytes: [0x00, 0xd0], mnemonic: 'b.eq', operands: '#0x8220' },
+            { address: 0x820c, bytes: [0x70, 0x47], mnemonic: 'bx', operands: 'lr' },
+            { address: 0x8220, bytes: [0x00, 0x48, 0x00, 0x47], mnemonic: 'bl', operands: '#0x8100' },
+            { address: 0x8224, bytes: [0x70, 0x47], mnemonic: 'bx', operands: 'lr' },
+        ];
+
+        // Display sample code
+        document.getElementById('sampleCode').textContent = sampleInstructions
+            .map(i => `0x${i.address.toString(16).padStart(4, '0')}: ${i.mnemonic.padEnd(8)} ${i.operands}`)
+            .join('\n');
+
+        // Initialize WASM module
+        async function initWasm() {
+            try {
+                await init();
+                analyzer = new BinaryAnalyzer(0x8000);
+                console.log('WASM module initialized successfully');
+                document.getElementById('analyzeBtn').disabled = false;
+            } catch (err) {
+                showError('Failed to initialize WASM: ' + err.message);
+            }
+        }
+
+        // Run analysis
+        window.runAnalysis = function() {
+            try {
+                const startTime = performance.now();
+                analysisResults = analyzer.analyze_from_disasm(sampleInstructions);
+                const endTime = performance.now();
+
+                console.log('Analysis results:', analysisResults);
+
+                // Show stats
+                const stats = document.getElementById('stats');
+                stats.style.display = 'block';
+                stats.innerHTML = `
+                    <span>Total Instructions: ${analysisResults.total_instructions}</span>
+                    <span>Cross-references: ${analysisResults.xrefs.length}</span>
+                    <span>Unique Targets: ${analysisResults.unique_targets}</span>
+                    <span>Analysis Time: ${analysisResults.analysis_time_ms}ms</span>
+                    <span>JS Overhead: ${(endTime - startTime - analysisResults.analysis_time_ms).toFixed(2)}ms</span>
+                `;
+
+                // Show xrefs
+                const results = document.getElementById('results');
+                results.style.display = 'block';
+                results.innerHTML = '<h3>All Cross-references</h3>' +
+                    analysisResults.xrefs.map(xref => `
+                        <div class="xref-item">
+                            <span class="xref-type xref-${xref.xref_type.toLowerCase()}">${xref.xref_type}</span>
+                            0x${xref.from_addr.toString(16).padStart(4, '0')} → 0x${xref.to_addr.toString(16).padStart(4, '0')}
+                            <code>${xref.instruction} ${xref.operands}</code>
+                        </div>
+                    `).join('');
+
+                document.getElementById('queryBtn').disabled = false;
+            } catch (err) {
+                showError('Analysis failed: ' + err.message);
+            }
+        };
+
+        // Query specific xrefs
+        window.queryXrefs = function() {
+            try {
+                const target = 0x8100;
+                const xrefs = analyzer.get_xrefs_to(target);
+
+                console.log(`Xrefs to 0x${target.toString(16)}:`, xrefs);
+
+                const results = document.getElementById('results');
+                results.innerHTML = `
+                    <h3>Cross-references TO 0x${target.toString(16)} (${xrefs.count} found)</h3>
+                    ${xrefs.xrefs.map(xref => `
+                        <div class="xref-item">
+                            <span class="xref-type xref-${xref.xref_type.toLowerCase()}">${xref.xref_type}</span>
+                            0x${xref.from_addr.toString(16).padStart(4, '0')} → 0x${xref.to_addr.toString(16).padStart(4, '0')}
+                            <code>${xref.instruction} ${xref.operands}</code>
+                        </div>
+                    `).join('')}
+                `;
+            } catch (err) {
+                showError('Query failed: ' + err.message);
+            }
+        };
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.style.display = 'block';
+            error.textContent = message;
+        }
+
+        // Initialize on load
+        initWasm();
+    </script>
+</body>
+</html>

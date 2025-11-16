@@ -1,0 +1,57 @@
+# ARM switch statement (jump table pattern)
+# Tests multiple branches to same targets
+
+# Switch implementation
+0x1000 push {lr}
+0x1004 cmp r0, #4
+0x1008 b.hi #0x1100
+
+# Load jump table
+0x100c ldr r1, [pc, #0x50]
+
+# Case 0
+0x1020 mov r0, #100
+0x1024 bl #0x2000
+0x1028 b #0x1200
+
+# Case 1
+0x1030 mov r0, #200
+0x1034 bl #0x2000
+0x1038 b #0x1200
+
+# Case 2
+0x1040 mov r0, #300
+0x1044 bl #0x2100
+0x1048 b #0x1200
+
+# Case 3
+0x1050 mov r0, #400
+0x1054 bl #0x2100
+0x1058 b #0x1200
+
+# Case 4
+0x1060 mov r0, #500
+0x1064 bl #0x2200
+0x1068 b #0x1200
+
+# Default case
+0x1100 mov r0, #-1
+0x1104 b #0x1200
+
+# Exit point (common exit for all cases)
+0x1200 pop {pc}
+
+# Helper function 1
+0x2000 ldr r1, [pc, #0x10]
+0x2004 add r0, r1
+0x2008 bx lr
+
+# Helper function 2
+0x2100 ldr r1, [pc, #0x10]
+0x2104 mul r0, r1
+0x2108 bx lr
+
+# Helper function 3
+0x2200 ldr r1, [pc, #0x10]
+0x2204 sub r0, r1
+0x2208 bx lr

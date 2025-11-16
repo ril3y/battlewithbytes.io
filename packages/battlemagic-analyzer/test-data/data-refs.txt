@@ -1,0 +1,33 @@
+# ARM code with heavy PC-relative data references
+# Simulates constant loading from literal pools
+
+# Function with literal pool usage
+0x1000 push {lr}
+0x1004 ldr r0, [pc, #0x20]
+0x1008 ldr r1, [pc, #0x20]
+0x100c ldr r2, [pc, #0x20]
+0x1010 ldr r3, [pc, #0x20]
+0x1014 bl #0x2000
+0x1018 pop {pc}
+
+# Literal pool (data section)
+# 0x1028: .word 0x12345678
+# 0x102c: .word 0xABCDEF00
+# 0x1030: .word 0xDEADBEEF
+# 0x1034: .word 0xCAFEBABE
+
+# Function with data writes
+0x2000 push {lr}
+0x2004 ldr r4, [pc, #0x30]
+0x2008 str r0, [pc, #0x30]
+0x200c str r1, [pc, #0x2c]
+0x2010 str r2, [pc, #0x28]
+0x2014 ldr r0, [pc, #0x20]
+0x2018 pop {pc}
+
+# Mixed PC-relative accesses
+0x3000 ldr r0, [pc, #0x100]
+0x3004 ldr r1, [pc, #-0x8]
+0x3008 ldr r2, [pc, #16]
+0x300c str r3, [pc, #-0x10]
+0x3010 bx lr
