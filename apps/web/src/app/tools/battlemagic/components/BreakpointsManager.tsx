@@ -24,14 +24,22 @@ interface BreakpointsManagerProps {
   gdbClient: GdbClient | null;
   isConnected: boolean;
   onOutput?: (message: string) => void;
+  breakpoints?: Breakpoint[];
+  setBreakpoints?: React.Dispatch<React.SetStateAction<Breakpoint[]>>;
 }
 
 export default function BreakpointsManager({
   gdbClient,
   isConnected,
-  onOutput
+  onOutput,
+  breakpoints: breakpointsProp,
+  setBreakpoints: setBreakpointsProp
 }: BreakpointsManagerProps) {
-  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
+  // Use local state if props not provided (fallback for standalone use)
+  const [localBreakpoints, setLocalBreakpoints] = useState<Breakpoint[]>([]);
+
+  const breakpoints = breakpointsProp ?? localBreakpoints;
+  const setBreakpoints = setBreakpointsProp ?? setLocalBreakpoints;
   const [newAddress, setNewAddress] = useState('');
   const [newSymbol, setNewSymbol] = useState('');
   const [newCondition, setNewCondition] = useState('');
@@ -56,23 +64,42 @@ export default function BreakpointsManager({
     }
 
     try {
-      // Insert breakpoint via GDB
-      await gdbClient.insertBreakpoint(addressOrSymbol, breakpointType === 'hardware');
+      // For addresses, convert to number; for symbols, keep as string
+      let gdbAddress: number | string = addressOrSymbol;
+      if (newAddress) {
+        // User entered an address
+        const addressNum = addressOrSymbol.startsWith('0x') || addressOrSymbol.startsWith('0X')
+          ? parseInt(addressOrSymbol, 16)
+          : parseInt(addressOrSymbol, 10);
 
-      // Add to local state
+        if (isNaN(addressNum)) {
+          onOutput?.(`[Error] Invalid address format: ${addressOrSymbol}`);
+          return;
+        }
+        gdbAddress = addressNum;
+      }
+
+      // Insert breakpoint via GDB
+      await gdbClient.insertBreakpoint(gdbAddress, breakpointType === 'hardware');
+
+      // Add to local state (store as string for display)
+      const displayAddress = typeof gdbAddress === 'number'
+        ? `0x${gdbAddress.toString(16).toUpperCase()}`
+        : gdbAddress;
+
       const newBreakpoint: Breakpoint = {
         id: generateId(),
-        address: addressOrSymbol,
+        address: displayAddress,
         type: breakpointType,
         enabled: true,
         condition: newCondition || undefined,
         symbol: newSymbol || undefined,
-        description: newSymbol ? `Symbol: ${newSymbol}` : `Address: ${addressOrSymbol}`,
+        description: newSymbol ? `Symbol: ${newSymbol}` : `Address: ${displayAddress}`,
         hitCount: 0
       };
 
       setBreakpoints(prev => [...prev, newBreakpoint]);
-      onOutput?.(`[Breakpoint] Added ${breakpointType} breakpoint at ${addressOrSymbol}`);
+      onOutput?.(`[Breakpoint] Added ${breakpointType} breakpoint at ${displayAddress}`);
 
       // Clear form
       setNewAddress('');
@@ -80,9 +107,10 @@ export default function BreakpointsManager({
       setNewCondition('');
       setShowAddForm(false);
     } catch (error) {
-      onOutput?.(`[Error] Failed to add breakpoint: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      onOutput?.(`[Error] Failed to add breakpoint: ${errorMsg}`);
     }
-  }, [gdbClient, isConnected, newAddress, newSymbol, newCondition, breakpointType, onOutput]);
+  }, [gdbClient, isConnected, newAddress, newSymbol, newCondition, breakpointType, onOutput, setBreakpoints]);
 
   // Remove a breakpoint
   const handleRemoveBreakpoint = useCallback(async (bp: Breakpoint) => {
@@ -92,16 +120,27 @@ export default function BreakpointsManager({
     }
 
     try {
+      // Convert address string to number for GDB command
+      const addressNum = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+        ? parseInt(bp.address, 16)
+        : parseInt(bp.address, 10);
+
+      if (isNaN(addressNum)) {
+        onOutput?.(`[Error] Invalid breakpoint address: ${bp.address}`);
+        return;
+      }
+
       // Remove from GDB
-      await gdbClient.removeBreakpoint(bp.address, bp.type === 'hardware');
+      await gdbClient.removeBreakpoint(addressNum, bp.type === 'hardware');
 
       // Remove from local state
       setBreakpoints(prev => prev.filter(b => b.id !== bp.id));
       onOutput?.(`[Breakpoint] Removed breakpoint at ${bp.address}`);
     } catch (error) {
-      onOutput?.(`[Error] Failed to remove breakpoint: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      onOutput?.(`[Error] Failed to remove breakpoint at ${bp.address}: ${errorMsg}`);
     }
-  }, [gdbClient, isConnected, onOutput]);
+  }, [gdbClient, isConnected, onOutput, setBreakpoints]);
 
   // Toggle breakpoint enabled/disabled
   const handleToggleBreakpoint = useCallback(async (bp: Breakpoint) => {
@@ -111,12 +150,22 @@ export default function BreakpointsManager({
     }
 
     try {
+      // Convert address string to number for GDB command
+      const addressNum = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+        ? parseInt(bp.address, 16)
+        : parseInt(bp.address, 10);
+
+      if (isNaN(addressNum)) {
+        onOutput?.(`[Error] Invalid breakpoint address: ${bp.address}`);
+        return;
+      }
+
       if (bp.enabled) {
         // Disable by removing from GDB but keep in list
-        await gdbClient.removeBreakpoint(bp.address, bp.type === 'hardware');
+        await gdbClient.removeBreakpoint(addressNum, bp.type === 'hardware');
       } else {
         // Re-enable by adding back to GDB
-        await gdbClient.insertBreakpoint(bp.address, bp.type === 'hardware');
+        await gdbClient.insertBreakpoint(addressNum, bp.type === 'hardware');
       }
 
       // Update local state
@@ -126,9 +175,10 @@ export default function BreakpointsManager({
 
       onOutput?.(`[Breakpoint] ${bp.enabled ? 'Disabled' : 'Enabled'} breakpoint at ${bp.address}`);
     } catch (error) {
-      onOutput?.(`[Error] Failed to toggle breakpoint: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      onOutput?.(`[Error] Failed to toggle breakpoint at ${bp.address}: ${errorMsg}`);
     }
-  }, [gdbClient, isConnected, onOutput]);
+  }, [gdbClient, isConnected, onOutput, setBreakpoints]);
 
   // Clear all breakpoints
   const handleClearAll = useCallback(async () => {
@@ -137,20 +187,46 @@ export default function BreakpointsManager({
       return;
     }
 
-    try {
-      // Remove all breakpoints from GDB
-      for (const bp of breakpoints) {
-        if (bp.enabled) {
-          await gdbClient.removeBreakpoint(bp.address, bp.type === 'hardware');
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    // Remove all breakpoints from GDB
+    for (const bp of breakpoints) {
+      if (bp.enabled) {
+        try {
+          // Convert address string to number for GDB command
+          const addressNum = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+            ? parseInt(bp.address, 16)
+            : parseInt(bp.address, 10);
+
+          if (isNaN(addressNum)) {
+            failCount++;
+            errors.push(`Invalid address: ${bp.address}`);
+            continue;
+          }
+
+          await gdbClient.removeBreakpoint(addressNum, bp.type === 'hardware');
+          successCount++;
+        } catch (error) {
+          failCount++;
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          errors.push(`${bp.address}: ${errorMsg}`);
         }
       }
-
-      setBreakpoints([]);
-      onOutput?.('[Breakpoint] Cleared all breakpoints');
-    } catch (error) {
-      onOutput?.(`[Error] Failed to clear breakpoints: ${error}`);
     }
-  }, [gdbClient, isConnected, breakpoints, onOutput]);
+
+    // Clear local state regardless of GDB errors
+    setBreakpoints([]);
+
+    // Report results
+    if (failCount === 0) {
+      onOutput?.(`[Breakpoint] Cleared all breakpoints (${successCount} removed)`);
+    } else {
+      onOutput?.(`[Breakpoint] Cleared breakpoints: ${successCount} removed, ${failCount} failed`);
+      errors.forEach(err => onOutput?.(`[Error] ${err}`));
+    }
+  }, [gdbClient, isConnected, breakpoints, onOutput, setBreakpoints]);
 
   // Export breakpoints to JSON
   const handleExport = useCallback(() => {
@@ -185,9 +261,21 @@ export default function BreakpointsManager({
         for (const bp of imported) {
           if (bp.enabled) {
             try {
-              await gdbClient.insertBreakpoint(bp.address, bp.type === 'hardware');
+              // Convert address string to number for GDB command
+              const addressNum = bp.address.startsWith('0x') || bp.address.startsWith('0X')
+                ? parseInt(bp.address, 16)
+                : parseInt(bp.address, 10);
+
+              if (isNaN(addressNum)) {
+                onOutput?.(`[Warning] Invalid address format: ${bp.address}`);
+                bp.enabled = false;
+                continue;
+              }
+
+              await gdbClient.insertBreakpoint(addressNum, bp.type === 'hardware');
             } catch (error) {
-              onOutput?.(`[Warning] Failed to set breakpoint at ${bp.address}: ${error}`);
+              const errorMsg = error instanceof Error ? error.message : String(error);
+              onOutput?.(`[Warning] Failed to set breakpoint at ${bp.address}: ${errorMsg}`);
               bp.enabled = false;
             }
           }
@@ -197,14 +285,15 @@ export default function BreakpointsManager({
       setBreakpoints(imported);
       onOutput?.(`[Breakpoint] Imported ${imported.length} breakpoints`);
     } catch (error) {
-      onOutput?.(`[Error] Failed to import breakpoints: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      onOutput?.(`[Error] Failed to import breakpoints: ${errorMsg}`);
     }
 
     // Clear file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [gdbClient, isConnected, onOutput]);
+  }, [gdbClient, isConnected, onOutput, setBreakpoints]);
 
   return (
     <div className="h-full flex flex-col bg-gray-950 text-white">

@@ -146,6 +146,17 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         self.is_analyzed = false;
     }
 
+    /// Get reference to XrefDatabase (for export)
+    pub fn get_xref_db(&self) -> &XrefDatabase {
+        &self.xref_db
+    }
+
+    /// Load XrefDatabase (for import)
+    pub fn load_xref_db(&mut self, xref_db: XrefDatabase) {
+        self.xref_db = xref_db;
+        self.is_analyzed = true;
+    }
+
     /// Analyze binary directly from raw bytes
     ///
     /// This method decodes instructions from raw bytes using the architecture's

@@ -1,20 +1,34 @@
 pub mod arch;
 pub mod analyzer;
+pub mod chips;
+pub mod database;
 pub mod traits;
 pub mod types;
 pub mod xref;
 
 use analyzer::BinaryAnalyzer;
 use arch::arm::ArmArchitecture;
+use database::{
+    AnalysisDatabase, Comment, CommentType, FunctionEntry, ProjectMetadata,
+    Symbol, SymbolType, VectorTableEntry, XrefDatabaseExport
+};
 use types::{Instruction, XrefQueryResult};
 #[cfg(test)]
 use types::XrefType;
 use wasm_bindgen::prelude::*;
+use std::collections::HashMap;
 
 /// Main binary analyzer that builds cross-reference database
 #[wasm_bindgen]
 pub struct ArmAnalyzer {
     inner: BinaryAnalyzer<ArmArchitecture>,
+
+    // Database state for persistence
+    metadata: Option<ProjectMetadata>,
+    functions: HashMap<u32, FunctionEntry>,
+    symbols: HashMap<u32, Symbol>,
+    comments: HashMap<u32, Comment>,
+    vector_table: Vec<VectorTableEntry>,
 }
 
 #[wasm_bindgen]
@@ -27,6 +41,11 @@ impl ArmAnalyzer {
 
         ArmAnalyzer {
             inner: BinaryAnalyzer::new(ArmArchitecture, base_address),
+            metadata: None,
+            functions: HashMap::new(),
+            symbols: HashMap::new(),
+            comments: HashMap::new(),
+            vector_table: Vec::new(),
         }
     }
 
@@ -131,6 +150,305 @@ impl ArmAnalyzer {
         // Serialize to JavaScript
         serde_wasm_bindgen::to_value(&results)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
+    }
+
+    // ========================================================================
+    // Database Export/Import
+    // ========================================================================
+
+    /// Export complete analysis database as JSON string
+    ///
+    /// This serializes all analysis data (xrefs, functions, comments, etc.)
+    /// for storage in IndexedDB. Returns JSON string that can be saved.
+    #[wasm_bindgen]
+    pub fn export_database(&self) -> Result<String, JsValue> {
+        if !self.inner.is_analyzed() {
+            return Err(JsValue::from_str("No analysis available to export"));
+        }
+
+        // Build database from current state
+        let db = self.build_database();
+
+        // Serialize to JSON
+        serde_json::to_string(&db)
+            .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+    }
+
+    /// Import analysis database from JSON string
+    ///
+    /// This loads a previously saved database and restores all analysis state.
+    /// Validates schema version and applies migrations if needed.
+    #[wasm_bindgen]
+    pub fn import_database(&mut self, json: &str) -> Result<(), JsValue> {
+        // Deserialize from JSON
+        let db: AnalysisDatabase = serde_json::from_str(json)
+            .map_err(|e| JsValue::from_str(&format!("Deserialization failed: {}", e)))?;
+
+        // Validate and migrate schema if needed
+        let db = database::DatabaseMigrator::migrate(db)
+            .map_err(|e| JsValue::from_str(&format!("Migration failed: {}", e)))?;
+
+        // Load database into analyzer
+        self.load_database(db)?;
+
+        Ok(())
+    }
+
+    /// Get database statistics (for UI display)
+    #[wasm_bindgen]
+    pub fn get_database_stats(&self) -> Result<JsValue, JsValue> {
+        if !self.inner.is_analyzed() {
+            return Err(JsValue::from_str("No analysis available"));
+        }
+
+        let db = self.build_database();
+        let stats = db.stats();
+
+        serde_wasm_bindgen::to_value(&stats)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize stats: {}", e)))
+    }
+
+    // ========================================================================
+    // Project Metadata
+    // ========================================================================
+
+    /// Get project metadata
+    #[wasm_bindgen]
+    pub fn get_metadata(&self) -> Result<JsValue, JsValue> {
+        if let Some(ref metadata) = self.metadata {
+            serde_wasm_bindgen::to_value(metadata)
+                .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+        } else {
+            Err(JsValue::from_str("No metadata available"))
+        }
+    }
+
+    /// Set project metadata
+    #[wasm_bindgen]
+    pub fn set_metadata(&mut self, metadata_js: JsValue) -> Result<(), JsValue> {
+        let metadata: ProjectMetadata = serde_wasm_bindgen::from_value(metadata_js)
+            .map_err(|e| JsValue::from_str(&format!("Deserialization failed: {}", e)))?;
+
+        self.metadata = Some(metadata);
+        Ok(())
+    }
+
+    /// Initialize metadata with basic info
+    #[wasm_bindgen]
+    pub fn init_metadata(
+        &mut self,
+        project_name: String,
+        architecture: String,
+        base_address: u32,
+        firmware_size: u32,
+    ) {
+        self.metadata = Some(ProjectMetadata::new(
+            project_name,
+            architecture,
+            base_address,
+            firmware_size,
+        ));
+    }
+
+    // ========================================================================
+    // Function Operations
+    // ========================================================================
+
+    /// Get function at specific address
+    #[wasm_bindgen]
+    pub fn get_function(&self, address: u32) -> Result<JsValue, JsValue> {
+        if let Some(func) = self.functions.get(&address) {
+            serde_wasm_bindgen::to_value(func)
+                .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+        } else {
+            Err(JsValue::from_str(&format!(
+                "No function at 0x{:X}",
+                address
+            )))
+        }
+    }
+
+    /// Rename function (marks as user-defined)
+    #[wasm_bindgen]
+    pub fn rename_function(&mut self, address: u32, new_name: String) -> Result<(), JsValue> {
+        if let Some(func) = self.functions.get_mut(&address) {
+            func.rename(new_name);
+            Ok(())
+        } else {
+            Err(JsValue::from_str(&format!(
+                "No function at 0x{:X}",
+                address
+            )))
+        }
+    }
+
+    /// Get all functions
+    #[wasm_bindgen]
+    pub fn get_all_functions(&self) -> Result<JsValue, JsValue> {
+        let funcs: Vec<&FunctionEntry> = self.functions.values().collect();
+        serde_wasm_bindgen::to_value(&funcs)
+            .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+    }
+
+    // ========================================================================
+    // Comment Operations
+    // ========================================================================
+
+    /// Add or update comment at address
+    #[wasm_bindgen]
+    pub fn add_comment(
+        &mut self,
+        address: u32,
+        text: String,
+        comment_type_str: &str,
+    ) -> Result<(), JsValue> {
+        let comment_type = match comment_type_str {
+            "standard" => CommentType::Standard,
+            "repeatable" => CommentType::Repeatable,
+            "anterior" => CommentType::Anterior,
+            "block" => CommentType::Block,
+            _ => return Err(JsValue::from_str("Invalid comment type")),
+        };
+
+        let comment = Comment::new(address, text, comment_type);
+        self.comments.insert(address, comment);
+        Ok(())
+    }
+
+    /// Get comment at address
+    #[wasm_bindgen]
+    pub fn get_comment(&self, address: u32) -> Result<JsValue, JsValue> {
+        if let Some(comment) = self.comments.get(&address) {
+            serde_wasm_bindgen::to_value(comment)
+                .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+        } else {
+            Err(JsValue::from_str(&format!(
+                "No comment at 0x{:X}",
+                address
+            )))
+        }
+    }
+
+    /// Delete comment at address
+    #[wasm_bindgen]
+    pub fn delete_comment(&mut self, address: u32) -> Result<(), JsValue> {
+        if self.comments.remove(&address).is_some() {
+            Ok(())
+        } else {
+            Err(JsValue::from_str(&format!(
+                "No comment at 0x{:X}",
+                address
+            )))
+        }
+    }
+
+    // ========================================================================
+    // Symbol Operations
+    // ========================================================================
+
+    /// Add symbol at address
+    #[wasm_bindgen]
+    pub fn add_symbol(
+        &mut self,
+        address: u32,
+        name: String,
+        symbol_type_str: &str,
+    ) -> Result<(), JsValue> {
+        let symbol_type = match symbol_type_str {
+            "code" => SymbolType::Code,
+            "data" => SymbolType::Data,
+            "function" => SymbolType::Function,
+            "vector" => SymbolType::VectorTable,
+            "import" => SymbolType::Import,
+            "export" => SymbolType::Export,
+            _ => return Err(JsValue::from_str("Invalid symbol type")),
+        };
+
+        let symbol = Symbol::new(address, name, symbol_type);
+        self.symbols.insert(address, symbol);
+        Ok(())
+    }
+
+    /// Get symbol at address
+    #[wasm_bindgen]
+    pub fn get_symbol(&self, address: u32) -> Result<JsValue, JsValue> {
+        if let Some(symbol) = self.symbols.get(&address) {
+            serde_wasm_bindgen::to_value(symbol)
+                .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+        } else {
+            Err(JsValue::from_str(&format!(
+                "No symbol at 0x{:X}",
+                address
+            )))
+        }
+    }
+
+    // ========================================================================
+    // Internal Helper Methods
+    // ========================================================================
+
+    /// Build AnalysisDatabase from current analyzer state
+    fn build_database(&self) -> AnalysisDatabase {
+        // Use metadata or create default
+        let metadata = self.metadata.clone().unwrap_or_else(|| {
+            ProjectMetadata::new(
+                "Untitled Project".to_string(),
+                "ARM Cortex-M".to_string(),
+                0,
+                0,
+            )
+        });
+
+        // Export xrefs from XrefDatabase
+        let xrefs = XrefDatabaseExport::from_xref_db(self.inner.get_xref_db());
+
+        // Convert HashMaps to Vecs
+        let functions: Vec<FunctionEntry> = self.functions.values().cloned().collect();
+        let symbols: Vec<Symbol> = self.symbols.values().cloned().collect();
+        let comments: Vec<Comment> = self.comments.values().cloned().collect();
+
+        AnalysisDatabase {
+            metadata,
+            xrefs,
+            functions,
+            symbols,
+            comments,
+            segments: Vec::new(), // TODO: Add segment detection
+            vector_table: self.vector_table.clone(),
+        }
+    }
+
+    /// Load database into analyzer state
+    fn load_database(&mut self, db: AnalysisDatabase) -> Result<(), JsValue> {
+        // Load metadata
+        self.metadata = Some(db.metadata);
+
+        // Load xrefs into XrefDatabase
+        let xref_db = db.xrefs.into_xref_db();
+        self.inner.load_xref_db(xref_db);
+
+        // Load functions
+        self.functions.clear();
+        for func in db.functions {
+            self.functions.insert(func.address, func);
+        }
+
+        // Load symbols
+        self.symbols.clear();
+        for symbol in db.symbols {
+            self.symbols.insert(symbol.address, symbol);
+        }
+
+        // Load comments
+        self.comments.clear();
+        for comment in db.comments {
+            self.comments.insert(comment.address, comment);
+        }
+
+        // Load vector table
+        self.vector_table = db.vector_table;
+
+        Ok(())
     }
 }
 

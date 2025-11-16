@@ -31,8 +31,9 @@ export async function loadBattleMagicCore() {
     }
 
     // Start the module
-    if (result.instance.exports.__wbindgen_start) {
-      result.instance.exports.__wbindgen_start();
+    const startFn = result.instance.exports.__wbindgen_start;
+    if (typeof startFn === 'function') {
+      startFn();
     }
 
     return glueModule;

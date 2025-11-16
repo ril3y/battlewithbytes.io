@@ -230,11 +230,15 @@ export default function DebugControlToolbar({
 
   return (
     <div className="bg-gray-900 border-b border-gray-700 p-2 flex gap-1 flex-wrap flex-shrink-0">
-      {/* Execution State Indicator */}
-      <div className="flex items-center gap-2 px-2 border-r border-gray-700 pr-3">
+      {/* Execution State Indicator - Enhanced visibility for RUNNING state */}
+      <div className={`flex items-center gap-2 px-2 pr-3 rounded transition-all ${
+        executionState === ExecutionState.RUNNING
+          ? 'border-r border-l border-green-500/50 bg-green-500/10'
+          : 'border-r border-gray-700'
+      }`}>
         <div className="text-xs text-gray-400">State:</div>
         <div className={`text-xs font-mono font-semibold flex items-center gap-1 ${
-          executionState === ExecutionState.RUNNING ? 'text-green-400 animate-pulse' :
+          executionState === ExecutionState.RUNNING ? 'text-green-400' :
           executionState === ExecutionState.STEPPING ? 'text-yellow-400' :
           executionState === ExecutionState.STOPPED ? 'text-red-400' :
           'text-gray-400'
@@ -243,12 +247,14 @@ export default function DebugControlToolbar({
             <span className="inline-block w-2 h-2 bg-red-400 rounded-full"></span>
           )}
           {executionState === ExecutionState.RUNNING && (
-            <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span className="inline-block w-2.5 h-2.5 bg-green-400 rounded-full animate-ping"></span>
           )}
           {executionState === ExecutionState.STEPPING && (
             <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full"></span>
           )}
-          {executionState.toUpperCase()}
+          <span className={executionState === ExecutionState.RUNNING ? 'animate-pulse' : ''}>
+            {executionState.toUpperCase()}
+          </span>
         </div>
       </div>
 

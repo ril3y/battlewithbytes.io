@@ -21,10 +21,24 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['@battlewithbytes/battlemagic-core'],
+  serverExternalPackages: ['@battlewithbytes/battlemagic-core', 'battlemagic-analyzer'],
   webpack: (config, { isServer }) => {
-    // Ignore Node.js-specific modules when bundling for the browser
+    // WASM support - enable for both client and server
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      syncWebAssembly: true,
+      layers: true,
+    };
+
+    // Handle .wasm files
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
+
     if (!isServer) {
+      // Ignore Node.js-specific modules when bundling for the browser
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -32,35 +46,22 @@ const nextConfig = {
         crypto: false,
       };
 
-      // WASM support - must be enabled for client-side
-      config.experiments = {
-        ...config.experiments,
-        asyncWebAssembly: true,
-        syncWebAssembly: true,
-        layers: true,
-      };
-
-      // Handle .wasm files
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: 'webassembly/async',
-      });
-
-      // Ensure WASM files are properly output
+      // Ensure WASM files are properly output for client
       config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
-
-      // Prevent WASM from being processed as asset
-      config.module.rules.forEach(rule => {
-        (rule.oneOf || []).forEach(oneOf => {
-          if (oneOf.type === 'asset/resource') {
-            oneOf.exclude = [
-              ...(Array.isArray(oneOf.exclude) ? oneOf.exclude : [oneOf.exclude].filter(Boolean)),
-              /\.wasm$/
-            ];
-          }
-        });
-      });
     }
+
+    // Prevent WASM from being processed as asset
+    config.module.rules.forEach(rule => {
+      (rule.oneOf || []).forEach(oneOf => {
+        if (oneOf.type === 'asset/resource') {
+          oneOf.exclude = [
+            ...(Array.isArray(oneOf.exclude) ? oneOf.exclude : [oneOf.exclude].filter(Boolean)),
+            /\.wasm$/
+          ];
+        }
+      });
+    });
+
     return config;
   },
   // Your other Next.js configurations can go here

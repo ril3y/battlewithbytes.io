@@ -19,9 +19,10 @@ import type {
   CFGLayout,
   BlockLayout,
   EdgeLayout,
-  BasicBlock,
-  BlockType
+  BasicBlock
 } from '../lib/cfg/types';
+import { drawGraphBlockNode } from './ControlFlowGraphView/GraphBlockNode';
+import { useXref } from '../lib/context/XrefContext';
 
 interface ControlFlowGraphViewProps {
   instructions: DisassembledInstruction[];
@@ -36,6 +37,22 @@ interface ViewTransform {
   scale: number;
 }
 
+interface BlockXrefInfo {
+  incomingCalls: number;
+  outgoingCalls: number;
+  incomingBranches: number;
+  outgoingBranches: number;
+  instructionsWithXrefs: number;
+  isEntryPoint: boolean;
+  isBranchTarget: boolean;
+}
+
+interface ContextMenuState {
+  blockId: string;
+  x: number;
+  y: number;
+}
+
 export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
   instructions,
   selectedAddress,
@@ -44,6 +61,9 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Xref context
+  const { getXrefsTo, getXrefsFrom, isAnalyzed } = useXref();
 
   const [cfg, setCfg] = useState<ControlFlowGraph | null>(null);
   const [layout, setLayout] = useState<CFGLayout | null>(null);
@@ -54,6 +74,68 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
 
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
+  const [breakpoints] = useState<Set<number>>(new Set()); // TODO: Add breakpoint toggle handler
+  const [showOpcodes, setShowOpcodes] = useState(false);
+  const [useXrefLayout, setUseXrefLayout] = useState(true);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [blockXrefInfo, setBlockXrefInfo] = useState<Map<string, BlockXrefInfo>>(new Map());
+
+  // Compute xref information for a block
+  const computeBlockXrefInfo = useCallback((block: BasicBlock): BlockXrefInfo => {
+    if (!isAnalyzed()) {
+      return {
+        incomingCalls: 0,
+        outgoingCalls: 0,
+        incomingBranches: 0,
+        outgoingBranches: 0,
+        instructionsWithXrefs: 0,
+        isEntryPoint: false,
+        isBranchTarget: false
+      };
+    }
+
+    let incomingCalls = 0;
+    let outgoingCalls = 0;
+    let incomingBranches = 0;
+    let outgoingBranches = 0;
+    let instructionsWithXrefs = 0;
+
+    // Check each instruction in the block
+    for (const inst of block.instructions) {
+      const xrefsTo = getXrefsTo(inst.address);
+      const xrefsFrom = getXrefsFrom(inst.address);
+
+      if (xrefsTo.length > 0 || xrefsFrom.length > 0) {
+        instructionsWithXrefs++;
+      }
+
+      // Count incoming xrefs
+      for (const xref of xrefsTo) {
+        if (xref.xref_type === 'Call') incomingCalls++;
+        else if (xref.xref_type === 'Branch' || xref.xref_type === 'ConditionalBranch') incomingBranches++;
+      }
+
+      // Count outgoing xrefs
+      for (const xref of xrefsFrom) {
+        if (xref.xref_type === 'Call') outgoingCalls++;
+        else if (xref.xref_type === 'Branch' || xref.xref_type === 'ConditionalBranch') outgoingBranches++;
+      }
+    }
+
+    // Entry point heuristic: first block or has many incoming calls
+    const isEntryPoint = block.type === 'entry' || incomingCalls >= 3;
+    const isBranchTarget = incomingBranches > 0;
+
+    return {
+      incomingCalls,
+      outgoingCalls,
+      incomingBranches,
+      outgoingBranches,
+      instructionsWithXrefs,
+      isEntryPoint,
+      isBranchTarget
+    };
+  }, [isAnalyzed, getXrefsTo, getXrefsFrom]);
 
   // Build CFG from instructions
   useEffect(() => {
@@ -82,19 +164,53 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
       });
       const result = cfgAnalyzer.buildCFG(blocks);
 
-      // Step 3: Compute layout
+      // Step 3: Compute layout with dynamic block heights
       const layoutEngine = new CFGLayoutEngine({
         algorithm: 'hierarchical',
-        blockWidth: 200,
-        blockHeight: 120,
+        blockWidth: 280,
+        blockHeight: 120, // Base height, will be adjusted per block
         horizontalSpacing: 60,
         verticalSpacing: 80,
         compactLayout: false
       });
       const computedLayout = layoutEngine.computeLayout(result.cfg);
 
+      // Adjust block heights based on instruction count
+      for (const [blockId, blockLayout] of computedLayout.blocks) {
+        const block = result.cfg.blocks.get(blockId);
+        if (block) {
+          // Calculate required height: header (48px) + instructions (12px each) + padding (16px)
+          const instructionHeight = block.instructions.length * 12;
+          const requiredHeight = 48 + instructionHeight + 16;
+          blockLayout.height = Math.max(120, requiredHeight);
+        }
+      }
+
+      // Recalculate bounds after height adjustments
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const [, layout] of computedLayout.blocks) {
+        minX = Math.min(minX, layout.x);
+        minY = Math.min(minY, layout.y);
+        maxX = Math.max(maxX, layout.x + layout.width);
+        maxY = Math.max(maxY, layout.y + layout.height);
+      }
+      const padding = 50;
+      computedLayout.bounds = {
+        width: maxX - minX + padding * 2,
+        height: maxY - minY + padding * 2,
+        minX,
+        minY
+      };
+
       setCfg(result.cfg);
       setLayout(computedLayout);
+
+      // Compute xref info for all blocks
+      const xrefInfo = new Map<string, BlockXrefInfo>();
+      for (const [blockId, block] of result.cfg.blocks) {
+        xrefInfo.set(blockId, computeBlockXrefInfo(block));
+      }
+      setBlockXrefInfo(xrefInfo);
 
       // Auto-fit the graph in the viewport
       if (containerRef.current && computedLayout) {
@@ -123,7 +239,7 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
       setCfg(null);
       setLayout(null);
     }
-  }, [instructions]);
+  }, [instructions, computeBlockXrefInfo]);
 
   // Find block containing selected address
   useEffect(() => {
@@ -141,56 +257,6 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     setSelectedBlock(null);
   }, [cfg, selectedAddress]);
 
-  // Get block color based on type
-  const getBlockColor = useCallback((blockType: BlockType, isSelected: boolean, isHovered: boolean): string => {
-    const colors = {
-      entry: { bg: '#1e3a8a', border: '#3b82f6', text: '#93c5fd' },      // Blue
-      normal: { bg: '#1e293b', border: '#475569', text: '#cbd5e1' },     // Gray
-      conditional: { bg: '#713f12', border: '#f59e0b', text: '#fbbf24' }, // Amber
-      call: { bg: '#581c87', border: '#a855f7', text: '#c084fc' },        // Purple
-      return: { bg: '#831843', border: '#ec4899', text: '#f9a8d4' },      // Pink
-      exit: { bg: '#7f1d1d', border: '#ef4444', text: '#fca5a5' },        // Red
-      unreachable: { bg: '#171717', border: '#404040', text: '#737373' }  // Dark gray
-    };
-
-    const color = colors[blockType] || colors.normal;
-
-    if (isSelected) {
-      return color.border; // Highlighted border
-    }
-    if (isHovered) {
-      return color.text; // Lighter on hover
-    }
-    return color.bg;
-  }, []);
-
-  const getBlockBorderColor = useCallback((blockType: BlockType, isSelected: boolean): string => {
-    const colors = {
-      entry: '#3b82f6',
-      normal: '#475569',
-      conditional: '#f59e0b',
-      call: '#a855f7',
-      return: '#ec4899',
-      exit: '#ef4444',
-      unreachable: '#404040'
-    };
-
-    return isSelected ? '#10b981' : colors[blockType] || colors.normal; // Green when selected
-  }, []);
-
-  const getBlockTextColor = useCallback((blockType: BlockType): string => {
-    const colors = {
-      entry: '#93c5fd',
-      normal: '#cbd5e1',
-      conditional: '#fbbf24',
-      call: '#c084fc',
-      return: '#f9a8d4',
-      exit: '#fca5a5',
-      unreachable: '#737373'
-    };
-
-    return colors[blockType] || colors.normal;
-  }, []);
 
   // Draw arrowhead at end of edge
   const drawArrowhead = useCallback((
@@ -199,8 +265,12 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     to: { x: number; y: number },
     color: string
   ) => {
-    const headLength = 10;
+    const headLength = 14; // Increased from 10 to 14 for better visibility
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
+
+    // Add shadow for glow effect
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = color;
 
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -215,9 +285,12 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     );
     ctx.closePath();
     ctx.fill();
+
+    // Reset shadow
+    ctx.shadowBlur = 0;
   }, []);
 
-  // Draw a basic block
+  // Draw a basic block using the new GraphBlockNode renderer
   const drawBlock = useCallback((
     ctx: CanvasRenderingContext2D,
     block: BasicBlock,
@@ -225,64 +298,80 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     isSelected: boolean,
     isHovered: boolean
   ) => {
-    const { x, y, width, height } = blockLayout;
+    const xrefInfo = blockXrefInfo.get(block.id);
+    drawGraphBlockNode(ctx, block, blockLayout, {
+      programCounter: selectedAddress,
+      breakpoints,
+      showOpcodes,
+      sectionName: undefined, // Could be enhanced to detect section from address
+      isSelected,
+      isHovered,
+      xrefInfo,
+      showXrefIndicators: isAnalyzed()
+    });
+  }, [selectedAddress, breakpoints, showOpcodes, blockXrefInfo, isAnalyzed]);
 
-    // Draw block background
-    ctx.fillStyle = getBlockColor(block.type, isSelected, isHovered);
-    ctx.fillRect(x, y, width, height);
-
-    // Draw border
-    ctx.strokeStyle = getBlockBorderColor(block.type, isSelected);
-    ctx.lineWidth = isSelected ? 3 : 2;
-    ctx.strokeRect(x, y, width, height);
-
-    // Draw block header
-    ctx.fillStyle = getBlockTextColor(block.type);
-    ctx.font = 'bold 12px "Courier New", monospace';
-    ctx.fillText(block.id, x + 8, y + 18);
-
-    // Draw block type badge
-    ctx.font = '10px "Courier New", monospace';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText(`[${block.type.toUpperCase()}]`, x + 8, y + 32);
-
-    // Draw instructions (truncated)
-    ctx.font = '10px "Courier New", monospace';
-    ctx.fillStyle = '#cbd5e1';
-
-    const maxInstructions = 5;
-    const instructions = block.instructions.slice(0, maxInstructions);
-
-    let lineY = y + 48;
-    for (const inst of instructions) {
-      const addrStr = `0x${inst.address.toString(16).toUpperCase().padStart(8, '0')}`;
-      const instText = `${inst.mnemonic} ${inst.operands}`.substring(0, 25);
-      ctx.fillText(`${addrStr}: ${instText}`, x + 8, lineY);
-      lineY += 12;
+  // Get edge color and style based on xref type
+  const getEdgeStyleForXref = useCallback((edge: EdgeLayout): { color: string; dash: number[]; width: number; label?: string } => {
+    if (!isAnalyzed() || !useXrefLayout || !cfg) {
+      return { color: edge.color, dash: edge.isBackEdge ? [5, 5] : [], width: 3 };
     }
 
-    if (block.instructions.length > maxInstructions) {
-      ctx.fillStyle = '#64748b';
-      ctx.fillText(`... (${block.instructions.length - maxInstructions} more)`, x + 8, lineY);
+    // Try to find xrefs between source and target blocks
+    const sourceBlock = cfg.blocks.get(edge.from);
+    const targetBlock = cfg.blocks.get(edge.to);
+
+    if (!sourceBlock || !targetBlock) {
+      return { color: edge.color, dash: edge.isBackEdge ? [5, 5] : [], width: 3 };
     }
-  }, [getBlockColor, getBlockBorderColor, getBlockTextColor]);
+
+    // Check for xrefs from any instruction in source block to target block
+    for (const inst of sourceBlock.instructions) {
+      const xrefs = getXrefsFrom(inst.address);
+      for (const xref of xrefs) {
+        // Check if xref points to any instruction in target block
+        if (xref.to_addr >= targetBlock.startAddress && xref.to_addr <= targetBlock.endAddress) {
+          switch (xref.xref_type) {
+            case 'Call':
+              return { color: '#60a5fa', dash: [8, 4], width: 3, label: 'call' }; // Blue dashed
+            case 'Branch':
+              return { color: '#4ade80', dash: [], width: 3, label: 'branch' }; // Green solid
+            case 'ConditionalBranch':
+              return { color: '#fbbf24', dash: [], width: 3, label: 'cond' }; // Yellow solid
+            default:
+              break;
+          }
+        }
+      }
+    }
+
+    // Fall-through edge (no xref found)
+    return { color: '#6b7280', dash: [2, 2], width: 2, label: 'fallthrough' }; // Gray dotted
+  }, [isAnalyzed, useXrefLayout, cfg, getXrefsFrom]);
 
   // Draw an edge
   const drawEdge = useCallback((
     ctx: CanvasRenderingContext2D,
     edge: EdgeLayout
   ) => {
-    const { points, color, isBackEdge } = edge;
+    const { points, isBackEdge } = edge;
 
     if (points.length < 2) return;
 
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    // Get edge style based on xrefs
+    const style = getEdgeStyleForXref(edge);
+
+    // Add glow effect for better visibility
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = style.color;
+
+    ctx.strokeStyle = style.color;
+    ctx.lineWidth = style.width;
 
     if (isBackEdge) {
       ctx.setLineDash([5, 5]); // Dashed line for back edges
     } else {
-      ctx.setLineDash([]);
+      ctx.setLineDash(style.dash);
     }
 
     ctx.beginPath();
@@ -302,13 +391,25 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
 
     ctx.stroke();
 
+    // Reset shadow for arrowhead (arrowhead has its own shadow)
+    ctx.shadowBlur = 0;
+
     // Draw arrowhead
     const lastPoint = points[points.length - 1];
     const secondLastPoint = points[points.length - 2];
-    drawArrowhead(ctx, secondLastPoint, lastPoint, color);
+    drawArrowhead(ctx, secondLastPoint, lastPoint, style.color);
+
+    // Draw edge label if present
+    if (style.label && isAnalyzed() && useXrefLayout) {
+      const midIdx = Math.floor(points.length / 2);
+      const midPoint = points[midIdx];
+      ctx.fillStyle = style.color;
+      ctx.font = 'bold 9px "Courier New", monospace';
+      ctx.fillText(style.label, midPoint.x + 5, midPoint.y - 5);
+    }
 
     ctx.setLineDash([]); // Reset dash
-  }, [drawArrowhead]);
+  }, [drawArrowhead, getEdgeStyleForXref, isAnalyzed, useXrefLayout]);
 
   // Draw CFG on canvas
   const draw = useCallback(() => {
@@ -414,6 +515,9 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Close context menu on any click
+    setContextMenu(null);
+
     if (e.button === 0) { // Left click
       const blockId = getBlockAtPosition(x, y);
 
@@ -423,12 +527,24 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
           onAddressClick(block.startAddress);
         }
       }
-    } else if (e.button === 2) { // Right click - start panning
+    } else if (e.button === 2) { // Right click
       e.preventDefault();
-      setIsPanning(true);
-      setLastPanPos({ x, y });
+      const blockId = getBlockAtPosition(x, y);
+
+      if (blockId && isAnalyzed()) {
+        // Show context menu for the block
+        setContextMenu({
+          blockId,
+          x: e.clientX,
+          y: e.clientY
+        });
+      } else {
+        // Start panning if not on a block
+        setIsPanning(true);
+        setLastPanPos({ x, y });
+      }
     }
-  }, [getBlockAtPosition, cfg, onAddressClick]);
+  }, [getBlockAtPosition, cfg, onAddressClick, isAnalyzed]);
 
   // Handle mouse up (stop panning)
   const handleMouseUp = useCallback(() => {
@@ -542,13 +658,49 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
         </div>
       )}
 
+      {/* Analysis Status Banner */}
+      {isAnalyzed() ? (
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-900/90 text-green-200 text-xs px-4 py-2 rounded border border-green-600 font-mono">
+          Analysis data available - showing xref-enhanced graph
+        </div>
+      ) : (
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-yellow-900/90 text-yellow-200 text-xs px-4 py-2 rounded border border-yellow-600 font-mono">
+          No analysis data - run &apos;Tools → Binary Analysis&apos; for enhanced features
+        </div>
+      )}
+
       {/* Controls overlay */}
-      <div className="absolute top-2 left-2 bg-slate-800/90 text-slate-200 text-xs px-3 py-2 rounded border border-slate-600 font-mono">
+      <div className="absolute top-14 left-2 bg-slate-800/90 text-slate-200 text-xs px-3 py-2 rounded border border-slate-600 font-mono">
         <div>Blocks: {cfg?.blocks.size || 0}</div>
         <div>Complexity: {cfg?.metadata.cyclomaticComplexity || 0}</div>
         <div>Loops: {cfg?.loops?.length || 0}</div>
+        <div className="mt-2">
+          <label className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
+            <input
+              type="checkbox"
+              checked={showOpcodes}
+              onChange={(e) => setShowOpcodes(e.target.checked)}
+              className="cursor-pointer"
+            />
+            <span>Show Opcodes</span>
+          </label>
+        </div>
+        {isAnalyzed() && (
+          <div className="mt-2">
+            <label className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
+              <input
+                type="checkbox"
+                checked={useXrefLayout}
+                onChange={(e) => setUseXrefLayout(e.target.checked)}
+                className="cursor-pointer"
+              />
+              <span>Xref Colors</span>
+            </label>
+          </div>
+        )}
         <div className="mt-2 text-slate-400">
           <div>Left Click: Select</div>
+          <div>Right Click: Menu</div>
           <div>Right Drag: Pan</div>
           <div>Scroll: Zoom</div>
         </div>
@@ -577,25 +729,135 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-2 left-2 bg-slate-800/90 text-slate-200 text-xs px-3 py-2 rounded border border-slate-600">
-        <div className="font-bold mb-1">Block Types:</div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-900 border border-blue-500"></div>
-          <span>Entry</span>
+      <div className="absolute bottom-2 left-2 bg-slate-800/90 text-slate-200 text-xs px-3 py-2 rounded border border-slate-600 font-mono max-w-xs">
+        <div className="font-bold mb-2">Block Types:</div>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-900 border border-blue-500"></div>
+            <span className="text-[10px]">Entry</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-amber-900 border border-amber-500"></div>
+            <span className="text-[10px]">Branch</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-purple-900 border border-purple-500"></div>
+            <span className="text-[10px]">Call</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-pink-900 border border-pink-500"></div>
+            <span className="text-[10px]">Return</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-amber-900 border border-amber-500"></div>
-          <span>Branch</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-purple-900 border border-purple-500"></div>
-          <span>Call</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-pink-900 border border-pink-500"></div>
-          <span>Return</span>
-        </div>
+
+        {isAnalyzed() && useXrefLayout && (
+          <>
+            <div className="font-bold mb-2 mt-3 pt-2 border-t border-slate-600">Edge Types:</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-blue-400" style={{ borderTop: '2px dashed' }}></div>
+                <span className="text-[10px]">Call</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-green-400"></div>
+                <span className="text-[10px]">Branch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-yellow-400"></div>
+                <span className="text-[10px]">Cond Branch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-gray-400" style={{ borderTop: '1px dotted' }}></div>
+                <span className="text-[10px]">Fall-through</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && cfg && (
+        <div
+          className="fixed z-[10000] bg-slate-800 text-slate-200 text-xs rounded border border-slate-600 shadow-lg overflow-hidden font-mono"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`
+          }}
+        >
+          <div className="px-3 py-2 bg-slate-700 font-bold border-b border-slate-600">
+            {contextMenu.blockId}
+          </div>
+          <button
+            onClick={() => {
+              const block = cfg.blocks.get(contextMenu.blockId);
+              if (block) {
+                const xrefInfo = blockXrefInfo.get(contextMenu.blockId);
+                if (xrefInfo) {
+                  console.log(`[CFG] Callers to ${contextMenu.blockId}:`, xrefInfo.incomingCalls);
+                  // Show all xrefs to this block
+                  for (const inst of block.instructions) {
+                    const xrefs = getXrefsTo(inst.address);
+                    if (xrefs.length > 0) {
+                      console.log(`  0x${inst.address.toString(16)}: ${xrefs.length} xrefs`);
+                      xrefs.forEach(xref => console.log(`    from 0x${xref.from_addr.toString(16)} (${xref.xref_type})`));
+                    }
+                  }
+                }
+              }
+              setContextMenu(null);
+            }}
+            className="w-full px-3 py-2 text-left hover:bg-slate-700 transition-colors"
+          >
+            Show Callers
+          </button>
+          <button
+            onClick={() => {
+              const block = cfg.blocks.get(contextMenu.blockId);
+              if (block) {
+                const xrefInfo = blockXrefInfo.get(contextMenu.blockId);
+                if (xrefInfo) {
+                  console.log(`[CFG] Callees from ${contextMenu.blockId}:`, xrefInfo.outgoingCalls);
+                  // Show all xrefs from this block
+                  for (const inst of block.instructions) {
+                    const xrefs = getXrefsFrom(inst.address);
+                    if (xrefs.length > 0) {
+                      console.log(`  0x${inst.address.toString(16)}: ${xrefs.length} xrefs`);
+                      xrefs.forEach(xref => console.log(`    to 0x${xref.to_addr.toString(16)} (${xref.xref_type})`));
+                    }
+                  }
+                }
+              }
+              setContextMenu(null);
+            }}
+            className="w-full px-3 py-2 text-left hover:bg-slate-700 transition-colors"
+          >
+            Show Callees
+          </button>
+          <button
+            onClick={() => {
+              const block = cfg.blocks.get(contextMenu.blockId);
+              if (block && layout) {
+                const blockLayout = layout.blocks.get(contextMenu.blockId);
+                if (blockLayout) {
+                  // Center on this block
+                  const canvas = canvasRef.current;
+                  if (canvas) {
+                    const centerX = blockLayout.x + blockLayout.width / 2;
+                    const centerY = blockLayout.y + blockLayout.height / 2;
+                    const offsetX = canvas.width / 2 - centerX * transform.scale;
+                    const offsetY = canvas.height / 2 - centerY * transform.scale;
+                    setTransform(prev => ({ ...prev, offsetX, offsetY }));
+                  }
+                }
+              }
+              setContextMenu(null);
+            }}
+            className="w-full px-3 py-2 text-left hover:bg-slate-700 transition-colors border-t border-slate-600"
+          >
+            Focus on Block
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -12,7 +12,7 @@ interface UseDisassemblyNavigationProps {
   onFollowPCChange?: (enabled: boolean) => void;
 }
 
-interface UseDisassemblyNavigationReturn {
+export interface UseDisassemblyNavigationReturn {
   navigationHistory: NavigationEntry[];
   historyIndex: number;
   addToHistory: (address: number, viewMode: ViewMode) => void;
@@ -69,8 +69,13 @@ export function useDisassemblyNavigation({
       setHistoryIndex(newIndex);
       onNavigate(entry.address, entry.viewMode);
       console.log('[Navigation] Back to:', entry.address.toString(16));
+
+      // Disable Follow PC when navigating through history
+      if (onFollowPCChange) {
+        onFollowPCChange(false);
+      }
     }
-  }, [historyIndex, navigationHistory, onNavigate]);
+  }, [historyIndex, navigationHistory, onNavigate, onFollowPCChange]);
 
   // Navigate forward in history
   const navigateForward = useCallback(() => {
@@ -80,8 +85,13 @@ export function useDisassemblyNavigation({
       setHistoryIndex(newIndex);
       onNavigate(entry.address, entry.viewMode);
       console.log('[Navigation] Forward to:', entry.address.toString(16));
+
+      // Disable Follow PC when navigating through history
+      if (onFollowPCChange) {
+        onFollowPCChange(false);
+      }
     }
-  }, [historyIndex, navigationHistory, onNavigate]);
+  }, [historyIndex, navigationHistory, onNavigate, onFollowPCChange]);
 
   // Keyboard navigation (Backspace/Left = back, Right = forward)
   useEffect(() => {

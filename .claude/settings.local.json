@@ -72,7 +72,13 @@
       "Bash(pnpm dev)",
       "Bash(npx tsc:*)",
       "Bash(where wasm-pack:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(git restore:*)",
+      "Bash(pnpm --filter @battleterm/web lint:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.rs)"
     ],
     "deny": []
   },

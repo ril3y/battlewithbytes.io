@@ -182,11 +182,34 @@ export class WasmDisassembler {
       const maxInstructions = 1000; // Limit to prevent infinite loops
       let rawInstructions;
       try {
-        rawInstructions = thumbMode
+        console.log(`[WASM] Calling disassemble_${thumbMode ? 'thumb' : 'arm'} with ${data.length} bytes at 0x${baseAddress.toString(16)}`);
+        console.log(`[WASM] Data preview (first 16 bytes):`, Array.from(data.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
+        const result = thumbMode
           ? disasm.disassemble_thumb(data, maxInstructions)
           : disasm.disassemble_arm(data, maxInstructions);
+
+        console.log(`[WASM] Disassembly result type:`, typeof result);
+        console.log(`[WASM] Disassembly result:`, result);
+
+        if (!result) {
+          throw new Error('WASM disassembler returned null/undefined');
+        }
+
+        rawInstructions = result;
+        console.log(`[WASM] Disassembly returned ${rawInstructions?.length || 0} instructions`);
       } catch (e) {
-        const errorMsg = e instanceof Error ? e.message : String(e);
+        console.error('[WASM] Disassembly exception:', e);
+        console.error('[WASM] Exception type:', typeof e);
+        console.error('[WASM] Exception constructor:', e?.constructor?.name);
+        console.error('[WASM] Exception details:', {
+          message: e?.message,
+          stack: e?.stack,
+          name: e?.name,
+          toString: e?.toString?.()
+        });
+
+        const errorMsg = e instanceof Error ? e.message : (e ? String(e) : 'Unknown WASM error (undefined exception)');
         console.error('[WASM] Disassembly failed:', errorMsg);
         throw new Error(`Failed to disassemble at 0x${baseAddress.toString(16)}: ${errorMsg}`);
       }
@@ -300,7 +323,9 @@ export class WasmDisassembler {
     // Check if previous instruction was a branch/return (gap in code)
     if (index > 0) {
       const prevInst = instructions[index - 1];
-      if (prevInst.isReturn || prevInst.isBranch) {
+      const isReturn = prevInst.mnemonic.toLowerCase().startsWith('bx') ||
+                       prevInst.mnemonic.toLowerCase() === 'pop' && prevInst.operands.includes('pc');
+      if (isReturn || prevInst.isBranch) {
         return true;
       }
     }

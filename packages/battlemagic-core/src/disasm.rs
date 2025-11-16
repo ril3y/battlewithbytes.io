@@ -6,7 +6,6 @@ use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use yaxpeax_arm::armv7::InstDecoder;
 use yaxpeax_arch::{Decoder, LengthedInstruction, U8Reader};
-use crate::error::{Result, BattleMagicError};
 
 /// Disassembled instruction
 #[wasm_bindgen]
@@ -46,6 +45,11 @@ impl Instruction {
         js_sys::Uint8Array::from(&self.bytes[..])
     }
 
+    #[wasm_bindgen(getter)]
+    pub fn text(&self) -> String {
+        self.text.clone()
+    }
+
     /// Get full disassembly string
     pub fn to_string(&self) -> String {
         self.text.clone()
@@ -79,9 +83,9 @@ impl Disassembler {
     }
 
     /// Disassemble ARM Thumb instructions using yaxpeax-arm
-    pub fn disassemble_thumb(&self, data: &[u8], max_instructions: u32) -> Result<Vec<JsValue>> {
+    pub fn disassemble_thumb(&self, data: &[u8], max_instructions: u32) -> Vec<Instruction> {
         if data.is_empty() {
-            return Err(BattleMagicError::InvalidInput("Empty data".into()));
+            return Vec::new();
         }
 
         // Create Thumb decoder
@@ -113,8 +117,7 @@ impl Disassembler {
                         text,
                     };
 
-                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
-                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+                    instructions.push(instruction);
 
                     offset += len;
                     count += 1;
@@ -130,8 +133,7 @@ impl Disassembler {
                             text: format!("??? 0x{:02x}{:02x}", bytes[0], bytes[1]),
                         };
 
-                        instructions.push(serde_wasm_bindgen::to_value(&instruction)
-                            .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+                        instructions.push(instruction);
 
                         offset += 2;
                         count += 1;
@@ -142,13 +144,13 @@ impl Disassembler {
             }
         }
 
-        Ok(instructions)
+        instructions
     }
 
     /// Disassemble ARM (not Thumb) instructions
-    pub fn disassemble_arm(&self, data: &[u8], max_instructions: u32) -> Result<Vec<JsValue>> {
+    pub fn disassemble_arm(&self, data: &[u8], max_instructions: u32) -> Vec<Instruction> {
         if data.is_empty() {
-            return Err(BattleMagicError::InvalidInput("Empty data".into()));
+            return Vec::new();
         }
 
         // Create ARM decoder
@@ -185,8 +187,7 @@ impl Disassembler {
                         text,
                     };
 
-                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
-                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+                    instructions.push(instruction);
 
                     offset += len;
                     count += 1;
@@ -202,8 +203,7 @@ impl Disassembler {
                             bytes[0], bytes[1], bytes[2], bytes[3]),
                     };
 
-                    instructions.push(serde_wasm_bindgen::to_value(&instruction)
-                        .map_err(|e| BattleMagicError::SerializationError(format!("{}", e)))?);
+                    instructions.push(instruction);
 
                     offset += 4;
                     count += 1;
@@ -211,6 +211,6 @@ impl Disassembler {
             }
         }
 
-        Ok(instructions)
+        instructions
     }
 }

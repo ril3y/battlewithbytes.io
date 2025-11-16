@@ -222,6 +222,89 @@ export function init() {
 }
 
 /**
+ * Check if architecture name is supported (WASM export)
+ *
+ * Case-insensitive check against architecture names.
+ *
+ * # Arguments
+ * * `arch_name` - Architecture name (e.g., "ArmCortexM4", "MIPS32")
+ *
+ * # Returns
+ * true if architecture has a working decoder
+ *
+ * # Example (JavaScript)
+ * ```javascript
+ * import { is_architecture_supported } from './battlemagic_analyzer';
+ *
+ * console.log(is_architecture_supported("ArmCortexM4")); // true
+ * console.log(is_architecture_supported("MIPS32"));      // false
+ * ```
+ * @param {string} arch_name
+ * @returns {boolean}
+ */
+export function is_architecture_supported_wasm(arch_name) {
+    const ptr0 = passStringToWasm0(arch_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.is_architecture_supported_wasm(ptr0, len0);
+    return ret !== 0;
+}
+
+/**
+ * Get list of all supported chips (WASM export)
+ *
+ * Returns array of all chip families with working decoders.
+ *
+ * # Returns
+ * JsValue containing array of ArchitectureInfo objects
+ *
+ * # Example (JavaScript)
+ * ```javascript
+ * import { get_supported_chips } from './battlemagic_analyzer';
+ *
+ * const chips = get_supported_chips();
+ * console.log(`Supported chips: ${chips.length}`);
+ * chips.forEach(chip => {
+ *   console.log(`${chip.chipName} - ${chip.manufacturer}`);
+ * });
+ * ```
+ * @returns {any}
+ */
+export function get_supported_chips_wasm() {
+    const ret = wasm.get_supported_chips_wasm();
+    return takeObject(ret);
+}
+
+/**
+ * Detect architecture from target description (WASM export)
+ *
+ * JavaScript-compatible wrapper for detect_architecture().
+ *
+ * # Arguments
+ * * `target_description` - Target string from GDB/BMP
+ *
+ * # Returns
+ * JsValue containing ArchitectureInfo serialized to JavaScript object
+ *
+ * # Example (JavaScript)
+ * ```javascript
+ * import { detect_architecture } from './battlemagic_analyzer';
+ *
+ * const info = detect_architecture("STM32F407VG");
+ * console.log(info.architecture); // "ArmCortexM4"
+ * console.log(info.manufacturer); // "STMicroelectronics"
+ * console.log(info.confidence);   // 0.95
+ * ```
+ * @param {string} target_description
+ * @returns {any}
+ */
+export function detect_architecture_wasm(target_description) {
+    const ptr0 = passStringToWasm0(target_description, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.detect_architecture_wasm(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
  * Type of cross-reference
  * @enum {0 | 1 | 2 | 3 | 4}
  */
@@ -488,18 +571,6 @@ export function __wbg_done_2042aa2670fb1db1(arg0) {
     return ret;
 };
 
-export function __wbg_error_7534b8e9a36f1ab4(arg0, arg1) {
-    let deferred0_0;
-    let deferred0_1;
-    try {
-        deferred0_0 = arg0;
-        deferred0_1 = arg1;
-        console.error(getStringFromWasm0(arg0, arg1));
-    } finally {
-        wasm.__wbindgen_export4(deferred0_0, deferred0_1, 1);
-    }
-};
-
 export function __wbg_get_7bed016f185add81(arg0, arg1) {
     const ret = getObject(arg0)[arg1 >>> 0];
     return addHeapObject(ret);
@@ -572,11 +643,6 @@ export function __wbg_new_5a79be3ab53b8aa5(arg0) {
     return addHeapObject(ret);
 };
 
-export function __wbg_new_8a6f238a6ece86ea() {
-    const ret = new Error();
-    return addHeapObject(ret);
-};
-
 export function __wbg_new_e17d9f43105b08be() {
     const ret = new Array();
     return addHeapObject(ret);
@@ -602,14 +668,6 @@ export function __wbg_set_3f1d0b984ed272ed(arg0, arg1, arg2) {
 
 export function __wbg_set_c213c871859d6500(arg0, arg1, arg2) {
     getObject(arg0)[arg1 >>> 0] = takeObject(arg2);
-};
-
-export function __wbg_stack_0ed75d68575b0f3c(arg0, arg1) {
-    const ret = getObject(arg1).stack;
-    const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-    const len1 = WASM_VECTOR_LEN;
-    getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-    getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 };
 
 export function __wbg_value_692627309814bb8c(arg0) {

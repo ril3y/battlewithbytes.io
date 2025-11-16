@@ -26,6 +26,8 @@ interface MenuBarProps {
     memory: boolean;
   };
   onPanelToggle?: (panel: 'registers' | 'stack' | 'memory' | 'console') => void;
+  onExportDatabase?: () => void;
+  onImportDatabase?: (file: File) => void;
 }
 
 type MenuKey = 'file' | 'view' | 'debug' | 'tools' | 'help' | null;
@@ -42,6 +44,8 @@ export default function MenuBar({
   isAttached = false,
   visiblePanels = { console: true, registers: true, stack: true, memory: true },
   onPanelToggle,
+  onExportDatabase,
+  onImportDatabase,
 }: MenuBarProps) {
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -121,6 +125,32 @@ export default function MenuBar({
             >
               <span>Save Project</span>
               <span className="text-gray-500 text-xs">Ctrl+S</span>
+            </button>
+            <div className="border-t border-gray-700 my-1" />
+            <button
+              onClick={() => handleMenuItemClick(() => onExportDatabase?.())}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Export Analysis (.mdb)
+            </button>
+            <button
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.mdb';
+                input.onchange = (e) => {
+                  const target = e.target as HTMLInputElement;
+                  const file = target.files?.[0];
+                  if (file && onImportDatabase) {
+                    onImportDatabase(file);
+                  }
+                  setOpenMenu(null);
+                };
+                input.click();
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Import Analysis (.mdb)
             </button>
             <div className="border-t border-gray-700 my-1" />
             <button
@@ -276,12 +306,6 @@ export default function MenuBar({
               className="w-full text-left px-4 py-2 hover:bg-gray-700"
             >
               Flash Programmer
-            </button>
-            <button
-              onClick={() => handleMenuItemClick(() => onToolSelect?.('extract'))}
-              className="w-full text-left px-4 py-2 hover:bg-gray-700"
-            >
-              Firmware Extractor
             </button>
             <button
               onClick={() => handleMenuItemClick(() => onToolSelect?.('firmware-dump'))}

@@ -1,27 +1,36 @@
 /**
  * Firmware Dump & Analysis Workflow
  *
- * Integrates two independent subsystems:
- * 1. GDB UART Firmware Dumper - Uses GdbClient to dump firmware via serial
- * 2. WASM Binary Analyzer - Analyzes dumped firmware for xrefs, functions, CFG
+ * Simplified UI component for firmware extraction and analysis.
+ * All business logic moved to FirmwareExtractor service.
  *
  * Workflow:
  * 1. Connect to Black Magic Probe via Web Serial
- * 2. Scan for targets (nRF52, STM32, etc.)
- * 3. Attach and halt target
- * 4. Dump firmware from flash memory
- * 5. Parse ARM Cortex-M vector table
- * 6. Disassemble binary
- * 7. Analyze with WASM (cross-references, control flow)
- * 8. Display results in UI
+ * 2. Scan for targets and detect architecture
+ * 3. Dump firmware using CPU-agnostic service
+ * 4. Parse vector table and validate
+ * 5. Analyze with WASM decoder
+ * 6. Display results in UI
  */
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { GdbClient } from '../lib/gdb/GdbClient';
 import { ConnectionState } from '../lib/gdb/types';
-import { createAnalyzer, type AnalysisResults as WasmAnalysisResults, type XrefResult } from '../lib/wasmAnalyzer';
+import {
+  createAnalyzer,
+  detectArchitecture,
+  type AnalysisResults as WasmAnalysisResults,
+  type XrefResult,
+  type ArchitectureInfo
+} from '../lib/wasmAnalyzer';
+import { useAnalysis } from '../lib/context/AnalysisContext';
+import {
+  dumpFirmware,
+  downloadFirmware,
+  type FirmwareDump,
+} from '../lib/firmware/FirmwareExtractor';
 
 interface DumpProgress {
   stage: 'idle' | 'connecting' | 'scanning' | 'attaching' | 'dumping' | 'parsing' | 'analyzing' | 'complete' | 'error';
@@ -31,69 +40,50 @@ interface DumpProgress {
   totalBytes?: number;
 }
 
-interface VectorTable {
-  initialSP: number;
-  resetVector: number;
-  resetAddress: number;
+interface FirmwareDumpWorkflowProps {
+  gdbClient?: GdbClient;
+  autoStart?: boolean;
+  onOutput?: (message: string) => void;
+  detectedArchInfo?: ArchitectureInfo;
+  onAnalysisComplete?: () => void;
 }
 
-interface FirmwareDump {
-  data: Uint8Array;
-  baseAddress: number;
-  size: number;
-  vectorTable: VectorTable;
-  architecture: 'ARM Thumb' | 'ARM' | 'Unknown';
-  chipInfo?: {
-    name: string;
-    voltage: number | null;
-  };
-}
+export function FirmwareDumpWorkflow({
+  gdbClient: externalGdbClient,
+  autoStart = false,
+  onOutput,
+  detectedArchInfo: externalArchInfo,
+  onAnalysisComplete
+}: FirmwareDumpWorkflowProps = {}) {
+  // Use provided gdbClient or create a new one
+  const [internalGdbClient] = useState(() => new GdbClient({ debug: true }));
+  const gdbClient = externalGdbClient || internalGdbClient;
 
-export function FirmwareDumpWorkflow() {
-  const [gdbClient] = useState(() => new GdbClient({ debug: true }));
+  // Get analysis context
+  const analysisContext = useAnalysis();
+
   const [progress, setProgress] = useState<DumpProgress>({ stage: 'idle', message: 'Ready to start' });
   const [dump, setDump] = useState<FirmwareDump | null>(null);
   const [analysisResults, setAnalysisResults] = useState<WasmAnalysisResults | null>(null);
-
-  /**
-   * Parse ARM Cortex-M vector table from dumped firmware
-   */
-  const parseVectorTable = useCallback((data: Uint8Array): VectorTable => {
-    if (data.length < 8) {
-      throw new Error('Firmware too small to parse vector table');
-    }
-
-    // ARM Cortex-M vector table (little-endian):
-    // 0x00-0x03: Initial stack pointer
-    // 0x04-0x07: Reset vector (with Thumb bit in LSB)
-    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    const initialSP = view.getUint32(0, true); // Little-endian
-    const resetVector = view.getUint32(4, true);
-    const resetAddress = resetVector & 0xFFFFFFFE; // Clear Thumb bit
-
-    return { initialSP, resetVector, resetAddress };
-  }, []);
-
-  /**
-   * Validate ARM Cortex-M vector table
-   */
-  const isValidVectorTable = useCallback((vt: VectorTable): boolean => {
-    // Initial SP should point to valid RAM (typically 0x20000000-0x20040000 for Cortex-M)
-    const spValid = vt.initialSP >= 0x20000000 && vt.initialSP <= 0x30000000;
-
-    // Reset vector should point to flash (0x00000000-0x10000000) and have Thumb bit set
-    const resetValid = (vt.resetVector & 0x1) === 0x1 && vt.resetAddress < 0x10000000;
-
-    return spValid && resetValid;
-  }, []);
+  const [archInfo, setArchInfo] = useState<ArchitectureInfo | null>(null);
+  const [lastTarget, setLastTarget] = useState<{ description: string; voltage: number | null } | null>(null);
+  const [autoStartTriggered, setAutoStartTriggered] = useState(false);
+  const [shouldAutoAnalyze, setShouldAutoAnalyze] = useState(false);
 
   /**
    * Main workflow: Dump firmware from target
    */
   const handleDumpFirmware = useCallback(async () => {
     try {
-      // Stage 1: Connect to Black Magic Probe (if not already connected)
-      if (gdbClient.getState() !== ConnectionState.CONNECTED) {
+      const currentState = gdbClient.getState();
+
+      console.log('[FirmwareDump] Starting dump, current state:', currentState);
+      onOutput?.('[Firmware Dump] Starting firmware dump...');
+
+      // Stage 1: Connect to Black Magic Probe (if needed)
+      if (currentState === ConnectionState.DISCONNECTED || currentState === ConnectionState.ERROR) {
+        console.log('[FirmwareDump] Requesting port...');
+        onOutput?.('[Firmware Dump] Connecting to Black Magic Probe...');
         setProgress({ stage: 'connecting', message: 'Connecting to Black Magic Probe...' });
 
         const port = await gdbClient.requestPort();
@@ -106,116 +96,149 @@ export function FirmwareDumpWorkflow() {
         setProgress({ stage: 'connecting', message: 'Using existing connection...' });
       }
 
-      // Stage 2: Scan for targets
-      setProgress({ stage: 'scanning', message: 'Scanning for targets...' });
-      const { targets, voltage } = await gdbClient.scanSwd();
+      // Stage 2: Scan for targets (if needed)
+      let target;
+      let voltage = null;
 
-      if (targets.length === 0) {
-        throw new Error('No targets found. Check SWD connection.');
+      if (currentState !== ConnectionState.ATTACHED) {
+        setProgress({ stage: 'scanning', message: 'Scanning for targets...' });
+        const scanResult = await gdbClient.scanSwd();
+
+        if (scanResult.targets.length === 0) {
+          throw new Error('No targets found. Check SWD connection.');
+        }
+
+        console.log('Found targets:', scanResult.targets);
+        target = scanResult.targets[0];
+        voltage = scanResult.voltage;
+        setLastTarget({ description: target.description, voltage });
+      } else {
+        setProgress({ stage: 'scanning', message: 'Using already-attached target...' });
+        // Use detected arch info if available, otherwise use stored target
+        if (externalArchInfo) {
+          target = { id: 1, description: externalArchInfo.chip_name, type: 'unknown' };
+          voltage = lastTarget?.voltage || null;
+        } else if (lastTarget) {
+          target = { id: 1, description: lastTarget.description, type: 'unknown' };
+          voltage = lastTarget.voltage;
+        } else if (archInfo) {
+          // Use previously detected architecture
+          target = { id: 1, description: archInfo.chip_name, type: 'unknown' };
+          voltage = null;
+        } else {
+          target = { id: 1, description: 'Unknown (already attached)', type: 'unknown' };
+        }
       }
 
-      console.log('Found targets:', targets);
-      const target = targets[0]; // Use first target
+      // Detect or use pre-detected architecture
+      let detectedArch: ArchitectureInfo;
+      if (externalArchInfo) {
+        detectedArch = externalArchInfo;
+        setArchInfo(detectedArch);
+        onOutput?.(`[Firmware Dump] Using pre-detected: ${detectedArch.chip_name} (${detectedArch.architecture})`);
+      } else if (archInfo) {
+        // Reuse previously detected architecture
+        detectedArch = archInfo;
+        onOutput?.(`[Firmware Dump] Using cached: ${detectedArch.chip_name} (${detectedArch.architecture})`);
+      } else {
+        setProgress({ stage: 'scanning', message: 'Detecting target architecture...' });
+        detectedArch = await detectArchitecture(target.description);
+        setArchInfo(detectedArch);
 
-      // Stage 3: Attach to target
-      setProgress({ stage: 'attaching', message: `Attaching to ${target.description}...` });
-      await gdbClient.attach(target.id);
+        onOutput?.(`[Firmware Dump] Detected: ${detectedArch.chip_name} (${detectedArch.architecture})`);
+        onOutput?.(`[Firmware Dump] Manufacturer: ${detectedArch.manufacturer}`);
+        onOutput?.(`[Firmware Dump] Analysis Support: ${detectedArch.supported ? '✅ Supported' : '❌ Not Supported'}`);
+        onOutput?.(`[Firmware Dump] Confidence: ${(detectedArch.confidence * 100).toFixed(1)}%`);
+      }
 
-      // Halt target so we can read memory
-      await gdbClient.halt();
+      // Check architecture support
+      if (!detectedArch.supported) {
+        console.warn(`Architecture ${detectedArch.architecture} not yet supported for analysis`);
+        onOutput?.(`[Firmware Dump] ⚠️ Architecture ${detectedArch.architecture} not yet supported`);
+      }
 
-      // Wait for target to stop
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Stage 3: Attach to target (if needed)
+      if (currentState !== ConnectionState.ATTACHED) {
+        setProgress({ stage: 'attaching', message: `Attaching to ${target.description}...` });
+        await gdbClient.attach(target.id);
+      }
 
-      // Stage 4: Dump firmware from flash
+      // Halt target
+      try {
+        setProgress({ stage: 'attaching', message: 'Halting target for memory read...' });
+        await gdbClient.halt();
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch {
+        console.log('[FirmwareDump] Halt command completed');
+      }
+
+      // Stage 4: Dump firmware using service
       setProgress({
         stage: 'dumping',
         message: 'Dumping firmware from flash memory...',
         progress: 0,
-        bytesRead: 0,
-        totalBytes: 0x10000 // 64KB default
       });
 
-      const FLASH_BASE = 0x0;
-      const DUMP_SIZE = 0x10000; // 64KB - adjust based on target
-      const CHUNK_SIZE = 256; // Read in 256-byte chunks (reliable with BMP)
-
-      const chunks: Uint8Array[] = [];
-      for (let offset = 0; offset < DUMP_SIZE; offset += CHUNK_SIZE) {
-        const chunk = await gdbClient.readMemory(FLASH_BASE + offset, CHUNK_SIZE);
-        chunks.push(chunk);
-
-        const progressPercent = Math.round((offset / DUMP_SIZE) * 100);
-        setProgress({
-          stage: 'dumping',
-          message: `Dumping firmware... 0x${(FLASH_BASE + offset).toString(16).toUpperCase()}`,
-          progress: progressPercent,
-          bytesRead: offset + chunk.length,
-          totalBytes: DUMP_SIZE
-        });
-      }
-
-      // Concatenate all chunks
-      const firmwareData = new Uint8Array(DUMP_SIZE);
-      let position = 0;
-      for (const chunk of chunks) {
-        firmwareData.set(chunk, position);
-        position += chunk.length;
-      }
-
-      // Stage 5: Parse vector table
-      setProgress({ stage: 'parsing', message: 'Parsing ARM Cortex-M vector table...' });
-      const vectorTable = parseVectorTable(firmwareData);
-
-      if (!isValidVectorTable(vectorTable)) {
-        console.warn('Vector table validation failed:', vectorTable);
-        console.warn('Firmware may be erased, read-protected, or not ARM Cortex-M');
-      }
-
-      const firmwareDump: FirmwareDump = {
-        data: firmwareData,
-        baseAddress: FLASH_BASE,
-        size: DUMP_SIZE,
-        vectorTable,
-        architecture: 'ARM Thumb',
-        chipInfo: {
-          name: target.description,
-          voltage
+      const firmwareDump = await dumpFirmware(
+        gdbClient,
+        detectedArch,
+        (progressPercent, bytesRead, totalBytes) => {
+          setProgress({
+            stage: 'dumping',
+            message: `Dumping firmware... 0x${(detectedArch as ArchitectureInfo).chip_name}`,
+            progress: progressPercent,
+            bytesRead,
+            totalBytes,
+          });
         }
+      );
+
+      if (!firmwareDump) {
+        throw new Error('Firmware dump failed');
+      }
+
+      // Add chip info
+      firmwareDump.chipInfo = {
+        name: target.description,
+        voltage,
       };
 
       setDump(firmwareDump);
       setProgress({
         stage: 'complete',
-        message: `Successfully dumped ${DUMP_SIZE} bytes from ${target.description}`,
-        progress: 100
+        message: `Successfully dumped ${firmwareDump.size} bytes from ${target.description}`,
+        progress: 100,
       });
 
       console.log('Firmware dump complete:', {
         size: firmwareDump.size,
-        vectorTable: {
-          initialSP: `0x${vectorTable.initialSP.toString(16).toUpperCase()}`,
-          resetVector: `0x${vectorTable.resetVector.toString(16).toUpperCase()}`,
-          resetAddress: `0x${vectorTable.resetAddress.toString(16).toUpperCase()}`
-        }
+        baseAddress: `0x${firmwareDump.baseAddress.toString(16).toUpperCase()}`,
+        vectorTable: firmwareDump.vectorTable,
       });
+
+      onOutput?.(`[Firmware Dump] ✅ Dump complete: ${firmwareDump.size} bytes`);
+      if (firmwareDump.vectorTable) {
+        onOutput?.(`[Firmware Dump] Reset Vector: 0x${firmwareDump.vectorTable.resetAddress.toString(16).toUpperCase()}`);
+      }
+
+      // Auto-trigger analysis if architecture is supported
+      if (autoStart && detectedArch?.supported) {
+        onOutput?.(`[Firmware Analysis] Starting WASM analysis...`);
+        setShouldAutoAnalyze(true);
+      }
 
     } catch (error) {
       console.error('Firmware dump error:', error);
+      onOutput?.(`[Firmware Dump] ❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setProgress({
         stage: 'error',
-        message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
-  }, [gdbClient, parseVectorTable, isValidVectorTable]);
+  }, [gdbClient, onOutput, autoStart, externalArchInfo, lastTarget, archInfo]);
 
   /**
    * Analyze dumped firmware with WASM analyzer
-   *
-   * Uses the battlemagic-analyzer WASM module to perform:
-   * 1. ARM Thumb-2 instruction decoding
-   * 2. Cross-reference analysis (calls, branches, data refs)
-   * 3. Function detection
    */
   const handleAnalyzeFirmware = useCallback(async () => {
     if (!dump) {
@@ -223,74 +246,110 @@ export function FirmwareDumpWorkflow() {
       return;
     }
 
+    // Check architecture support
+    if (archInfo && !archInfo.supported) {
+      setProgress({
+        stage: 'error',
+        message: `❌ ${archInfo.architecture} architecture not yet supported for analysis`,
+      });
+      console.error(`Cannot analyze ${archInfo.chip_name}: ${archInfo.architecture} decoder not implemented`);
+      return;
+    }
+
     try {
       setProgress({ stage: 'analyzing', message: 'Loading WASM analyzer...' });
+      onOutput?.(`[Firmware Analysis] Loading WASM analyzer module...`);
 
       console.log('[FirmwareDump] Creating analyzer with base address:', `0x${dump.baseAddress.toString(16)}`);
       console.log('[FirmwareDump] Firmware size:', dump.data.length, 'bytes');
 
-      // Create analyzer instance with base address
+      // Create analyzer instance
       const analyzer = await createAnalyzer(dump.baseAddress);
-
       console.log('[FirmwareDump] Analyzer created successfully');
+      onOutput?.(`[Firmware Analysis] WASM module loaded successfully`);
 
       setProgress({ stage: 'analyzing', message: 'Analyzing firmware binary...' });
+      onOutput?.(`[Firmware Analysis] Decoding ${dump.data.length} bytes of ${archInfo?.architecture} code...`);
 
-      // Analyze firmware directly from bytes (no Capstone needed!)
-      // The WASM module includes a complete ARM Thumb-2 decoder
-      console.log('[FirmwareDump] Calling analyze_from_bytes...');
+      // Analyze firmware
+      const startTime = performance.now();
       const results = analyzer.analyze_from_bytes(dump.data);
+      const endTime = performance.now();
+      const actualTimeMs = Math.round(endTime - startTime);
+      const displayTimeMs = results.analysis_time_ms > 0 ? results.analysis_time_ms : actualTimeMs;
 
       console.log('[FirmwareDump] WASM analysis complete:', {
         totalInstructions: results.total_instructions,
         xrefCount: results.xrefs?.length || 0,
         uniqueTargets: results.unique_targets,
-        analysisTimeMs: results.analysis_time_ms,
-        addressRange: `0x${results.start_address?.toString(16)} - 0x${results.end_address?.toString(16)}`,
-        firstXref: results.xrefs?.[0]
+        timeMs: displayTimeMs,
       });
 
+      // Output results
+      onOutput?.(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      onOutput?.(`🎉 FIRMWARE ANALYSIS COMPLETE!`);
+      onOutput?.(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      onOutput?.(`   ✓ Decoded ${results.total_instructions.toLocaleString()} instructions`);
+      onOutput?.(`   ✓ Found ${results.xrefs.length.toLocaleString()} cross-references`);
+      onOutput?.(`   ✓ Detected ${results.unique_targets.toLocaleString()} unique targets`);
+      onOutput?.(`   ✓ Analysis time: ${displayTimeMs}ms`);
+      onOutput?.(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
       setAnalysisResults(results);
+
+      // Populate analysis context
+      analysisContext.setAnalysisResults(results, dump.baseAddress, dump.size);
 
       setProgress({
         stage: 'complete',
         message: `Analysis complete: Found ${results.xrefs.length} cross-references`,
-        progress: 100
+        progress: 100,
       });
 
+      // Notify parent
+      onAnalysisComplete?.();
+
       // Clean up analyzer
-      console.log('[FirmwareDump] Cleaning up analyzer...');
       analyzer.free();
 
     } catch (error) {
       console.error('[FirmwareDump] Analysis error:', error);
-      // Log stack trace if available
+      onOutput?.(`[Firmware Analysis] ❌ Error: ${error instanceof Error ? error.message : String(error)}`);
       if (error instanceof Error && error.stack) {
         console.error('[FirmwareDump] Stack trace:', error.stack);
       }
       setProgress({
         stage: 'error',
-        message: `Analysis error: ${error instanceof Error ? error.message : String(error)}`
+        message: `Analysis error: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
-  }, [dump]);
+  }, [dump, archInfo, onOutput, analysisContext, onAnalysisComplete]);
 
   /**
    * Download dumped firmware as .bin file
    */
   const handleDownloadDump = useCallback(() => {
     if (!dump) return;
-
-    const blob = new Blob([dump.data], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `firmware_${dump.chipInfo?.name.replace(/\s+/g, '_')}_${Date.now()}.bin`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadFirmware(dump);
   }, [dump]);
+
+  // Auto-start dump & analysis when autoStart prop is true
+  useEffect(() => {
+    if (autoStart && !autoStartTriggered && progress.stage === 'idle') {
+      console.log('[FirmwareDumpWorkflow] Auto-starting dump & analysis...');
+      setAutoStartTriggered(true);
+      handleDumpFirmware();
+    }
+  }, [autoStart, autoStartTriggered, progress.stage, handleDumpFirmware]);
+
+  // Auto-trigger analysis after dump completes
+  useEffect(() => {
+    if (shouldAutoAnalyze && dump && !analysisResults) {
+      console.log('[FirmwareDumpWorkflow] Auto-triggering analysis...');
+      setShouldAutoAnalyze(false);
+      handleAnalyzeFirmware();
+    }
+  }, [shouldAutoAnalyze, dump, analysisResults, handleAnalyzeFirmware]);
 
   return (
     <div className="flex flex-col h-full bg-gray-900 text-gray-100">
@@ -353,8 +412,9 @@ export function FirmwareDumpWorkflow() {
             <>
               <button
                 onClick={handleAnalyzeFirmware}
-                disabled={progress.stage === 'analyzing'}
+                disabled={progress.stage === 'analyzing' || (archInfo !== null && !archInfo.supported)}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
+                title={archInfo && !archInfo.supported ? `${archInfo.architecture} not supported` : 'Analyze firmware with WASM decoder'}
               >
                 Analyze with WASM
               </button>
@@ -387,9 +447,32 @@ export function FirmwareDumpWorkflow() {
                 </span>
               </div>
 
+              {archInfo && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Architecture:</span>
+                    <span className={archInfo.supported ? "text-green-400" : "text-yellow-400"}>
+                      {archInfo.architecture}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Manufacturer:</span>
+                    <span className="text-blue-400">{archInfo.manufacturer}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Analysis Support:</span>
+                    <span className={archInfo.supported ? "text-green-400" : "text-red-400"}>
+                      {archInfo.supported ? '✅ Supported' : '❌ Not Supported'}
+                    </span>
+                  </div>
+                </>
+              )}
+
               <div className="flex justify-between">
                 <span className="text-gray-400">Size:</span>
-                <span>{dump.size.toLocaleString()} bytes</span>
+                <span>{dump.size.toLocaleString()} bytes ({(dump.size / 1024).toFixed(1)} KB)</span>
               </div>
 
               <div className="flex justify-between">
@@ -397,31 +480,28 @@ export function FirmwareDumpWorkflow() {
                 <span>0x{dump.baseAddress.toString(16).toUpperCase().padStart(8, '0')}</span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-400">Architecture:</span>
-                <span>{dump.architecture}</span>
-              </div>
+              {dump.vectorTable && (
+                <div className="border-t border-gray-700 pt-2 mt-2">
+                  <div className="text-gray-400 mb-1">Vector Table:</div>
 
-              <div className="border-t border-gray-700 pt-2 mt-2">
-                <div className="text-gray-400 mb-1">Vector Table:</div>
+                  <div className="flex justify-between ml-4">
+                    <span className="text-gray-400">Initial SP:</span>
+                    <span>0x{dump.vectorTable.initialSP.toString(16).toUpperCase().padStart(8, '0')}</span>
+                  </div>
 
-                <div className="flex justify-between ml-4">
-                  <span className="text-gray-400">Initial SP:</span>
-                  <span>0x{dump.vectorTable.initialSP.toString(16).toUpperCase().padStart(8, '0')}</span>
+                  <div className="flex justify-between ml-4">
+                    <span className="text-gray-400">Reset Vector:</span>
+                    <span>0x{dump.vectorTable.resetVector.toString(16).toUpperCase().padStart(8, '0')}</span>
+                  </div>
+
+                  <div className="flex justify-between ml-4">
+                    <span className="text-gray-400">Reset Address:</span>
+                    <span className="text-yellow-400">
+                      0x{dump.vectorTable.resetAddress.toString(16).toUpperCase().padStart(8, '0')}
+                    </span>
+                  </div>
                 </div>
-
-                <div className="flex justify-between ml-4">
-                  <span className="text-gray-400">Reset Vector:</span>
-                  <span>0x{dump.vectorTable.resetVector.toString(16).toUpperCase().padStart(8, '0')}</span>
-                </div>
-
-                <div className="flex justify-between ml-4">
-                  <span className="text-gray-400">Reset Address:</span>
-                  <span className="text-yellow-400">
-                    0x{dump.vectorTable.resetAddress.toString(16).toUpperCase().padStart(8, '0')}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -436,13 +516,11 @@ export function FirmwareDumpWorkflow() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total Cross-References:</span>
-                  <span className="font-mono text-green-400">{analysisResults.total_xrefs}</span>
+                  <span className="font-mono text-green-400">{analysisResults.xrefs.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Analysis Status:</span>
-                  <span className={analysisResults.analyzed ? 'text-green-400' : 'text-yellow-400'}>
-                    {analysisResults.analyzed ? 'Complete' : 'Incomplete'}
-                  </span>
+                  <span className="text-gray-400">Total Instructions:</span>
+                  <span className="font-mono text-green-400">{analysisResults.total_instructions}</span>
                 </div>
               </div>
 
