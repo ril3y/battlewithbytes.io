@@ -1,0 +1,54 @@
+[package]
+name = "battlemagic-analyzer"
+version = "0.1.0"
+authors = ["ril3y"]
+edition = "2021"
+description = "High-performance binary analysis and cross-reference database for ARM binaries"
+repository = "https://github.com/ril3y/battlewithbytes.io"
+license = "MIT"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "test_analyzer"
+path = "src/bin/test_analyzer.rs"
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
+
+# Optional: better panic messages in browser console
+console_error_panic_hook = { version = "0.1", optional = true }
+
+[features]
+default = []
+# Enable better panic messages in development
+console_errors = ["console_error_panic_hook"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+criterion = "0.5"
+serialport = "4.5"
+
+[[bench]]
+name = "analyzer_bench"
+harness = false
+
+[profile.release]
+# Optimize for small code size while maintaining good performance
+opt-level = "z"          # Optimize for size
+lto = true              # Enable Link Time Optimization
+codegen-units = 1       # Reduce parallel code generation for better optimization
+panic = "abort"         # Remove panic unwinding code
+strip = true           # Strip symbols from binary
+
+[profile.dev]
+# Faster compilation during development
+opt-level = 0
+lto = false
