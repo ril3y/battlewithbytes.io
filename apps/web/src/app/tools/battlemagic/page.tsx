@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import Script from 'next/script';
 import { generateToolSchema } from '@/lib/utils/seo';
 import BattleMagicMonitor from './components/BattleMagicMonitor';
+import { WasmProvider } from './components/WasmProvider';
+import { AnalysisProvider } from './lib/context/AnalysisContext';
 
 export const metadata: Metadata = {
   title: 'BattleMagic - Black Magic Probe Debugger | BattleWithBytes',
@@ -48,7 +50,11 @@ export default function BattleMagicPage() {
         {JSON.stringify(toolSchema)}
       </Script>
 
-      <BattleMagicMonitor />
+      <WasmProvider>
+        <AnalysisProvider>
+          <BattleMagicMonitor />
+        </AnalysisProvider>
+      </WasmProvider>
     </>
   );
 }

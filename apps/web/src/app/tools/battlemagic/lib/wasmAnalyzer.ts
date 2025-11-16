@@ -59,10 +59,21 @@ export interface ArmAnalyzerInstance {
   free(): void;
 }
 
+export interface ArchitectureInfo {
+  architecture: string;      // "ArmCortexM4"
+  chip_name: string;         // "STM32F407"
+  manufacturer: string;      // "STMicroelectronics"
+  supported: boolean;        // true if decoder available
+  confidence: number;        // 0.0-1.0 match confidence
+}
+
 export interface WasmAnalyzerModule {
   ArmAnalyzer: ArmAnalyzerClass;
   XrefType: typeof XrefType;
   init(): void;
+  detect_architecture_wasm(target_description: string): ArchitectureInfo;
+  get_supported_chips_wasm(): ArchitectureInfo[];
+  is_architecture_supported_wasm(arch_name: string): boolean;
 }
 
 let wasmModule: WasmAnalyzerModule | null = null;
@@ -132,6 +143,9 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
         ArmAnalyzer: glueModule.ArmAnalyzer,
         XrefType: glueModule.XrefType || XrefType,
         init: glueModule.init || (() => {}),
+        detect_architecture_wasm: glueModule.detect_architecture_wasm,
+        get_supported_chips_wasm: glueModule.get_supported_chips_wasm,
+        is_architecture_supported_wasm: glueModule.is_architecture_supported_wasm,
       };
 
       return wasmModule;
@@ -171,4 +185,36 @@ export function isWasmLoaded(): boolean {
 export function resetWasmCache(): void {
   wasmModule = null;
   initPromise = null;
+}
+
+/**
+ * Detect target architecture from GDB target description
+ *
+ * @param targetDescription - Target description string from BMP scan (e.g., "STM32F407VG")
+ * @returns Architecture info including support status and confidence
+ */
+export async function detectArchitecture(targetDescription: string): Promise<ArchitectureInfo> {
+  const wasmMod = await loadWasmAnalyzer();
+  return wasmMod.detect_architecture_wasm(targetDescription);
+}
+
+/**
+ * Get list of all supported chips
+ *
+ * @returns Array of all chips in the database with support status
+ */
+export async function getSupportedChips(): Promise<ArchitectureInfo[]> {
+  const wasmMod = await loadWasmAnalyzer();
+  return wasmMod.get_supported_chips_wasm();
+}
+
+/**
+ * Check if a specific architecture is supported for analysis
+ *
+ * @param archName - Architecture name (e.g., "ArmCortexM4", "Mips32")
+ * @returns True if we have a decoder for this architecture
+ */
+export async function isArchitectureSupported(archName: string): Promise<boolean> {
+  const wasmMod = await loadWasmAnalyzer();
+  return wasmMod.is_architecture_supported_wasm(archName);
 }

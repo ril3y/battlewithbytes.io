@@ -38,6 +38,7 @@ import {
 } from '../utils/deviceStorage';
 import { MemoryRegion } from '../lib/memory/MemoryMapParser';
 import { ProjectManager } from '../lib/project/ProjectManager';
+import { detectArchitecture, ArchitectureInfo } from '../lib/wasmAnalyzer';
 
 // Resizable divider component
 function ResizableDivider({ onMouseDown }: { onMouseDown: () => void }) {
@@ -111,6 +112,10 @@ export default function BattleMagicMonitor() {
   const [executionState, setExecutionState] = useState<'running' | 'stopped' | 'stepping'>('stopped');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [currentTarget, setCurrentTarget] = useState<Target | null>(null);
+
+  // Auto-analysis prompt state
+  const [showAnalysisPrompt, setShowAnalysisPrompt] = useState(false);
+  const [detectedArchInfo, setDetectedArchInfo] = useState<ArchitectureInfo | null>(null);
 
   // Ensure we're on the client side before rendering serial-dependent components
   useEffect(() => {
@@ -494,6 +499,27 @@ export default function BattleMagicMonitor() {
         addGdbOutput(`  ${t.id}: ${t.description}`);
       });
       setLastUpdate(new Date());
+
+      // Detect architecture and prompt for analysis if supported
+      if (result.targets.length > 0) {
+        const target = result.targets[0];
+        try {
+          const archInfo = await detectArchitecture(target.description);
+          setDetectedArchInfo(archInfo);
+
+          addGdbOutput(`[Architecture: ${archInfo.architecture}]`);
+          addGdbOutput(`[Manufacturer: ${archInfo.manufacturer}]`);
+          addGdbOutput(`[Analysis Support: ${archInfo.supported ? '✅ Supported' : '❌ Not Supported'}]`);
+          addGdbOutput(`[Match Confidence: ${(archInfo.confidence * 100).toFixed(1)}%]`);
+
+          // If architecture is supported, prompt user for auto-analysis
+          if (archInfo.supported) {
+            setShowAnalysisPrompt(true);
+          }
+        } catch (error) {
+          addGdbOutput(`[Architecture detection failed: ${error}]`);
+        }
+      }
     } catch (error) {
       addGdbOutput(`[Scan failed: ${error}]`);
     }
@@ -1016,8 +1042,8 @@ export default function BattleMagicMonitor() {
                     }}
                   />
                 )}
-                {activeRightPanel === 'firmware-dump' && (
-                  <FirmwareDumpWorkflow />
+                {activeRightPanel === 'firmware-dump' && gdbClient && (
+                  <FirmwareDumpWorkflow gdbClient={gdbClient} />
                 )}
               </div>
 
@@ -1077,6 +1103,60 @@ export default function BattleMagicMonitor() {
           </div>
         )}
       </div>
+
+      {/* Auto-Analysis Prompt Dialog */}
+      {showAnalysisPrompt && detectedArchInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border-2 border-green-500 rounded-lg p-6 max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold text-green-400 mb-4 font-mono">
+              Firmware Analysis Available
+            </h2>
+            <div className="space-y-3 mb-6 font-mono text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Architecture:</span>
+                <span className="text-green-400">{detectedArchInfo.architecture}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Manufacturer:</span>
+                <span className="text-white">{detectedArchInfo.manufacturer}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Chip:</span>
+                <span className="text-white">{detectedArchInfo.chip_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Confidence:</span>
+                <span className="text-green-400">{(detectedArchInfo.confidence * 100).toFixed(1)}%</span>
+              </div>
+            </div>
+            <p className="text-gray-300 mb-6 text-sm">
+              This chip is supported for firmware analysis. Would you like to dump and analyze the firmware now?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowAnalysisPrompt(false);
+                  setActiveRightPanel('firmware-dump');
+                  addGdbOutput('[Auto-analysis starting...]');
+                  addGdbOutput('[Opening firmware dump workflow - analysis will begin automatically]');
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded font-mono transition-colors"
+              >
+                Yes, Analyze
+              </button>
+              <button
+                onClick={() => {
+                  setShowAnalysisPrompt(false);
+                  addGdbOutput('[Analysis prompt dismissed - you can manually analyze later via Tools → Firmware Dump]');
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded font-mono transition-colors"
+              >
+                Not Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Bar - IDA Pro style */}
       {isClient && (
