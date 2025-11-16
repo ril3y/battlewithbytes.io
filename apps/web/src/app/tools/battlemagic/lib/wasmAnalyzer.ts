@@ -11,10 +11,11 @@
  */
 
 export interface XrefResult {
-  from: number;
-  to: number;
+  from_addr: number;
+  to_addr: number;
   xref_type: XrefType;
   instruction: string;
+  operands: string;
 }
 
 export enum XrefType {
@@ -27,8 +28,11 @@ export enum XrefType {
 
 export interface AnalysisResults {
   xrefs: XrefResult[];
-  total_xrefs: number;
-  analyzed: boolean;
+  total_instructions: number;
+  analysis_time_ms: number;
+  unique_targets: number;
+  start_address: number;
+  end_address: number;
 }
 
 export interface ArmAnalyzerClass {

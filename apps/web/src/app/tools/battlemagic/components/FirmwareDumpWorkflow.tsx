@@ -242,16 +242,19 @@ export function FirmwareDumpWorkflow() {
       const results = analyzer.analyze_from_bytes(dump.data);
 
       console.log('[FirmwareDump] WASM analysis complete:', {
-        totalXrefs: results.total_xrefs,
+        totalInstructions: results.total_instructions,
         xrefCount: results.xrefs?.length || 0,
-        analyzed: results.analyzed
+        uniqueTargets: results.unique_targets,
+        analysisTimeMs: results.analysis_time_ms,
+        addressRange: `0x${results.start_address?.toString(16)} - 0x${results.end_address?.toString(16)}`,
+        firstXref: results.xrefs?.[0]
       });
 
       setAnalysisResults(results);
 
       setProgress({
         stage: 'complete',
-        message: `Analysis complete: Found ${results.total_xrefs} cross-references`,
+        message: `Analysis complete: Found ${results.xrefs.length} cross-references`,
         progress: 100
       });
 
@@ -461,10 +464,10 @@ export function FirmwareDumpWorkflow() {
                         {analysisResults.xrefs.slice(0, 20).map((xref: XrefResult, idx: number) => (
                           <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30">
                             <td className="py-1 px-2 text-blue-400">
-                              0x{xref.from.toString(16).toUpperCase().padStart(8, '0')}
+                              0x{xref.from_addr.toString(16).toUpperCase().padStart(8, '0')}
                             </td>
                             <td className="py-1 px-2 text-green-400">
-                              0x{xref.to.toString(16).toUpperCase().padStart(8, '0')}
+                              0x{xref.to_addr.toString(16).toUpperCase().padStart(8, '0')}
                             </td>
                             <td className="py-1 px-2 text-yellow-400">
                               {['Call', 'Branch', 'CondBranch', 'DataRead', 'DataWrite'][xref.xref_type] || 'Unknown'}
