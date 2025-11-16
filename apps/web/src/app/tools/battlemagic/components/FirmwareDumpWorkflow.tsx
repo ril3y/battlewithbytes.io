@@ -92,15 +92,19 @@ export function FirmwareDumpWorkflow() {
    */
   const handleDumpFirmware = useCallback(async () => {
     try {
-      // Stage 1: Connect to Black Magic Probe
-      setProgress({ stage: 'connecting', message: 'Connecting to Black Magic Probe...' });
+      // Stage 1: Connect to Black Magic Probe (if not already connected)
+      if (gdbClient.getState() !== ConnectionState.CONNECTED) {
+        setProgress({ stage: 'connecting', message: 'Connecting to Black Magic Probe...' });
 
-      const port = await gdbClient.requestPort();
-      if (!port) {
-        throw new Error('No serial port selected');
+        const port = await gdbClient.requestPort();
+        if (!port) {
+          throw new Error('No serial port selected');
+        }
+
+        await gdbClient.connect(port, { baudRate: 115200 });
+      } else {
+        setProgress({ stage: 'connecting', message: 'Using existing connection...' });
       }
-
-      await gdbClient.connect(port, { baudRate: 115200 });
 
       // Stage 2: Scan for targets
       setProgress({ stage: 'scanning', message: 'Scanning for targets...' });

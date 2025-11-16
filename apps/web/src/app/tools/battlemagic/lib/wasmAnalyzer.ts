@@ -91,19 +91,43 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
     try {
       console.log('[WasmAnalyzer] Loading WASM module from /wasm/battlemagic_analyzer_bg.wasm');
 
-      // Dynamically import the WASM module
-      // The battlemagic_analyzer.js loader expects the .wasm file to be at the same path
-      const wasmImport = await import('/wasm/battlemagic_analyzer.js');
+      // Import the glue code from local copy (same pattern as wasm-loader.ts)
+      const glueModule = await import(
+        /* webpackChunkName: "battlemagic-analyzer-glue" */
+        /* webpackMode: "lazy" */
+        './battlemagic_analyzer_bg.js'
+      );
 
-      // Initialize the WASM
-      await wasmImport.default('/wasm/battlemagic_analyzer_bg.wasm');
+      // Fetch WASM from public directory
+      const response = await fetch('/wasm/battlemagic_analyzer_bg.wasm');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch WASM: ${response.statusText}`);
+      }
+      const wasmBytes = await response.arrayBuffer();
+
+      // Instantiate WASM with the glue code as imports
+      const result = await WebAssembly.instantiate(wasmBytes, {
+        './battlemagic_analyzer_bg.js': glueModule,
+        wbg: glueModule
+      });
+
+      // Set the WASM instance
+      if (glueModule.__wbg_set_wasm) {
+        glueModule.__wbg_set_wasm(result.instance.exports);
+      }
+
+      // Start the module if needed
+      const startFn = result.instance.exports.__wbindgen_start;
+      if (typeof startFn === 'function') {
+        startFn();
+      }
 
       console.log('[WasmAnalyzer] WASM module initialized successfully');
 
       wasmModule = {
-        ArmAnalyzer: wasmImport.ArmAnalyzer,
-        XrefType: wasmImport.XrefType,
-        init: wasmImport.init || (() => {}),
+        ArmAnalyzer: glueModule.ArmAnalyzer,
+        XrefType: glueModule.XrefType || XrefType,
+        init: glueModule.init || (() => {}),
       };
 
       return wasmModule;
