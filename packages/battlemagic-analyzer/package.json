@@ -1,0 +1,28 @@
+{
+  "name": "battlemagic-analyzer",
+  "version": "0.1.0",
+  "description": "WebAssembly-powered binary analysis engine for ARM and MIPS architectures",
+  "main": "pkg/battlemagic_analyzer.js",
+  "types": "pkg/battlemagic_analyzer.d.ts",
+  "files": [
+    "pkg"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target bundler --out-dir pkg",
+    "test": "cargo test"
+  },
+  "keywords": [
+    "wasm",
+    "binary-analysis",
+    "disassembly",
+    "arm",
+    "mips",
+    "cross-reference",
+    "reverse-engineering"
+  ],
+  "author": "ril3y",
+  "license": "MIT",
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}

@@ -1,0 +1,14 @@
+# Simple ARM function with basic control flow
+# Function: simple_test (0x8000 - 0x8010)
+
+# Entry point
+0x8000 push {lr}
+0x8004 bl #0x9000
+0x8008 cmp r0, #0
+0x800c b.eq #0x8018
+0x8010 mov r0, #1
+0x8014 pop {pc}
+
+# Error path
+0x8018 mov r0, #-1
+0x801c pop {pc}

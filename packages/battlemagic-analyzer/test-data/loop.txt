@@ -1,0 +1,57 @@
+# ARM code with loop patterns
+# Tests backward branches and loop detection
+
+# Simple for loop
+0x1000 mov r4, #0
+
+# Loop start
+0x1004 cmp r4, #10
+0x1008 b.ge #0x1020
+
+# Loop body
+0x100c ldr r0, [pc, #0x20]
+0x1010 bl #0x2000
+0x1014 add r4, #1
+0x1018 b #0x1004
+
+# After loop
+0x1020 bx lr
+
+# Nested loops
+0x2000 push {r4, r5, lr}
+0x2004 mov r4, #0
+
+# Outer loop
+0x2008 cmp r4, #5
+0x200c b.ge #0x2030
+0x2010 mov r5, #0
+
+# Inner loop
+0x2014 cmp r5, #3
+0x2018 b.ge #0x2028
+0x201c bl #0x3000
+0x2020 add r5, #1
+0x2024 b #0x2014
+
+# Outer loop continue
+0x2028 add r4, #1
+0x202c b #0x2008
+
+# Exit
+0x2030 pop {r4, r5, pc}
+
+# Do-while loop
+0x3000 push {r4, lr}
+0x3004 mov r4, #0
+
+# Loop body (executed at least once)
+0x3008 bl #0x4000
+0x300c add r4, #1
+0x3010 cmp r4, #5
+0x3014 b.lt #0x3008
+
+0x3018 pop {r4, pc}
+
+# Helper function
+0x4000 mov r0, #1
+0x4004 bx lr

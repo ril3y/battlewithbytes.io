@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BattleMagic Analyzer - ELF Binary Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #4ec9b0;
+        }
+        .container {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #2d2d30;
+            padding: 15px;
+            border-left: 3px solid #4ec9b0;
+        }
+        .stat-label {
+            color: #858585;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            color: #4ec9b0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .xref-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        .xref-item {
+            padding: 5px;
+            border-bottom: 1px solid #3e3e42;
+        }
+        .xref-item:hover {
+            background: #2d2d30;
+        }
+        .address {
+            color: #ce9178;
+        }
+        .xref-type {
+            color: #569cd6;
+            display: inline-block;
+            min-width: 120px;
+        }
+        .instruction {
+            color: #dcdcaa;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button:disabled {
+            background: #3e3e42;
+            cursor: not-allowed;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #2d2d30;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .info { color: #569cd6; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ BattleMagic Analyzer - ELF Binary Analysis</h1>
+
+    <div class="container">
+        <h2>Load ELF File</h2>
+        <input type="file" id="fileInput" accept=".elf,.so,.bin">
+        <button id="analyzeBtn" disabled>Analyze Binary</button>
+        <div id="status"></div>
+    </div>
+
+    <div class="container" id="resultsContainer" style="display: none;">
+        <h2>Analysis Results</h2>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Instructions Analyzed</div>
+                <div class="stat-value" id="totalInstructions">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Cross-References Found</div>
+                <div class="stat-value" id="xrefCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Unique Targets</div>
+                <div class="stat-value" id="uniqueTargets">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Analysis Time</div>
+                <div class="stat-value" id="analysisTime">0ms</div>
+            </div>
+        </div>
+
+        <h3>Cross-Reference Types</h3>
+        <div id="xrefTypes" class="xref-list" style="max-height: 150px;"></div>
+
+        <h3>Cross-References (First 100)</h3>
+        <div id="xrefList" class="xref-list"></div>
+    </div>
+
+    <script type="module">
+        import init, { ArmAnalyzer } from './pkg/battlemagic_analyzer.js';
+
+        let analyzer = null;
+        let elfData = null;
+
+        const status = document.getElementById('status');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const fileInput = document.getElementById('fileInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function setStatus(message, type = 'info') {
+            status.innerHTML = `<span class="${type}">${message}</span>`;
+        }
+
+        // Initialize WASM
+        async function initWasm() {
+            try {
+                await init();
+                setStatus('✅ WASM module loaded successfully', 'success');
+                return true;
+            } catch (error) {
+                setStatus(`❌ Failed to load WASM: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Simple ARM Thumb instruction decoder (very basic)
+        function createMockDisassembly(bytes, baseAddr) {
+            const instructions = [];
+            let addr = baseAddr;
+            let i = 0;
+
+            while (i < Math.min(bytes.length, 2048)) { // Analyze first 2KB
+                const byte1 = bytes[i];
+                const byte2 = bytes[i + 1] || 0;
+                const word = byte1 | (byte2 << 8);
+
+                let mnemonic = 'unknown';
+                let operands = '';
+                let size = 2;
+
+                // PUSH instruction (b4xx, b5xx)
+                if ((word & 0xfe00) === 0xb400 || (word & 0xfe00) === 0xb500) {
+                    mnemonic = 'push';
+                    const hasLR = (word & 0x0100) !== 0;
+                    operands = hasLR ? '{..., lr}' : '{...}';
+                }
+                // POP instruction (bcxx, bdxx)
+                else if ((word & 0xfe00) === 0xbc00 || (word & 0xfe00) === 0xbd00) {
+                    mnemonic = 'pop';
+                    const hasPC = (word & 0x0100) !== 0;
+                    operands = hasPC ? '{..., pc}' : '{...}';
+                }
+                // BL instruction (f000 xxxx range - 4 bytes)
+                else if ((word & 0xf800) === 0xf000 && i + 3 < bytes.length) {
+                    const byte3 = bytes[i + 2];
+                    const byte4 = bytes[i + 3];
+                    const word2 = byte3 | (byte4 << 8);
+
+                    if ((word2 & 0xd000) === 0xd000) {
+                        mnemonic = 'bl';
+                        const s = (word >> 10) & 1;
+                        const j1 = (word2 >> 13) & 1;
+                        const j2 = (word2 >> 11) & 1;
+                        const imm10 = word & 0x3ff;
+                        const imm11 = word2 & 0x7ff;
+                        let offset = (imm10 << 12) | (imm11 << 1);
+                        if (s) offset -= (1 << 23);
+                        const target = (addr + 4 + offset) & 0xffffffff;
+                        operands = `#0x${target.toString(16)}`;
+                        size = 4;
+                    }
+                }
+                // B instruction (e0xx)
+                else if ((word & 0xf800) === 0xe000) {
+                    mnemonic = 'b';
+                    let offset = (word & 0x7ff) << 1;
+                    if (offset & 0x800) offset -= 0x1000;
+                    const target = (addr + 4 + offset) & 0xffffffff;
+                    operands = `#0x${target.toString(16)}`;
+                }
+                // Conditional branch (d0xx-d7xx)
+                else if ((word & 0xf000) === 0xd000 && (word & 0x0f00) <= 0x0700) {
+                    const cond = (word >> 8) & 0xf;
+                    const condNames = ['eq', 'ne', 'cs', 'cc', 'mi', 'pl', 'vs', 'vc', 'hi', 'ls', 'ge', 'lt', 'gt', 'le'];
+                    mnemonic = `b.${condNames[cond] || 'xx'}`;
+                    let offset = (word & 0xff) << 1;
+                    if (offset & 0x100) offset -= 0x200;
+                    const target = (addr + 4 + offset) & 0xffffffff;
+                    operands = `#0x${target.toString(16)}`;
+                }
+                // LDR PC-relative (48xx)
+                else if ((word & 0xf800) === 0x4800) {
+                    mnemonic = 'ldr';
+                    const rt = (word >> 8) & 0x7;
+                    const imm = (word & 0xff) << 2;
+                    operands = `r${rt}, [pc, #0x${imm.toString(16)}]`;
+                }
+
+                instructions.push({
+                    address: addr,
+                    bytes: Array.from(bytes.slice(i, i + size)),
+                    mnemonic,
+                    operands
+                });
+
+                addr += size;
+                i += size;
+            }
+
+            return instructions;
+        }
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            setStatus(`Loading ${file.name}...`, 'info');
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                elfData = new Uint8Array(event.target.result);
+                setStatus(`✅ Loaded ${elfData.length} bytes from ${file.name}`, 'success');
+                analyzeBtn.disabled = false;
+            };
+            reader.onerror = () => {
+                setStatus('❌ Failed to read file', 'error');
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!elfData) return;
+
+            setStatus('🔍 Analyzing binary...', 'info');
+            analyzeBtn.disabled = true;
+
+            try {
+                // Extract code section (simplified - assumes code at 0x1000)
+                const CODE_OFFSET = 0x1000;
+                const CODE_SIZE = Math.min(0x2000, elfData.length - CODE_OFFSET);
+
+                if (CODE_OFFSET + CODE_SIZE > elfData.length) {
+                    throw new Error('Code offset exceeds file size');
+                }
+
+                const codeBytes = elfData.slice(CODE_OFFSET, CODE_OFFSET + CODE_SIZE);
+
+                // Create disassembly
+                const instructions = createMockDisassembly(codeBytes, CODE_OFFSET);
+                console.log(`Created ${instructions.length} instructions`);
+
+                // Create analyzer and analyze
+                analyzer = new ArmAnalyzer(CODE_OFFSET);
+                const results = analyzer.analyze_from_disasm(instructions);
+
+                console.log('Analysis results:', results);
+
+                // Display results
+                document.getElementById('totalInstructions').textContent = results.total_instructions;
+                document.getElementById('xrefCount').textContent = results.xrefs.length;
+                document.getElementById('uniqueTargets').textContent = results.unique_targets;
+                document.getElementById('analysisTime').textContent = `${results.analysis_time_ms}ms`;
+
+                // Group by type
+                const xrefsByType = {};
+                results.xrefs.forEach(xref => {
+                    xrefsByType[xref.xref_type] = (xrefsByType[xref.xref_type] || 0) + 1;
+                });
+
+                const typesHtml = Object.entries(xrefsByType)
+                    .map(([type, count]) => `<div class="xref-item"><span class="xref-type">${type}:</span> ${count}</div>`)
+                    .join('');
+                document.getElementById('xrefTypes').innerHTML = typesHtml;
+
+                // Display xrefs
+                const xrefsHtml = results.xrefs.slice(0, 100)
+                    .map(xref => `
+                        <div class="xref-item">
+                            <span class="address">0x${xref.from_addr.toString(16).padStart(8, '0')}</span> →
+                            <span class="address">0x${xref.to_addr.toString(16).padStart(8, '0')}</span>
+                            <span class="xref-type">[${xref.xref_type}]</span>
+                            <span class="instruction">${xref.instruction} ${xref.operands}</span>
+                        </div>
+                    `).join('');
+                document.getElementById('xrefList').innerHTML = xrefsHtml;
+
+                resultsContainer.style.display = 'block';
+                setStatus(`✅ Analysis complete! Found ${results.xrefs.length} cross-references`, 'success');
+            } catch (error) {
+                setStatus(`❌ Analysis failed: ${error.message}`, 'error');
+                console.error('Analysis error:', error);
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Initialize on load
+        initWasm();
+    </script>
+</body>
+</html>

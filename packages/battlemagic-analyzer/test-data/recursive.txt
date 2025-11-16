@@ -1,0 +1,67 @@
+# Recursive function examples
+# Tests self-referencing calls
+
+# Factorial function (recursive)
+0x1000 push {r4, lr}
+0x1004 cmp r0, #1
+0x1008 b.le #0x1020
+
+# Recursive case
+0x100c mov r4, r0
+0x1010 sub r0, #1
+0x1014 bl #0x1000
+0x1018 mul r0, r4
+0x101c pop {r4, pc}
+
+# Base case
+0x1020 mov r0, #1
+0x1024 pop {r4, pc}
+
+# Fibonacci function (recursive)
+0x2000 push {r4, r5, lr}
+0x2004 cmp r0, #2
+0x2008 b.le #0x2030
+
+# fib(n-1)
+0x200c mov r4, r0
+0x2010 sub r0, #1
+0x2014 bl #0x2000
+0x2018 mov r5, r0
+
+# fib(n-2)
+0x201c mov r0, r4
+0x2020 sub r0, #2
+0x2024 bl #0x2000
+0x2028 add r0, r5
+0x202c pop {r4, r5, pc}
+
+# Base case
+0x2030 mov r0, #1
+0x2034 pop {r4, r5, pc}
+
+# Mutual recursion example
+# Function A calls B, B calls A
+
+# Function A
+0x3000 push {r4, lr}
+0x3004 cmp r0, #0
+0x3008 b.eq #0x3018
+0x300c sub r0, #1
+0x3010 bl #0x3100
+0x3014 pop {r4, pc}
+
+# Base case A
+0x3018 mov r0, #1
+0x301c pop {r4, pc}
+
+# Function B
+0x3100 push {r4, lr}
+0x3104 cmp r0, #0
+0x3108 b.eq #0x3118
+0x310c sub r0, #1
+0x3110 bl #0x3000
+0x3114 pop {r4, pc}
+
+# Base case B
+0x3118 mov r0, #2
+0x311c pop {r4, pc}
