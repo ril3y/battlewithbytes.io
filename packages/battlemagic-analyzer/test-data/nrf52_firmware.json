@@ -1,0 +1,9 @@
+{
+  "initial_sp": "0x20000400",
+  "reset_vector": "0x8E9",
+  "reset_address": "0x8E8",
+  "firmware_size": 4096,
+  "architecture": "ARM Thumb",
+  "mcu": "NRF52",
+  "flash_base": "0x0"
+}
