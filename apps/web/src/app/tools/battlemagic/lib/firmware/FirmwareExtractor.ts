@@ -357,17 +357,35 @@ export async function dumpFirmware(
 
     // Parse vector table (ARM Cortex-M only)
     let vectorTable: VectorTable | null = null;
+    let effectiveBaseAddress = flashBase;
+
     if (archInfo.architecture.startsWith('ArmCortex')) {
       vectorTable = parseVectorTable(firmwareData, layout.vectorTableOffset);
 
       if (vectorTable && !isValidVectorTable(vectorTable, layout)) {
         console.warn('[FirmwareExtractor] Vector table validation failed - firmware may be erased or read-protected');
       }
+
+      // Detect boot memory aliasing: If reset vector points below flashBase,
+      // the firmware was likely linked for address 0x00000000 (boot alias).
+      // This is common for STM32 where flash at 0x08000000 is aliased to 0x00000000.
+      if (vectorTable && vectorTable.resetAddress < flashBase) {
+        console.log('[FirmwareExtractor] Detected boot memory aliasing:');
+        console.log(`  Reset vector points to: 0x${vectorTable.resetAddress.toString(16).toUpperCase()}`);
+        console.log(`  Physical flash base:    0x${flashBase.toString(16).toUpperCase()}`);
+
+        // Use 0x00000000 as the effective base address for analysis.
+        // This ensures the WASM analyzer can validate vector table entries correctly.
+        effectiveBaseAddress = 0x00000000;
+
+        console.log(`  Using effective base:   0x${effectiveBaseAddress.toString(16).toUpperCase()}`);
+        console.log('  This is normal for STM32 and similar chips with boot aliasing.');
+      }
     }
 
     const dump: FirmwareDump = {
       data: firmwareData,
-      baseAddress: flashBase,
+      baseAddress: effectiveBaseAddress,  // Use detected base address, not physical flash base
       size: flashSize,
       vectorTable,
       architecture: archInfo.architecture,
@@ -376,6 +394,8 @@ export async function dumpFirmware(
 
     console.log('[FirmwareExtractor] Firmware dump complete:', {
       size: firmwareData.length,
+      physicalFlashBase: `0x${flashBase.toString(16).toUpperCase()}`,
+      effectiveBaseAddress: `0x${effectiveBaseAddress.toString(16).toUpperCase()}`,
       vectorTable: vectorTable ? {
         initialSP: `0x${vectorTable.initialSP.toString(16).toUpperCase()}`,
         resetAddress: `0x${vectorTable.resetAddress.toString(16).toUpperCase()}`,

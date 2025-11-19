@@ -478,7 +478,7 @@ export class SwoDecoder extends BaseDecoder {
   private emitTimestampPacket(raw: Uint8Array, timestamp: number): void {
     // Parse timestamp value from variable-length encoding
     let value = 0;
-    let isAbsolute = false;
+    const isAbsolute = false;
     let isContinuation = false;
 
     if (raw.length > 0) {

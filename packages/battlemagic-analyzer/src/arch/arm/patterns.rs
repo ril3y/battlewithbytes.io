@@ -83,6 +83,7 @@ pub fn is_arm_function_end(inst: &Instruction) -> bool {
 ///
 /// # Returns
 /// True if the instruction is a function call
+#[allow(dead_code)]
 pub fn is_function_call(inst: &Instruction) -> bool {
     let mnemonic = inst.mnemonic.to_lowercase();
 
@@ -105,6 +106,7 @@ pub fn is_function_call(inst: &Instruction) -> bool {
 ///
 /// # Returns
 /// Estimated complexity score (higher = more complex)
+#[allow(dead_code)]
 pub fn estimate_function_complexity(inst: &Instruction) -> u32 {
     let mnemonic = inst.mnemonic.to_lowercase();
 
@@ -151,6 +153,7 @@ pub fn estimate_function_complexity(inst: &Instruction) -> u32 {
 }
 
 /// Check if instruction is a conditional branch
+#[allow(dead_code)]
 fn is_conditional_branch(mnemonic: &str) -> bool {
     mnemonic == "beq"    // Branch if equal
         || mnemonic == "bne"    // Branch if not equal
@@ -171,6 +174,7 @@ fn is_conditional_branch(mnemonic: &str) -> bool {
 }
 
 /// Check if instruction is an arithmetic operation
+#[allow(dead_code)]
 fn is_arithmetic_op(mnemonic: &str) -> bool {
     mnemonic == "add"
         || mnemonic == "sub"

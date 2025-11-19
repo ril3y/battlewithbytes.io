@@ -155,19 +155,27 @@ impl<'a, A: Architecture> FunctionDetector<'a, A> {
         functions: &HashMap<u32, FunctionInfo>,
         addr: u32,
     ) -> Option<u32> {
+        let mut best_match: Option<(u32, Option<u32>)> = None;
+
         for (start_addr, func) in functions {
             if addr >= *start_addr {
                 if let Some(end_addr) = func.end_address {
                     if addr <= end_addr {
-                        return Some(*start_addr);
+                        // Address is within bounds, check if this is closer than previous match
+                        if best_match.is_none_or(|(best_start, _)| start_addr > &best_start) {
+                            best_match = Some((*start_addr, Some(end_addr)));
+                        }
                     }
                 } else {
-                    // No end address known, assume it could be in this function
-                    return Some(*start_addr);
+                    // No end address known, this could be a match if it's the closest start
+                    if best_match.is_none_or(|(best_start, _)| start_addr > &best_start) {
+                        best_match = Some((*start_addr, None));
+                    }
                 }
             }
         }
-        None
+
+        best_match.map(|(start, _)| start)
     }
 
     /// Get instructions belonging to a specific function

@@ -4,6 +4,7 @@ import { generateToolSchema } from '@/lib/utils/seo';
 import BattleMagicMonitor from './components/BattleMagicMonitor';
 import { WasmProvider } from './components/WasmProvider';
 import { AnalysisProvider } from './lib/context/AnalysisContext';
+import { FirmwareProvider } from './lib/context/FirmwareContext';
 
 export const metadata: Metadata = {
   title: 'BattleMagic - Black Magic Probe Debugger | BattleWithBytes',
@@ -51,9 +52,11 @@ export default function BattleMagicPage() {
       </Script>
 
       <WasmProvider>
-        <AnalysisProvider>
-          <BattleMagicMonitor />
-        </AnalysisProvider>
+        <FirmwareProvider>
+          <AnalysisProvider>
+            <BattleMagicMonitor />
+          </AnalysisProvider>
+        </FirmwareProvider>
       </WasmProvider>
     </>
   );

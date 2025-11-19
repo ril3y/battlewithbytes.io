@@ -86,13 +86,13 @@ impl XrefDatabase {
             // Index by target address
             self.to_index
                 .entry(xref.to_addr)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(idx);
 
             // Index by source address
             self.from_index
                 .entry(xref.from_addr)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(idx);
         }
 

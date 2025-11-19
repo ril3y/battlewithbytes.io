@@ -8,6 +8,8 @@ use crate::traits::{Architecture, CrossReference, Instruction};
 mod xref;
 mod patterns;
 
+pub mod binary_patterns;
+
 pub use xref::extract_mips_xrefs;
 pub use patterns::{is_mips_function_start, is_mips_function_end};
 

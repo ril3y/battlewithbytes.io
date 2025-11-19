@@ -318,13 +318,13 @@ mod tests {
         );
 
         // Test control flow detection (should all be false for stub)
-        assert_eq!(arch.is_conditional_branch(&inst), false);
-        assert_eq!(arch.is_unconditional_branch(&inst), false);
-        assert_eq!(arch.is_call(&inst), false);
-        assert_eq!(arch.is_comparison(&inst), false);
+        assert!(!arch.is_conditional_branch(&inst));
+        assert!(!arch.is_unconditional_branch(&inst));
+        assert!(!arch.is_call(&inst));
+        assert!(!arch.is_comparison(&inst));
 
         // Test default is_branch implementation (aggregates the above)
-        assert_eq!(arch.is_branch(&inst), false);
+        assert!(!arch.is_branch(&inst));
 
         // Test branch target
         assert_eq!(arch.get_branch_target(&inst), None);
@@ -394,7 +394,7 @@ mod tests {
         );
 
         // is_branch should return true when is_conditional_branch is true
-        assert_eq!(arch.is_branch(&conditional_branch), true);
-        assert_eq!(arch.is_branch(&other_inst), false);
+        assert!(arch.is_branch(&conditional_branch));
+        assert!(!arch.is_branch(&other_inst));
     }
 }

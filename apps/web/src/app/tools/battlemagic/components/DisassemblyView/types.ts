@@ -1,4 +1,4 @@
-import type { DisassembledInstruction } from '../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../lib/arch/arm/disasm';
 import { GdbClient } from '../../lib/gdb/GdbClient';
 
 /**

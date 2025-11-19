@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DisassemblyLine, ViewMode } from '../types';
-import type { DisassembledInstruction } from '../../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
 
 /**
  * Hook for managing all disassembly state
@@ -22,7 +22,7 @@ export function useDisassemblyState() {
   const [jumpedToAddress, setJumpedToAddress] = useState<number | null>(null);
 
   // View configuration state
-  const [bytesToRead, setBytesToRead] = useState<number>(512); // Increased default for better initial view
+  const [bytesToRead, setBytesToRead] = useState<number>(512); // 512 bytes - max reliable for BMP serial
   const [showBytes, setShowBytes] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('linear');
 
@@ -32,6 +32,8 @@ export function useDisassemblyState() {
   const [goToError, setGoToError] = useState<string | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [selectedFunctionAddress, setSelectedFunctionAddress] = useState<number | null>(null);
 
   // UI interaction state
   const [isMouseOverPanel, setIsMouseOverPanel] = useState(false);
@@ -75,6 +77,10 @@ export function useDisassemblyState() {
     setShowCommentModal,
     commentText,
     setCommentText,
+    showRenameModal,
+    setShowRenameModal,
+    selectedFunctionAddress,
+    setSelectedFunctionAddress,
 
     // UI interaction state
     isMouseOverPanel,

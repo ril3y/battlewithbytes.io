@@ -32,6 +32,7 @@ export default function ProjectMenu({
   const [isOpen, setIsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,15 +70,28 @@ export default function ProjectMenu({
     if (hasUnsavedChanges) {
       setShowNewDialog(true);
     } else {
-      onNew();
+      // Show dialog to get project name/description
+      setShowNewProjectDialog(true);
       setIsOpen(false);
     }
   };
 
   const confirmNew = () => {
-    onNew();
+    // Show dialog to get project name/description for new project
+    setShowNewProjectDialog(true);
     setShowNewDialog(false);
     setIsOpen(false);
+  };
+
+  const handleSave = () => {
+    // If project is still "Untitled Project", show Save As dialog
+    if (projectName === 'Untitled Project' || projectName.startsWith('Untitled')) {
+      setShowEditDialog(true);
+      setIsOpen(false);
+    } else {
+      onSave();
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -116,7 +130,7 @@ export default function ProjectMenu({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute top-full left-0 mt-1 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+          <div className="absolute top-full left-0 mt-1 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-[60]">
             <div className="p-2 space-y-1">
               {/* New Project */}
               <button
@@ -131,16 +145,13 @@ export default function ProjectMenu({
 
               {/* Save Project */}
               <button
-                onClick={() => {
-                  onSave();
-                  setIsOpen(false);
-                }}
+                onClick={handleSave}
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 rounded text-sm text-left transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                 </svg>
-                <span>Save Project</span>
+                <span>{projectName === 'Untitled Project' || projectName.startsWith('Untitled') ? 'Save As...' : 'Save Project'}</span>
                 {hasUnsavedChanges && (
                   <span className="ml-auto text-xs text-yellow-400">*</span>
                 )}
@@ -200,19 +211,42 @@ export default function ProjectMenu({
         )}
       </div>
 
-      {/* Edit Project Dialog */}
+      {/* Edit Project Dialog (for editing existing project or Save As) */}
       {showEditDialog && (
         <EditProjectDialog
           currentName={projectName}
+          title={projectName === 'Untitled Project' || projectName.startsWith('Untitled') ? 'Save Project As' : 'Edit Project Info'}
           onSave={(name, description) => {
+            // Update metadata first
             onEditMetadata(name, description);
+            // If this was a Save As, also trigger save (synchronously)
+            if (projectName === 'Untitled Project' || projectName.startsWith('Untitled')) {
+              onSave();
+            }
             setShowEditDialog(false);
           }}
           onCancel={() => setShowEditDialog(false)}
         />
       )}
 
-      {/* New Project Confirmation Dialog */}
+      {/* New Project Dialog (get name/description for new project) */}
+      {showNewProjectDialog && (
+        <EditProjectDialog
+          currentName=""
+          title="New Project"
+          onSave={(name, description) => {
+            // Create new project first
+            onNew();
+            // Immediately set metadata (must be synchronous)
+            onEditMetadata(name, description);
+            // Close dialog
+            setShowNewProjectDialog(false);
+          }}
+          onCancel={() => setShowNewProjectDialog(false)}
+        />
+      )}
+
+      {/* New Project Confirmation Dialog (when unsaved changes exist) */}
       {showNewDialog && (
         <ConfirmDialog
           title="Unsaved Changes"
@@ -231,11 +265,12 @@ export default function ProjectMenu({
  */
 interface EditProjectDialogProps {
   currentName: string;
+  title?: string;
   onSave: (name: string, description: string) => void;
   onCancel: () => void;
 }
 
-function EditProjectDialog({ currentName, onSave, onCancel }: EditProjectDialogProps) {
+function EditProjectDialog({ currentName, title = 'Edit Project Info', onSave, onCancel }: EditProjectDialogProps) {
   const [name, setName] = useState(currentName);
   const [description, setDescription] = useState('');
 
@@ -245,10 +280,17 @@ function EditProjectDialog({ currentName, onSave, onCancel }: EditProjectDialogP
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && name.trim()) {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[70]">
       <div className="bg-gray-900 border border-green-400 rounded-lg p-6 w-[500px] max-w-[90vw]">
-        <h2 className="text-lg font-bold text-green-400 mb-4">Edit Project Info</h2>
+        <h2 className="text-lg font-bold text-green-400 mb-4">{title}</h2>
 
         <div className="space-y-4">
           <div>
@@ -257,6 +299,7 @@ function EditProjectDialog({ currentName, onSave, onCancel }: EditProjectDialogP
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyPress={handleKeyPress}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 focus:outline-none focus:border-green-400"
               placeholder="My Debug Session"
               autoFocus
@@ -308,7 +351,7 @@ interface ConfirmDialogProps {
 
 function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }: ConfirmDialogProps) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[70]">
       <div className="bg-gray-900 border border-yellow-400 rounded-lg p-6 w-[400px] max-w-[90vw]">
         <h2 className="text-lg font-bold text-yellow-400 mb-4">{title}</h2>
         <p className="text-gray-300 mb-6">{message}</p>

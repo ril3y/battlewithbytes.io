@@ -5,7 +5,7 @@
 
 import { BasicBlockAnalyzer } from '../../../lib/cfg/BasicBlockAnalyzer';
 import { BlockType, EdgeType } from '../../../lib/cfg/types';
-import type { DisassembledInstruction } from '../../../lib/arm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../../lib/arch/arm/types';
 
 describe('BasicBlockAnalyzer', () => {
   let analyzer: BasicBlockAnalyzer;

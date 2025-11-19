@@ -77,6 +77,38 @@ export class ProjectManager {
   }
 
   /**
+   * Update cached firmware
+   */
+  updateFirmware(firmware: import('./types').CachedFirmware | undefined): void {
+    this.currentProject.firmware = firmware;
+    this.currentProject.metadata.lastModified = new Date().toISOString();
+    this.hasUnsavedChanges = true;
+  }
+
+  /**
+   * Get cached firmware
+   */
+  getCachedFirmware(): import('./types').CachedFirmware | undefined {
+    return this.currentProject.firmware;
+  }
+
+  /**
+   * Update analysis metadata
+   */
+  updateAnalysis(analysis: import('./types').AnalysisMetadata | undefined): void {
+    this.currentProject.analysis = analysis;
+    this.currentProject.metadata.lastModified = new Date().toISOString();
+    this.hasUnsavedChanges = true;
+  }
+
+  /**
+   * Get analysis metadata
+   */
+  getAnalysisMetadata(): import('./types').AnalysisMetadata | undefined {
+    return this.currentProject.analysis;
+  }
+
+  /**
    * Check if there are unsaved changes
    */
   hasChanges(): boolean {
@@ -106,9 +138,34 @@ export class ProjectManager {
   }
 
   /**
-   * Save project to file (download)
+   * Save project (in-place update to localStorage + MDB)
+   * This updates the project state without downloading a file.
    */
-  saveToFile(): void {
+  async saveProject(): Promise<void> {
+    try {
+      // Update last modified timestamp
+      this.currentProject.metadata.lastModified = new Date().toISOString();
+
+      // Save to localStorage
+      this.saveToLocalStorage();
+
+      // Mark as saved
+      this.hasUnsavedChanges = false;
+      this.callbacks.onProjectSaved?.(this.currentProject);
+
+      console.log('[ProjectManager] Project saved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.callbacks.onError?.(`Failed to save project: ${message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Export project to file (download)
+   * This creates a complete project file with all metadata for sharing/backup.
+   */
+  exportProject(): void {
     try {
       const json = JSON.stringify(this.currentProject, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
@@ -122,12 +179,18 @@ export class ProjectManager {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      this.hasUnsavedChanges = false;
-      this.callbacks.onProjectSaved?.(this.currentProject);
+      console.log('[ProjectManager] Project exported successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.callbacks.onError?.(`Failed to save project: ${message}`);
+      this.callbacks.onError?.(`Failed to export project: ${message}`);
     }
+  }
+
+  /**
+   * @deprecated Use saveProject() for in-place saves or exportProject() for downloads
+   */
+  saveToFile(): void {
+    this.exportProject();
   }
 
   /**
@@ -171,6 +234,16 @@ export class ProjectManager {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.callbacks.onError?.(`Failed to save to localStorage: ${message}`);
+    }
+  }
+
+  /**
+   * Auto-save project to localStorage (if auto-save is enabled)
+   * Returns Promise for async contexts
+   */
+  async autoSave(): Promise<void> {
+    if (this.autoSaveEnabled) {
+      this.saveToLocalStorage();
     }
   }
 

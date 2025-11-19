@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { WasmDisassembler } from '../../../lib/disasm/WasmDisassembler';
-import { ArmDisassembler } from '../../../lib/disasm/ArmDisassembler';
+import { ArmDisassembler } from '../../../lib/arch/arm/disasm';
 
 /**
  * Hook for managing disassembler initialization

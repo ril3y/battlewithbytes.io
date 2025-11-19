@@ -130,7 +130,7 @@ fn parse_memory_reference(operands: &str) -> Option<u32> {
 
     // Extract address from "rt, offset(base)" format
     if let Some(paren_pos) = trimmed.find('(') {
-        let offset_part = &trimmed[..paren_pos].split(',').last()?.trim();
+        let offset_part = &trimmed[..paren_pos].split(',').next_back()?.trim();
         if let Some(hex) = offset_part.strip_prefix("0x") {
             return u32::from_str_radix(hex, 16).ok();
         }

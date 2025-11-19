@@ -5,7 +5,7 @@
  * including color coding and function boundary detection.
  */
 
-import type { DisassembledInstruction } from '../../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
 
 /**
  * Get color class for instruction based on type

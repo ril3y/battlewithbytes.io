@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import type { DisassembledInstruction } from '../../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
 import { ControlFlowGraphView } from '../../ControlFlowGraphView';
 
 interface GraphViewWrapperProps {

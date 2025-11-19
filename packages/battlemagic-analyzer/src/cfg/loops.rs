@@ -100,7 +100,7 @@ impl LoopDetector {
     fn find_back_edges(cfg: &ControlFlowGraph, dom_tree: &DominatorTree) -> Vec<(u32, u32)> {
         let mut back_edges = Vec::new();
 
-        for (_, block) in &cfg.blocks {
+        for block in cfg.blocks.values() {
             let source = block.start_addr;
 
             for &target in &block.successors {

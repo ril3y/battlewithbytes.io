@@ -10,7 +10,7 @@
  */
 
 import { useCallback } from 'react';
-import type { DisassembledInstruction } from '../../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
 import type { DisassemblyLine } from '../types';
 import { useAnalysisOptional } from '../../../lib/context/AnalysisContext';
 import { useXref } from '../../../lib/context/XrefContext';
@@ -62,10 +62,10 @@ export function useEnrichedDisassembly(): UseEnrichedDisassemblyReturn {
       result.isFunctionEntry = true;
     }
 
-    // Get user comment from analysis context
-    const userComment = analysisContext?.getComment(inst.address);
-    if (userComment) {
-      result.comment = userComment;
+    // Get standard comment from analysis context (for backwards compatibility)
+    const standardComment = analysisContext?.getComment(inst.address, 'standard');
+    if (standardComment) {
+      result.comment = standardComment.text;
     }
 
     // Get xref counts from analyzer if available

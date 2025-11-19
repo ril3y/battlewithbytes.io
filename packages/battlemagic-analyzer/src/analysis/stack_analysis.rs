@@ -210,8 +210,8 @@ impl StackAnalyzer {
                 }
             } else {
                 // Positive offset
-                if num_str.starts_with("0x") {
-                    return i32::from_str_radix(&num_str[2..], 16).ok();
+                if let Some(stripped) = num_str.strip_prefix("0x") {
+                    return i32::from_str_radix(stripped, 16).ok();
                 } else {
                     return num_str.parse::<i32>().ok();
                 }

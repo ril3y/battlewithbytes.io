@@ -675,6 +675,48 @@ export class ArmAnalyzer {
         }
     }
     /**
+     * Get ARM Cortex-M vector table entries
+     *
+     * Returns the detected vector table from the firmware. The vector table
+     * contains interrupt handlers and the initial stack pointer.
+     *
+     * # Returns
+     * Array of VectorTableEntry objects containing:
+     * - `vector_number`: Vector index (0 = Initial SP, 1 = Reset, etc.)
+     * - `handler_address`: Handler address (Thumb bit cleared for code vectors)
+     * - `handler_name`: Standard ARM handler name
+     * - `is_valid`: Whether the entry is valid
+     *
+     * # Example
+     * ```javascript
+     * const analyzer = new ArmAnalyzer(0x08000000);
+     * analyzer.analyze_from_bytes(firmwareBytes);
+     * const vectorTable = analyzer.get_vector_table();
+     *
+     * vectorTable.forEach(entry => {
+     *     if (entry.is_valid && entry.vector_number > 0) {
+     *         console.log(`${entry.handler_name}: 0x${entry.handler_address.toString(16)}`);
+     *     }
+     * });
+     * ```
+     * @returns {any}
+     */
+    get_vector_table() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.armanalyzer_get_vector_table(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Get all functions
      * @returns {any}
      */
@@ -1014,7 +1056,7 @@ export function __wbg_new_5a79be3ab53b8aa5(arg0) {
 };
 
 export function __wbg_new_e17d9f43105b08be() {
-    const ret = new Array();
+    const ret = [];
     return addHeapObject(ret);
 };
 

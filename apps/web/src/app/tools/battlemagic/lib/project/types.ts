@@ -68,6 +68,47 @@ export interface SessionNotes {
 }
 
 /**
+ * Cached firmware dump data
+ */
+export interface CachedFirmware {
+  /** Firmware data as base64-encoded string (for JSON serialization) */
+  data: string;
+  /** SHA-256 hash of firmware data */
+  hash: string;
+  /** Base address where firmware is located */
+  baseAddress: number;
+  /** Size of firmware in bytes */
+  size: number;
+  /** When firmware was dumped */
+  dumpedAt: string;
+  /** Target chip name */
+  chipName?: string;
+  /** Architecture (e.g., "ArmCortexM4") */
+  architecture?: string;
+}
+
+/**
+ * Analysis metadata - tracks MDB (Analysis Database) state
+ */
+export interface AnalysisMetadata {
+  /** When firmware was last analyzed */
+  analyzedAt?: string;
+  /** Analysis format version (for future migrations) */
+  analysisVersion?: number;
+  /** MDB database name (for IndexedDB lookup) */
+  mdbDatabaseName?: string;
+  /** Statistics from last analysis */
+  stats?: {
+    totalInstructions: number;
+    functionCount: number;
+    xrefCount: number;
+    analysisTimeMs: number;
+  };
+  /** Firmware hash when analyzed (detect if firmware changed) */
+  firmwareHashAtAnalysis?: string;
+}
+
+/**
  * Complete project data structure
  */
 export interface BattleMagicProject {
@@ -88,6 +129,12 @@ export interface BattleMagicProject {
 
   /** Last active panel/view */
   activePanel?: string;
+
+  /** Cached firmware dump (to avoid re-dumping on every connect) */
+  firmware?: CachedFirmware;
+
+  /** Analysis metadata (tracks MDB state) */
+  analysis?: AnalysisMetadata;
 
   /** Additional custom data for future extensions */
   customData?: Record<string, unknown>;

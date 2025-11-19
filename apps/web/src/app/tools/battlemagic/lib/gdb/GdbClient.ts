@@ -387,7 +387,11 @@ export class GdbClient {
       const response = await this.sendCommand(cmd);
 
       if (response.type !== 'data') {
-        throw new Error('Failed to read memory');
+        const addrStr = typeof address === 'number' ? `0x${address.toString(16)}` : address;
+        if (this.config.debug) {
+          console.error(`[GdbClient] Memory read failed at ${addrStr}, response type: ${response.type}`);
+        }
+        throw new Error(`Failed to read memory at ${addrStr} (response: ${response.type})`);
       }
 
       return RspProtocol.parseMemoryData(response.data);
@@ -406,7 +410,10 @@ export class GdbClient {
       const response = await this.sendCommand(cmd);
 
       if (response.type !== 'data') {
-        throw new Error(`Failed to read memory at 0x${chunkAddr.toString(16)}`);
+        if (this.config.debug) {
+          console.error(`[GdbClient] Memory read failed at 0x${chunkAddr.toString(16)}, response type: ${response.type}`);
+        }
+        throw new Error(`Failed to read memory at 0x${chunkAddr.toString(16)} (response: ${response.type})`);
       }
 
       const chunkData = RspProtocol.parseMemoryData(response.data);
@@ -525,34 +532,157 @@ export class GdbClient {
   }
 
   /**
-   * Get stack backtrace
+   * Get stack backtrace with ARM Thumb-2 unwinding
    *
-   * @returns Stack frame information
+   * This performs basic stack unwinding using the Link Register (LR) chain.
+   * For ARM Cortex-M without full DWARF debug info, we use a heuristic approach:
+   *
+   * 1. Frame 0: Current PC (where we stopped)
+   * 2. Frame 1+: Use LR to find return addresses
+   *
+   * Note: Without complete stack frame info, this is best-effort unwinding.
+   * It works well for typical ARM calling conventions where LR is pushed/popped.
+   *
+   * @returns Stack frame information with addresses
    */
   async getBacktrace(): Promise<Array<{ level: number; address: number; function?: string }>> {
-    // Try to get backtrace using monitor command
-    // Note: qfThreadInfo is for thread listing, not backtrace
-    // For now, we'll use register-based basic backtrace
     const frames: Array<{ level: number; address: number; function?: string }> = [];
 
-    // For now, return basic frame with PC
     try {
       const regs = await this.getFormattedRegisters();
       const pc = regs.get('pc');
       const lr = regs.get('lr');
-      // SP could be used for stack unwinding in future
+      const sp = regs.get('sp');
 
-      if (pc !== undefined) {
-        frames.push({ level: 0, address: pc, function: '<current>' });
+      if (pc === undefined || sp === undefined) {
+        return frames;
       }
-      if (lr !== undefined) {
-        frames.push({ level: 1, address: lr, function: '<return>' });
+
+      // Frame 0: Current execution point
+      frames.push({
+        level: 0,
+        address: pc & ~1 // Clear Thumb bit for display
+      });
+
+      // Frame 1: Immediate caller (from LR)
+      if (lr !== undefined && lr !== 0 && lr !== 0xFFFFFFFF) {
+        // Check if LR looks like a valid code address
+        const lrAddr = lr & ~1; // Clear Thumb bit
+        if (this.isValidCodeAddress(lrAddr)) {
+          frames.push({
+            level: 1,
+            address: lrAddr
+          });
+        }
       }
-    } catch {
-      // Ignore errors, return empty frames
+
+      // Frames 2+: Walk the stack to find pushed LR values
+      // This is heuristic-based since we don't have full unwind info
+      try {
+        const stackFrames = await this.walkStack(sp, 10); // Max 10 frames
+        stackFrames.forEach((addr) => {
+          frames.push({
+            level: frames.length,
+            address: addr & ~1 // Clear Thumb bit
+          });
+        });
+      } catch {
+        // Stack walking failed, but we still have PC and LR
+        // This is expected in some cases, so we silently continue
+      }
+    } catch (error) {
+      // Critical failure - return empty frames
+      if (this.config.debug) {
+        console.error('[getBacktrace] Failed to get backtrace:', error);
+      }
     }
 
     return frames;
+  }
+
+  /**
+   * Walk the stack to find return addresses
+   *
+   * This scans the stack memory looking for values that look like return addresses.
+   * For ARM Cortex-M, we look for values in the code region (typically 0x08000000+)
+   * with the Thumb bit set.
+   *
+   * @param sp - Current stack pointer
+   * @param maxFrames - Maximum number of frames to find
+   * @returns Array of return addresses found on stack
+   */
+  private async walkStack(sp: number, maxFrames: number): Promise<number[]> {
+    const returnAddresses: number[] = [];
+
+    // Read a reasonable chunk of stack (256 bytes = 64 words)
+    // This should cover most typical call depths
+    const STACK_READ_SIZE = 256;
+
+    try {
+      const stackData = await this.readMemory(sp, STACK_READ_SIZE);
+
+      // Scan for potential return addresses (word-aligned, 4 bytes each)
+      for (let offset = 0; offset < stackData.length - 3; offset += 4) {
+        if (returnAddresses.length >= maxFrames) {
+          break;
+        }
+
+        // Read little-endian 32-bit value
+        const value = (
+          stackData[offset] |
+          (stackData[offset + 1] << 8) |
+          (stackData[offset + 2] << 16) |
+          (stackData[offset + 3] << 24)
+        ) >>> 0;
+
+        // Check if this looks like a return address:
+        // 1. Must have Thumb bit set (bit 0 = 1)
+        // 2. Must be in valid code region
+        // 3. Should be odd (Thumb mode)
+        if ((value & 1) === 1) {
+          const addr = value & ~1;
+          if (this.isValidCodeAddress(addr)) {
+            returnAddresses.push(value);
+          }
+        }
+      }
+    } catch (error) {
+      if (this.config.debug) {
+        console.log('[walkStack] Failed to read stack memory:', error);
+      }
+    }
+
+    return returnAddresses;
+  }
+
+  /**
+   * Check if an address looks like valid code
+   *
+   * For ARM Cortex-M, code is typically in:
+   * - 0x00000000 - 0x00100000 (aliased flash)
+   * - 0x08000000 - 0x08100000 (physical flash)
+   * - 0x20000000 - 0x20100000 (SRAM - for code in RAM)
+   *
+   * @param address - Address to check
+   * @returns True if address looks like valid code
+   */
+  private isValidCodeAddress(address: number): boolean {
+    // Aliased flash region
+    if (address >= 0x00000000 && address < 0x00100000) {
+      return true;
+    }
+
+    // Physical flash region (most common for STM32)
+    if (address >= 0x08000000 && address < 0x08100000) {
+      return true;
+    }
+
+    // SRAM region (code in RAM)
+    if (address >= 0x20000000 && address < 0x20100000) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -719,6 +849,156 @@ export class GdbClient {
   }
 
   /**
+   * Reset target and halt at entry point
+   *
+   * This ensures the CPU is at the actual reset vector, not a random execution point.
+   * Essential for accurate firmware dumping and vector table detection.
+   *
+   * Note: Black Magic Probe detaches during reset, so we need to track the target ID
+   * and re-attach after the reset completes.
+   */
+  async resetAndHalt(): Promise<void> {
+    try {
+      // Black Magic Probe detaches during reset, but we can use 'monitor reset halt'
+      // which will reset and halt without requiring a re-attach
+      // However, we need to handle the case where the state changes
+
+      const currentState = this.getState();
+      if (this.config.debug) {
+        console.log('[GdbClient] Current state before reset:', currentState);
+      }
+
+      // Send monitor reset halt command
+      // Note: BMP may report detach, but the target remains halted
+      await this.sendMonitorCommand('reset halt');
+
+      // Give the target time to settle after reset
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Update state to ATTACHED since reset halt keeps us attached
+      this.state = ConnectionState.ATTACHED;
+
+      if (this.config.debug) {
+        console.log('[GdbClient] Target reset and halted at entry point');
+      }
+    } catch (error) {
+      throw new Error(`Failed to reset and halt: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Get reset vector information from target's vector table
+   *
+   * Reads the first two vectors (Initial SP and Reset Handler) to determine:
+   * - Stack pointer initialization value
+   * - Reset handler address (entry point)
+   * - Correct base address from architecture detection
+   *
+   * Uses the architecture-specific flash base address from the memory layout database.
+   * Falls back to common addresses (0x00000000, 0x08000000) if architecture is not provided.
+   *
+   * @param archInfo Optional architecture information with flash_base property
+   * @returns Vector table information including detected base address
+   */
+  async getResetVector(archInfo?: { flash_base?: number }): Promise<{
+    sp: number;
+    resetHandler: number;
+    baseAddress: number;
+  }> {
+    // ARM Cortex-M vector table layout:
+    // Offset 0x00: Initial Stack Pointer (should point to RAM, e.g., 0x2000XXXX)
+    // Offset 0x04: Reset Handler address (with Thumb bit set, e.g., 0x080000XX)
+
+    // Use architecture-specific flash base if provided, otherwise try common addresses
+    const addressesToTry = archInfo?.flash_base !== undefined
+      ? [archInfo.flash_base]
+      : [0x00000000, 0x08000000]; // Try common Cortex-M addresses
+
+    let baseAddress: number | undefined;
+    let vector0Data: Uint8Array | undefined;
+    let vector1Data: Uint8Array | undefined;
+
+    // Try each address until we find valid vector table data
+    for (const addr of addressesToTry) {
+      try {
+        const v0 = await this.readMemory(addr, 4);
+        const v1 = await this.readMemory(addr + 4, 4);
+
+        if (this.config.debug) {
+          console.log(`[getResetVector] Successfully read from 0x${addr.toString(16).toUpperCase()}`);
+        }
+
+        vector0Data = v0;
+        vector1Data = v1;
+        baseAddress = addr;
+        break;
+      } catch {
+        if (this.config.debug) {
+          console.log(`[getResetVector] Failed to read from 0x${addr.toString(16).toUpperCase()}, trying next address...`);
+        }
+        continue;
+      }
+    }
+
+    if (!vector0Data || !vector1Data || baseAddress === undefined) {
+      const triedAddrs = addressesToTry.map(a => `0x${a.toString(16).toUpperCase()}`).join(', ');
+      throw new Error(`Failed to read vector table from addresses: ${triedAddrs}`);
+    }
+
+    // Parse Initial SP (Vector 0) - should point to end of RAM
+    const sp = (
+      vector0Data[0] |
+      (vector0Data[1] << 8) |
+      (vector0Data[2] << 16) |
+      (vector0Data[3] << 24)
+    ) >>> 0; // Unsigned 32-bit
+
+    // Parse Reset Handler (Vector 1) - should point to flash code
+    const resetHandler = (
+      (vector1Data[0] |
+        (vector1Data[1] << 8) |
+        (vector1Data[2] << 16) |
+        (vector1Data[3] << 24)) &
+      ~1 // Clear Thumb bit (LSB)
+    ) >>> 0; // Unsigned 32-bit
+
+    // Validate that Initial SP looks like a RAM address
+    // ARM Cortex-M typically has RAM at 0x20000000 or 0x10000000
+    const isValidSP = (sp >= 0x10000000 && sp < 0x30000000);
+
+    // Validate that Reset Handler looks like a flash address
+    const isValidResetHandler = (
+      (resetHandler >= 0x00000000 && resetHandler < 0x00100000) || // Aliased
+      (resetHandler >= 0x08000000 && resetHandler < 0x08100000)    // Physical
+    );
+
+    if (!isValidSP) {
+      console.warn(`[getResetVector] Suspicious Initial SP: 0x${sp.toString(16).toUpperCase()}`);
+      console.warn('[getResetVector] Expected RAM address (0x10000000-0x30000000)');
+    }
+
+    if (!isValidResetHandler) {
+      console.warn(`[getResetVector] Suspicious Reset Handler: 0x${resetHandler.toString(16).toUpperCase()}`);
+      console.warn('[getResetVector] Expected flash address (0x00000000 or 0x08000000 range)');
+    }
+
+    if (this.config.debug) {
+      console.log('[getResetVector] Vector table analysis:');
+      console.log(`  Base Address:   0x${baseAddress.toString(16).toUpperCase().padStart(8, '0')}`);
+      console.log(`  Initial SP:     0x${sp.toString(16).toUpperCase().padStart(8, '0')}`);
+      console.log(`  Reset Handler:  0x${resetHandler.toString(16).toUpperCase().padStart(8, '0')}`);
+      console.log(`  Valid SP:       ${isValidSP}`);
+      console.log(`  Valid Handler:  ${isValidResetHandler}`);
+    }
+
+    return {
+      sp,
+      resetHandler,
+      baseAddress
+    };
+  }
+
+  /**
    * Flash operations for programming firmware
    */
   async flashErase(address: number, length: number): Promise<void> {
@@ -872,11 +1152,6 @@ export class GdbClient {
    */
   private async sendPacket(command: string): Promise<void> {
     const packet = RspProtocol.encodePacket(command);
-
-    if (this.config.debug) {
-      console.log('TX:', packet);
-    }
-
     await this.transport.send(packet);
     this.pendingAck = this.ackMode;
   }
@@ -889,14 +1164,6 @@ export class GdbClient {
    * @param data - Received data string
    */
   private handleReceivedData(data: string): void {
-    if (this.config.debug && data.length > 0) {
-      console.log('RX (raw):', data.split('').map(c =>
-        c.charCodeAt(0) < 32 || c.charCodeAt(0) > 126
-          ? `[${c.charCodeAt(0).toString(16)}]`
-          : c
-      ).join(''));
-    }
-
     this.receiveBuffer += data;
 
     // Extract packets from buffer
@@ -915,10 +1182,6 @@ export class GdbClient {
    * @param packet - Packet string
    */
   private handlePacket(packet: string): void {
-    if (this.config.debug) {
-      console.log('RX:', packet);
-    }
-
     // Handle ACK/NAK
     if (packet === RspProtocol.ACK) {
       this.pendingAck = false;
@@ -957,10 +1220,6 @@ export class GdbClient {
 
     // Parse response
     const response = RspProtocol.parseResponse(decoded.data);
-
-    if (this.config.debug) {
-      console.log('[GDB] Parsed response:', response, 'currentCommand:', !!this.currentCommand);
-    }
 
     // Handle notifications (async stop events, etc.)
     if (decoded.data.startsWith('%')) {

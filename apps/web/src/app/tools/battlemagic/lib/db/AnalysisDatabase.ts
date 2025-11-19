@@ -12,13 +12,14 @@
  */
 
 const DB_NAME = 'battlemagic-analysis';
-const DB_VERSION = 1;
+const DB_VERSION = 4; // Updated to fix comment storage (composite key: address + comment_type)
 
 // Object store names
 export const STORE_FUNCTIONS = 'functions';
 export const STORE_COMMENTS = 'comments';
 export const STORE_XREFS = 'xrefs';
 export const STORE_METADATA = 'metadata';
+export const STORE_VECTOR_TABLE = 'vector_table';
 
 /**
  * Function entry in database
@@ -29,14 +30,32 @@ export interface DbFunction {
   callers: number[];         // Addresses that call this function
   callees: number[];         // Addresses this function calls
   xref_count: number;        // Total xrefs to this function
+  is_user_renamed?: boolean; // True if user manually renamed this function
 }
+
+/**
+ * Vector table entry in database
+ */
+export interface DbVectorTableEntry {
+  vector_number: number;     // Primary key
+  handler_address: number;   // Handler function address
+  handler_name: string;      // Handler name (can be user-renamed)
+  is_valid: boolean;         // Whether this vector is valid
+}
+
+/**
+ * Comment type enum matching IDA Pro conventions
+ */
+export type CommentType = 'standard' | 'repeatable' | 'anterior' | 'block';
 
 /**
  * Comment entry in database
  */
 export interface DbComment {
-  address: number;           // Primary key
+  id: string;                // Primary key (composite: `${address}_${comment_type}`)
+  address: number;           // Address of the comment
   text: string;              // Comment text
+  comment_type: CommentType; // Comment type (standard, repeatable, anterior, block)
   timestamp: number;         // When comment was created/modified
 }
 
@@ -70,6 +89,7 @@ export interface MdbExport {
   functions: DbFunction[];
   comments: DbComment[];
   xrefs: DbXref[];
+  vector_table?: DbVectorTableEntry[];
 }
 
 /**
@@ -107,9 +127,10 @@ export class AnalysisDatabase {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        console.log('[AnalysisDB] Upgrading database schema...');
+        const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
+        console.log('[AnalysisDB] Upgrading database schema from version', oldVersion, 'to', DB_VERSION);
 
-        // Create object stores
+        // Create object stores (for new databases)
         if (!db.objectStoreNames.contains(STORE_FUNCTIONS)) {
           const functionsStore = db.createObjectStore(STORE_FUNCTIONS, { keyPath: 'address' });
           functionsStore.createIndex('name', 'name', { unique: false });
@@ -117,8 +138,10 @@ export class AnalysisDatabase {
         }
 
         if (!db.objectStoreNames.contains(STORE_COMMENTS)) {
-          const commentsStore = db.createObjectStore(STORE_COMMENTS, { keyPath: 'address' });
+          const commentsStore = db.createObjectStore(STORE_COMMENTS, { keyPath: 'id' });
+          commentsStore.createIndex('address', 'address', { unique: false });
           commentsStore.createIndex('timestamp', 'timestamp', { unique: false });
+          commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
           console.log('[AnalysisDB] Created comments store');
         }
 
@@ -133,6 +156,92 @@ export class AnalysisDatabase {
         if (!db.objectStoreNames.contains(STORE_METADATA)) {
           db.createObjectStore(STORE_METADATA, { keyPath: 'key' });
           console.log('[AnalysisDB] Created metadata store');
+        }
+
+        if (!db.objectStoreNames.contains(STORE_VECTOR_TABLE)) {
+          const vectorTableStore = db.createObjectStore(STORE_VECTOR_TABLE, { keyPath: 'vector_number' });
+          vectorTableStore.createIndex('handler_address', 'handler_address', { unique: false });
+          vectorTableStore.createIndex('is_valid', 'is_valid', { unique: false });
+          console.log('[AnalysisDB] Created vector_table store');
+        }
+
+        // Migration from v1 to v2: Add comment_type field to existing comments
+        if (oldVersion < 2 && oldVersion >= 1) {
+          console.log('[AnalysisDB] Migrating comments to v2 schema (adding comment_type)');
+          const transaction = (event.target as IDBOpenDBRequest).transaction!;
+          const commentsStore = transaction.objectStore(STORE_COMMENTS);
+
+          // Add comment_type index if upgrading from v1
+          if (!commentsStore.indexNames.contains('comment_type')) {
+            commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
+          }
+
+          // Migrate existing comments to have 'standard' type
+          const cursorRequest = commentsStore.openCursor();
+          cursorRequest.onsuccess = (e) => {
+            const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+            if (cursor) {
+              const comment = cursor.value;
+              if (!comment.comment_type) {
+                comment.comment_type = 'standard';
+                cursor.update(comment);
+              }
+              cursor.continue();
+            }
+          };
+        }
+
+        // Migration from v3 to v4: Recreate comments store with composite key
+        if (oldVersion < 4 && oldVersion >= 1) {
+          console.log('[AnalysisDB] Migrating comments to v4 schema (composite key: address + comment_type)');
+          const transaction = (event.target as IDBOpenDBRequest).transaction!;
+
+          // Read all existing comments before deleting the store
+          const oldCommentsStore = transaction.objectStore(STORE_COMMENTS);
+          const existingComments: Array<{address: number; text: string; comment_type: CommentType; timestamp: number}> = [];
+
+          const readRequest = oldCommentsStore.openCursor();
+          readRequest.onsuccess = (e) => {
+            const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+            if (cursor) {
+              const comment = cursor.value;
+              existingComments.push({
+                address: comment.address,
+                text: comment.text,
+                comment_type: comment.comment_type || 'standard',
+                timestamp: comment.timestamp || Date.now(),
+              });
+              cursor.continue();
+            } else {
+              // All comments read, now recreate the store
+              console.log(`[AnalysisDB] Read ${existingComments.length} existing comments`);
+
+              // Delete old comments store
+              if (db.objectStoreNames.contains(STORE_COMMENTS)) {
+                db.deleteObjectStore(STORE_COMMENTS);
+              }
+
+              // Create new comments store with composite key
+              const commentsStore = db.createObjectStore(STORE_COMMENTS, { keyPath: 'id' });
+              commentsStore.createIndex('address', 'address', { unique: false });
+              commentsStore.createIndex('timestamp', 'timestamp', { unique: false });
+              commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
+
+              // Migrate existing comments to new schema
+              existingComments.forEach(comment => {
+                const newComment: DbComment = {
+                  id: `${comment.address}_${comment.comment_type}`,
+                  address: comment.address,
+                  text: comment.text,
+                  comment_type: comment.comment_type,
+                  timestamp: comment.timestamp,
+                };
+                commentsStore.add(newComment);
+              });
+
+              console.log(`[AnalysisDB] Migrated ${existingComments.length} comments to v4 schema`);
+            }
+          };
         }
       };
     });
@@ -316,16 +425,33 @@ export class AnalysisDatabase {
   }
 
   /**
-   * Get a comment by address
+   * Get a comment by address and type
    */
-  async getComment(address: number): Promise<DbComment | null> {
+  async getComment(address: number, commentType: CommentType = 'standard'): Promise<DbComment | null> {
     await this.init();
     const transaction = this.db!.transaction(STORE_COMMENTS, 'readonly');
     const store = transaction.objectStore(STORE_COMMENTS);
+    const id = `${address}_${commentType}`;
 
     return new Promise((resolve, reject) => {
-      const request = store.get(address);
+      const request = store.get(id);
       request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Get all comments at a specific address
+   */
+  async getCommentsAtAddress(address: number): Promise<DbComment[]> {
+    await this.init();
+    const transaction = this.db!.transaction(STORE_COMMENTS, 'readonly');
+    const store = transaction.objectStore(STORE_COMMENTS);
+    const index = store.index('address');
+
+    return new Promise((resolve, reject) => {
+      const request = index.getAll(address);
+      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
@@ -346,15 +472,16 @@ export class AnalysisDatabase {
   }
 
   /**
-   * Delete a comment by address
+   * Delete a comment by address and type
    */
-  async deleteComment(address: number): Promise<void> {
+  async deleteComment(address: number, commentType: CommentType = 'standard'): Promise<void> {
     await this.init();
     const transaction = this.db!.transaction(STORE_COMMENTS, 'readwrite');
     const store = transaction.objectStore(STORE_COMMENTS);
+    const id = `${address}_${commentType}`;
 
     return new Promise((resolve, reject) => {
-      const request = store.delete(address);
+      const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
@@ -448,6 +575,66 @@ export class AnalysisDatabase {
     return new Promise((resolve, reject) => {
       const request = index.getAll(toAddr);
       request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // ============================================================================
+  // Vector Table Store Operations
+  // ============================================================================
+
+  /**
+   * Save vector table entries (batch operation)
+   */
+  async saveVectorTable(entries: DbVectorTableEntry[]): Promise<void> {
+    await this.init();
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readwrite');
+    const store = transaction.objectStore(STORE_VECTOR_TABLE);
+
+    return new Promise((resolve, reject) => {
+      let pending = entries.length;
+      if (pending === 0) {
+        resolve();
+        return;
+      }
+
+      entries.forEach(entry => {
+        const request = store.put(entry);
+        request.onsuccess = () => {
+          pending--;
+          if (pending === 0) resolve();
+        };
+        request.onerror = () => reject(request.error);
+      });
+    });
+  }
+
+  /**
+   * Get all vector table entries
+   */
+  async getAllVectorTableEntries(): Promise<DbVectorTableEntry[]> {
+    await this.init();
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readonly');
+    const store = transaction.objectStore(STORE_VECTOR_TABLE);
+
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Get vector table entry by vector number
+   */
+  async getVectorTableEntry(vectorNum: number): Promise<DbVectorTableEntry | null> {
+    await this.init();
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readonly');
+    const store = transaction.objectStore(STORE_VECTOR_TABLE);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(vectorNum);
+      request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
   }
@@ -652,6 +839,48 @@ export class AnalysisDatabase {
       xrefs: xrefs.length,
       lastModified,
     };
+  }
+
+  // ============================================================================
+  // User Data Preservation (for re-analysis)
+  // ============================================================================
+
+  /**
+   * Get all user-renamed functions
+   * These should be preserved when re-analyzing firmware
+   */
+  async getUserRenamedFunctions(): Promise<Map<number, string>> {
+    await this.init();
+    const allFunctions = await this.getAllFunctions();
+    const userRenamed = new Map<number, string>();
+
+    allFunctions.forEach(func => {
+      if (func.is_user_renamed) {
+        userRenamed.set(func.address, func.name);
+      }
+    });
+
+    return userRenamed;
+  }
+
+  /**
+   * Clear auto-generated data (xrefs, loops, stack analysis)
+   * Preserves user data (comments, function renames)
+   */
+  async clearAutoGeneratedData(): Promise<void> {
+    await this.init();
+    const transaction = this.db!.transaction(
+      [STORE_XREFS, STORE_VECTOR_TABLE, STORE_FUNCTIONS],
+      'readwrite'
+    );
+
+    await Promise.all([
+      this.clearStore(transaction.objectStore(STORE_XREFS)),
+      this.clearStore(transaction.objectStore(STORE_VECTOR_TABLE)),
+      this.clearStore(transaction.objectStore(STORE_FUNCTIONS)),
+    ]);
+
+    console.log('[AnalysisDB] Cleared auto-generated data (xrefs, vector table, functions)');
   }
 }
 

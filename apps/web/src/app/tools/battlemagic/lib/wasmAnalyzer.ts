@@ -66,10 +66,18 @@ export interface FunctionInfo {
   complexity: number;
 }
 
+export interface VectorTableEntry {
+  vector_number: number;
+  handler_address: number;
+  handler_name: string;
+  is_valid: boolean;
+}
+
 export interface AnalysisResults {
   xrefs: XrefResult[];
   loops: Loop[];
   functions: FunctionInfo[];
+  vector_table?: VectorTableEntry[];
   total_instructions: number;
   analysis_time_ms: number;
   unique_targets: number;
@@ -101,6 +109,7 @@ export interface ArmAnalyzerInstance {
   analyze_from_disasm(disasmData: DisasmData): AnalysisResults;
   get_xrefs_to(address: number): XrefResult[];
   get_xrefs_from(address: number): XrefResult[];
+  get_vector_table(): VectorTableEntry[];
   xref_count(): number;
   is_analyzed(): boolean;
   reset(): void;
@@ -113,6 +122,7 @@ export interface ArchitectureInfo {
   manufacturer: string;      // "STMicroelectronics"
   supported: boolean;        // true if decoder available
   confidence: number;        // 0.0-1.0 match confidence
+  flash_base?: number;       // Optional flash base address from vector table
 }
 
 export interface WasmAnalyzerModule {
@@ -238,12 +248,17 @@ export function resetWasmCache(): void {
 /**
  * Detect target architecture from GDB target description
  *
+ * Uses the TypeScript chip database instead of WASM for flexibility.
+ * This allows users to add custom chips without recompiling WASM.
+ *
  * @param targetDescription - Target description string from BMP scan (e.g., "STM32F407VG")
  * @returns Architecture info including support status and confidence
  */
 export async function detectArchitecture(targetDescription: string): Promise<ArchitectureInfo> {
-  const wasmMod = await loadWasmAnalyzer();
-  return wasmMod.detect_architecture_wasm(targetDescription);
+  // Use TypeScript chip database (supports custom chips)
+  const { getChipDatabase } = await import('./chips/ChipDatabase');
+  const chipDb = getChipDatabase();
+  return chipDb.detectArchitecture(targetDescription);
 }
 
 /**
@@ -252,8 +267,28 @@ export async function detectArchitecture(targetDescription: string): Promise<Arc
  * @returns Array of all chips in the database with support status
  */
 export async function getSupportedChips(): Promise<ArchitectureInfo[]> {
-  const wasmMod = await loadWasmAnalyzer();
-  return wasmMod.get_supported_chips_wasm();
+  const { getChipDatabase } = await import('./chips/ChipDatabase');
+  const chipDb = getChipDatabase();
+  await chipDb.ready();
+
+  return chipDb.getAllChips()
+    .filter(chip => chip.supported)
+    .map(chip => ({
+      architecture: chip.architecture,
+      chip_name: chip.family,
+      manufacturer: chip.manufacturer,
+      supported: chip.supported,
+      confidence: 1.0,
+      architecture_name: chip.architecture,
+      isa_family: chip.architecture.startsWith('ArmCortex') ? 'ARM' :
+                  chip.architecture.startsWith('Mips') ? 'MIPS' :
+                  chip.architecture.startsWith('RiscV') ? 'RISC-V' : 'Unknown',
+      flash_base: parseInt(chip.flashBase, 16),
+      flash_size: parseInt(chip.flashSize, 16),
+      ram_base: parseInt(chip.ramBase, 16),
+      ram_size: parseInt(chip.ramSize, 16),
+      vector_table_offset: chip.vectorTableOffset,
+    }));
 }
 
 /**
@@ -263,6 +298,16 @@ export async function getSupportedChips(): Promise<ArchitectureInfo[]> {
  * @returns True if we have a decoder for this architecture
  */
 export async function isArchitectureSupported(archName: string): Promise<boolean> {
-  const wasmMod = await loadWasmAnalyzer();
-  return wasmMod.is_architecture_supported_wasm(archName);
+  // ARM Cortex-M architectures are supported
+  const supported = [
+    'ArmCortexM0',
+    'ArmCortexM0Plus',
+    'ArmCortexM3',
+    'ArmCortexM4',
+    'ArmCortexM7',
+    'ArmCortexM23',
+    'ArmCortexM33',
+  ];
+
+  return supported.includes(archName);
 }

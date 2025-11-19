@@ -16,11 +16,18 @@ export function formatAddress(addr: number): string {
 
 /**
  * Format byte array for display as space-separated hex values
+ * Limits to first 5 bytes for readability
  * @param bytes - Byte array to format
  * @returns Formatted byte string (e.g., "48 65 6C 6C 6F")
  */
-export function formatBytes(bytes: Uint8Array): string {
-  return Array.from(bytes)
+export function formatBytes(bytes: Uint8Array | undefined): string {
+  // Defensive: Handle undefined or null bytes
+  if (!bytes || bytes.length === 0) {
+    return '';
+  }
+
+  const maxBytes = Math.min(bytes.length, 5);
+  return Array.from(bytes.slice(0, maxBytes))
     .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
     .join(' ');
 }

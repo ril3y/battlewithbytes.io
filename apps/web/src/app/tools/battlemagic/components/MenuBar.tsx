@@ -4,14 +4,16 @@
  * MenuBar Component
  *
  * Professional menu bar with File, View, Debug, Tools, Help menus
- * IDA Pro-inspired design
+ * IDA Pro / VS Code-inspired design with streamlined layout
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { ConnectionState } from '../lib/gdb/types';
 
 interface MenuBarProps {
   onNewProject?: () => void;
   onSaveProject?: () => void;
+  onExportProject?: () => void;
   onLoadProject?: (file: File) => void;
   onDisconnect?: () => void;
   onViewToggle?: (view: string) => void;
@@ -28,6 +30,14 @@ interface MenuBarProps {
   onPanelToggle?: (panel: 'registers' | 'stack' | 'memory' | 'console') => void;
   onExportDatabase?: () => void;
   onImportDatabase?: (file: File) => void;
+  onReAnalyze?: () => void;
+  gdbState?: ConnectionState;
+  uartConnected?: boolean;
+  onConnectGdb?: () => void;
+  onDisconnectGdb?: () => void;
+  onConnectUart?: () => void;
+  onDisconnectUart?: () => void;
+  hasCachedFirmware?: boolean;
 }
 
 type MenuKey = 'file' | 'view' | 'debug' | 'tools' | 'help' | null;
@@ -35,6 +45,7 @@ type MenuKey = 'file' | 'view' | 'debug' | 'tools' | 'help' | null;
 export default function MenuBar({
   onNewProject,
   onSaveProject,
+  onExportProject,
   onLoadProject,
   onDisconnect,
   onViewToggle,
@@ -46,6 +57,14 @@ export default function MenuBar({
   onPanelToggle,
   onExportDatabase,
   onImportDatabase,
+  onReAnalyze,
+  gdbState = ConnectionState.DISCONNECTED,
+  uartConnected = false,
+  onConnectGdb,
+  onDisconnectGdb,
+  onConnectUart,
+  onDisconnectUart,
+  hasCachedFirmware = false,
 }: MenuBarProps) {
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -85,18 +104,42 @@ export default function MenuBar({
     setOpenMenu(null);
   };
 
+  // Helper to get connection status indicator
+  const getStatusColor = (state: ConnectionState) => {
+    switch (state) {
+      case ConnectionState.CONNECTED:
+      case ConnectionState.ATTACHED:
+        return 'text-green-500';
+      case ConnectionState.CONNECTING:
+        return 'text-amber-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
+  const getUartStatusColor = () => {
+    return uartConnected ? 'text-green-500' : 'text-gray-500';
+  };
+
   return (
-    <div ref={menuRef} className="bg-gray-900 border-b border-gray-700 flex items-center text-sm font-mono relative z-50 h-8">
-      {/* File Menu */}
-      <div className="relative">
-        <button
-          onClick={() => handleMenuClick('file')}
-          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
-            openMenu === 'file' ? 'bg-gray-800 text-white' : ''
-          }`}
-        >
-          File
-        </button>
+    <div ref={menuRef} className="bg-gray-900 border-b border-gray-700 flex items-center text-sm font-mono relative z-50 h-12 px-2">
+      {/* Title */}
+      <div className="flex items-center mr-2">
+        <span className="text-gray-200 font-semibold text-base">BattleMagic</span>
+      </div>
+
+      {/* Menu Items */}
+      <div className="flex items-center">
+        {/* File Menu */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('file')}
+            className={`px-3 h-12 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+              openMenu === 'file' ? 'bg-gray-800 text-white' : ''
+            }`}
+          >
+            File
+          </button>
         {openMenu === 'file' && (
           <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
             <button
@@ -125,6 +168,12 @@ export default function MenuBar({
             >
               <span>Save Project</span>
               <span className="text-gray-500 text-xs">Ctrl+S</span>
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onExportProject?.())}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Export Project (.bmproj)
             </button>
             <div className="border-t border-gray-700 my-1" />
             <button
@@ -171,16 +220,16 @@ export default function MenuBar({
         )}
       </div>
 
-      {/* View Menu */}
-      <div className="relative">
-        <button
-          onClick={() => handleMenuClick('view')}
-          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
-            openMenu === 'view' ? 'bg-gray-800 text-white' : ''
-          }`}
-        >
-          View
-        </button>
+        {/* View Menu */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('view')}
+            className={`px-3 h-12 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+              openMenu === 'view' ? 'bg-gray-800 text-white' : ''
+            }`}
+          >
+            View
+          </button>
         {openMenu === 'view' && (
           <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
             <button
@@ -209,6 +258,15 @@ export default function MenuBar({
             >
               <span>{activeView === 'analysis' ? '✓' : ' '}</span>
               <span>Analysis</span>
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onViewToggle?.('vector-table'))}
+              className={`w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center gap-2 ${
+                activeView === 'vector-table' ? 'text-green-400' : ''
+              }`}
+            >
+              <span>{activeView === 'vector-table' ? '✓' : ' '}</span>
+              <span>Vector Table</span>
             </button>
             <div className="border-t border-gray-700 my-1" />
             <div className="px-4 py-1 text-xs text-gray-500">Panels</div>
@@ -244,17 +302,17 @@ export default function MenuBar({
         )}
       </div>
 
-      {/* Debug Menu */}
-      <div className="relative">
-        <button
-          onClick={() => handleMenuClick('debug')}
-          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-            openMenu === 'debug' ? 'bg-gray-800 text-white' : ''
-          }`}
-          disabled={!isAttached}
-        >
-          Debug
-        </button>
+        {/* Debug Menu */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('debug')}
+            className={`px-3 h-12 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+              openMenu === 'debug' ? 'bg-gray-800 text-white' : ''
+            }`}
+            disabled={!isAttached}
+          >
+            Debug
+          </button>
         {openMenu === 'debug' && (
           <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
             <button className="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center">
@@ -289,16 +347,16 @@ export default function MenuBar({
         )}
       </div>
 
-      {/* Tools Menu */}
-      <div className="relative">
-        <button
-          onClick={() => handleMenuClick('tools')}
-          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
-            openMenu === 'tools' ? 'bg-gray-800 text-white' : ''
-          }`}
-        >
-          Tools
-        </button>
+        {/* Tools Menu */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('tools')}
+            className={`px-3 h-12 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+              openMenu === 'tools' ? 'bg-gray-800 text-white' : ''
+            }`}
+          >
+            Tools
+          </button>
         {openMenu === 'tools' && (
           <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
             <button
@@ -345,34 +403,96 @@ export default function MenuBar({
             >
               Cross-References
             </button>
+            <button
+              onClick={() => handleMenuItemClick(() => onReAnalyze?.())}
+              disabled={!hasCachedFirmware}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={hasCachedFirmware ? 'Re-analyze cached firmware (preserves comments and renames)' : 'No cached firmware available'}
+            >
+              Re-analyze Firmware
+            </button>
+            <div className="border-t border-gray-700 my-1" />
+            <button
+              onClick={() => handleMenuItemClick(() => onToolSelect?.('chip-settings'))}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            >
+              Chip Database
+            </button>
           </div>
         )}
       </div>
 
-      {/* Help Menu */}
-      <div className="relative">
+        {/* Help Menu */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('help')}
+            className={`px-3 h-12 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
+              openMenu === 'help' ? 'bg-gray-800 text-white' : ''
+            }`}
+          >
+            Help
+          </button>
+          {openMenu === 'help' && (
+            <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
+                Documentation
+              </button>
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
+                Keyboard Shortcuts
+              </button>
+              <div className="border-t border-gray-700 my-1" />
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
+                About BattleMagic
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Spacer - pushes connection controls to the right */}
+      <div className="flex-1" />
+
+      {/* Connection Controls */}
+      <div className="flex items-center gap-2 border-l border-gray-700 pl-4">
+        {/* GDB Connection */}
         <button
-          onClick={() => handleMenuClick('help')}
-          className={`px-3 h-8 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-0 outline-none ${
-            openMenu === 'help' ? 'bg-gray-800 text-white' : ''
-          }`}
+          onClick={() => {
+            if (gdbState === ConnectionState.DISCONNECTED) {
+              onConnectGdb?.();
+            } else {
+              onDisconnectGdb?.();
+            }
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded hover:bg-gray-800 transition-colors"
+          title={
+            gdbState === ConnectionState.DISCONNECTED
+              ? 'Connect to GDB'
+              : gdbState === ConnectionState.CONNECTING
+              ? 'Connecting to GDB...'
+              : gdbState === ConnectionState.CONNECTED
+              ? 'Connected to GDB'
+              : 'Attached to target'
+          }
         >
-          Help
+          <span className="text-gray-300 text-xs">GDB</span>
+          <span className={`text-lg leading-none ${getStatusColor(gdbState)}`}>●</span>
         </button>
-        {openMenu === 'help' && (
-          <div className="absolute top-full left-0 bg-gray-800 border border-gray-700 shadow-lg min-w-[200px] py-1">
-            <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
-              Documentation
-            </button>
-            <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
-              Keyboard Shortcuts
-            </button>
-            <div className="border-t border-gray-700 my-1" />
-            <button className="w-full text-left px-4 py-2 hover:bg-gray-700">
-              About BattleMagic
-            </button>
-          </div>
-        )}
+
+        {/* UART Connection */}
+        <button
+          onClick={() => {
+            if (uartConnected) {
+              onDisconnectUart?.();
+            } else {
+              onConnectUart?.();
+            }
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded hover:bg-gray-800 transition-colors"
+          title={uartConnected ? 'UART Connected' : 'Connect UART'}
+        >
+          <span className="text-gray-300 text-xs">UART</span>
+          <span className={`text-lg leading-none ${getUartStatusColor()}`}>●</span>
+        </button>
       </div>
     </div>
   );

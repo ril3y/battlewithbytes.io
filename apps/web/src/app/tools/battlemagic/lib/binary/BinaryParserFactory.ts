@@ -6,7 +6,7 @@
  */
 
 import { BinaryParser } from './BinaryParser';
-import { ArmBinaryParser } from './parsers/ArmBinaryParser';
+import { ArmBinaryParser } from '../arch/arm/binary';
 import { MipsBinaryParser } from './parsers/MipsBinaryParser';
 import { RiscVBinaryParser } from './parsers/RiscVBinaryParser';
 import {

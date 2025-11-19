@@ -34,7 +34,7 @@ function getStringFromWasm0(ptr, len) {
     return decodeText(ptr, len);
 }
 
-let heap = new Array(128).fill(undefined);
+const heap = new Array(128).fill(undefined);
 
 heap.push(undefined, null, true, false);
 

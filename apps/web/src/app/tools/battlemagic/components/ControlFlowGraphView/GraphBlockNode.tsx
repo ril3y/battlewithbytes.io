@@ -7,7 +7,7 @@
  */
 
 import type { BasicBlock, BlockLayout, BlockType } from '../../lib/cfg/types';
-import type { DisassembledInstruction } from '../../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../../lib/arch/arm/disasm';
 
 export interface BlockXrefInfo {
   incomingCalls: number;

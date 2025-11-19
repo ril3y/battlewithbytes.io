@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import type { DisassembledInstruction } from '../lib/disasm/ArmDisassembler';
+import type { DisassembledInstruction } from '../lib/arch/arm/disasm';
 import {
   BasicBlockAnalyzer,
   ControlFlowAnalyzer,

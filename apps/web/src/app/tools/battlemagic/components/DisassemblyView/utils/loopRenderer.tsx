@@ -49,14 +49,14 @@ export function getLoopColor(nestingLevel: number): string {
 }
 
 /**
- * Map character type to visual representation with arrows
+ * Map character type to visual representation using IDA-style brackets
  */
 function getCharacterForType(type: LoopCharType): string {
   switch (type) {
-    case 'top': return '┌─→';      // Loop entry with arrow
-    case 'bottom': return '└──';   // Loop back edge
-    case 'vertical': return '│';   // Loop body
-    case 'branch': return '├─→';   // Branch out with arrow
+    case 'top': return '╭';        // Loop entry (top bracket)
+    case 'bottom': return '╰';     // Loop back edge (bottom bracket)
+    case 'vertical': return '│';   // Loop body (vertical line)
+    case 'branch': return '├';     // Branch out
     case 'empty': return '';
     default: return '';
   }
@@ -100,10 +100,13 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
       style={{
         display: 'flex',
         fontFamily: 'monospace',
-        fontSize: '12px',
-        gap: '4px',
+        fontSize: '13px',
+        gap: '2px',
         whiteSpace: 'nowrap',
-        paddingRight: '8px',
+        paddingLeft: '4px',
+        paddingRight: '4px',
+        height: '100%',
+        alignItems: 'center',
       }}
     >
       {lineInfo.columns.map((charType, columnIdx) => {
@@ -113,7 +116,7 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
         const char = getCharacterForType(charType);
 
         if (!char) {
-          return <span key={columnIdx} style={{ width: '24px', display: 'inline-block' }}>&nbsp;</span>;
+          return <span key={columnIdx} style={{ width: '14px', display: 'inline-block' }}>&nbsp;</span>;
         }
 
         return (
@@ -122,10 +125,11 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
             style={{
               color: isActive ? color : 'transparent',
               fontWeight: 'bold',
-              minWidth: '24px',
-              textAlign: 'left',
+              minWidth: '14px',
+              textAlign: 'center',
               display: 'inline-block',
               opacity: isActive ? 1 : 0,
+              lineHeight: '1',
             }}
           >
             {char}

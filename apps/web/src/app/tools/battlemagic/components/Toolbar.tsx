@@ -91,57 +91,22 @@ export default function Toolbar({
 
   return (
     <div className="bg-gray-900 border-b border-gray-700 px-2 py-1 flex items-center gap-1 flex-shrink-0">
-      {/* Connection Controls */}
-      {!gdbConnected ? (
-        <ToolbarButton
-          icon="🔌"
-          label="Connect GDB"
-          onClick={onConnectGdb}
-          disabled={isConnecting}
-          variant="success"
-        />
-      ) : (
-        <ToolbarButton
-          icon="⏻"
-          label="Disconnect"
-          onClick={onDisconnectGdb}
-          variant="danger"
-        />
-      )}
-
+      {/* Target Scan */}
       {gdbConnected && !targetAttached && (
-        <ToolbarButton
-          icon="🔍"
-          label="Scan Targets"
-          onClick={onScanTargets}
-          variant="primary"
-        />
+        <>
+          <ToolbarButton
+            icon="🔍"
+            label="Scan Targets"
+            onClick={onScanTargets}
+            variant="primary"
+          />
+          <Separator />
+        </>
       )}
 
-      <Separator />
-
-      {/* UART Controls */}
-      {!uartConnected ? (
-        <ToolbarButton
-          icon="📡"
-          label="Connect UART"
-          onClick={onConnectUart}
-          variant="primary"
-        />
-      ) : (
-        <ToolbarButton
-          icon="📴"
-          label="Disconnect UART"
-          onClick={onDisconnectUart}
-          variant="danger"
-        />
-      )}
-
+      {/* Debug Controls */}
       {targetAttached && (
         <>
-          <Separator />
-
-          {/* Debug Controls */}
           <ToolbarButton
             icon="▶"
             label="Continue (F5)"

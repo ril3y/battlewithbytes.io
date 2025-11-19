@@ -17,7 +17,7 @@ fn analyze_mips_instructions(instructions: &[Instruction]) -> battlemagic_analyz
 #[test]
 fn test_mips_analyzer_creation() {
     let analyzer = BinaryAnalyzer::new(MipsArchitecture, 0x400000);
-    assert_eq!(analyzer.is_analyzed(), false);
+    assert!(!analyzer.is_analyzed());
 }
 
 #[test]

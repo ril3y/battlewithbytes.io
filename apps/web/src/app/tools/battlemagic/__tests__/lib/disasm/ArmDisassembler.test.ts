@@ -3,7 +3,7 @@
  * Tests for ARM/Thumb instruction disassembly
  */
 
-import { ArmDisassembler } from '../../../lib/disasm/ArmDisassembler';
+import { ArmDisassembler } from '../../../lib/arch/arm/disasm';
 import { THUMB_INSTRUCTIONS } from '../../fixtures/testData';
 
 describe('ArmDisassembler', () => {

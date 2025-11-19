@@ -28,6 +28,8 @@ export interface DisassemblyHeaderProps {
   navigation: UseDisassemblyNavigationReturn;
   showBytes: boolean;
   setShowBytes: (value: boolean) => void;
+  showArgAnnotations?: boolean;
+  setShowArgAnnotations?: (value: boolean) => void;
   bytesToRead: number;
   setBytesToRead: (value: number) => void;
   isConnected: boolean;
@@ -46,6 +48,8 @@ export function DisassemblyHeader({
   navigation,
   showBytes,
   setShowBytes,
+  showArgAnnotations = true,
+  setShowArgAnnotations,
   bytesToRead,
   setBytesToRead,
   isConnected,
@@ -79,6 +83,17 @@ export function DisassemblyHeader({
           title="Forward (Right Arrow)"
         >
           →
+        </button>
+        <button
+          onClick={() => {
+            setAddressInput('0x0');
+            handleGoTo();
+          }}
+          disabled={!isConnected || isLoading}
+          className="px-2 py-1 text-xs font-mono bg-gray-800 text-green-400 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Go to 0x0 (Vector Table)"
+        >
+          0x0
         </button>
       </div>
 
@@ -138,15 +153,28 @@ export function DisassemblyHeader({
 
       <div className="flex items-center gap-2 ml-auto">
         {viewMode === 'linear' && (
-          <label className="flex items-center gap-1 text-xs text-gray-400">
-            <input
-              type="checkbox"
-              checked={showBytes}
-              onChange={(e) => setShowBytes(e.target.checked)}
-              className="rounded"
-            />
-            Show Bytes
-          </label>
+          <>
+            <label className="flex items-center gap-1 text-xs text-gray-400">
+              <input
+                type="checkbox"
+                checked={showBytes}
+                onChange={(e) => setShowBytes(e.target.checked)}
+                className="rounded"
+              />
+              Show Bytes
+            </label>
+            {setShowArgAnnotations && (
+              <label className="flex items-center gap-1 text-xs text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={showArgAnnotations}
+                  onChange={(e) => setShowArgAnnotations(e.target.checked)}
+                  className="rounded"
+                />
+                Show Args
+              </label>
+            )}
+          </>
         )}
 
         <select
@@ -159,6 +187,8 @@ export function DisassemblyHeader({
           <option value="512">512 bytes</option>
           <option value="1024">1KB</option>
           <option value="2048">2KB</option>
+          <option value="4096">4KB</option>
+          <option value="8192">8KB</option>
         </select>
       </div>
     </div>

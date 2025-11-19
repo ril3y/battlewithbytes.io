@@ -13,6 +13,7 @@ import RegistersPanel, { RegisterValue } from './RegistersPanel';
 import MemoryPanel from './MemoryPanel';
 import StackPanel, { StackFrame } from './StackPanel';
 import DisassemblyView from './DisassemblyView';
+import FunctionsPanel from './FunctionsPanel';
 
 interface DebuggerViewProps {
   gdbClient: GdbClient | null;
@@ -52,6 +53,7 @@ export default function DebuggerView({
   jumpToPCTrigger
 }: DebuggerViewProps) {
   const [maximizedPanel, setMaximizedPanel] = useState<MaximizedPanel>(null);
+  const [stackPanelTab, setStackPanelTab] = useState<'stack' | 'functions'>('stack');
 
   // Panel sizing state - horizontal split (top/bottom), vertical split (left/right)
   const [horizontalSplit, setHorizontalSplit] = useState(50); // Top row height percentage
@@ -286,11 +288,46 @@ export default function DebuggerView({
             />
           )}
           {maximizedPanel === 'stack' && visiblePanels.stack && (
-            <StackPanel
-              frames={stackFrames}
-              onRefresh={onRefreshStack}
-              isConnected={isConnected}
-            />
+            <div className="flex flex-col h-full">
+              {/* Tabs */}
+              <div className="flex border-b border-gray-700 bg-gray-900">
+                <button
+                  onClick={() => setStackPanelTab('stack')}
+                  className={`px-4 py-2 text-xs font-mono transition-colors ${
+                    stackPanelTab === 'stack'
+                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  STACK
+                </button>
+                <button
+                  onClick={() => setStackPanelTab('functions')}
+                  className={`px-4 py-2 text-xs font-mono transition-colors ${
+                    stackPanelTab === 'functions'
+                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  FUNCTIONS
+                </button>
+              </div>
+              {/* Tab Content */}
+              <div className="flex-1 overflow-hidden">
+                {stackPanelTab === 'stack' && (
+                  <StackPanel
+                    frames={stackFrames}
+                    onRefresh={onRefreshStack}
+                    isConnected={isConnected}
+                  />
+                )}
+                {stackPanelTab === 'functions' && (
+                  <FunctionsPanel
+                    onNavigateToAddress={handleDisassemblyJump}
+                  />
+                )}
+              </div>
+            </div>
           )}
           {maximizedPanel === 'memory' && visiblePanels.memory && (
             <MemoryPanel
@@ -358,16 +395,47 @@ export default function DebuggerView({
       {/* Bottom Row: Stack | Memory */}
       {(visiblePanels.stack || visiblePanels.memory) && (
         <div className="flex" style={{ height: `${100 - horizontalSplit}%` }}>
-          {/* Stack Panel */}
+          {/* Stack Panel with Tabs */}
           {visiblePanels.stack && (
             <div className="flex flex-col" style={{ width: visiblePanels.memory ? `${bottomRowVerticalSplit}%` : '100%' }}>
-              <PanelHeader title="STACK" panelKey="stack" onRefresh={onRefreshStack} />
+              <PanelHeader title="STACK / FUNCTIONS" panelKey="stack" onRefresh={stackPanelTab === 'stack' ? onRefreshStack : undefined} />
+              {/* Tabs */}
+              <div className="flex border-b border-gray-700 bg-gray-900">
+                <button
+                  onClick={() => setStackPanelTab('stack')}
+                  className={`px-4 py-2 text-xs font-mono transition-colors ${
+                    stackPanelTab === 'stack'
+                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  STACK
+                </button>
+                <button
+                  onClick={() => setStackPanelTab('functions')}
+                  className={`px-4 py-2 text-xs font-mono transition-colors ${
+                    stackPanelTab === 'functions'
+                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  FUNCTIONS
+                </button>
+              </div>
+              {/* Tab Content */}
               <div className="flex-1 overflow-hidden">
-                <StackPanel
-                  frames={stackFrames}
-                  onRefresh={onRefreshStack}
-                  isConnected={isConnected}
-                />
+                {stackPanelTab === 'stack' && (
+                  <StackPanel
+                    frames={stackFrames}
+                    onRefresh={onRefreshStack}
+                    isConnected={isConnected}
+                  />
+                )}
+                {stackPanelTab === 'functions' && (
+                  <FunctionsPanel
+                    onNavigateToAddress={handleDisassemblyJump}
+                  />
+                )}
               </div>
             </div>
           )}

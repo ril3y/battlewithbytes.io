@@ -35,11 +35,13 @@
 pub mod calling_convention;
 pub mod functions;
 pub mod stack_analysis;
+pub mod vector_table;
 
 // Re-export primary types for convenience
-pub use calling_convention::{ArmCallingConvention, CallingConvention};
+pub use calling_convention::{ArmCallingConvention, CallingConvention, CallingConventionAnalyzer};
 pub use functions::FunctionDetector;
 pub use stack_analysis::StackAnalyzer;
+pub use vector_table::VectorTableDetector;
 
 #[cfg(test)]
 mod tests {
