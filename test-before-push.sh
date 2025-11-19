@@ -29,4 +29,9 @@ pnpm run build
 echo "✅ Build passed"
 echo ""
 
+echo "Running tests..."
+pnpm run test
+echo "✅ Tests passed"
+echo ""
+
 echo "=== ✅ All checks passed! Safe to push to master ==="
