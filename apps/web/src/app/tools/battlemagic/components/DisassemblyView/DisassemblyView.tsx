@@ -251,7 +251,7 @@ export default function DisassemblyView({
 
     const firstAddress = lines[0].instruction.address;
     // Use larger chunk size for cached firmware (4KB), smaller for GDB/UART (512 bytes)
-    const chunkSize = firmwareContext?.hasFirmware() ? 4096 : 512;
+    const chunkSize = firmwareContext?.hasFirmware() ? 1024 : 512; // Reduced from 4096 to prevent rendering too many rows at once
     const previousAddress = Math.max(0, firstAddress - chunkSize);
 
     await loadDisassembly(previousAddress, chunkSize, 'top');
@@ -270,7 +270,7 @@ export default function DisassemblyView({
 
     const lastAddress = lines[lines.length - 1].instruction.address;
     // Use larger chunk size for cached firmware (4KB), smaller for GDB/UART (512 bytes)
-    const chunkSize = firmwareContext?.hasFirmware() ? 4096 : 512;
+    const chunkSize = firmwareContext?.hasFirmware() ? 1024 : 512; // Reduced from 4096 to prevent rendering too many rows at once
     const nextAddress = lastAddress + 4; // Start after last instruction (ARM is 2-4 bytes)
 
     await loadDisassembly(nextAddress, chunkSize, 'bottom');
@@ -329,13 +329,13 @@ export default function DisassemblyView({
         requestAnimationFrame(() => {
           const pcElement = containerRef.current?.querySelector(`[data-address="${programCounter}"]`);
           if (pcElement) {
-            pcElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            pcElement.scrollIntoView({ behavior: 'auto', block: 'center' });
           } else {
             // Fallback: If element not found immediately, try again after a short delay
             setTimeout(() => {
               const retryElement = containerRef.current?.querySelector(`[data-address="${programCounter}"]`);
               if (retryElement) {
-                retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                retryElement.scrollIntoView({ behavior: 'auto', block: 'center' });
               }
             }, 50);
           }
@@ -380,7 +380,7 @@ export default function DisassemblyView({
       requestAnimationFrame(() => {
         const targetElement = containerRef.current?.querySelector(`[data-address="${targetAddress}"]`);
         if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetElement.scrollIntoView({ behavior: 'auto', block: 'center' });
           // Delay click until after scroll completes to prevent forced reflow
           setTimeout(() => {
             (targetElement as HTMLElement).click();
@@ -608,13 +608,13 @@ export default function DisassemblyView({
         requestAnimationFrame(() => {
           const pcElement = containerRef.current?.querySelector(`[data-address="${programCounter}"]`);
           if (pcElement) {
-            pcElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            pcElement.scrollIntoView({ behavior: 'auto', block: 'center' });
           } else {
             // Fallback: If element not found immediately, try again after a short delay
             setTimeout(() => {
               const retryElement = containerRef.current?.querySelector(`[data-address="${programCounter}"]`);
               if (retryElement) {
-                retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                retryElement.scrollIntoView({ behavior: 'auto', block: 'center' });
               }
             }, 50);
           }
