@@ -11,6 +11,7 @@
     "test:rust": "turbo run test:rust",
     "lint": "turbo run lint",
     "lint:rust": "turbo run lint:rust",
+    "type-check": "echo 'Type checking is done during build'",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:rust": "cargo fmt --all",
