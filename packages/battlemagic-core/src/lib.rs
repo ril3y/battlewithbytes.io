@@ -6,12 +6,12 @@
 use wasm_bindgen::prelude::*;
 
 // Module declarations
-mod utils;
-mod error;
 mod disasm;
+mod error;
+mod utils;
 
 // Re-exports
-pub use error::{Result, BattleMagicError};
+pub use error::{BattleMagicError, Result};
 
 /// Initialize the WASM module
 /// Sets up panic hooks and logging
@@ -41,7 +41,7 @@ impl ModuleInfo {
             version: env!("CARGO_PKG_VERSION").to_string(),
         }
     }
-    
+
     #[wasm_bindgen(getter)]
     pub fn version(&self) -> String {
         self.version.clone()

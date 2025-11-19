@@ -1,7 +1,7 @@
 //! Error handling for WASM boundary
 
-use wasm_bindgen::prelude::*;
 use std::fmt;
+use wasm_bindgen::prelude::*;
 
 pub type Result<T> = std::result::Result<T, BattleMagicError>;
 
