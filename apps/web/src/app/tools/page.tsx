@@ -84,14 +84,17 @@ export default function ToolsPage() {
             </div>
           </div>
 
-          {/* Placeholder for future tools */}
-          <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden opacity-50">
+          {/* BattleMagic Card */}
+          <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
             <div className="p-6">
-              <div className="text-green-400 font-mono text-sm mb-2">COMING SOON</div>
-              <h3 className="text-xl font-bold mb-3">More Tools</h3>
+              <div className="text-green-400 font-mono text-sm mb-2">06 // EMBEDDED</div>
+              <h3 className="text-xl font-bold mb-3">BattleMagic</h3>
               <p className="text-gray-400 mb-4">
-                Additional engineering and cybersecurity tools are in development.
+                Browser-based GDB debugger for ARM microcontrollers with Black Magic Probe support, disassembly, memory inspection, and SWO tracing.
               </p>
+              <Link href="/tools/battlemagic" className="text-green-400 font-mono text-sm hover:underline">
+                Open tool →
+              </Link>
             </div>
           </div>
         </div>
