@@ -106,7 +106,7 @@ export function LinearView({
   // Calculate global max nesting depth for consistent column width
   const maxLoopDepth = useMemo(() => {
     if (!analysisContext || !hasLoopsGlobally) return 0;
-    return analysisContext.loops.reduce((max, loop) => Math.max(max, loop.nesting_level), 0);
+    return analysisContext.loops.reduce((max: number, loop: { nesting_level: number }) => Math.max(max, loop.nesting_level), 0);
   }, [analysisContext, hasLoopsGlobally]);
 
   // Get loops from database that overlap with visible range
@@ -132,7 +132,7 @@ export function LinearView({
   // This prevents O(n*m) lookups inside the render loop
   const loopHeaderAddresses = useMemo(() => {
     const headers = new Map<number, number>(); // address -> nesting_level
-    loopsInRange.forEach(loop => {
+    loopsInRange.forEach((loop: { header_addr: number; nesting_level: number }) => {
       headers.set(loop.header_addr, loop.nesting_level);
     });
     return headers;
@@ -140,7 +140,7 @@ export function LinearView({
 
   const loopBackEdgeAddresses = useMemo(() => {
     const backEdges = new Map<number, number>(); // address -> nesting_level
-    loopsInRange.forEach(loop => {
+    loopsInRange.forEach((loop: { back_edge_addr: number; nesting_level: number }) => {
       backEdges.set(loop.back_edge_addr, loop.nesting_level);
     });
     return backEdges;
@@ -152,8 +152,8 @@ export function LinearView({
 
     const vectorTable = analysisContext.getVectorTable();
     const baseAddress = analysisContext.baseAddress || 0;
-    const maxVectorAddr = vectorTable.length > 0 ? Math.max(...vectorTable.map(v => v.vector_number)) * 4 + 4 : 192;
-    const resetVector = vectorTable.find(entry => entry.vector_number === 1);
+    const maxVectorAddr = vectorTable.length > 0 ? Math.max(...vectorTable.map((v: { vector_number: number }) => v.vector_number)) * 4 + 4 : 192;
+    const resetVector = vectorTable.find((entry: { vector_number: number; handler_address?: number }) => entry.vector_number === 1);
     const resetVectorAddress = resetVector?.handler_address ?? null;
 
     return { vectorTable, baseAddress, maxVectorAddr, resetVectorAddress };
@@ -257,7 +257,7 @@ export function LinearView({
       // Get vector table entry details if this is a vector
       let vectorInfo = null;
       if (vectorNum !== null) {
-        const vectorEntry = vectorTable.find(v => v.vector_number === vectorNum);
+        const vectorEntry = vectorTable.find((v: { vector_number: number; handler_name?: string; handler_address?: number; is_valid?: boolean }) => v.vector_number === vectorNum);
         vectorInfo = {
           vectorNumber: vectorNum,
           standardName: getStandardVectorName(vectorNum),
@@ -554,7 +554,7 @@ export function LinearView({
                         <td></td>
                         <td colSpan={showBytes ? 6 : 5}>
                           <div className="text-gray-500 text-xs">
-                            ; stack vars: {functionInfo.stack_vars.map((v, idx) => (
+                            ; stack vars: {functionInfo.stack_vars.map((v: { offset: number }, idx: number) => (
                               <span key={idx}>
                                 {idx > 0 && ', '}
                                 [sp{v.offset >= 0 ? '+' : ''}{v.offset}]
@@ -779,7 +779,7 @@ export function LinearView({
                     {xrefsTo.length > 0 && (
                       <div className={`text-xs ${line.isCurrentPC ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
                         ; {xrefsTo.length === 1 ? 'xref' : `${xrefsTo.length} xrefs`} from:{' '}
-                        {xrefsTo.slice(0, 5).map((xref, idx) => (
+                        {xrefsTo.slice(0, 5).map((xref: { from_addr: number; to_addr: number; xref_type: string; instruction?: string; operands?: string }, idx: number) => (
                           <React.Fragment key={xref.from_addr}>
                             <span
                               className={`cursor-pointer hover:underline ${

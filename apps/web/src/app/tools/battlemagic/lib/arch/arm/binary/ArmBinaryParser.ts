@@ -5,7 +5,7 @@
  * Handles vector table parsing, Thumb mode, and ARM-specific binary formats.
  */
 
-import { BinaryParser } from '../BinaryParser';
+import { BinaryParser } from '../../../binary/BinaryParser';
 import {
   Architecture,
   ParserCapabilities,
