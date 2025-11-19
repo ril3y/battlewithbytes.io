@@ -138,6 +138,9 @@ export default function BattleMagicMonitor() {
         gdb.addGdbOutput(`[State] ${state}`);
       },
       onStopped: async (reply: StopReply) => {
+        // Target stopped - update execution state
+        debug.setExecutionState('stopped');
+
         // Auto-refresh debug.registers and stack after target stops (e.g., after stepping)
         try {
           // Refresh debug.registers first to get PC
@@ -532,8 +535,10 @@ export default function BattleMagicMonitor() {
       }
     } catch (error) {
       gdb.addGdbOutput(`[Halt failed: ${error}]`);
+      // Even if halt failed, set to stopped to prevent UI inconsistency
+      debug.setExecutionState('stopped');
     }
-  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput]);
+  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug, project]);
 
   const handleRun = useCallback(async () => {
     if (!gdb.gdbClient) return;
@@ -545,15 +550,20 @@ export default function BattleMagicMonitor() {
       gdb.gdbClient.continue();
     } catch (error) {
       gdb.addGdbOutput(`[Run failed: ${error}]`);
+      debug.setExecutionState('stopped');
     }
-  }, [gdb.gdbClient, gdb.addGdbOutput]);
+  }, [gdb.gdbClient, gdb.addGdbOutput, debug, project]);
 
   const handleReset = useCallback(async () => {
     if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
     try {
       gdb.addGdbOutput('> monitor reset');
       await gdb.gdbClient.reset();
-      gdb.addGdbOutput('[Target reset]');
+
+      // Reset halts the target, update execution state
+      debug.setExecutionState('stopped');
+      gdb.addGdbOutput('[Target reset and halted]');
+      project.setLastUpdate(new Date());
 
       // Auto-refresh panels after reset
       try {
@@ -583,11 +593,20 @@ export default function BattleMagicMonitor() {
       }
     } catch (error) {
       gdb.addGdbOutput(`[Reset failed: ${error}]`);
+      // Even if reset failed, set to stopped to prevent UI inconsistency
+      debug.setExecutionState('stopped');
     }
-  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput]);
+  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug, project]);
 
   const handleStep = useCallback(async () => {
     if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
+
+    // Can't step if already running
+    if (debug.executionState === 'running') {
+      gdb.addGdbOutput('[Cannot step: target is running. Use Halt first.]');
+      return;
+    }
+
     try {
       gdb.addGdbOutput('> stepi');
       debug.setExecutionState('stepping');
