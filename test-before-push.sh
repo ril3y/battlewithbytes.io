@@ -12,6 +12,13 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo "Current branch: $CURRENT_BRANCH"
 echo ""
 
+echo "Checking Rust formatting..."
+cd packages/battlemagic-core
+cargo fmt --check
+cd ../..
+echo "✅ Rust formatting check passed"
+echo ""
+
 echo "Running lint..."
 pnpm run lint
 echo "✅ Lint passed"
