@@ -22,13 +22,6 @@ interface RegistersPanelProps {
 }
 
 export default function RegistersPanel({ registers, onRefresh, isConnected, onAddressClick }: RegistersPanelProps) {
-  // Debug log to see what we're receiving
-  React.useEffect(() => {
-    if (registers.length > 0) {
-      console.log('[RegistersPanel] First 5 registers:', registers.slice(0, 5).map(r => `${r.name}=0x${r.value.toString(16)} (${r.value})`));
-    }
-  }, [registers]);
-
   // Group registers for better organization
   const coreRegisters = registers.filter(r => r.name.match(/^r\d+$/));
   const specialRegisters = registers.filter(r => ['sp', 'lr', 'pc', 'xpsr', 'msp', 'psp'].includes(r.name.toLowerCase()));

@@ -49,6 +49,10 @@ serialport = "4.5"
 name = "analyzer_bench"
 harness = false
 
+[[bench]]
+name = "architecture_detection_bench"
+harness = false
+
 [profile.release]
 # Optimize for small code size while maintaining good performance
 opt-level = "z"          # Optimize for size
@@ -61,3 +65,9 @@ strip = true           # Strip symbols from binary
 # Faster compilation during development
 opt-level = 0
 lto = false
+
+[profile.bench]
+# Benchmarks need unwind panic strategy
+opt-level = 3
+lto = true
+panic = "unwind"

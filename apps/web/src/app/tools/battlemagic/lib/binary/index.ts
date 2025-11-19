@@ -5,7 +5,6 @@
  */
 
 // Main factory and base class
-export { BinaryParserFactory } from './BinaryParserFactory';
 export { BinaryParser } from './BinaryParser';
 
 // Architecture-specific parsers
@@ -15,6 +14,3 @@ export { RiscVBinaryParser } from './parsers/RiscVBinaryParser';
 
 // Types and interfaces
 export * from './types';
-
-// Test utilities
-export { testBinaryParser } from './test-binary-parser';

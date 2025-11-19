@@ -84,7 +84,7 @@ export function FirmwareDumpWorkflow({
   onFirmwareCached
 }: FirmwareDumpWorkflowProps = {}) {
   // Use provided gdbClient or create a new one
-  const [internalGdbClient] = useState(() => new GdbClient({ debug: true }));
+  const [internalGdbClient] = useState(() => new GdbClient({ debug: false }));
   const gdbClient = externalGdbClient || internalGdbClient;
 
   // Get analysis context

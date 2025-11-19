@@ -61,6 +61,20 @@ export interface FunctionInfo {
 }
 
 /**
+ * Batch query result for multiple addresses (PERFORMANCE OPTIMIZATION)
+ *
+ * This reduces N individual Map lookups to a single batch query.
+ * Used in LinearView to fetch all data for visible addresses in one call.
+ */
+export interface BatchQueryResult {
+  functions: Map<number, FunctionInfo>;
+  xrefsTo: Map<number, XrefResult[]>;
+  xrefsFrom: Map<number, XrefResult[]>;
+  comments: Map<number, Map<CommentType, Comment>>;
+  argAnnotations: Map<number, ArgAnnotation>;
+}
+
+/**
  * Analysis context state
  */
 interface AnalysisContextState {
@@ -93,6 +107,7 @@ interface AnalysisContextState {
   getAllRepeatableComments: () => Map<number, Comment>;
   getLoopsInRange: (startAddr: number, endAddr: number) => Loop[];
   getArgAnnotation: (callAddress: number) => ArgAnnotation | null;
+  getBatchData: (addresses: number[]) => BatchQueryResult;
   isAnalyzed: () => boolean;
 
   // Vector table methods
@@ -434,6 +449,91 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     }
     return null;
   }, [functions]);
+
+  /**
+   * Batch query for multiple addresses (PERFORMANCE OPTIMIZATION)
+   *
+   * Instead of making N individual Map.get() calls, this method:
+   * 1. Creates a Set of target addresses for O(1) lookup
+   * 2. Makes single passes through each Map
+   * 3. Returns all matching data in one batch
+   *
+   * Complexity: O(n + m) where n = addresses.length, m = total map size
+   * vs. Individual queries: O(n * log(m)) with repeated lookups
+   *
+   * This reduces 1,024+ individual lookups to 1 batch query in LinearView.
+   */
+  const getBatchData = useCallback((addresses: number[]): BatchQueryResult => {
+    if (addresses.length === 0) {
+      return {
+        functions: new Map(),
+        xrefsTo: new Map(),
+        xrefsFrom: new Map(),
+        comments: new Map(),
+        argAnnotations: new Map(),
+      };
+    }
+
+    // Convert to Set for O(1) lookup
+    const addressSet = new Set(addresses);
+
+    // Batch extract functions (O(n) - single pass through addresses)
+    const batchFunctions = new Map<number, FunctionInfo>();
+    for (const addr of addresses) {
+      const func = functions.get(addr);
+      if (func) {
+        batchFunctions.set(addr, func);
+      }
+    }
+
+    // Batch extract xrefsTo (O(n) - single pass through addresses)
+    const batchXrefsTo = new Map<number, XrefResult[]>();
+    for (const addr of addresses) {
+      const xrefs = xrefsTo.get(addr);
+      if (xrefs && xrefs.length > 0) {
+        batchXrefsTo.set(addr, xrefs);
+      }
+    }
+
+    // Batch extract xrefsFrom (O(n) - single pass through addresses)
+    const batchXrefsFrom = new Map<number, XrefResult[]>();
+    for (const addr of addresses) {
+      const xrefs = xrefsFrom.get(addr);
+      if (xrefs && xrefs.length > 0) {
+        batchXrefsFrom.set(addr, xrefs);
+      }
+    }
+
+    // Batch extract comments (O(n) - single pass through addresses)
+    const batchComments = new Map<number, Map<CommentType, Comment>>();
+    for (const addr of addresses) {
+      const commentMap = comments.get(addr);
+      if (commentMap && commentMap.size > 0) {
+        batchComments.set(addr, commentMap);
+      }
+    }
+
+    // Batch extract arg annotations (O(m) - single pass through all functions)
+    // This is the most expensive lookup (nested search through functions)
+    const batchArgAnnotations = new Map<number, ArgAnnotation>();
+    for (const func of functions.values()) {
+      if (func.arg_annotations && func.arg_annotations.length > 0) {
+        for (const annotation of func.arg_annotations) {
+          if (addressSet.has(annotation.call_address)) {
+            batchArgAnnotations.set(annotation.call_address, annotation);
+          }
+        }
+      }
+    }
+
+    return {
+      functions: batchFunctions,
+      xrefsTo: batchXrefsTo,
+      xrefsFrom: batchXrefsFrom,
+      comments: batchComments,
+      argAnnotations: batchArgAnnotations,
+    };
+  }, [functions, xrefsTo, xrefsFrom, comments]);
 
   const isAnalyzed = useCallback(() => {
     return results !== null;
@@ -789,6 +889,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     getAllRepeatableComments,
     getLoopsInRange,
     getArgAnnotation,
+    getBatchData,
     isAnalyzed,
     getVectorTable,
     getHandlerByVector,

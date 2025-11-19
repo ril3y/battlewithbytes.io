@@ -1,9 +1,11 @@
 pub mod analysis;
 pub mod arch;
 pub mod analyzer;
+pub mod binary;
 pub mod cfg;
 pub mod chips;
 pub mod database;
+pub mod parsing;
 pub mod traits;
 pub mod types;
 pub mod xref;

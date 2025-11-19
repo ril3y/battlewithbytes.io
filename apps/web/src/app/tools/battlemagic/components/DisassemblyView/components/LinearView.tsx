@@ -159,34 +159,85 @@ export function LinearView({
     return { vectorTable, baseAddress, maxVectorAddr, resetVectorAddress };
   }, [analysisContext]);
 
-  // Pre-compute all enriched data for each line (optimization: prevents re-lookup on every render)
+  // Pre-compute all enriched data for each line (BATCH QUERY OPTIMIZATION)
+  // Instead of making 1,024+ individual lookups, we fetch all data in 1-2 batch queries
   const enrichedLines = useMemo(() => {
     if (!lines.length) return [];
 
     const { vectorTable, baseAddress, maxVectorAddr, resetVectorAddress } = vectorTableData;
 
+    // STEP 1: Extract all addresses from visible lines (O(n))
+    const addresses = lines.map(line => line.instruction.address);
+
+    // STEP 2: Batch fetch all data in ONE query (O(n + m))
+    // This replaces 1,024+ individual Map.get() calls with a single batch query
+    const batchData = analysisContext?.getBatchData(addresses) || {
+      functions: new Map(),
+      xrefsTo: new Map(),
+      xrefsFrom: new Map(),
+      comments: new Map(),
+      argAnnotations: new Map(),
+    };
+
+    // STEP 3: Extract unique target addresses for arg annotations (O(n))
+    const targetAddresses = new Set<number>();
+    for (const line of lines) {
+      const inst = line.instruction;
+      if ((inst.mnemonic === 'bl' || inst.mnemonic === 'blx')) {
+        const argAnnotation = batchData.argAnnotations.get(inst.address);
+        if (argAnnotation) {
+          targetAddresses.add(argAnnotation.function_target);
+        }
+      }
+      // Also collect target addresses for repeatable comments
+      const xrefsFrom = batchData.xrefsFrom.get(inst.address);
+      if (xrefsFrom && xrefsFrom.length > 0) {
+        xrefsFrom.forEach(xref => targetAddresses.add(xref.to_addr));
+      }
+    }
+
+    // STEP 4: Batch fetch target functions and comments if needed (O(m))
+    const targetData = targetAddresses.size > 0
+      ? analysisContext?.getBatchData(Array.from(targetAddresses)) || {
+          functions: new Map(),
+          xrefsTo: new Map(),
+          xrefsFrom: new Map(),
+          comments: new Map(),
+          argAnnotations: new Map(),
+        }
+      : {
+          functions: new Map(),
+          xrefsTo: new Map(),
+          xrefsFrom: new Map(),
+          comments: new Map(),
+          argAnnotations: new Map(),
+        };
+
+    // STEP 5: Build enriched lines using batch data (O(n) with O(1) lookups)
     return lines.map(line => {
       const inst = line.instruction;
-      const functionInfo = analysisContext?.getFunctionAt(inst.address);
-      const xrefsTo = analysisContext?.getXrefsTo(inst.address) || [];
-      const xrefsFrom = analysisContext?.getXrefsFrom(inst.address) || [];
-      const commentsAtAddress = analysisContext?.getCommentsAt(inst.address) || new Map();
+
+      // O(1) lookups from batch results (no context calls!)
+      const functionInfo = batchData.functions.get(inst.address) || null;
+      const xrefsTo = batchData.xrefsTo.get(inst.address) || [];
+      const xrefsFrom = batchData.xrefsFrom.get(inst.address) || [];
+      const commentsAtAddress = batchData.comments.get(inst.address) || new Map();
 
       // Pre-compute argument annotations for bl/blx instructions
       let argAnnotation = undefined;
       let targetFunc = undefined;
-      if ((inst.mnemonic === 'bl' || inst.mnemonic === 'blx') && analysisContext) {
-        argAnnotation = analysisContext.getArgAnnotation(inst.address);
+      if ((inst.mnemonic === 'bl' || inst.mnemonic === 'blx')) {
+        argAnnotation = batchData.argAnnotations.get(inst.address);
         if (argAnnotation) {
-          targetFunc = analysisContext.getFunctionAt(argAnnotation.function_target);
+          targetFunc = targetData.functions.get(argAnnotation.function_target);
         }
       }
 
       // Check if any xref targets have repeatable comments
       let targetRepeatableComment = undefined;
-      if (xrefsFrom.length > 0 && analysisContext) {
+      if (xrefsFrom.length > 0) {
         for (const xref of xrefsFrom) {
-          const targetComments = analysisContext.getCommentsAt(xref.to_addr);
+          const targetComments = targetData.comments.get(xref.to_addr);
           const repeatable = targetComments?.get('repeatable');
           if (repeatable) {
             targetRepeatableComment = repeatable;

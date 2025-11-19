@@ -1,0 +1,26 @@
+{
+  "name": "battlemagic-analyzer",
+  "type": "module",
+  "collaborators": [
+    "ril3y"
+  ],
+  "description": "High-performance binary analysis and cross-reference database for ARM binaries",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ril3y/battlewithbytes.io"
+  },
+  "files": [
+    "battlemagic_analyzer_bg.wasm",
+    "battlemagic_analyzer.js",
+    "battlemagic_analyzer_bg.js",
+    "battlemagic_analyzer.d.ts"
+  ],
+  "main": "battlemagic_analyzer.js",
+  "types": "battlemagic_analyzer.d.ts",
+  "sideEffects": [
+    "./battlemagic_analyzer.js",
+    "./snippets/*"
+  ]
+}
