@@ -16,6 +16,52 @@ export interface CpuDetectionResult {
 }
 
 /**
+ * Calculate flash size from binary info
+ */
+function calculateFlashSize(binaryInfo: BinaryInfo): number | undefined {
+  if (binaryInfo.memoryMap) {
+    const flashRegion = binaryInfo.memoryMap.find(r => r.type === 'flash');
+    if (flashRegion) return flashRegion.size;
+  }
+
+  // Fallback: sum of all sections that look like flash
+  const flashSections = binaryInfo.sections?.filter(s =>
+    s.name.toLowerCase().includes('text') ||
+    s.name.toLowerCase().includes('rodata') ||
+    s.name.toLowerCase().includes('flash')
+  );
+
+  if (flashSections && flashSections.length > 0) {
+    return flashSections.reduce((sum, s) => sum + s.size, 0);
+  }
+
+  return undefined;
+}
+
+/**
+ * Calculate RAM size from binary info
+ */
+function calculateRamSize(binaryInfo: BinaryInfo): number | undefined {
+  if (binaryInfo.memoryMap) {
+    const ramRegion = binaryInfo.memoryMap.find(r => r.type === 'ram');
+    if (ramRegion) return ramRegion.size;
+  }
+
+  // Fallback: sum of all sections that look like RAM
+  const ramSections = binaryInfo.sections?.filter(s =>
+    s.name.toLowerCase().includes('data') ||
+    s.name.toLowerCase().includes('bss') ||
+    s.name.toLowerCase().includes('ram')
+  );
+
+  if (ramSections && ramSections.length > 0) {
+    return ramSections.reduce((sum, s) => sum + s.size, 0);
+  }
+
+  return undefined;
+}
+
+/**
  * Detect CPU from binary file information
  */
 export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult {
@@ -27,6 +73,7 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
   const entryPoint = binaryInfo.entryPoint;
   const flashStart = binaryInfo.sections?.find(s => s.name.toLowerCase().includes('text'))?.address;
   const ramStart = binaryInfo.sections?.find(s => s.name.toLowerCase().includes('data'))?.address;
+  const flashSize = calculateFlashSize(binaryInfo);
 
   // Score each CPU definition
   const scores: Array<{ cpu: CpuDefinition; score: number; reasons: string[] }> = [];
@@ -75,9 +122,9 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
     }
 
     // Flash size match (within 10% tolerance)
-    if (binaryInfo.metadata.fileSize && cpu.flashSize) {
+    if (flashSize && cpu.flashSize) {
       const tolerance = cpu.flashSize * 0.1;
-      if (Math.abs(binaryInfo.metadata.fileSize - cpu.flashSize) <= tolerance) {
+      if (Math.abs(flashSize - cpu.flashSize) <= tolerance) {
         score += 5;
         reasons.push(`Flash size similar`);
       }
@@ -244,8 +291,8 @@ export function createCpuFromBinary(binaryInfo: BinaryInfo, cpuName: string): Om
     family: binaryInfo.architecture,
     vendor: 'Custom',
     architecture: binaryInfo.architecture,
-    flashSize: binaryInfo.metadata.fileSize || 0,
-    ramSize: 0, // RAM size not available in BinaryInfo
+    flashSize: calculateFlashSize(binaryInfo) || 0,
+    ramSize: calculateRamSize(binaryInfo) || 0,
     memoryRegions
   };
 }

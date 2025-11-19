@@ -294,7 +294,7 @@ export class RiscVBinaryParser extends BinaryParser {
     this.riscvMetadata.archString = this.buildArchString();
 
     // Detect ABI
-    this.riscvMetadata.abi = await this.detectAbi();
+    this.riscvMetadata.abi = await this.detectAbi() as 'ilp32' | 'ilp32f' | 'ilp32d' | 'lp64' | 'lp64f' | 'lp64d' | undefined;
 
     return {
       arch: 'RISCV',

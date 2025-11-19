@@ -7,6 +7,7 @@
 
 import {
   Architecture,
+  ArchitectureMetadata,
   BinaryFormat,
   BinaryInfo,
   BinaryParseOptions,
@@ -180,7 +181,7 @@ export abstract class BinaryParser {
   /**
    * Architecture-specific metadata extraction
    */
-  protected abstract extractArchitectureMetadata(): Promise<Record<string, unknown>>;
+  protected abstract extractArchitectureMetadata(): Promise<ArchitectureMetadata>;
 
   /**
    * Detect binary format from magic numbers and headers

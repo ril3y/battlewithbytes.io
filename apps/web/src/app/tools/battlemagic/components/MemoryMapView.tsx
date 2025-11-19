@@ -77,9 +77,10 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       setRegions(detectedRegions);
 
       // Try to update with runtime info
-      const sp = await gdbClient.readRegister(13); // SP is register 13 in ARM
-      if (sp) {
-        parser.updateMemoryUsage(new Map(), parseInt(sp, 16));
+      const registers = await gdbClient.getFormattedRegisters();
+      const sp = registers.get('sp');
+      if (typeof sp === 'number') {
+        parser.updateMemoryUsage(new Map(), sp);
         setStatistics(parser.getStatistics());
       }
     } catch (error) {
@@ -282,7 +283,7 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
         setViewState(prev => ({ ...prev, hoveredRegion }));
       }
     }
-  }, [isDragging, dragStart, regions, viewState.zoom, viewState.offset]);
+  }, [isDragging, dragStart, regions, viewState.zoom, viewState.offset, viewState.hoveredRegion]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDragging(true);

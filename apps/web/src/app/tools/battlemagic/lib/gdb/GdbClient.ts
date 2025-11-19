@@ -723,7 +723,8 @@ export class GdbClient {
 
     // Only accept 'ok' as true success
     if (response.type !== 'ok') {
-      throw new Error(`Unexpected response type: ${response.type}`);
+      const details = response.type === 'data' ? `, data: ${response.data}` : '';
+      throw new Error(`Unexpected response type: ${response.type}${details}`);
     }
   }
 
