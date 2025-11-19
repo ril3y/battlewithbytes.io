@@ -35,6 +35,21 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            packages/battlemagic-core
+            packages/battlemagic-analyzer
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
       - name: Get pnpm store directory
         id: pnpm-cache
         shell: bash
