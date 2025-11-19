@@ -242,14 +242,22 @@ export default function DisassemblyView({
     }, [])
   });
 
+  // PERFORMANCE FIX: Use ref to access latest lines without triggering callback recreation
+  // This prevents IntersectionObserver from being recreated on every line change
+  const linesRef = React.useRef(lines);
+  React.useEffect(() => {
+    linesRef.current = lines;
+  }, [lines]);
+
   // Load previous chunk (scrolling up)
   const loadPreviousChunk = useCallback(async () => {
-    if (lines.length === 0) return;
+    const currentLines = linesRef.current;
+    if (currentLines.length === 0) return;
 
     // Disable follow PC when user manually scrolls
     followPC.current = false;
 
-    const firstAddress = lines[0].instruction.address;
+    const firstAddress = currentLines[0].instruction.address;
     // Use larger chunk size for cached firmware (4KB), smaller for GDB/UART (512 bytes)
     const chunkSize = firmwareContext?.hasFirmware() ? 1024 : 512; // Reduced from 4096 to prevent rendering too many rows at once
     const previousAddress = Math.max(0, firstAddress - chunkSize);
@@ -259,16 +267,17 @@ export default function DisassemblyView({
     // Prune distant chunks to keep memory usage under control
     const currentCenter = firstAddress;
     memoryChunks.pruneDistantChunks(currentCenter, chunkSize * 3); // Keep 3 chunks worth
-  }, [lines, loadDisassembly, memoryChunks, firmwareContext]);
+  }, [loadDisassembly, memoryChunks, firmwareContext]); // Removed 'lines' dependency
 
   // Load next chunk (scrolling down)
   const loadNextChunk = useCallback(async () => {
-    if (lines.length === 0) return;
+    const currentLines = linesRef.current;
+    if (currentLines.length === 0) return;
 
     // Disable follow PC when user manually scrolls
     followPC.current = false;
 
-    const lastAddress = lines[lines.length - 1].instruction.address;
+    const lastAddress = currentLines[currentLines.length - 1].instruction.address;
     // Use larger chunk size for cached firmware (4KB), smaller for GDB/UART (512 bytes)
     const chunkSize = firmwareContext?.hasFirmware() ? 1024 : 512; // Reduced from 4096 to prevent rendering too many rows at once
     const nextAddress = lastAddress + 4; // Start after last instruction (ARM is 2-4 bytes)
@@ -278,7 +287,7 @@ export default function DisassemblyView({
     // Prune distant chunks to keep memory usage under control
     const currentCenter = lastAddress;
     memoryChunks.pruneDistantChunks(currentCenter, chunkSize * 3); // Keep 3 chunks worth
-  }, [lines, loadDisassembly, memoryChunks, firmwareContext]);
+  }, [loadDisassembly, memoryChunks, firmwareContext]); // Removed 'lines' dependency
 
   // Refresh button handler
   const handleRefresh = useCallback(() => {

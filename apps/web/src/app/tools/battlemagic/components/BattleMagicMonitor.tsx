@@ -612,35 +612,16 @@ export default function BattleMagicMonitor() {
       debug.setExecutionState('stepping');
       await gdb.gdbClient.step();
       gdb.addGdbOutput('[Stepped one instruction]');
-      debug.setExecutionState('stopped');
       project.setLastUpdate(new Date());
 
-      // Auto-refresh panels after step
-      try {
-        const regs = await gdb.gdbClient.getFormattedRegisters();
-        const regValues: RegisterValue[] = Array.from(regs.entries()).map(([name, value]) => ({
-          name,
-          value,
-          size: 32
-        }));
-        debug.setRegisters(regValues);
-        const pc = regs.get('pc');
-        if (pc !== undefined) debug.setProgramCounter(pc);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh registers: ${error}]`);
-      }
+      // FIX: Remove duplicate register/PC update from here
+      // The step() command triggers onStopped callback (line 140-224)
+      // which already refreshes registers, PC, and stack
+      // Keeping duplicate updates here causes race condition where stale data overwrites fresh data
 
-      try {
-        const frames = await gdb.gdbClient.getBacktrace();
-        const stackData: StackFrame[] = frames.map((frame) => ({
-          level: frame.level,
-          address: frame.address,
-          function: frame.function
-        }));
-        debug.setStackFrames(stackData);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh stack: ${error}]`);
-      }
+      // Note: execution state is set to 'stopped' by onStopped callback (line 142)
+      // Note: registers and PC are updated by onStopped callback (lines 147-159)
+      // Note: stack frames are updated by onStopped callback (lines 211-217)
     } catch (error) {
       gdb.addGdbOutput(`[Step failed: ${error}]`);
       debug.setExecutionState('stopped');
@@ -779,13 +760,42 @@ export default function BattleMagicMonitor() {
   }, [gdb.addGdbOutput]);
 
   // Vector table navigation handler
-  const handleNavigateToAddress = useCallback((address: number) => {
+  const handleNavigateToAddress = useCallback(async (address: number) => {
     // Switch to debugger view
     panels.setActiveRightPanel('debugger');
-    // Set the program counter to the target address for navigation
+
+    // CRITICAL FIX: Update GDB's actual PC register (not just UI)
+    // This fixes the "PC runs away" bug when single-stepping from vector table navigation
+    if (gdb.gdbClient && gdb.gdbState === ConnectionState.ATTACHED) {
+      try {
+        // ARM Cortex-M requires Thumb bit (LSB=1) for Thumb mode execution
+        // Vector table addresses have Thumb bit set, but we cleared it for display
+        // Now restore it when writing to GDB's PC register
+        const thumbAddress = address | 0x1;
+
+        // CRITICAL: GDB reverses byte pairs when writing registers!
+        // Testing showed: sending "000008e9" resulted in PC=0xE9080000
+        // So we must pre-reverse the bytes (little-endian format) before sending
+        const bytes = [
+          (thumbAddress & 0xFF).toString(16).padStart(2, '0'),
+          ((thumbAddress >> 8) & 0xFF).toString(16).padStart(2, '0'),
+          ((thumbAddress >> 16) & 0xFF).toString(16).padStart(2, '0'),
+          ((thumbAddress >> 24) & 0xFF).toString(16).padStart(2, '0'),
+        ];
+        const hexValue = bytes.join('');  // Little-endian byte order
+
+        await gdb.gdbClient.writeRegister(15, hexValue);
+        gdb.addGdbOutput(`[Navigation] Set GDB PC to 0x${thumbAddress.toString(16).toUpperCase()} (with Thumb bit)`);
+      } catch (error) {
+        gdb.addGdbOutput(`[Navigation] Warning: Failed to update GDB PC: ${error}`);
+        gdb.addGdbOutput(`[Navigation] UI will show 0x${address.toString(16).toUpperCase()}, but GDB PC unchanged`);
+      }
+    }
+
+    // Set the program counter in UI (without Thumb bit for display)
     debug.setProgramCounter(address);
     gdb.addGdbOutput(`[Navigation] Jumping to address 0x${address.toString(16).toUpperCase()}`);
-  }, [gdb.addGdbOutput]);
+  }, [gdb, debug, panels]);
 
   // Project management handlers
   const updateProjectState = useCallback(() => {
@@ -1004,14 +1014,22 @@ export default function BattleMagicMonitor() {
   }, []);
 
   // Panel resize handlers
+  // Cache container rect on drag start to avoid forced reflows during mousemove
+  const dragStartRectRef = React.useRef<DOMRect | null>(null);
+
   const handleMouseDown = useCallback(() => {
+    // Cache the bounding rect ONCE on drag start (not during mousemove at 60Hz!)
+    if (panels.containerRef.current) {
+      dragStartRectRef.current = panels.containerRef.current.getBoundingClientRect();
+    }
     panels.setIsDragging(true);
   }, []);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!panels.isDragging || !panels.containerRef.current) return;
-      const containerRect = panels.containerRef.current.getBoundingClientRect();
+      if (!panels.isDragging || !dragStartRectRef.current) return;
+      // Use cached rect instead of calling getBoundingClientRect() at 60Hz
+      const containerRect = dragStartRectRef.current;
       const offsetX = e.clientX - containerRect.left;
       // Calculate console width from the right side
       const newConsoleWidth = ((containerRect.width - offsetX) / containerRect.width) * 100;
@@ -1465,13 +1483,41 @@ export default function BattleMagicMonitor() {
                           const vectorTable = analysisContext.getVectorTable();
                           const resetVector = vectorTable.find(entry => entry.vector_number === 1);
                           if (resetVector && resetVector.handler_address) {
-                            debug.setProgramCounter(resetVector.handler_address);
-                            gdb.addGdbOutput(`[PC set to reset vector: 0x${resetVector.handler_address.toString(16).toUpperCase()}]`);
+                            // Clear Thumb bit for UI display and function lookup
+                            const displayAddress = resetVector.handler_address & 0xFFFFFFFE;
+
+                            // Update both GDB PC and UI to reset vector
+                            // CRITICAL: Must write to GDB, not just UI, otherwise stepping goes from wrong location
+                            if (gdb.gdbClient && gdb.gdbState === ConnectionState.ATTACHED) {
+                              try {
+                                const thumbAddress = displayAddress | 0x1;
+
+                                // CRITICAL: GDB reverses byte pairs when writing registers!
+                                // Testing showed: sending "000008e9" resulted in PC=0xE9080000
+                                // So we must pre-reverse the bytes before sending
+                                const bytes = [
+                                  (thumbAddress & 0xFF).toString(16).padStart(2, '0'),
+                                  ((thumbAddress >> 8) & 0xFF).toString(16).padStart(2, '0'),
+                                  ((thumbAddress >> 16) & 0xFF).toString(16).padStart(2, '0'),
+                                  ((thumbAddress >> 24) & 0xFF).toString(16).padStart(2, '0'),
+                                ];
+                                const hexValue = bytes.join('');  // Little-endian byte order
+
+                                await gdb.gdbClient.writeRegister(15, hexValue);
+                                gdb.addGdbOutput(`[Set GDB PC to reset vector: 0x${displayAddress.toString(16).toUpperCase()} (Thumb: 0x${thumbAddress.toString(16).toUpperCase()})]`);
+                              } catch (error) {
+                                gdb.addGdbOutput(`[Warning: Failed to update GDB PC: ${error}]`);
+                              }
+                            }
+
+                            // Update UI (without Thumb bit for display)
+                            debug.setProgramCounter(displayAddress);
+                            gdb.addGdbOutput(`[PC set to reset vector: 0x${displayAddress.toString(16).toUpperCase()}]`);
 
                             // Rename reset handler to "entrypoint" if it has a default name
-                            const resetHandlerFunc = analysisContext.getFunctionAt(resetVector.handler_address);
+                            const resetHandlerFunc = analysisContext.getFunctionAt(displayAddress);
                             if (resetHandlerFunc && resetHandlerFunc.name.startsWith('sub_')) {
-                              analysisContext.renameFunction(resetVector.handler_address, 'entrypoint');
+                              analysisContext.renameFunction(displayAddress, 'entrypoint');
                               gdb.addGdbOutput('[Renamed reset handler to "entrypoint"]');
                             }
                           } else {

@@ -7,7 +7,7 @@
  * managing firmware cache, and tracking analysis metadata.
  */
 
-import React, { createContext, useContext, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useRef, useMemo, ReactNode } from 'react';
 import { ProjectManager } from '../project/ProjectManager';
 
 interface ProjectContextState {
@@ -28,9 +28,12 @@ export function ProjectProvider({
 }) {
   const projectManagerRef = useRef(projectManager);
 
-  const value: ProjectContextState = {
+  // CRITICAL FIX: Memoize context value to prevent re-renders
+  // Without this, the value object is recreated on every render, causing all consumers to re-render
+  // This was causing FirmwareDumpWorkflow to re-render 8x due to cascading context updates
+  const value: ProjectContextState = useMemo(() => ({
     projectManager: projectManagerRef.current,
-  };
+  }), [projectManagerRef.current]);
 
   return (
     <ProjectContext.Provider value={value}>

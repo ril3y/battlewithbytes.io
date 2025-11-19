@@ -213,26 +213,34 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
       setBlockXrefInfo(xrefInfo);
 
       // Auto-fit the graph in the viewport
+      // PERFORMANCE FIX: Defer layout reads using RAF to avoid forced reflow
       if (containerRef.current && computedLayout) {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const { bounds } = computedLayout;
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
 
-        // Calculate scale to fit with padding
-        const padding = 100; // pixels of padding
-        const scaleX = (canvasWidth - padding * 2) / bounds.width;
-        const scaleY = (canvasHeight - padding * 2) / bounds.height;
-        const fitScale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x zoom
+        // Defer the auto-fit calculation to next animation frame
+        // This prevents forced reflow by allowing browser to complete layout first
+        requestAnimationFrame(() => {
+          if (!canvas) return;
 
-        // Center the graph
-        const offsetX = (canvasWidth - bounds.width * fitScale) / 2 - bounds.minX * fitScale;
-        const offsetY = (canvasHeight - bounds.height * fitScale) / 2 - bounds.minY * fitScale;
+          const canvasWidth = canvas.width;
+          const canvasHeight = canvas.height;
 
-        setTransform({ offsetX, offsetY, scale: fitScale });
-        console.log('[CFG] Auto-fit:', { scale: fitScale, offsetX, offsetY, bounds });
+          // Calculate scale to fit with padding
+          const padding = 100; // pixels of padding
+          const scaleX = (canvasWidth - padding * 2) / bounds.width;
+          const scaleY = (canvasHeight - padding * 2) / bounds.height;
+          const fitScale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x zoom
+
+          // Center the graph
+          const offsetX = (canvasWidth - bounds.width * fitScale) / 2 - bounds.minX * fitScale;
+          const offsetY = (canvasHeight - bounds.height * fitScale) / 2 - bounds.minY * fitScale;
+
+          setTransform({ offsetX, offsetY, scale: fitScale });
+          console.log('[CFG] Auto-fit:', { scale: fitScale, offsetX, offsetY, bounds });
+        });
       }
     } catch (err) {
       console.error('[CFG] Error building control flow graph:', err);
@@ -584,15 +592,23 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
   }, [draw]);
 
   // Resize canvas to container
+  // PERFORMANCE FIX: Use ResizeObserver entry data instead of reading clientWidth/clientHeight
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      draw();
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries.length === 0) return;
+      // Use entry.contentRect instead of reading DOM properties (avoids forced reflow)
+      const { width, height } = entries[0].contentRect;
+      canvas.width = width;
+      canvas.height = height;
+
+      // Defer draw to next animation frame to batch with other layout operations
+      requestAnimationFrame(() => {
+        draw();
+      });
     });
 
     resizeObserver.observe(container);

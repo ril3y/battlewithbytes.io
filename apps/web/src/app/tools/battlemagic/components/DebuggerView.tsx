@@ -108,14 +108,22 @@ export default function DebuggerView({
     }
   }, [jumpToPCTrigger, programCounter]);
 
+  // Cache container rect on drag start to avoid forced reflows during mousemove (60Hz!)
+  const dragStartRectRef = React.useRef<DOMRect | null>(null);
+
   // Mouse handlers for horizontal divider (top/bottom split)
   const handleHorizontalMouseDown = useCallback(() => {
+    // Cache bounding rect ONCE on drag start
+    if (containerRef.current) {
+      dragStartRectRef.current = containerRef.current.getBoundingClientRect();
+    }
     setIsDraggingHorizontal(true);
   }, []);
 
   const handleHorizontalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingHorizontal || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!isDraggingHorizontal || !dragStartRectRef.current) return;
+    // Use cached rect instead of calling getBoundingClientRect() at 60Hz
+    const rect = dragStartRectRef.current;
     const offsetY = e.clientY - rect.top;
     const newSplit = (offsetY / rect.height) * 100;
     if (newSplit >= 20 && newSplit <= 80) {
@@ -125,12 +133,17 @@ export default function DebuggerView({
 
   // Mouse handlers for top row vertical divider (disasm/registers split)
   const handleTopVerticalMouseDown = useCallback(() => {
+    // Cache bounding rect ONCE on drag start
+    if (containerRef.current) {
+      dragStartRectRef.current = containerRef.current.getBoundingClientRect();
+    }
     setIsDraggingTopVertical(true);
   }, []);
 
   const handleTopVerticalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingTopVertical || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!isDraggingTopVertical || !dragStartRectRef.current) return;
+    // Use cached rect instead of calling getBoundingClientRect() at 60Hz
+    const rect = dragStartRectRef.current;
     const offsetX = e.clientX - rect.left;
     const newSplit = (offsetX / rect.width) * 100;
     if (newSplit >= 30 && newSplit <= 85) {
@@ -140,12 +153,17 @@ export default function DebuggerView({
 
   // Mouse handlers for bottom row vertical divider (stack/memory split)
   const handleBottomVerticalMouseDown = useCallback(() => {
+    // Cache bounding rect ONCE on drag start
+    if (containerRef.current) {
+      dragStartRectRef.current = containerRef.current.getBoundingClientRect();
+    }
     setIsDraggingBottomVertical(true);
   }, []);
 
   const handleBottomVerticalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingBottomVertical || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!isDraggingBottomVertical || !dragStartRectRef.current) return;
+    // Use cached rect instead of calling getBoundingClientRect() at 60Hz
+    const rect = dragStartRectRef.current;
     const offsetX = e.clientX - rect.left;
     const newSplit = (offsetX / rect.width) * 100;
     if (newSplit >= 20 && newSplit <= 80) {

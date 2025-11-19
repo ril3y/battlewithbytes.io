@@ -16,7 +16,7 @@
  * - If cache miss: fall back to GDB read (live debugging mode)
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 
 /**
  * Firmware Context State
@@ -100,15 +100,31 @@ export function FirmwareProvider({ children }: { children: React.ReactNode }) {
     setSize(0);
   }, []);
 
-  const value: FirmwareContextState = {
-    firmwareData,
-    baseAddress,
-    size,
-    setFirmwareData,
-    readMemory,
-    hasFirmware,
-    clearFirmware,
-  };
+  // Debug logging to track firmware size changes
+  useEffect(() => {
+    console.log(`[FirmwareContext] State updated - size: ${size}, baseAddress: 0x${baseAddress.toString(16)}, hasFirmware: ${firmwareData !== null}`);
+  }, [size, baseAddress, firmwareData]);
+
+  // Debug logging for component lifecycle
+  useEffect(() => {
+    console.log('[FirmwareContext] Provider mounted');
+    return () => {
+      console.log('[FirmwareContext] Provider unmounting');
+    };
+  }, []);
+
+  const value: FirmwareContextState = useMemo(
+    () => ({
+      firmwareData,
+      baseAddress,
+      size,
+      setFirmwareData,
+      readMemory,
+      hasFirmware,
+      clearFirmware,
+    }),
+    [firmwareData, baseAddress, size, setFirmwareData, readMemory, hasFirmware, clearFirmware]
+  );
 
   return (
     <FirmwareContext.Provider value={value}>
