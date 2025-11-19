@@ -2,11 +2,11 @@
 //!
 //! Provides high-performance ARM/Thumb disassembly using yaxpeax-arm
 
-use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
-use yaxpeax_arm::armv7::InstDecoder;
-use yaxpeax_arch::{Decoder, LengthedInstruction, U8Reader};
 use std::fmt;
+use wasm_bindgen::prelude::*;
+use yaxpeax_arch::{Decoder, LengthedInstruction, U8Reader};
+use yaxpeax_arm::armv7::InstDecoder;
 
 /// Disassembled instruction
 #[wasm_bindgen]
@@ -29,7 +29,11 @@ impl Instruction {
     #[wasm_bindgen(getter)]
     pub fn mnemonic(&self) -> String {
         // Extract mnemonic from full text (first word)
-        self.text.split_whitespace().next().unwrap_or("").to_string()
+        self.text
+            .split_whitespace()
+            .next()
+            .unwrap_or("")
+            .to_string()
     }
 
     #[wasm_bindgen(getter)]
@@ -201,8 +205,10 @@ impl Disassembler {
                         address: self.base_address + offset as u32,
                         size: 4,
                         bytes: bytes.clone(),
-                        text: format!("??? 0x{:02x}{:02x}{:02x}{:02x}",
-                            bytes[0], bytes[1], bytes[2], bytes[3]),
+                        text: format!(
+                            "??? 0x{:02x}{:02x}{:02x}{:02x}",
+                            bytes[0], bytes[1], bytes[2], bytes[3]
+                        ),
                     };
 
                     instructions.push(instruction);
