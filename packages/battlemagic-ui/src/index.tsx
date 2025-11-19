@@ -8,7 +8,7 @@ let wasmModule: typeof import('@battlewithbytes/battlemagic-core') | null = null
  * Hook to load and initialize the WASM module
  */
 export function useBattleMagicCore() {
-  const [core, setCore] = useState<any>(null);
+  const [core, setCore] = useState<typeof import('@battlewithbytes/battlemagic-core') | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -18,15 +18,15 @@ export function useBattleMagicCore() {
     const loadWasm = async () => {
       try {
         // Dynamic import of WASM module
-        const module = await import('@battlewithbytes/battlemagic-core');
+        const wasmCoreModule = await import('@battlewithbytes/battlemagic-core');
 
         if (!mounted) return;
 
-        wasmModule = module;
-        const instance = new module.BattleMagicCore();
-        instance.init();
+        // Initialize the WASM module
+        wasmCoreModule.initialize();
 
-        setCore(instance);
+        wasmModule = wasmCoreModule;
+        setCore(wasmCoreModule);
         setLoading(false);
       } catch (err) {
         if (!mounted) return;
@@ -54,7 +54,7 @@ interface BattleMagicProviderProps {
 }
 
 export function BattleMagicProvider({ children, onError }: BattleMagicProviderProps) {
-  const { core, loading, error } = useBattleMagicCore();
+  const { loading, error } = useBattleMagicCore();
 
   useEffect(() => {
     if (error && onError) {
