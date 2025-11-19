@@ -5,7 +5,7 @@
  * Uses JSON format with versioning for future compatibility.
  */
 
-import { MemoryRegion } from '../memory/MemoryMapParser';
+import { MemoryRegion } from '../memory/types';
 import { Breakpoint } from '../../components/BreakpointsManager';
 
 /**

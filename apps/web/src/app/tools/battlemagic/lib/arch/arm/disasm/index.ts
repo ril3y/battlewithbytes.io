@@ -5,3 +5,4 @@
  */
 
 export { ArmDisassembler } from './ArmDisassembler';
+export type { DisassembledInstruction } from './ArmDisassembler';

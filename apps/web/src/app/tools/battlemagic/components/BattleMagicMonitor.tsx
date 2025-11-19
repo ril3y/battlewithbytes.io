@@ -43,7 +43,7 @@ import {
   saveGdbPort,
   saveUartPort
 } from '../utils/deviceStorage';
-import { MemoryRegion } from '../lib/memory/MemoryMapParser';
+import { MemoryRegion } from '../lib/memory/types';
 import { ProjectProvider } from '../lib/context/ProjectContext';
 import { detectArchitecture } from '../lib/wasmAnalyzer';
 import { AnalysisStateManager } from '../lib/analysis/AnalysisStateManager';
@@ -1265,7 +1265,7 @@ export default function BattleMagicMonitor() {
                 )}
                 {panels.activeRightPanel === 'xrefs' && (
                   <XrefPanel
-                    selectedAddress={selectedDisassemblyAddress}
+                    selectedAddress={debug.selectedDisassemblyAddress}
                     onNavigateToAddress={() => {
                       // Switch to debugger view and navigate
                       panels.setActiveRightPanel('debugger');

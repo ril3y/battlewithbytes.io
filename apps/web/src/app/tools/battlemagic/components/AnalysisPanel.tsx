@@ -411,9 +411,9 @@ export default function AnalysisPanel({
       // Sample xrefs to count types (iterate through all instructions)
       instructions.forEach(inst => {
         const xrefs = analyzer.get_xrefs_from(inst.address);
-        xrefs.forEach((xref: Xref) => {
-          xrefsByType[xref.xref_type]++;
-          uniqueTargets.add(xref.to_addr);
+        xrefs.forEach((xref) => {
+          xrefsByType[(xref as Xref).xref_type]++;
+          uniqueTargets.add((xref as Xref).to_addr);
         });
       });
 

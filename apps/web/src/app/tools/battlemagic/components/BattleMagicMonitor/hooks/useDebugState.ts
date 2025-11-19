@@ -4,7 +4,7 @@
  * Manages debugging state: registers, stack frames, breakpoints, program counter
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { RegisterValue } from '../../RegistersPanel';
 import { StackFrame } from '../../StackPanel';
 import { Breakpoint } from '../../BreakpointsManager';
@@ -21,11 +21,11 @@ export interface DebugState {
   executionState: 'running' | 'stopped' | 'stepping';
 
   // Setters
-  setRegisters: (registers: RegisterValue[]) => void;
-  setStackFrames: (frames: StackFrame[]) => void;
-  setBreakpoints: (breakpoints: Breakpoint[]) => void;
-  setProgramCounter: (pc: number | undefined) => void;
-  setExecutionState: (state: 'running' | 'stopped' | 'stepping') => void;
+  setRegisters: React.Dispatch<React.SetStateAction<RegisterValue[]>>;
+  setStackFrames: React.Dispatch<React.SetStateAction<StackFrame[]>>;
+  setBreakpoints: React.Dispatch<React.SetStateAction<Breakpoint[]>>;
+  setProgramCounter: React.Dispatch<React.SetStateAction<number | undefined>>;
+  setExecutionState: React.Dispatch<React.SetStateAction<'running' | 'stopped' | 'stepping'>>;
 
   // Actions
   triggerJumpToPC: () => void;

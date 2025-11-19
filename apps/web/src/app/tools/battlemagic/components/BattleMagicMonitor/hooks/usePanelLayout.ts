@@ -33,7 +33,7 @@ export interface PanelLayoutState {
   activeRightPanel: RightPanelType;
   consoleWidth: number;
   isDragging: boolean;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   visiblePanels: PanelVisibility;
 
   // Setters

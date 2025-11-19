@@ -43,11 +43,12 @@ export interface AnalysisStats {
 
 /**
  * WASM Analyzer interface (simplified from battlemagic-analyzer)
+ * Note: WASM bindings return unknown[] for arrays, not strongly typed arrays
  */
 interface ArmAnalyzer {
   analyze_from_disasm(instructions: unknown): unknown;
-  get_xrefs_to(address: number): Xref[];
-  get_xrefs_from(address: number): Xref[];
+  get_xrefs_to(address: number): unknown[];
+  get_xrefs_from(address: number): unknown[];
   xref_count(): number;
   is_analyzed(): boolean;
   reset(): void;
@@ -77,7 +78,7 @@ export function XrefProvider({ children }: { children: React.ReactNode }) {
   const getXrefsTo = useCallback((address: number): Xref[] => {
     if (!analyzer) return [];
     try {
-      return analyzer.get_xrefs_to(address);
+      return analyzer.get_xrefs_to(address) as Xref[];
     } catch (error) {
       console.error('[XrefContext] Failed to get xrefs to address:', error);
       return [];
@@ -87,7 +88,7 @@ export function XrefProvider({ children }: { children: React.ReactNode }) {
   const getXrefsFrom = useCallback((address: number): Xref[] => {
     if (!analyzer) return [];
     try {
-      return analyzer.get_xrefs_from(address);
+      return analyzer.get_xrefs_from(address) as Xref[];
     } catch (error) {
       console.error('[XrefContext] Failed to get xrefs from address:', error);
       return [];

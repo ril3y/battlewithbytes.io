@@ -192,7 +192,7 @@ export function LinearView({
       // Also collect target addresses for repeatable comments
       const xrefsFrom = batchData.xrefsFrom.get(inst.address);
       if (xrefsFrom && xrefsFrom.length > 0) {
-        xrefsFrom.forEach(xref => targetAddresses.add(xref.to_addr));
+        xrefsFrom.forEach((xref: { to_addr: number }) => targetAddresses.add(xref.to_addr));
       }
     }
 
