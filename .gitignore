@@ -100,6 +100,16 @@ coverage/
 /uCAN
 nul
 
+# Temporary documentation and notes (root level only)
+/repo.md
+/notes.txt
+/*_IMPLEMENTATION*.md
+/*_ANALYSIS*.md
+/*_SUMMARY*.md
+/INVESTIGATION_REPORT.md
+/QUICK_REFERENCE.md
+/PHASE*.md
+
 # Turborepo
 .turbo
 dist/
