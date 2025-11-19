@@ -110,7 +110,6 @@ export class CapstoneDisassembler {
       try {
         // Dynamic import to avoid bundle bloat
         // Capstone.js exports MCapstone, and we need to initialize it first
-        // @ts-expect-error - No type definitions available for this module
         const capstoneModule = await import('@alexaltea/capstone-js/dist/capstone.min.js');
 
         // The module exports MCapstone which needs to be initialized
