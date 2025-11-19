@@ -31,7 +31,8 @@
         ".next/**",
         "!.next/cache/**",
         "out/**",
-        "dist/**"
+        "dist/**",
+        "pkg/**"
       ],
       "env": [
         "NODE_ENV",
