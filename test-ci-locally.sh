@@ -8,7 +8,7 @@ echo "This simulates the GitHub Actions Ubuntu environment"
 echo ""
 
 # Use Ubuntu 24.04 to match CI
-docker run --rm -v "$(pwd):/repo" -w /repo ubuntu:24.04 bash -c '
+MSYS_NO_PATHCONV=1 docker run --rm -v "X:/battlewithbytes.io:/repo" -w /repo ubuntu:24.04 bash -c '
 set -e
 
 echo "Installing system dependencies..."
@@ -39,5 +39,6 @@ pnpm run lint
 echo "Running build..."
 pnpm run build
 
-echo "=== SUCCESS ==="
+echo ""
+echo "=== ✅ SUCCESS - All CI steps passed locally ==="
 '
