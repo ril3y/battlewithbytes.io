@@ -19,8 +19,7 @@ import {
   VectorInfo,
   SymbolInfo,
   MemoryRegion,
-  ElfMachine,
-  ArchitectureMetadata
+  ElfMachine
 } from './types';
 
 /**
