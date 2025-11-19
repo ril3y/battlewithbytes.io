@@ -47,3 +47,9 @@ impl ModuleInfo {
         self.version.clone()
     }
 }
+
+impl Default for ModuleInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
