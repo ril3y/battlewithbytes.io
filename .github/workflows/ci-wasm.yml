@@ -145,7 +145,7 @@ jobs:
 
       - name: Build WASM (release)
         working-directory: packages/battlemagic-core
-        run: WASM_PACK_PROFILE=release pnpm run build:wasm
+        run: WASM_PACK_PROFILE=release pnpm run build
 
       - name: Analyze bundle size
         working-directory: packages/battlemagic-core
