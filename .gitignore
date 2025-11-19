@@ -122,3 +122,13 @@ packages/*/dist
 **/*.wasm
 # WASM binaries (generated during build)
 apps/web/public/wasm/*.wasm
+
+# Firmware files and debugging artifacts
+*.so
+*.bin
+*.elf
+*.hex
+*.srec
+firmware_*.bin
+*.pyc
+*.py[cod]

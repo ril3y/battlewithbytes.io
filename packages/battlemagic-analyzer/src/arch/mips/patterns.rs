@@ -85,6 +85,7 @@ pub fn is_mips_function_end(inst: &Instruction) -> bool {
 ///
 /// # Returns
 /// `true` if the instruction is a function call
+#[allow(dead_code)]
 pub fn is_function_call(inst: &Instruction) -> bool {
     let mnemonic = inst.mnemonic.to_lowercase();
     matches!(mnemonic.as_str(), "jal" | "jalr")
@@ -97,6 +98,7 @@ pub fn is_function_call(inst: &Instruction) -> bool {
 ///
 /// # Returns
 /// `true` if it's a conditional branch instruction
+#[allow(dead_code)]
 fn is_conditional_branch(mnemonic: &str) -> bool {
     matches!(
         mnemonic,

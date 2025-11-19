@@ -4,6 +4,8 @@ mod xref;
 mod patterns;
 mod decoder;
 
+pub mod binary_patterns;
+
 use crate::traits::{Architecture, Instruction, CrossReference};
 
 pub use xref::extract_arm_xrefs;

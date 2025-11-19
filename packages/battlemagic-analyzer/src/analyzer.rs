@@ -1,7 +1,8 @@
 //! Generic binary analyzer parameterized by architecture
 
-use crate::analysis::{FunctionDetector, StackAnalyzer};
+use crate::analysis::{CallingConventionAnalyzer, FunctionDetector, StackAnalyzer, VectorTableDetector};
 use crate::cfg::{BasicBlockAnalyzer, DominatorAnalyzer, LoopDetector, LoopClassifier};
+use crate::database::VectorTableEntry;
 use crate::traits::{Architecture, Instruction as TraitInstruction};
 use crate::types::{AnalysisResults, CrossReference as TypesXref, FunctionInfo, Instruction, Loop};
 use crate::xref::XrefDatabase;
@@ -23,6 +24,9 @@ pub struct BinaryAnalyzer<A: Architecture> {
 
     /// Analysis state flag
     is_analyzed: bool,
+
+    /// Vector table entries (ARM Cortex-M)
+    vector_table: Vec<VectorTableEntry>,
 }
 
 impl<A: Architecture> BinaryAnalyzer<A> {
@@ -33,6 +37,7 @@ impl<A: Architecture> BinaryAnalyzer<A> {
             xref_db: XrefDatabase::new(),
             base_address,
             is_analyzed: false,
+            vector_table: Vec::new(),
         }
     }
 
@@ -166,16 +171,18 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         let function_detector = FunctionDetector::new(&self.arch);
         let mut functions = function_detector.detect_functions(&trait_instructions, &xrefs);
         let stack_analyzer = StackAnalyzer::new();
+        let calling_conv_analyzer = CallingConventionAnalyzer::default();
         for function in functions.values_mut() {
             let func_instructions: Vec<TraitInstruction> = trait_instructions
                 .iter()
                 .filter(|instr| {
                     instr.address >= function.start_address
-                        && function.end_address.map_or(true, |end| instr.address <= end)
+                        && function.end_address.is_none_or(|end| instr.address <= end)
                 })
                 .cloned()
                 .collect();
             stack_analyzer.analyze_function(function, &func_instructions);
+            calling_conv_analyzer.analyze_function(function, &func_instructions);
         }
         let function_list: Vec<FunctionInfo> = functions.into_values().collect();
 
@@ -238,7 +245,13 @@ impl<A: Architecture> BinaryAnalyzer<A> {
     /// Reset analyzer state
     pub fn reset(&mut self) {
         self.xref_db.clear();
+        self.vector_table.clear();
         self.is_analyzed = false;
+    }
+
+    /// Get vector table entries
+    pub fn get_vector_table(&self) -> &[VectorTableEntry] {
+        &self.vector_table
     }
 
     /// Get reference to XrefDatabase (for export)
@@ -276,6 +289,11 @@ impl<A: Architecture> BinaryAnalyzer<A> {
     pub fn analyze_from_bytes(&mut self, bytes: &[u8]) -> AnalysisResults {
         // Clear previous analysis
         self.xref_db.clear();
+        self.vector_table.clear();
+
+        // Step 0: Detect vector table (ARM Cortex-M only)
+        // This happens before instruction decoding to identify entry points
+        self.vector_table = VectorTableDetector::detect_vector_table(bytes, self.base_address);
 
         let mut instructions = Vec::new();
         let mut offset = 0;
@@ -353,16 +371,18 @@ impl<A: Architecture> BinaryAnalyzer<A> {
         let function_detector = FunctionDetector::new(&self.arch);
         let mut functions = function_detector.detect_functions(&instructions, &xrefs);
         let stack_analyzer = StackAnalyzer::new();
+        let calling_conv_analyzer = CallingConventionAnalyzer::default();
         for function in functions.values_mut() {
             let func_instructions: Vec<TraitInstruction> = instructions
                 .iter()
                 .filter(|instr| {
                     instr.address >= function.start_address
-                        && function.end_address.map_or(true, |end| instr.address <= end)
+                        && function.end_address.is_none_or(|end| instr.address <= end)
                 })
                 .cloned()
                 .collect();
             stack_analyzer.analyze_function(function, &func_instructions);
+            calling_conv_analyzer.analyze_function(function, &func_instructions);
         }
         let function_list: Vec<FunctionInfo> = functions.into_values().collect();
 
@@ -395,14 +415,19 @@ impl<A: Architecture> BinaryAnalyzer<A> {
     {
         // Clear previous analysis
         self.xref_db.clear();
+        self.vector_table.clear();
+
+        // Step 0: Detect vector table (ARM Cortex-M only)
+        progress_fn("Detecting vector table", 0.0);
+        self.vector_table = VectorTableDetector::detect_vector_table(bytes, self.base_address);
 
         let mut instructions = Vec::new();
         let mut offset = 0;
         let alignment = self.arch.instruction_alignment();
         let total_bytes = bytes.len() as f64;
 
-        // Stage 1: Decode instructions (0-40%)
-        progress_fn("Decoding instructions", 0.0);
+        // Stage 1: Decode instructions (5-40%)
+        progress_fn("Decoding instructions", 5.0);
 
         while offset < bytes.len() {
             let addr = self.base_address + (offset as u32);
@@ -436,8 +461,8 @@ impl<A: Architecture> BinaryAnalyzer<A> {
                 offset += alignment;
             }
 
-            // Report progress every ~10KB
-            if offset % 10240 == 0 {
+            // Report progress every ~2KB (more frequent for better UI responsiveness)
+            if offset % 2048 == 0 {
                 let decode_progress = ((offset as f64 / total_bytes) * 40.0).min(40.0);
                 progress_fn("Decoding instructions", decode_progress);
             }
@@ -492,16 +517,34 @@ impl<A: Architecture> BinaryAnalyzer<A> {
 
         progress_fn("Analyzing stack frames", 80.0);
         let stack_analyzer = StackAnalyzer::new();
+        let calling_conv_analyzer = CallingConventionAnalyzer::default();
+
+        // Build a sorted list of function starts to find boundaries
+        let mut function_starts: Vec<u32> = functions.keys().copied().collect();
+        function_starts.sort_unstable();
+
         for function in functions.values_mut() {
+            // Determine the effective end address
+            let effective_end = if let Some(end) = function.end_address {
+                end
+            } else {
+                // If no end address, stop at the next function's start
+                function_starts
+                    .iter()
+                    .find(|&&addr| addr > function.start_address)
+                    .copied()
+                    .unwrap_or(u32::MAX)
+            };
+
             let func_instructions: Vec<TraitInstruction> = instructions
                 .iter()
                 .filter(|instr| {
-                    instr.address >= function.start_address
-                        && function.end_address.map_or(true, |end| instr.address <= end)
+                    instr.address >= function.start_address && instr.address < effective_end
                 })
                 .cloned()
                 .collect();
             stack_analyzer.analyze_function(function, &func_instructions);
+            calling_conv_analyzer.analyze_function(function, &func_instructions);
         }
         let function_list: Vec<FunctionInfo> = functions.into_values().collect();
 

@@ -92,7 +92,7 @@ pub fn decode_arm_instruction(bytes: &[u8], addr: u32) -> Option<Instruction> {
 /// - 0b11111 - Branches, coprocessor ops
 fn is_thumb2_32bit(hw: u16) -> bool {
     let bits_15_11 = (hw >> 11) & 0x1F;
-    matches!(bits_15_11, 0b11101 | 0b11110 | 0b11111)
+    matches!(bits_15_11, 0b11101..=0b11111)
 }
 
 /// Decode a 16-bit Thumb instruction
@@ -530,11 +530,7 @@ fn decode_thumb_data_proc(hw: u16, addr: u32) -> Option<Instruction> {
     };
 
     // TST and CMP don't have destination
-    let operands = if matches!(opcode, 0x8 | 0xA | 0xB) {
-        format!("r{}, r{}", rd, rm)
-    } else {
-        format!("r{}, r{}", rd, rm)
-    };
+    let operands = format!("r{}, r{}", rd, rm);
 
     Some(Instruction::new(
         addr,
@@ -788,9 +784,7 @@ fn decode_thumb2_ldm_stm(hw1: u16, hw2: u16, addr: u32) -> Option<Instruction> {
     let mut regs = Vec::new();
     for i in 0..13 {
         if reg_list & (1 << i) != 0 {
-            if i <= 12 {
-                regs.push(format!("r{}", i));
-            }
+            regs.push(format!("r{}", i));
         }
     }
 

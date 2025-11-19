@@ -210,7 +210,7 @@ impl DominatorAnalyzer {
         // Build children map
         for (&node, &dom) in idom {
             if node != dom {
-                tree.children.entry(dom).or_insert_with(Vec::new).push(node);
+                tree.children.entry(dom).or_default().push(node);
             }
         }
 

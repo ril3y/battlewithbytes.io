@@ -150,6 +150,23 @@ impl ArmAnalyzer {
     pub fn analyze_from_bytes(&mut self, bytes: &[u8]) -> Result<JsValue, JsValue> {
         let results = self.inner.analyze_from_bytes(bytes);
 
+        // Copy vector table from inner analyzer
+        self.vector_table = self.inner.get_vector_table().to_vec();
+
+        // Auto-create symbols for valid vector table handlers
+        for entry in &self.vector_table {
+            if entry.is_valid && entry.vector_number > 0 {
+                // Only create symbol if one doesn't already exist at this address
+                self.symbols.entry(entry.handler_address).or_insert_with(|| {
+                    Symbol::new(
+                        entry.handler_address,
+                        entry.handler_name.clone(),
+                        SymbolType::Function,
+                    )
+                });
+            }
+        }
+
         // Serialize to JavaScript
         serde_wasm_bindgen::to_value(&results)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
@@ -192,7 +209,25 @@ impl ArmAnalyzer {
         };
 
         report_progress("Decoding instructions", 0.0);
+
         let results = self.inner.analyze_from_bytes_with_progress(bytes, &report_progress);
+
+        // Copy vector table from inner analyzer
+        self.vector_table = self.inner.get_vector_table().to_vec();
+
+        // Auto-create symbols for valid vector table handlers
+        for entry in &self.vector_table {
+            if entry.is_valid && entry.vector_number > 0 {
+                // Only create symbol if one doesn't already exist at this address
+                self.symbols.entry(entry.handler_address).or_insert_with(|| {
+                    Symbol::new(
+                        entry.handler_address,
+                        entry.handler_name.clone(),
+                        SymbolType::Function,
+                    )
+                });
+            }
+        }
 
         report_progress("Analysis complete", 100.0);
 
@@ -432,6 +467,36 @@ impl ArmAnalyzer {
         }
     }
 
+    /// Get ARM Cortex-M vector table entries
+    ///
+    /// Returns the detected vector table from the firmware. The vector table
+    /// contains interrupt handlers and the initial stack pointer.
+    ///
+    /// # Returns
+    /// Array of VectorTableEntry objects containing:
+    /// - `vector_number`: Vector index (0 = Initial SP, 1 = Reset, etc.)
+    /// - `handler_address`: Handler address (Thumb bit cleared for code vectors)
+    /// - `handler_name`: Standard ARM handler name
+    /// - `is_valid`: Whether the entry is valid
+    ///
+    /// # Example
+    /// ```javascript
+    /// const analyzer = new ArmAnalyzer(0x08000000);
+    /// analyzer.analyze_from_bytes(firmwareBytes);
+    /// const vectorTable = analyzer.get_vector_table();
+    ///
+    /// vectorTable.forEach(entry => {
+    ///     if (entry.is_valid && entry.vector_number > 0) {
+    ///         console.log(`${entry.handler_name}: 0x${entry.handler_address.toString(16)}`);
+    ///     }
+    /// });
+    /// ```
+    #[wasm_bindgen]
+    pub fn get_vector_table(&self) -> Result<JsValue, JsValue> {
+        serde_wasm_bindgen::to_value(&self.vector_table)
+            .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))
+    }
+
     // ========================================================================
     // Internal Helper Methods
     // ========================================================================
@@ -543,7 +608,7 @@ mod tests {
     #[test]
     fn test_analyzer_creation() {
         let analyzer = ArmAnalyzer::new(0x8000);
-        assert_eq!(analyzer.is_analyzed(), false);
+        assert!(!analyzer.is_analyzed());
         assert_eq!(analyzer.xref_count(), 0);
     }
 
@@ -557,7 +622,7 @@ mod tests {
         assert!(analyzer.is_analyzed());
 
         analyzer.reset();
-        assert_eq!(analyzer.is_analyzed(), false);
+        assert!(!analyzer.is_analyzed());
     }
 
     #[test]
