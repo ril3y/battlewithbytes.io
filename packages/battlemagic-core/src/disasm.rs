@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use yaxpeax_arm::armv7::InstDecoder;
 use yaxpeax_arch::{Decoder, LengthedInstruction, U8Reader};
+use std::fmt;
 
 /// Disassembled instruction
 #[wasm_bindgen]
@@ -50,11 +51,6 @@ impl Instruction {
         self.text.clone()
     }
 
-    /// Get full disassembly string
-    pub fn to_string(&self) -> String {
-        self.text.clone()
-    }
-
     /// Check if this is a branch instruction
     pub fn is_branch(&self) -> bool {
         let mnem = self.mnemonic().to_lowercase();
@@ -65,6 +61,12 @@ impl Instruction {
     pub fn is_return(&self) -> bool {
         let text = self.text.to_lowercase();
         text.contains("bx") && text.contains("lr")
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.text)
     }
 }
 
