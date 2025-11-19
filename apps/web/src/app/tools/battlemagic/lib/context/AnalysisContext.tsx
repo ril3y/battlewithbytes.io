@@ -237,7 +237,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     newResults: AnalysisResults,
     baseAddr: number,
     size: number
-  ) => {
+  ): Promise<void> => {
     // Set results immediately (non-blocking)
     setResults(newResults);
     setBaseAddress(baseAddr);
@@ -245,7 +245,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
     // Load user data asynchronously in the background (don't block UI)
     const db = dbRef.current;
-    Promise.all([
+    return Promise.all([
       db.getUserRenamedFunctions(),
       db.getAllComments()
     ]).then(([userRenamedFunctions, dbComments]) => {
@@ -695,11 +695,11 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         callers: dbFunc.callers,
         callees: dbFunc.callees,
         // Extended fields may not be in database (they come from WASM analyzer)
-        end_address: undefined,
-        stack_frame_size: undefined,
-        stack_vars: undefined,
-        arg_annotations: undefined,
-        complexity: undefined,
+        end_address: null,
+        stack_frame_size: 0,
+        stack_vars: [],
+        arg_annotations: [],
+        complexity: 0,
       }));
 
       // Convert DbXref[] to XrefResult[]

@@ -16,7 +16,7 @@ import type { FirmwareDump } from './FirmwareExtractor';
  */
 export async function generateFirmwareHash(data: Uint8Array): Promise<string> {
   // Use Web Crypto API for SHA-256 hashing
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data as Uint8Array<ArrayBuffer>);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex;

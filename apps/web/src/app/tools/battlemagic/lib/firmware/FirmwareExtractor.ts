@@ -437,7 +437,7 @@ export function prepareFirmwareForAnalysis(dump: FirmwareDump): {
  * @param filename Optional filename (auto-generated if not provided)
  */
 export function downloadFirmware(dump: FirmwareDump, filename?: string): void {
-  const blob = new Blob([dump.data], { type: 'application/octet-stream' });
+  const blob = new Blob([dump.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
 

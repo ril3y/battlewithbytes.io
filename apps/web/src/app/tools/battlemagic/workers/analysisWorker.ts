@@ -52,9 +52,10 @@ async function initWasm() {
       const wasmBytes = await response.arrayBuffer();
 
       // Instantiate WASM with the glue code as imports
+      // Note: glueModule contains enums and other exports that TypeScript doesn't recognize as valid WASM imports
       const result = await WebAssembly.instantiate(wasmBytes, {
-        './battlemagic_analyzer_bg.js': glueModule,
-        wbg: glueModule
+        './battlemagic_analyzer_bg.js': glueModule as unknown as WebAssembly.ModuleImports,
+        wbg: glueModule as unknown as WebAssembly.ModuleImports
       });
 
       // Set the WASM instance

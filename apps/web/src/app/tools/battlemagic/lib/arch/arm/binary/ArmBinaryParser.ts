@@ -17,7 +17,7 @@ import {
   BinaryInfo,
   ElfMachine,
   MemoryRegion
-} from '../types';
+} from '../../../binary/types';
 
 /**
  * ARM Binary Parser Implementation

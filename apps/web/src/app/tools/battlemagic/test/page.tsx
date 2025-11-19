@@ -11,7 +11,7 @@ import { WasmErrorBoundary } from '../components/WasmErrorBoundary';
 interface WasmInstruction {
   address?: number;
   text?: string;
-  bytes?: number[];
+  bytes?: Uint8Array;
   mnemonic?: string;
   operands?: string;
 }

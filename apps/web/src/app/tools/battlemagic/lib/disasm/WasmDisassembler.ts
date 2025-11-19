@@ -36,7 +36,7 @@ interface BattleMagicWasmModule {
 interface WasmInstruction {
   address: number;
   text: string;
-  bytes: number[];
+  bytes: Uint8Array;
 }
 
 /**
@@ -210,7 +210,7 @@ export class WasmDisassembler {
         const mnemonic = firstSpace >= 0 ? text.substring(0, firstSpace) : text;
         const operands = firstSpace >= 0 ? text.substring(firstSpace + 1).trim() : '';
 
-        const bytes = Array.isArray(inst.bytes) ? new Uint8Array(inst.bytes) : new Uint8Array();
+        const bytes = inst.bytes instanceof Uint8Array ? inst.bytes : new Uint8Array();
         const address = typeof inst.address === 'number' ? inst.address : 0;
 
         // Detect branch instructions
