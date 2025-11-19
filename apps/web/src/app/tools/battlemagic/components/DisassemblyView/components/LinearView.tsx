@@ -146,17 +146,24 @@ export function LinearView({
     return backEdges;
   }, [loopsInRange]);
 
-  // Get reset vector address from vector table (vector_number = 1)
-  const resetVectorAddress = useMemo(() => {
-    if (!analysisContext) return null;
+  // PERFORMANCE: Pre-compute vector table data ONCE (not per-line!)
+  const vectorTableData = useMemo(() => {
+    if (!analysisContext) return { vectorTable: [], baseAddress: 0, maxVectorAddr: 192, resetVectorAddress: null };
+
     const vectorTable = analysisContext.getVectorTable();
+    const baseAddress = analysisContext.baseAddress || 0;
+    const maxVectorAddr = vectorTable.length > 0 ? Math.max(...vectorTable.map(v => v.vector_number)) * 4 + 4 : 192;
     const resetVector = vectorTable.find(entry => entry.vector_number === 1);
-    return resetVector?.handler_address ?? null;
+    const resetVectorAddress = resetVector?.handler_address ?? null;
+
+    return { vectorTable, baseAddress, maxVectorAddr, resetVectorAddress };
   }, [analysisContext]);
 
   // Pre-compute all enriched data for each line (optimization: prevents re-lookup on every render)
   const enrichedLines = useMemo(() => {
     if (!lines.length) return [];
+
+    const { vectorTable, baseAddress, maxVectorAddr, resetVectorAddress } = vectorTableData;
 
     return lines.map(line => {
       const inst = line.instruction;
@@ -192,11 +199,7 @@ export function LinearView({
       const isResetVector = resetVectorAddress !== null && inst.address === resetVectorAddress;
 
       // Check if this address is in the vector table region (ARM Cortex-M only)
-      // MIPS uses fixed exception vectors, not a table, so skip this for MIPS
-      const vectorTable = analysisContext?.getVectorTable() || [];
-      const baseAddress = analysisContext?.baseAddress || 0;
-
-      const maxVectorAddr = vectorTable.length > 0 ? Math.max(...vectorTable.map(v => v.vector_number)) * 4 + 4 : 192;
+      // PERFORMANCE: Using pre-computed values instead of recalculating for each line
       const isVectorTableEntry = vectorTable.length > 0 && isInVectorTable(inst.address, baseAddress, maxVectorAddr / 4);
       const vectorNum = isVectorTableEntry ? getVectorNumber(inst.address, baseAddress) : null;
 
@@ -228,7 +231,7 @@ export function LinearView({
         vectorInfo
       };
     });
-  }, [lines, analysisContext, resetVectorAddress]);
+  }, [lines, analysisContext, vectorTableData]);
 
   // Debug log vector table detection
   useEffect(() => {
