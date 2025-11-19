@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Rust tests
         working-directory: packages/battlemagic-core
-        run: cargo test --all-features
+        run: wasm-pack test --node --all-features
 
       - name: Run Clippy
         working-directory: packages/battlemagic-core
