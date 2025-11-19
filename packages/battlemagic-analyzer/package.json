@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "wasm-pack build --target bundler --out-dir pkg",
-    "test": "cargo test"
+    "test": "wasm-pack test --node --all-features"
   },
   "keywords": [
     "wasm",
