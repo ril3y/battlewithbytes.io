@@ -42,6 +42,8 @@ console_errors = ["console_error_panic_hook"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = "0.5"
 serialport = "4.5"
 
