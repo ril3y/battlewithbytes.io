@@ -128,6 +128,24 @@ export function LinearView({
     return generateLoopVisualization(addresses, loopsInRange);
   }, [lines, loopsInRange]);
 
+  // Pre-compute loop header and back edge addresses (PERFORMANCE OPTIMIZATION)
+  // This prevents O(n*m) lookups inside the render loop
+  const loopHeaderAddresses = useMemo(() => {
+    const headers = new Map<number, number>(); // address -> nesting_level
+    loopsInRange.forEach(loop => {
+      headers.set(loop.header_addr, loop.nesting_level);
+    });
+    return headers;
+  }, [loopsInRange]);
+
+  const loopBackEdgeAddresses = useMemo(() => {
+    const backEdges = new Map<number, number>(); // address -> nesting_level
+    loopsInRange.forEach(loop => {
+      backEdges.set(loop.back_edge_addr, loop.nesting_level);
+    });
+    return backEdges;
+  }, [loopsInRange]);
+
   // Get reset vector address from vector table (vector_number = 1)
   const resetVectorAddress = useMemo(() => {
     if (!analysisContext) return null;
@@ -312,13 +330,9 @@ export function LinearView({
             const loopLineInfo = loopLines.get(index);
             const isLoopActive = hoveredLoop !== null && loopLineInfo?.activeLoops.includes(hoveredLoop);
 
-            // Check if this line is a loop header or back edge based on address
-            const isLoopHeader = loopsInRange.some(loop =>
-              loop.header_addr === inst.address && loop.nesting_level === hoveredLoop
-            );
-            const isLoopBackEdge = loopsInRange.some(loop =>
-              loop.back_edge_addr === inst.address && loop.nesting_level === hoveredLoop
-            );
+            // Check if this line is a loop header or back edge based on address (OPTIMIZED: O(1) instead of O(m))
+            const isLoopHeader = hoveredLoop !== null && loopHeaderAddresses.get(inst.address) === hoveredLoop;
+            const isLoopBackEdge = hoveredLoop !== null && loopBackEdgeAddresses.get(inst.address) === hoveredLoop;
 
             return (
               <React.Fragment key={index}>
