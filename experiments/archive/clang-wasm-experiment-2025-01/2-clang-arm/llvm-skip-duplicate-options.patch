@@ -1,0 +1,25 @@
+--- a/llvm/lib/Support/CommandLine.cpp
++++ b/llvm/lib/Support/CommandLine.cpp
+@@ -400,7 +400,9 @@ void Option::addArgument() {
+   assert(NextRegistered == nullptr && "argument multiply registered!");
+
+   GlobalParser->addOption(this);
++#ifndef __EMSCRIPTEN__
+   MarkOptionsChanged();
++#endif
+ }
+
+ void Option::removeArgument() {
+@@ -476,10 +478,12 @@ bool cl::Option::error(const Twine &Message, StringRef ArgName, raw_ostream &Er
+
+ bool cl::Option::addOccurrence(unsigned pos, StringRef ArgName, StringRef Value,
+                                 bool MultiArg) {
++#ifndef __EMSCRIPTEN__
+   if (!MultiArg)
+     NumOccurrences++; // Increment the number of times seen
+
+   return handleOccurrence(pos, ArgName, Value);
++#endif
+ }
+
+ // getValueStr - Get the value description string, using "DefaultMsg"

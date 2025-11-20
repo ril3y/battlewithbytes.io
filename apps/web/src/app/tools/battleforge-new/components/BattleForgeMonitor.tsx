@@ -38,13 +38,14 @@ void main(void) {
 }
 `);
 
-  const [output, setOutput] = useState<Array<{message: string, type: 'info' | 'success' | 'error' | 'warning'}>>([
+  const [output, setOutput] = useState<Array<{message: string, type: 'info' | 'success' | 'error' | 'warning', timestamp?: string}>>([
     { message: 'BattleForge Ready - Compile firmware for embedded systems', type: 'info' },
     { message: 'Waiting for compilation...', type: 'info' },
   ]);
 
   const log = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
-    setOutput(prev => [...prev, { message, type }]);
+    const timestamp = new Date().toLocaleTimeString();
+    setOutput(prev => [...prev, { message, type, timestamp }]);
   };
 
   const handleCompile = async () => {

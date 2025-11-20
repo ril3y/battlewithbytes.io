@@ -1,0 +1,13 @@
+# Python requirements for building Clang to WASM
+# Install with: pip install -r requirements.txt
+
+# LLVM/Clang build requirements
+cmake>=3.20.0
+ninja
+
+# Code generation and build tools
+setuptools>=60.0.0
+wheel
+
+# Optional but recommended for faster builds
+psutil  # For parallel build optimization

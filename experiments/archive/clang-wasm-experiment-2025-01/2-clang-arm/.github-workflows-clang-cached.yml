@@ -1,0 +1,188 @@
+# GitHub Actions Workflow for Fast Clang WASM Builds
+# Uses cached LLVM base image for rebuilds in minutes instead of hours
+
+name: Build Clang WASM (Cached)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'experiments/c-compiler-poc/2-clang-arm/**'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rebuild_cache:
+        description: 'Force rebuild LLVM cache'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  LLVM_CACHE_IMAGE: battlewithbytes/llvm-wasm-arm:18.x
+  CLANG_IMAGE: battlewithbytes/clang-wasm-arm:latest
+
+jobs:
+  # Job 1: Build or pull cached LLVM base (runs once per LLVM version)
+  build-llvm-cache:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.rebuild_cache == 'true' || !github.event.repository.default_branch
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Check if cache exists
+        id: cache-check
+        run: |
+          if docker pull ${{ env.LLVM_CACHE_IMAGE }}; then
+            echo "cache_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "cache_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build LLVM cache layer
+        if: steps.cache-check.outputs.cache_exists == 'false' || github.event.inputs.rebuild_cache == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: experiments/c-compiler-poc/2-clang-arm
+          file: experiments/c-compiler-poc/2-clang-arm/Dockerfile.multistage
+          target: llvm-build
+          push: true
+          tags: ${{ env.LLVM_CACHE_IMAGE }}
+          cache-from: type=registry,ref=${{ env.LLVM_CACHE_IMAGE }}
+          cache-to: type=inline
+          build-args: |
+            LLVM_VERSION=release/18.x
+            LLVM_TARGETS=ARM
+            BUILD_TYPE=MinSizeRel
+
+  # Job 2: Fast build using cached LLVM (minutes instead of hours)
+  build-clang:
+    runs-on: ubuntu-latest
+    needs: [build-llvm-cache]
+    if: always() && !cancelled()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Pull LLVM cache
+        run: docker pull ${{ env.LLVM_CACHE_IMAGE }} || true
+
+      - name: Build Clang WASM (using cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: experiments/c-compiler-poc/2-clang-arm
+          file: experiments/c-compiler-poc/2-clang-arm/Dockerfile.multistage
+          target: custom-wasm
+          push: false
+          tags: ${{ env.CLANG_IMAGE }}
+          cache-from: |
+            type=registry,ref=${{ env.LLVM_CACHE_IMAGE }}
+            type=registry,ref=${{ env.CLANG_IMAGE }}
+          outputs: type=local,dest=./dist
+
+      - name: Check build output
+        run: |
+          ls -lh dist/
+          if [ -f "dist/clang.wasm.gz" ]; then
+            SIZE=$(stat -c%s dist/clang.wasm.gz)
+            SIZE_MB=$(echo "scale=2; $SIZE / 1048576" | bc)
+            echo "✓ Clang WASM built successfully!"
+            echo "  Compressed size: ${SIZE_MB} MB"
+
+            # Verify it's within expected range (5-10 MB for ARM-only)
+            if [ $SIZE -gt 10485760 ]; then
+              echo "⚠️  Warning: Binary larger than expected (>10MB)"
+            fi
+          else
+            echo "✗ Build failed: clang.wasm.gz not found"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-wasm-arm
+          path: |
+            dist/clang.wasm
+            dist/clang.wasm.gz
+          retention-days: 30
+
+      - name: Upload to web app (on push to main)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          mkdir -p apps/web/public/compiler
+          cp dist/clang.wasm.gz apps/web/public/compiler/
+          echo "Deployed to web app"
+
+  # Job 3: Create GitHub Release on tag
+  release:
+    runs-on: ubuntu-latest
+    needs: [build-clang]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: clang-wasm-arm
+          path: dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/clang.wasm
+            dist/clang.wasm.gz
+          body: |
+            Clang WASM Compiler (ARM backend only)
+
+            - Architecture: ARM Cortex-M
+            - Target: STM32 microcontrollers
+            - Size: ~5-7 MB compressed
+
+            **Usage:**
+            1. Download `clang.wasm.gz`
+            2. Decompress: `gunzip clang.wasm.gz`
+            3. Load in web app via WebAssembly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# ==============================================================================
+# Performance Comparison
+# ==============================================================================
+#
+# Traditional build (no cache):
+#   - LLVM clone: 1-2 min
+#   - LLVM configure: 2-3 min
+#   - LLVM compile: 30-60 min
+#   - Total: ~35-65 minutes
+#
+# Cached build (after first run):
+#   - Pull cache image: 30-60 sec
+#   - Compile changes: 0-5 min (depends on changes)
+#   - Total: ~1-6 minutes ✅
+#
+# Cache rebuild (when updating LLVM):
+#   - Only when LLVM version changes
+#   - Manually triggered or scheduled
+#   - Rebuilds cache layer: 35-65 min
+#   - All subsequent builds: 1-6 min
+#

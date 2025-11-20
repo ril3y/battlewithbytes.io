@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  clang-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: battlewithbytes/clang-wasm-builder:latest
+    container_name: clang-arm-builder
+    volumes:
+      # Mount dist directory to get output
+      - ./dist:/build/dist
+      # Mount build cache to speed up rebuilds (saves ~10-15 min on future builds)
+      - ./build-wasm:/build/build-wasm
+      - ./llvm-project:/build/llvm-project
+    environment:
+      # Build configuration
+      - LLVM_TARGETS_TO_BUILD=ARM
+      - CMAKE_BUILD_TYPE=MinSizeRel
+      # Optional: Limit CPU usage
+      # - CMAKE_BUILD_PARALLEL_LEVEL=4
+    # Resource limits (optional but recommended)
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 8G
+        reservations:
+          memory: 4G
