@@ -6,6 +6,7 @@ interface TerminalPanelProps {
   output: Array<{
     message: string;
     type: 'info' | 'success' | 'error' | 'warning';
+    timestamp?: string;
   }>;
 }
 
@@ -33,7 +34,7 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
       <div className="terminal-output" ref={outputRef}>
         {output.map((line, index) => (
           <div key={index} className={line.type}>
-            [{new Date().toLocaleTimeString()}] {line.message}
+            {line.timestamp && `[${line.timestamp}] `}{line.message}
           </div>
         ))}
       </div>

@@ -1,0 +1,34 @@
+{
+  "name": "stm32f1",
+  "displayName": "STM32F1 Series",
+  "version": "1.0.0",
+  "description": "STM32F1 (Cortex-M3) microcontroller family support",
+  "architecture": "thumbv7m-none-eabi",
+  "cpu": "cortex-m3",
+  "features": ["+thumb2", "+strict-align"],
+  "devices": [
+    {
+      "id": "STM32F103C8T6",
+      "name": "STM32F103C8T6 (Blue Pill)",
+      "flash": 65536,
+      "ram": 20480,
+      "linkerScript": "STM32F103C8Tx_FLASH.ld",
+      "description": "64KB Flash, 20KB RAM, ARM Cortex-M3 @ 72MHz"
+    }
+  ],
+  "compilerFlags": ["-mcpu=cortex-m3", "-mthumb", "-mfloat-abi=soft"],
+  "linkerFlags": ["-nostdlib", "-Wl,--gc-sections"],
+  "defines": {"STM32F103xB": "1"},
+  "headers": [
+    {"path": "/sdk/stm32f103xb.h", "url": "stm32-headers/stm32f103xb.h"},
+    {"path": "/sdk/stm32f1xx.h", "url": "stm32-headers/stm32f1xx.h"},
+    {"path": "/sdk/system_stm32f1xx.h", "url": "stm32-headers/system_stm32f1xx.h"},
+    {"path": "/sdk/core_cm3.h", "url": "stm32-headers/core_cm3.h"},
+    {"path": "/sdk/cmsis_gcc.h", "url": "stm32-headers/cmsis_gcc.h"},
+    {"path": "/sdk/cmsis_compiler.h", "url": "stm32-headers/cmsis_compiler.h"},
+    {"path": "/sdk/cmsis_version.h", "url": "stm32-headers/cmsis_version.h"}
+  ],
+  "linkerScripts": [
+    {"device": "STM32F103C8T6", "path": "/sdk/STM32F103C8Tx_FLASH.ld", "url": "stm32-headers/STM32F103C8Tx_FLASH.ld"}
+  ]
+}

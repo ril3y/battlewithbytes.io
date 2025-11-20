@@ -14,7 +14,7 @@ export default function StandaloneWrapper({ children }: { children: React.ReactN
   const pathname = usePathname();
 
   // Routes that should be full-screen without navigation/footer
-  const fullscreenRoutes = ['/tools/ucan', '/tools/battlemagic'];
+  const fullscreenRoutes = ['/tools/ucan', '/tools/battlemagic', '/tools/stm32-ide'];
   const isFullscreenRoute = fullscreenRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
