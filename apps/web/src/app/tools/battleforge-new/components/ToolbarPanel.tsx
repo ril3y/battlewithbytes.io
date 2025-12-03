@@ -1,15 +1,31 @@
 'use client';
 
 interface ToolbarPanelProps {
+  onLoadCompiler: () => void;
   onCompile: () => void;
   onFlash: () => void;
+  onToggleConsole?: () => void;
+  isLoading?: boolean;
+  compilerReady?: boolean;
+  showConsole?: boolean;
 }
 
-export function ToolbarPanel({ onCompile, onFlash }: ToolbarPanelProps) {
+export function ToolbarPanel({ onLoadCompiler, onCompile, onFlash, onToggleConsole, isLoading, compilerReady, showConsole }: ToolbarPanelProps) {
   return (
     <div className="toolbar">
-      <button onClick={onCompile}>
-        🔧 Compile
+      <button
+        onClick={onLoadCompiler}
+        disabled={isLoading || compilerReady}
+        style={{ opacity: compilerReady ? 0.5 : 1 }}
+      >
+        {isLoading ? '⏳ Loading...' : compilerReady ? '✓ Loaded' : '📥 Load Compiler'}
+      </button>
+      <button
+        onClick={onCompile}
+        disabled={!compilerReady}
+        style={{ opacity: compilerReady ? 1 : 0.5 }}
+      >
+        🔧 Compile Code
       </button>
       <button onClick={onFlash}>
         ⚡ Flash
@@ -21,6 +37,15 @@ export function ToolbarPanel({ onCompile, onFlash }: ToolbarPanelProps) {
         📂 Load
       </button>
       <div style={{ flex: 1 }} />
+      <button
+        onClick={onToggleConsole}
+        style={{
+          background: showConsole ? 'var(--accent-primary)' : 'transparent',
+          color: showConsole ? '#000' : 'var(--accent-primary)'
+        }}
+      >
+        {showConsole ? '📊 Output' : '💻 VFS Console'}
+      </button>
       <select
         style={{
           background: 'transparent',
