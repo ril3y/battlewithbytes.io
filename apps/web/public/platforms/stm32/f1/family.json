@@ -85,6 +85,42 @@
     "required": ["libc_nano.a", "libnosys.a"],
     "optional": ["libm.a", "libgcc.a"]
   },
+  "frameworks": [
+    {
+      "frameworkId": "native",
+      "enabled": true,
+      "version": "1.0.0",
+      "framework": {
+        "id": "native",
+        "name": "Native (Bare Metal)",
+        "description": "Direct register access without abstraction layers. Maximum control and efficiency.",
+        "version": "1.0.0",
+        "compilerFlags": ["-nostdlib", "-ffreestanding"],
+        "linkerFlags": ["-nostdlib", "--gc-sections"],
+        "defines": [],
+        "includePaths": []
+      }
+    },
+    {
+      "frameworkId": "arduino",
+      "enabled": true,
+      "version": "2.7.1",
+      "framework": {
+        "id": "arduino",
+        "name": "Arduino",
+        "description": "Arduino API with familiar functions like digitalWrite, Serial, etc.",
+        "version": "2.7.1",
+        "compilerFlags": ["-std=gnu++14", "-fno-rtti", "-fno-exceptions", "-fno-threadsafe-statics", "-Os"],
+        "linkerFlags": ["--gc-sections"],
+        "defines": ["ARDUINO=10819", "ARDUINO_ARCH_STM32", "ARDUINO_BLUEPILL_F103C8"],
+        "includePaths": ["/cores/arduino", "/variants/BLUEPILL_F103C8"],
+        "coreUrl": "stm32/f1/frameworks/arduino/core.tar.gz",
+        "coreChecksum": "sha256:pending",
+        "requiresPreprocessing": true,
+        "fileExtension": ".ino"
+      }
+    }
+  ],
   "examples": [
     {
       "id": "blink",

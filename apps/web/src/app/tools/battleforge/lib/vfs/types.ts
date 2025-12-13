@@ -10,7 +10,7 @@ export interface VFSFile {
   type: 'file';
   editable: boolean;
   modified: boolean;
-  language?: 'c' | 'cpp' | 'h' | 'makefile' | 'ld' | 'asm' | 'text' | 'binary';
+  language?: 'c' | 'cpp' | 'h' | 'ino' | 'makefile' | 'ld' | 'asm' | 'text' | 'binary';
 }
 
 export interface VFSDirectory {
@@ -47,6 +47,9 @@ export function getLanguageFromPath(path: string): VFSFile['language'] {
     case 'cc':
     case 'cxx':
       return 'cpp';
+    case 'ino':
+    case 'pde':  // Legacy Arduino extension
+      return 'ino';
     case 'h':
     case 'hpp':
       return 'h';

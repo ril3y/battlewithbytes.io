@@ -1,25 +1,67 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import Editor, { OnMount, BeforeMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
+import type * as Monaco from 'monaco-editor';
+import { registerCHeaderCompletion } from '../lib/editor';
+
+interface VFSFile {
+  content: string | Uint8Array;
+  readOnly?: boolean;
+}
 
 interface EditorPanelProps {
   sourceCode: string;
   onChange: (code: string) => void;
   language?: string;
   readOnly?: boolean;
+  /** Function to get all VFS files for intellisense */
+  getVFSFiles?: () => Map<string, VFSFile>;
+}
+
+/**
+ * Map VFS language types to Monaco editor language IDs
+ */
+function getMonacoLanguage(language: string): string {
+  switch (language) {
+    case 'c':
+      return 'c';
+    case 'cpp':
+      return 'cpp';
+    case 'h':
+      return 'cpp';  // Headers use C++ mode
+    case 'ino':
+      return 'cpp';  // Arduino sketches are essentially C++
+    case 'makefile':
+      return 'makefile';
+    case 'ld':
+      return 'plaintext';  // Linker scripts
+    case 'asm':
+      return 'plaintext';  // Assembly
+    default:
+      return 'plaintext';
+  }
 }
 
 export function EditorPanel({
   sourceCode,
   onChange,
   language = 'c',
-  readOnly = false
+  readOnly = false,
+  getVFSFiles
 }: EditorPanelProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof Monaco | null>(null);
+  const completionDisposableRef = useRef<Monaco.IDisposable | null>(null);
+
+  // Map language to Monaco-compatible language ID
+  const monacoLanguage = getMonacoLanguage(language);
 
   const handleBeforeMount: BeforeMount = useCallback((monaco) => {
+    // Store Monaco reference for completion provider
+    monacoRef.current = monaco;
+
     // Define custom dark theme matching site colors
     monaco.editor.defineTheme('battleforge-dark', {
       base: 'vs-dark',
@@ -78,6 +120,13 @@ export function EditorPanel({
         bracketPairs: true,
         indentation: true,
       },
+      // Enable suggestions inside strings for #include autocomplete
+      quickSuggestions: {
+        other: true,
+        comments: false,
+        strings: true,  // This enables suggestions inside "..." strings
+      },
+      suggestOnTriggerCharacters: true,
     });
   }, []);
 
@@ -86,6 +135,32 @@ export function EditorPanel({
       onChange(value);
     }
   }, [onChange]);
+
+  // Register C header completion provider when Monaco and VFS files getter are available
+  useEffect(() => {
+    if (!monacoRef.current || !getVFSFiles) {
+      return;
+    }
+
+    // Dispose previous registration if any
+    if (completionDisposableRef.current) {
+      completionDisposableRef.current.dispose();
+    }
+
+    // Register the completion provider
+    completionDisposableRef.current = registerCHeaderCompletion(
+      monacoRef.current,
+      getVFSFiles
+    );
+
+    // Cleanup on unmount
+    return () => {
+      if (completionDisposableRef.current) {
+        completionDisposableRef.current.dispose();
+        completionDisposableRef.current = null;
+      }
+    };
+  }, [getVFSFiles]);
 
   return (
     <div className="editor-panel" style={{
@@ -97,7 +172,7 @@ export function EditorPanel({
     }}>
       <Editor
         height="100%"
-        language={language}
+        language={monacoLanguage}
         value={sourceCode}
         onChange={handleEditorChange}
         beforeMount={handleBeforeMount}
