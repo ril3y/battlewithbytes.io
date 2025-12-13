@@ -2,8 +2,8 @@
  * Clang ARM WASM Loader
  *
  * Loads and instantiates the custom ARM-enabled Clang WASM binary.
- * Unlike YoWASP which uses npm packages, this loader fetches the WASM
- * binary directly from the public directory and manages its lifecycle.
+ * This loader fetches the WASM binary directly from the public directory
+ * and manages its lifecycle for embedded ARM compilation (STM32, etc).
  */
 
 import { VirtualFileSystem } from '../wasi/wasiBindings';
@@ -244,6 +244,13 @@ export class ClangWasmLoader {
       console.error('[ClangWasmLoader] Failed to get version:', error);
       return 'Unknown version';
     }
+  }
+
+  /**
+   * Get access to the virtual filesystem
+   */
+  getVFS(): VirtualFileSystem {
+    return this.fs;
   }
 
   /**

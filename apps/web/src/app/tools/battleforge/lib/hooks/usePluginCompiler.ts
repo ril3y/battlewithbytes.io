@@ -2,14 +2,13 @@
  * usePluginCompiler Hook
  *
  * React hook for using compilers with a plugin architecture.
- * Supports both ClangWasmLoader and YoWaspCompiler through a unified interface.
+ * Supports ClangWasmLoader for ARM embedded compilation.
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import { ClangWasmLoader, ClangExecutionOptions, ClangExecutionResult } from '../compiler/ClangWasmLoader';
-import { YoWaspCompiler, YoWaspCompilerOptions, YoWaspCompilerResult, YoWaspPackage } from '../compiler/YoWaspCompiler';
 
-export type CompilerType = 'clang-arm' | 'yowasp';
+export type CompilerType = 'clang-arm';
 
 export interface CompilerPlugin {
   type: CompilerType;
@@ -26,14 +25,7 @@ export interface ClangPlugin extends CompilerPlugin {
   execute(options: ClangExecutionOptions): Promise<ClangExecutionResult>;
 }
 
-export interface YoWaspPlugin extends CompilerPlugin {
-  type: 'yowasp';
-  instance: YoWaspCompiler;
-  packageName: YoWaspPackage;
-  execute(options: YoWaspCompilerOptions): Promise<YoWaspCompilerResult>;
-}
-
-export type AnyCompilerPlugin = ClangPlugin | YoWaspPlugin;
+export type AnyCompilerPlugin = ClangPlugin;
 
 export interface UsePluginCompilerOptions {
   autoLoad?: boolean;
@@ -62,23 +54,6 @@ export function createClangPlugin(loader: ClangWasmLoader): ClangPlugin {
     execute: (options: ClangExecutionOptions) => loader.execute(options),
     getVersion: () => loader.getVersion(),
     isReady: () => loader.isReady()
-  };
-}
-
-/**
- * Create a YoWasp compiler plugin
- */
-export function createYoWaspPlugin(packageName: YoWaspPackage): YoWaspPlugin {
-  const compiler = new YoWaspCompiler(packageName);
-  return {
-    type: 'yowasp',
-    name: `YoWasp ${packageName}`,
-    packageName,
-    instance: compiler,
-    load: () => compiler.load(),
-    execute: (options: YoWaspCompilerOptions) => compiler.execute(options),
-    getVersion: () => compiler.getVersion(),
-    isReady: () => compiler.isReady()
   };
 }
 
@@ -136,7 +111,7 @@ export function usePluginCompiler(
       throw new Error('Compiler not ready');
     }
 
-    return compiler.execute(options);
+    return compiler.execute(options as ClangExecutionOptions);
   }, [compiler]);
 
   /**

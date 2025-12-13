@@ -20,6 +20,9 @@ export class VirtualFileSystem {
   private files: Map<string, Uint8Array> = new Map();
 
   constructor() {
+    // Create root directory marker
+    this.files.set('/.dir', new Uint8Array(0));
+
     // Create standard directories
     this.mkdir('/tmp');
     this.mkdir('/include');
@@ -28,6 +31,8 @@ export class VirtualFileSystem {
     this.mkdir('/sdk');
     this.mkdir('/project');
     this.mkdir('/dev');
+    this.mkdir('/usr');
+    this.mkdir('/usr/include');
 
     // Create /dev/null
     this.writeFile('/dev/null', new Uint8Array(0));
@@ -42,6 +47,7 @@ export class VirtualFileSystem {
       ? new TextEncoder().encode(content)
       : content;
     this.files.set(path, data);
+    console.log(`[VFS] writeFile: ${path} (${data.length} bytes)`);
   }
 
   readFile(path: string): Uint8Array | null {
@@ -49,7 +55,34 @@ export class VirtualFileSystem {
   }
 
   exists(path: string): boolean {
+    // Root directory always exists
+    if (path === '/' || path === '/.') {
+      return true;
+    }
     return this.files.has(path) || this.files.has(path + '/.dir');
+  }
+
+  isDirectory(path: string): boolean {
+    // Root is always a directory
+    if (path === '/' || path === '/.' || path === '') {
+      return true;
+    }
+    // Check if path has a .dir marker
+    return this.files.has(path + '/.dir');
+  }
+
+  isFile(path: string): boolean {
+    // Files are entries that exist but don't have a .dir marker
+    return this.files.has(path) && !path.endsWith('/.dir');
+  }
+
+  deleteFile(path: string): boolean {
+    if (this.files.has(path)) {
+      this.files.delete(path);
+      console.log(`[VFS] deleteFile: ${path}`);
+      return true;
+    }
+    return false;
   }
 
   listFiles(): string[] {
@@ -58,6 +91,8 @@ export class VirtualFileSystem {
 
   clear(): void {
     this.files.clear();
+    // Recreate root directory marker
+    this.files.set('/.dir', new Uint8Array(0));
     // Recreate all standard directories and special files
     this.mkdir('/tmp');
     this.mkdir('/include');
@@ -66,6 +101,8 @@ export class VirtualFileSystem {
     this.mkdir('/sdk');
     this.mkdir('/project');
     this.mkdir('/dev');
+    this.mkdir('/usr');
+    this.mkdir('/usr/include');
     this.writeFile('/dev/null', new Uint8Array(0));
   }
 }
@@ -166,21 +203,61 @@ export function createWASIBindings(
 
       let totalWritten = 0;
 
-      for (let i = 0; i < iovsLen; i++) {
-        const ptr = view.getUint32(iovs + i * 8, true);
-        const len = view.getUint32(iovs + i * 8 + 4, true);
-        const bytes = new Uint8Array(memory.buffer, ptr, len);
-        const text = decoder.decode(bytes);
+      // Handle stdout and stderr
+      if (fd === 1 || fd === 2) {
+        for (let i = 0; i < iovsLen; i++) {
+          const ptr = view.getUint32(iovs + i * 8, true);
+          const len = view.getUint32(iovs + i * 8 + 4, true);
+          const bytes = new Uint8Array(memory.buffer, ptr, len);
+          const text = decoder.decode(bytes);
 
-        if (fd === 1) {
-          stdoutBuffer += text;
-          console.log(text);
-        } else if (fd === 2) {
-          stderrBuffer += text;
-          console.error(text);
+          if (fd === 1) {
+            stdoutBuffer += text;
+            console.log(text);
+          } else {
+            stderrBuffer += text;
+            console.error(text);
+          }
+
+          totalWritten += len;
+        }
+      } else {
+        // Handle file writes
+        const fileInfo = fds.get(fd);
+        if (!fileInfo) {
+          return 8; // EBADF
         }
 
-        totalWritten += len;
+        // Collect all data to write
+        const chunks: Uint8Array[] = [];
+        for (let i = 0; i < iovsLen; i++) {
+          const ptr = view.getUint32(iovs + i * 8, true);
+          const len = view.getUint32(iovs + i * 8 + 4, true);
+          const bytes = new Uint8Array(memory.buffer, ptr, len);
+          chunks.push(new Uint8Array(bytes)); // Copy the bytes
+          totalWritten += len;
+        }
+
+        // Get existing file data or create empty
+        const existingData = fs.readFile(fileInfo.path) || new Uint8Array(0);
+
+        // Calculate new file size
+        const newSize = Math.max(existingData.length, fileInfo.position + totalWritten);
+        const newData = new Uint8Array(newSize);
+
+        // Copy existing data
+        newData.set(existingData);
+
+        // Write new data at current position
+        let offset = fileInfo.position;
+        for (const chunk of chunks) {
+          newData.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        // Update file and position
+        fs.writeFile(fileInfo.path, newData);
+        fileInfo.position = offset;
       }
 
       view.setUint32(nwritten, totalWritten, true);
@@ -334,6 +411,8 @@ export function createWASIBindings(
       fdflags: number,
       fd_ptr: number
     ) => {
+      console.log(`[VFS] path_open CALLED: fd=${fd}, oflags=0x${oflags.toString(16)}`);
+
       const pathStr = readString(path_ptr, path_len);
       const dirPath = preopens.get(fd) || '/';
       let fullPath = pathStr.startsWith('/') ? pathStr : dirPath + '/' + pathStr;
@@ -341,12 +420,30 @@ export function createWASIBindings(
       // Normalize path (remove double slashes)
       fullPath = fullPath.replace(/\/+/g, '/');
 
-      if (!fs.exists(fullPath)) {
+      const O_DIRECTORY = 0x200000;
+      const O_CREAT = 0x1;
+
+      // Check if path exists and what type it is
+      const isDir = fs.isDirectory(fullPath);
+      const isFile = fs.isFile(fullPath);
+      const pathExists = isDir || isFile;
+
+      console.log(`[VFS] path_open: ${fullPath}, exists: ${pathExists}, isDir: ${isDir}, isFile: ${isFile}, O_DIRECTORY=${!!(oflags & O_DIRECTORY)}`);
+
+      if (!pathExists) {
         // Create file if O_CREAT flag is set
-        if (oflags & 0x1) {
+        if (oflags & O_CREAT) {
+          console.log(`[VFS] path_open: Creating new file ${fullPath}`);
           fs.writeFile(fullPath, new Uint8Array(0));
         } else {
+          console.log(`[VFS] path_open: File not found, returning ENOENT`);
           return 44; // ENOENT
+        }
+      } else {
+        // Path exists - check O_DIRECTORY flag
+        if ((oflags & O_DIRECTORY) && isFile) {
+          console.log(`[VFS] path_open: O_DIRECTORY set but ${fullPath} is a file, returning ENOTDIR`);
+          return 54; // ENOTDIR - Not a directory
         }
       }
 
@@ -354,6 +451,7 @@ export function createWASIBindings(
       fds.set(fd_num, { path: fullPath, position: 0, flags: fdflags });
       writeU32(fd_ptr, fd_num);
 
+      console.log(`[VFS] path_open: SUCCESS - opened ${fullPath} as fd ${fd_num}`);
       return 0;
     },
 
@@ -368,23 +466,33 @@ export function createWASIBindings(
       const dirPath = preopens.get(fd) || '/';
       let fullPath = pathStr.startsWith('/') ? pathStr : dirPath + '/' + pathStr;
 
-      // Normalize path (remove double slashes)
+      // Normalize path (remove double slashes, handle . and ..)
       fullPath = fullPath.replace(/\/+/g, '/');
+      if (fullPath.endsWith('/.')) {
+        fullPath = fullPath.slice(0, -2) || '/';
+      }
 
-      const fileData = fs.readFile(fullPath);
-      const exists = fileData || fullPath.endsWith('/.dir');
+      const isDir = fs.isDirectory(fullPath);
+      const isFile = fs.isFile(fullPath);
+      const pathExists = isDir || isFile;
 
-      if (!fileData && !fullPath.endsWith('/.dir')) {
+      console.log(`[VFS] path_filestat_get: fd=${fd}, path="${pathStr}", fullPath="${fullPath}", exists: ${pathExists}, isDir: ${isDir}, isFile: ${isFile}`);
+
+      if (!pathExists) {
+        console.log(`[VFS] path_filestat_get: File not found: "${fullPath}"`);
         return 44; // ENOENT
       }
+
+      const fileData = isFile ? fs.readFile(fullPath) : null;
 
       const memory = getMemory();
       const view = new DataView(memory.buffer);
 
       // Write filestat structure
+      // filetype: 3 = directory, 4 = regular file
       view.setBigUint64(buf_ptr, 0n, true); // dev
       view.setBigUint64(buf_ptr + 8, 0n, true); // ino
-      view.setUint8(buf_ptr + 16, fullPath.endsWith('/.dir') ? 3 : 4); // filetype (3=dir, 4=file)
+      view.setUint8(buf_ptr + 16, isDir ? 3 : 4); // filetype
       view.setBigUint64(buf_ptr + 24, 1n, true); // nlink
       view.setBigUint64(buf_ptr + 32, BigInt(fileData ? fileData.length : 0), true); // size
       view.setBigUint64(buf_ptr + 40, 0n, true); // atim
@@ -403,13 +511,39 @@ export function createWASIBindings(
     fd_readdir: () => 0,
 
     path_rename: (
-      _old_fd: number,
-      _old_path_ptr: number,
-      _old_path_len: number,
-      _fd: number,
-      _new_path_ptr: number,
-      _new_path_len: number
+      old_fd: number,
+      old_path_ptr: number,
+      old_path_len: number,
+      new_fd: number,
+      new_path_ptr: number,
+      new_path_len: number
     ) => {
+      const oldPathStr = readString(old_path_ptr, old_path_len);
+      const newPathStr = readString(new_path_ptr, new_path_len);
+
+      const oldDirPath = preopens.get(old_fd) || '/';
+      const newDirPath = preopens.get(new_fd) || '/';
+
+      let oldFullPath = oldPathStr.startsWith('/') ? oldPathStr : oldDirPath + '/' + oldPathStr;
+      let newFullPath = newPathStr.startsWith('/') ? newPathStr : newDirPath + '/' + newPathStr;
+
+      // Normalize paths
+      oldFullPath = oldFullPath.replace(/\/+/g, '/');
+      newFullPath = newFullPath.replace(/\/+/g, '/');
+
+      console.log(`[VFS] path_rename: "${oldFullPath}" -> "${newFullPath}"`);
+
+      const data = fs.readFile(oldFullPath);
+      if (!data) {
+        console.log(`[VFS] path_rename: Source file not found: ${oldFullPath}`);
+        return 44; // ENOENT
+      }
+
+      // Write to new path and delete old path
+      fs.writeFile(newFullPath, data);
+      fs.deleteFile(oldFullPath);
+
+      console.log(`[VFS] path_rename: SUCCESS - renamed ${oldFullPath} to ${newFullPath} (${data.length} bytes)`);
       return 0;
     },
 
@@ -431,6 +565,8 @@ export function createWASIBindings(
     fd_sync: () => 0,
     fd_tell: () => 0,
     fd_fdstat_set_flags: () => 0,
+    fd_filestat_set_times: (_fd: number, _atim: bigint, _mtim: bigint, _fst_flags: number) => 0,
+    fd_pread: (_fd: number, _iovs: number, _iovsLen: number, _offset: bigint, _nread: number) => 0,
     fd_advise: (_fd: number, _offset: bigint, _len: bigint, _advice: number) => 0,
 
     poll_oneoff: (
@@ -517,12 +653,24 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
         const pathBytes = new Uint8Array(memory.buffer, path_ptr, pathLen);
         const pathStr = new TextDecoder().decode(pathBytes);
 
+        console.log(`[VFS] __syscall_openat: dirfd=${dirfd}, path="${pathStr}", flags=${flags}`);
+
+        // Handle AT_FDCWD (-100) - use root preopen (fd 3)
+        // AT_FDCWD means "current working directory", which we treat as root
+        const AT_FDCWD = -100;
+        let actualDirFd = dirfd;
+
+        if (dirfd === AT_FDCWD || dirfd < 0) {
+          actualDirFd = 3; // Use root preopen directory
+          console.log(`[VFS] __syscall_openat: Converted special dirfd ${dirfd} to root preopen (3)`);
+        }
+
         // Delegate to WASI path_open
         // Allocate temporary space for fd output
         const fd_ptr = path_ptr + pathLen + 8; // Use space after path string
 
         const result = wasi.path_open(
-          dirfd,
+          actualDirFd,
           0, // dirflags
           path_ptr,
           pathLen,
@@ -534,12 +682,14 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
         );
 
         if (result !== 0) {
+          console.log(`[VFS] __syscall_openat: path_open failed with error ${result} for "${pathStr}"`);
           return -result; // Return negative errno
         }
 
         // Read the fd that was written
         const view = new DataView(memory.buffer);
         const fd = view.getUint32(fd_ptr, true);
+        console.log(`[VFS] __syscall_openat: Successfully opened "${pathStr}" as fd ${fd}`);
         return fd;
       },
 
@@ -590,11 +740,11 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
           const bytes = new Uint8Array(memory.buffer, buf, len);
           const text = decoder.decode(bytes);
 
-          // Use WASI bindings to handle output
+          // Capture stdout/stderr - delegate to WASI fd_write which buffers
           if (fd === 1 || fd === 2) {
-            // Delegate to WASI fd_write for proper buffering
-            const nwritten_ptr = 0; // We don't need this return value here
-            wasi.fd_write(fd, iov + i * 8, 1, nwritten_ptr);
+            console.log(fd === 1 ? '[STDOUT]' : '[STDERR]', text);
+            // Use WASI fd_write to properly capture and buffer
+            wasi.fd_write(fd, iov + i * 8, 1, 0);
           }
 
           totalWritten += len;
@@ -629,13 +779,133 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
         let pathLen = 0;
         while (memoryView[pathLen] !== 0 && pathLen < 4096) pathLen++;
 
+        const pathBytes = new Uint8Array(memory.buffer, path_ptr, pathLen);
+        const pathStr = new TextDecoder().decode(pathBytes);
+
+        console.log(`[VFS] __syscall_newfstatat: dirfd=${dirfd}, path="${pathStr}", flags=${flags}`);
+
+        // Handle AT_FDCWD (-100) - use root preopen (fd 3)
+        const AT_FDCWD = -100;
+        let actualDirFd = dirfd;
+
+        if (dirfd === AT_FDCWD || dirfd < 0) {
+          actualDirFd = 3; // Use root preopen directory
+          console.log(`[VFS] __syscall_newfstatat: Converted special dirfd ${dirfd} to root preopen (3)`);
+        }
+
         // Use WASI path_filestat_get
-        const result = wasi.path_filestat_get(dirfd, flags, path_ptr, pathLen, statbuf);
+        const result = wasi.path_filestat_get(actualDirFd, flags, path_ptr, pathLen, statbuf);
+        console.log(`[VFS] __syscall_newfstatat: path_filestat_get returned ${result} for "${pathStr}"`);
         return result === 0 ? 0 : -result;
       },
 
       __syscall_ioctl: () => -1,
       __syscall_fcntl64: () => -1,
+
+      __syscall_unlinkat: (dirfd: number, path_ptr: number, flags: number) => {
+        const memory = getMemory();
+        if (!memory) return -1;
+
+        // Find path length
+        const memoryView = new Uint8Array(memory.buffer, path_ptr);
+        let pathLen = 0;
+        while (memoryView[pathLen] !== 0 && pathLen < 4096) pathLen++;
+
+        const pathBytes = new Uint8Array(memory.buffer, path_ptr, pathLen);
+        const pathStr = new TextDecoder().decode(pathBytes);
+
+        console.log(`[VFS] __syscall_unlinkat: dirfd=${dirfd}, path="${pathStr}", flags=${flags}`);
+
+        // Handle AT_FDCWD (-100)
+        const AT_FDCWD = -100;
+        let fullPath = pathStr;
+        if (!pathStr.startsWith('/')) {
+          fullPath = '/' + pathStr;
+        }
+
+        // Delete the file from VFS
+        const deleted = fs.deleteFile(fullPath);
+        console.log(`[VFS] __syscall_unlinkat: ${deleted ? 'deleted' : 'not found'} ${fullPath}`);
+        return deleted ? 0 : -2; // ENOENT
+      },
+
+      __syscall_renameat: (olddirfd: number, oldpath_ptr: number, newdirfd: number, newpath_ptr: number) => {
+        const memory = getMemory();
+        if (!memory) return -1;
+
+        // Read old path
+        const memoryView = new Uint8Array(memory.buffer);
+        let oldLen = 0;
+        while (memoryView[oldpath_ptr + oldLen] !== 0 && oldLen < 4096) oldLen++;
+        const oldPath = new TextDecoder().decode(new Uint8Array(memory.buffer, oldpath_ptr, oldLen));
+
+        // Read new path
+        let newLen = 0;
+        while (memoryView[newpath_ptr + newLen] !== 0 && newLen < 4096) newLen++;
+        const newPath = new TextDecoder().decode(new Uint8Array(memory.buffer, newpath_ptr, newLen));
+
+        console.log(`[VFS] __syscall_renameat: "${oldPath}" -> "${newPath}"`);
+
+        const fullOldPath = oldPath.startsWith('/') ? oldPath : '/' + oldPath;
+        const fullNewPath = newPath.startsWith('/') ? newPath : '/' + newPath;
+
+        const data = fs.readFile(fullOldPath);
+        if (!data) {
+          console.log(`[VFS] __syscall_renameat: source not found`);
+          return -2; // ENOENT
+        }
+
+        fs.writeFile(fullNewPath, data);
+        fs.deleteFile(fullOldPath);
+        console.log(`[VFS] __syscall_renameat: SUCCESS`);
+        return 0;
+      },
+
+      // Additional syscalls needed by Emscripten
+      __syscall_chdir: () => 0, // Always succeed (we use absolute paths)
+      __syscall_statfs64: () => 0, // Stub
+      __syscall_dup3: () => -1,
+      __syscall_pipe2: () => -1,
+      __syscall_socket: () => -1,
+      __syscall_connect: () => -1,
+      __syscall_bind: () => -1,
+      __syscall_listen: () => -1,
+      __syscall_accept4: () => -1,
+      __syscall_getsockname: () => -1,
+      __syscall_getpeername: () => -1,
+      __syscall_sendto: () => -1,
+      __syscall_recvfrom: () => -1,
+      __syscall_shutdown: () => -1,
+      __syscall_setsockopt: () => -1,
+      __syscall_getsockopt: () => -1,
+      __syscall_sendmsg: () => -1,
+      __syscall_recvmsg: () => -1,
+      __syscall_fchmod: () => 0,
+      __syscall_fchmodat: () => 0,
+      __syscall_fchown32: () => 0,
+      __syscall_fchownat: () => 0,
+      __syscall_ftruncate64: () => 0,
+      __syscall_getcwd: (buf: number, size: number) => {
+        const memory = getMemory();
+        if (!memory) return -1;
+        const cwd = '/';
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(cwd + '\0');
+        new Uint8Array(memory.buffer, buf, encoded.length).set(encoded);
+        return buf;
+      },
+      __syscall_getdents64: () => 0,
+      __syscall_lstat64: () => -1,
+      __syscall_stat64: () => -1,
+      __syscall_mkdirat: () => 0,
+      __syscall_rmdir: () => 0,
+      __syscall_faccessat: () => 0,
+      __syscall_utimensat: () => 0,
+      __syscall_poll: () => 0,
+      __syscall_pselect6: () => 0,
+      __syscall_readlinkat: () => -1,
+      __syscall_symlinkat: () => -1,
+      __syscall_linkat: () => -1,
 
       // Emscripten runtime functions
       emscripten_notify_memory_growth: (_idx: number) => {

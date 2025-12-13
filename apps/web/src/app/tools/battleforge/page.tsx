@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Script from 'next/script';
 import { generateToolSchema } from '@/lib/utils/seo';
-import { BattleForgeMonitor } from './components/BattleForgeMonitor';
+import { BattleForgeIDE } from './components/BattleForgeIDE';
 import './battleforge.css';
 
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export default function BattleForgePage() {
       <Script id="battleforge-schema" type="application/ld+json">
         {JSON.stringify(toolSchema)}
       </Script>
-      <BattleForgeMonitor />
+      <BattleForgeIDE />
     </>
   );
 }
