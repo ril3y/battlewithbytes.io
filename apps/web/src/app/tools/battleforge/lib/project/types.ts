@@ -1,3 +1,5 @@
+import type { FrameworkId } from '../platform/types';
+
 export interface ProjectMetadata {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export interface ProjectPlatform {
   familyId: string;      // "f1"
   deviceId: string;      // "stm32f103c8"
   architecture: string;  // "cortex-m3"
+  frameworkId?: FrameworkId;  // "native" | "arduino" | "mbed" | "zephyr" (defaults to 'native')
 }
 
 export interface ProjectFile {
@@ -46,6 +49,7 @@ export interface ProjectTemplate {
     platformId: string;
     familyId: string;
     deviceId: string;
+    frameworkId?: FrameworkId;  // Optional, defaults to 'native'
   } | null;
   files: ProjectFile[];
 }

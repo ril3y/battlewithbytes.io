@@ -59,6 +59,50 @@ export interface LibraryRegistry {
 }
 
 // ============================================================================
+// Framework Types
+// ============================================================================
+
+/**
+ * Framework IDs - Supported software frameworks
+ */
+export type FrameworkId = 'native' | 'arduino' | 'mbed' | 'zephyr';
+
+/**
+ * Framework definition - Software framework for a platform
+ */
+export interface Framework {
+  id: FrameworkId;
+  name: string;
+  description: string;
+  version: string;
+
+  // Build configuration
+  compilerFlags: string[];
+  linkerFlags: string[];
+  defines: string[];
+  includePaths: string[];
+
+  // Resources
+  coreUrl?: string;         // URL to core files tar.gz
+  coreChecksum?: string;
+  variantsUrl?: string;     // URL to variants tar.gz
+
+  // Preprocessing
+  requiresPreprocessing?: boolean;  // true for Arduino (.ino → .cpp)
+  fileExtension?: string;           // e.g., '.ino' for Arduino
+}
+
+/**
+ * Framework support entry for a platform family
+ */
+export interface FrameworkSupport {
+  frameworkId: FrameworkId;
+  enabled: boolean;
+  version: string;
+  framework: Framework;
+}
+
+// ============================================================================
 // Family Types
 // ============================================================================
 
@@ -75,6 +119,7 @@ export interface PlatformFamily {
   libs: LibBundle;
   compilerFlags: string[];
   linkerFlags?: string[];
+  frameworks?: FrameworkSupport[];  // Supported frameworks for this family
 }
 
 /**
@@ -242,6 +287,7 @@ export interface SelectedPlatform {
   family: PlatformFamily;
   device: DeviceEntry;
   archConfig: ArchitectureConfig;
+  frameworkId?: FrameworkId;  // Optional framework selection (defaults to 'native')
 }
 
 // ============================================================================

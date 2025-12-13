@@ -13,6 +13,7 @@ const stm32BlinkTemplate: ProjectTemplate = {
     platformId: 'stm32',
     familyId: 'f1',
     deviceId: 'stm32f103c8',
+    frameworkId: 'native',
   },
   files: [
     {
@@ -225,6 +226,7 @@ const stm32UartEchoTemplate: ProjectTemplate = {
     platformId: 'stm32',
     familyId: 'f1',
     deviceId: 'stm32f103c8',
+    frameworkId: 'native',
   },
   files: [
     {
@@ -390,6 +392,7 @@ const stm32FreeRtosTemplate: ProjectTemplate = {
     platformId: 'stm32',
     familyId: 'f1',
     deviceId: 'stm32f103c8',
+    frameworkId: 'native',
   },
   files: [
     {

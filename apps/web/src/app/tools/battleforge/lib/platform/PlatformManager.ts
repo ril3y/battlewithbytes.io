@@ -12,8 +12,6 @@ import type {
   DeviceEntry,
   SelectedPlatform,
   BuildConfig,
-  Architecture,
-  ARCHITECTURE_CONFIGS,
   LoadingProgress
 } from './types';
 import { HeaderCache } from './HeaderCache';
@@ -214,16 +212,16 @@ export class PlatformManager {
    * Generate build configuration for selected platform
    */
   async generateBuildConfig(selected: SelectedPlatform): Promise<BuildConfig> {
-    const { family, device, archConfig } = selected;
+    const { family, device, archConfig, frameworkId = 'native' } = selected;
 
-    // Build compiler arguments
+    // Determine if using Arduino framework
+    const isArduino = frameworkId === 'arduino';
+
+    // Build compiler arguments based on framework
     const compilerArgs: string[] = [
       `--target=${archConfig.target}`,
       `-mcpu=${archConfig.cpu}`,
-      '-mthumb',
-      '-nostdlib',
-      '-ffreestanding',
-      ...family.compilerFlags
+      '-mthumb'
     ];
 
     // Add FPU flags if present
@@ -234,11 +232,66 @@ export class PlatformManager {
       compilerArgs.push(`-mfloat-abi=${archConfig.float}`);
     }
 
-    // Add device-specific defines
-    const defines = device.defines || [];
+    // Framework-specific compiler flags
+    if (isArduino) {
+      // Arduino-specific flags
+      compilerArgs.push(
+        '-std=gnu++14',              // Arduino uses C++14
+        '-fno-rtti',
+        '-fno-exceptions',
+        '-fno-threadsafe-statics',
+        '-ffunction-sections',
+        '-fdata-sections',
+        '-Os'                        // Arduino optimizes for size
+      );
+    } else {
+      // Native framework flags
+      compilerArgs.push(
+        '-nostdlib',
+        '-ffreestanding',
+        '-fno-exceptions',
+        '-fno-rtti'
+      );
+    }
+
+    // Add family-specific compiler flags
+    compilerArgs.push(...family.compilerFlags);
+
+    // Build defines array
+    const defines = [...(device.defines || [])];
+
+    // Add framework-specific defines
+    if (isArduino) {
+      defines.push(
+        'ARDUINO=10819',
+        `ARDUINO_${device.id.toUpperCase()}`,
+        `ARDUINO_ARCH_${selected.platformId.toUpperCase()}`
+      );
+    }
+
+    // Add defines as compiler arguments
     for (const define of defines) {
       compilerArgs.push(`-D${define}`);
     }
+
+    // Include paths (relative to VFS root)
+    const includePaths: string[] = [];
+
+    // Add framework-specific include paths
+    if (isArduino) {
+      // Arduino core and variant paths
+      includePaths.push(
+        `/framework/arduino/cores/arduino`,
+        `/framework/arduino/variants/${device.id.toUpperCase()}`
+      );
+    }
+
+    // Add platform headers
+    includePaths.push(
+      ...family.headers.includes.map(
+        inc => `/platform/${selected.platformId}/${selected.familyId}/headers${inc}`
+      )
+    );
 
     // Build linker arguments
     const linkerArgs: string[] = [
@@ -250,11 +303,6 @@ export class PlatformManager {
     if (family.linkerFlags) {
       linkerArgs.push(...family.linkerFlags);
     }
-
-    // Include paths (relative to VFS root)
-    const includePaths = family.headers.includes.map(
-      inc => `/platform/${selected.platformId}/${selected.familyId}/headers${inc}`
-    );
 
     // Library paths
     const libPaths = [`/libs/${archConfig.libPath}`];
