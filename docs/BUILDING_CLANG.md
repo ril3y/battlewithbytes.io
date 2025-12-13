@@ -125,7 +125,7 @@ apps/web/public/wasm/clang_arm/
                 ↓
          (loaded at runtime)
                 ↓
-apps/web/src/app/tools/battleforge-new/lib/compiler/ClangWasmLoader.ts
+apps/web/src/app/tools/battleforge/lib/compiler/ClangWasmLoader.ts
     └── Fetches /wasm/clang_arm/clang-arm.wasm
         Compiles to WebAssembly.Module
         Executes with WASI runtime
