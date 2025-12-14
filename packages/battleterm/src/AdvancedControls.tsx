@@ -3,14 +3,14 @@
  * Terminal control buttons (auto-scroll, clear, download)
  */
 
-import React from 'react';
-import type { AdvancedControlsProps } from './serialTerminal.types';
+import React from "react";
+import type { AdvancedControlsProps } from "./serialTerminal.types";
 
 export default function AdvancedControls({
   autoScroll,
   onToggleAutoScroll,
   onClear,
-  onDownloadLog
+  onDownloadLog,
 }: AdvancedControlsProps) {
   return (
     <div className="flex items-center justify-between gap-3 p-3 bg-black/30">

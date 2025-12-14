@@ -3,10 +3,20 @@
  * Handles saving and loading of terminal configurations to/from localStorage
  */
 
-import type { ConfigProfile, SerialConfig, TerminalOptions, SendOptions, QuickMacro } from './serialTerminal.types';
-import { DEFAULT_SERIAL_CONFIG, DEFAULT_TERMINAL_OPTIONS, DEFAULT_SEND_OPTIONS } from './serialTerminal.types';
+import type {
+  ConfigProfile,
+  SerialConfig,
+  TerminalOptions,
+  SendOptions,
+  QuickMacro,
+} from "./serialTerminal.types";
+import {
+  DEFAULT_SERIAL_CONFIG,
+  DEFAULT_TERMINAL_OPTIONS,
+  DEFAULT_SEND_OPTIONS,
+} from "./serialTerminal.types";
 
-const STORAGE_KEY_PREFIX = 'serial-terminal';
+const STORAGE_KEY_PREFIX = "serial-terminal";
 const PROFILES_KEY = `${STORAGE_KEY_PREFIX}-profiles`;
 const CURRENT_PROFILE_KEY = `${STORAGE_KEY_PREFIX}-current-profile`;
 const LAST_CONFIG_KEY = `${STORAGE_KEY_PREFIX}-last-config`;
@@ -26,7 +36,7 @@ export function saveProfile(
   serialConfig: SerialConfig,
   terminalOptions: TerminalOptions,
   sendOptions: SendOptions,
-  macros: QuickMacro[]
+  macros: QuickMacro[],
 ): ConfigProfile {
   try {
     const profiles = getAllProfiles();
@@ -39,7 +49,7 @@ export function saveProfile(
       sendOptions,
       macros,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     profiles.push(profile);
@@ -47,8 +57,8 @@ export function saveProfile(
 
     return profile;
   } catch (error) {
-    console.error('Failed to save profile:', error);
-    throw new Error('Failed to save configuration profile');
+    console.error("Failed to save profile:", error);
+    throw new Error("Failed to save configuration profile");
   }
 }
 
@@ -57,11 +67,11 @@ export function saveProfile(
  */
 export function updateProfile(
   id: string,
-  updates: Partial<Omit<ConfigProfile, 'id' | 'createdAt' | 'updatedAt'>>
+  updates: Partial<Omit<ConfigProfile, "id" | "createdAt" | "updatedAt">>,
 ): ConfigProfile | null {
   try {
     const profiles = getAllProfiles();
-    const index = profiles.findIndex(p => p.id === id);
+    const index = profiles.findIndex((p) => p.id === id);
 
     if (index === -1) {
       return null;
@@ -70,7 +80,7 @@ export function updateProfile(
     const updatedProfile: ConfigProfile = {
       ...profiles[index],
       ...updates,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     profiles[index] = updatedProfile;
@@ -78,8 +88,8 @@ export function updateProfile(
 
     return updatedProfile;
   } catch (error) {
-    console.error('Failed to update profile:', error);
-    throw new Error('Failed to update configuration profile');
+    console.error("Failed to update profile:", error);
+    throw new Error("Failed to update configuration profile");
   }
 }
 
@@ -89,7 +99,7 @@ export function updateProfile(
 export function deleteProfile(id: string): boolean {
   try {
     const profiles = getAllProfiles();
-    const filtered = profiles.filter(p => p.id !== id);
+    const filtered = profiles.filter((p) => p.id !== id);
 
     if (filtered.length === profiles.length) {
       return false; // Profile not found
@@ -105,8 +115,8 @@ export function deleteProfile(id: string): boolean {
 
     return true;
   } catch (error) {
-    console.error('Failed to delete profile:', error);
-    throw new Error('Failed to delete configuration profile');
+    console.error("Failed to delete profile:", error);
+    throw new Error("Failed to delete configuration profile");
   }
 }
 
@@ -121,7 +131,7 @@ export function getAllProfiles(): ConfigProfile[] {
     const profiles = JSON.parse(data);
     return Array.isArray(profiles) ? profiles : [];
   } catch (error) {
-    console.error('Failed to load profiles:', error);
+    console.error("Failed to load profiles:", error);
     return [];
   }
 }
@@ -131,7 +141,7 @@ export function getAllProfiles(): ConfigProfile[] {
  */
 export function getProfile(id: string): ConfigProfile | null {
   const profiles = getAllProfiles();
-  return profiles.find(p => p.id === id) || null;
+  return profiles.find((p) => p.id === id) || null;
 }
 
 /**
@@ -141,7 +151,7 @@ export function setCurrentProfile(id: string): void {
   try {
     localStorage.setItem(CURRENT_PROFILE_KEY, id);
   } catch (error) {
-    console.error('Failed to set current profile:', error);
+    console.error("Failed to set current profile:", error);
   }
 }
 
@@ -152,7 +162,7 @@ export function getCurrentProfileId(): string | null {
   try {
     return localStorage.getItem(CURRENT_PROFILE_KEY);
   } catch (error) {
-    console.error('Failed to get current profile:', error);
+    console.error("Failed to get current profile:", error);
     return null;
   }
 }
@@ -171,19 +181,19 @@ export function getCurrentProfile(): ConfigProfile | null {
 export function saveLastConfig(
   serialConfig: SerialConfig,
   terminalOptions: TerminalOptions,
-  sendOptions: SendOptions
+  sendOptions: SendOptions,
 ): void {
   try {
     const config = {
       serialConfig,
       terminalOptions,
       sendOptions,
-      savedAt: new Date().toISOString()
+      savedAt: new Date().toISOString(),
     };
 
     localStorage.setItem(LAST_CONFIG_KEY, JSON.stringify(config));
   } catch (error) {
-    console.error('Failed to save last config:', error);
+    console.error("Failed to save last config:", error);
   }
 }
 
@@ -205,14 +215,17 @@ export function loadLastConfig(): {
     if (config.serialConfig && config.terminalOptions && config.sendOptions) {
       return {
         serialConfig: { ...DEFAULT_SERIAL_CONFIG, ...config.serialConfig },
-        terminalOptions: { ...DEFAULT_TERMINAL_OPTIONS, ...config.terminalOptions },
-        sendOptions: { ...DEFAULT_SEND_OPTIONS, ...config.sendOptions }
+        terminalOptions: {
+          ...DEFAULT_TERMINAL_OPTIONS,
+          ...config.terminalOptions,
+        },
+        sendOptions: { ...DEFAULT_SEND_OPTIONS, ...config.sendOptions },
       };
     }
 
     return null;
   } catch (error) {
-    console.error('Failed to load last config:', error);
+    console.error("Failed to load last config:", error);
     return null;
   }
 }
@@ -233,18 +246,18 @@ export function importProfiles(jsonString: string): number {
     const imported = JSON.parse(jsonString);
 
     if (!Array.isArray(imported)) {
-      throw new Error('Invalid format: expected an array of profiles');
+      throw new Error("Invalid format: expected an array of profiles");
     }
 
     const existingProfiles = getAllProfiles();
 
     // Merge imported profiles with existing ones
     // Generate new IDs for imported profiles to avoid conflicts
-    const newProfiles = imported.map(profile => ({
+    const newProfiles = imported.map((profile) => ({
       ...profile,
       id: generateId(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     }));
 
     const allProfiles = [...existingProfiles, ...newProfiles];
@@ -252,8 +265,11 @@ export function importProfiles(jsonString: string): number {
 
     return newProfiles.length;
   } catch (error) {
-    console.error('Failed to import profiles:', error);
-    throw new Error('Failed to import profiles: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    console.error("Failed to import profiles:", error);
+    throw new Error(
+      "Failed to import profiles: " +
+        (error instanceof Error ? error.message : "Unknown error"),
+    );
   }
 }
 
@@ -266,7 +282,7 @@ export function clearAllData(): void {
     localStorage.removeItem(CURRENT_PROFILE_KEY);
     localStorage.removeItem(LAST_CONFIG_KEY);
   } catch (error) {
-    console.error('Failed to clear data:', error);
+    console.error("Failed to clear data:", error);
   }
 }
 
@@ -285,6 +301,6 @@ export function getStorageInfo(): {
   return {
     profileCount: profiles.length,
     hasLastConfig: lastConfig !== null,
-    currentProfileName: currentProfile?.name || null
+    currentProfileName: currentProfile?.name || null,
   };
 }

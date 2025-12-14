@@ -3,10 +3,10 @@
  * Comprehensive modal showing features, about info, browser support, and usage tips
  */
 
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { VERSION, VERSION_DATE, CHANGELOG } from './version';
+import React, { useEffect } from "react";
+import { VERSION, VERSION_DATE, CHANGELOG } from "./version";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -15,41 +15,41 @@ interface HelpModalProps {
 
 const features = [
   {
-    category: 'Core Features',
+    category: "Core Features",
     items: [
-      'Web Serial API - No drivers needed',
-      'Full ANSI color support',
-      'Multiple view modes (ASCII, Hex, Mixed)',
-      'Custom baud rates up to 921600',
-      'Unicode support (UTF-8)'
-    ]
+      "Web Serial API - No drivers needed",
+      "Full ANSI color support",
+      "Multiple view modes (ASCII, Hex, Mixed)",
+      "Custom baud rates up to 921600",
+      "Unicode support (UTF-8)",
+    ],
   },
   {
-    category: 'Advanced Features',
+    category: "Advanced Features",
     items: [
-      'Quick send macros',
-      'Command history',
-      'Save/export logs',
-      'Timestamps & statistics',
-      'Save configuration profiles',
-      'Context menu (copy/paste)',
-      'TX/RX activity indicators',
-      'Line numbers (optional)'
-    ]
-  }
+      "Quick send macros",
+      "Command history",
+      "Save/export logs",
+      "Timestamps & statistics",
+      "Save configuration profiles",
+      "Context menu (copy/paste)",
+      "TX/RX activity indicators",
+      "Line numbers (optional)",
+    ],
+  },
 ];
 
 export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -110,12 +110,14 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
               </h3>
               <div className="space-y-3 text-gray-300 text-sm font-mono">
                 <p>
-                  BattleTerm uses the Web Serial API to communicate directly with serial devices
-                  from your browser. No drivers, no software installation - just connect and go.
+                  BattleTerm uses the Web Serial API to communicate directly
+                  with serial devices from your browser. No drivers, no software
+                  installation - just connect and go.
                 </p>
                 <p>
-                  Perfect for debugging embedded systems, communicating with microcontrollers (Arduino, ESP32, etc.),
-                  testing serial protocols, and interacting with any device that speaks UART.
+                  Perfect for debugging embedded systems, communicating with
+                  microcontrollers (Arduino, ESP32, etc.), testing serial
+                  protocols, and interacting with any device that speaks UART.
                 </p>
               </div>
             </div>
@@ -164,8 +166,9 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 Browser Support
               </div>
               <div className="text-yellow-300/90 text-sm font-mono">
-                This tool requires the Web Serial API, which is currently supported in
-                Chrome, Edge, and Opera. Firefox and Safari do not yet support this feature.
+                This tool requires the Web Serial API, which is currently
+                supported in Chrome, Edge, and Opera. Firefox and Safari do not
+                yet support this feature.
               </div>
             </div>
 
@@ -178,8 +181,12 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 <li>Right-click in terminal for copy/paste options</li>
                 <li>Use gear icon to access configuration settings</li>
                 <li>Watch TX/RX LEDs for data transmission activity</li>
-                <li>Enable timestamps for debugging time-sensitive protocols</li>
-                <li>Download logs for later analysis using the download button</li>
+                <li>
+                  Enable timestamps for debugging time-sensitive protocols
+                </li>
+                <li>
+                  Download logs for later analysis using the download button
+                </li>
               </ul>
             </div>
           </div>

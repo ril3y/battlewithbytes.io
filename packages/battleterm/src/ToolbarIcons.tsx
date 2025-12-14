@@ -3,9 +3,9 @@
  * Gear (config) and Help (?) icon buttons for opening modals
  */
 
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface ToolbarIconsProps {
   onConfigClick: () => void;
@@ -16,7 +16,7 @@ interface ToolbarIconsProps {
 export default function ToolbarIcons({
   onConfigClick,
   onHelpClick,
-  disabled = false
+  disabled = false,
 }: ToolbarIconsProps) {
   return (
     <div className="flex items-center gap-2">

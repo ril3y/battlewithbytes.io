@@ -3,20 +3,28 @@
  * Displays connection statistics and status
  */
 
-import React from 'react';
-import type { StatusBarProps } from './serialTerminal.types';
-import { formatBytes, formatTransferRate } from './serialUtils';
-import { formatDuration } from './terminalUtils';
-import ActivityIndicator from './ActivityIndicator';
+import React from "react";
+import type { StatusBarProps } from "./serialTerminal.types";
+import { formatBytes, formatTransferRate } from "./serialUtils";
+import { formatDuration } from "./terminalUtils";
+import ActivityIndicator from "./ActivityIndicator";
 
-export default function StatusBar({ stats, isConnected, viewMode, onViewModeToggle, rxActive = false, txActive = false, isStandalone = false }: StatusBarProps) {
+export default function StatusBar({
+  stats,
+  isConnected,
+  viewMode,
+  onViewModeToggle,
+  rxActive = false,
+  txActive = false,
+  isStandalone = false,
+}: StatusBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-black/50 border-t border-gray-800 font-mono text-xs text-gray-400">
       {/* Connection Status */}
       <div className="flex items-center gap-2">
         <span className="text-gray-500">Status:</span>
-        <span className={isConnected ? 'text-green-400' : 'text-gray-500'}>
-          {isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+        <span className={isConnected ? "text-green-400" : "text-gray-500"}>
+          {isConnected ? "CONNECTED" : "DISCONNECTED"}
         </span>
       </div>
 
@@ -26,7 +34,9 @@ export default function StatusBar({ stats, isConnected, viewMode, onViewModeTogg
       {/* RX Bytes */}
       <div className="flex items-center gap-2">
         <span className="text-gray-500">RX:</span>
-        <span className="text-blue-400">{formatBytes(stats.bytesReceived)}</span>
+        <span className="text-blue-400">
+          {formatBytes(stats.bytesReceived)}
+        </span>
       </div>
 
       {/* TX Bytes */}

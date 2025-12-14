@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { VERSION } from './version';
+import { useEffect, useState } from "react";
+import { VERSION } from "./version";
 
 /**
  * Component that checks for new versions when running as PWA
@@ -9,13 +9,15 @@ import { VERSION } from './version';
  */
 export default function VersionChecker() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [latestVersion, setLatestVersion] = useState('');
+  const [latestVersion, setLatestVersion] = useState("");
 
   useEffect(() => {
     // Only run in standalone PWA mode
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        ('standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone) ||
-                        document.referrer.includes('android-app://');
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in window.navigator &&
+        (window.navigator as { standalone?: boolean }).standalone) ||
+      document.referrer.includes("android-app://");
 
     if (!isStandalone) {
       return;
@@ -24,9 +26,9 @@ export default function VersionChecker() {
     // Check for updates every 30 minutes
     const checkForUpdates = async () => {
       try {
-        const response = await fetch('/tools/serial-terminal', {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
+        const response = await fetch("/tools/serial-terminal", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
         });
 
         if (response.ok) {
@@ -41,7 +43,7 @@ export default function VersionChecker() {
           }
         }
       } catch (error) {
-        console.log('Version check failed:', error);
+        console.log("Version check failed:", error);
       }
     };
 
@@ -67,7 +69,8 @@ export default function VersionChecker() {
         <div className="flex-1">
           <h3 className="font-bold text-green-400 mb-1">Update Available</h3>
           <p className="text-sm text-gray-300 mb-3">
-            BattleTerm {latestVersion} is now available. You are using {VERSION}.
+            BattleTerm {latestVersion} is now available. You are using {VERSION}
+            .
           </p>
           <div className="flex gap-2">
             <button

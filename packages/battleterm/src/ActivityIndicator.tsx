@@ -3,16 +3,19 @@
  * Virtual TX/RX LEDs showing serial data transmission activity
  */
 
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 interface ActivityIndicatorProps {
   rxActive: boolean;
   txActive: boolean;
 }
 
-export default function ActivityIndicator({ rxActive, txActive }: ActivityIndicatorProps) {
+export default function ActivityIndicator({
+  rxActive,
+  txActive,
+}: ActivityIndicatorProps) {
   const [rxBlink, setRxBlink] = useState(false);
   const [txBlink, setTxBlink] = useState(false);
 
@@ -42,8 +45,8 @@ export default function ActivityIndicator({ rxActive, txActive }: ActivityIndica
           <div
             className={`w-3 h-3 rounded-full transition-all duration-75 ${
               rxBlink
-                ? 'bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]'
-                : 'bg-blue-900/40 shadow-[0_0_4px_rgba(96,165,250,0.2)]'
+                ? "bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]"
+                : "bg-blue-900/40 shadow-[0_0_4px_rgba(96,165,250,0.2)]"
             }`}
           />
           {rxBlink && (
@@ -59,8 +62,8 @@ export default function ActivityIndicator({ rxActive, txActive }: ActivityIndica
           <div
             className={`w-3 h-3 rounded-full transition-all duration-75 ${
               txBlink
-                ? 'bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
-                : 'bg-amber-900/40 shadow-[0_0_4px_rgba(251,191,36,0.2)]'
+                ? "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]"
+                : "bg-amber-900/40 shadow-[0_0_4px_rgba(251,191,36,0.2)]"
             }`}
           />
           {txBlink && (
