@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "platforms": [
+    {
+      "id": "stm32",
+      "name": "STMicroelectronics STM32",
+      "description": "Industry-leading ARM Cortex-M microcontrollers with extensive peripheral support",
+      "manufacturer": "STMicroelectronics",
+      "icon": "stm32.svg",
+      "color": "#03234B",
+      "website": "https://www.st.com/stm32",
+      "github": "https://github.com/STMicroelectronics",
+      "families": ["f1", "f4"],
+      "tags": ["arm", "cortex-m", "industrial", "automotive"],
+      "supported": true
+    },
+    {
+      "id": "esp32",
+      "name": "Espressif ESP32",
+      "description": "WiFi and Bluetooth SoCs for IoT applications",
+      "manufacturer": "Espressif",
+      "icon": "esp32.svg",
+      "color": "#E7352C",
+      "website": "https://www.espressif.com/en/products/socs/esp32",
+      "github": "https://github.com/espressif",
+      "families": ["s3", "c3"],
+      "tags": ["wifi", "bluetooth", "iot", "riscv", "xtensa"],
+      "supported": true
+    },
+    {
+      "id": "nrf",
+      "name": "Nordic nRF",
+      "description": "Ultra low power wireless SoCs for BLE and mesh applications",
+      "manufacturer": "Nordic Semiconductor",
+      "icon": "nrf.svg",
+      "color": "#00A9CE",
+      "website": "https://www.nordicsemi.com/Products",
+      "github": "https://github.com/NordicSemiconductor",
+      "families": ["nrf52", "nrf53"],
+      "tags": ["ble", "mesh", "low-power", "arm"],
+      "supported": true
+    },
+    {
+      "id": "rp2040",
+      "name": "Raspberry Pi RP2040",
+      "description": "Dual-core ARM Cortex-M0+ with PIO for flexible I/O",
+      "manufacturer": "Raspberry Pi",
+      "icon": "rp2040.svg",
+      "color": "#C51A4A",
+      "website": "https://www.raspberrypi.com/products/rp2040/",
+      "github": "https://github.com/raspberrypi/pico-sdk",
+      "families": ["rp2"],
+      "tags": ["arm", "cortex-m0", "pio", "beginner"],
+      "supported": true
+    }
+  ],
+  "libraries": {
+    "core": [
+      {
+        "id": "cmsis",
+        "name": "CMSIS",
+        "description": "ARM Cortex Microcontroller Software Interface Standard",
+        "version": "5.9.0",
+        "github": "https://github.com/ARM-software/CMSIS_5",
+        "required": true,
+        "architectures": ["cortex-m0", "cortex-m0+", "cortex-m3", "cortex-m4", "cortex-m4f", "cortex-m7", "cortex-m7f", "cortex-m33"]
+      }
+    ],
+    "community": [
+      {
+        "id": "fastled",
+        "name": "FastLED",
+        "description": "Fast LED library for addressable LEDs (WS2812B, etc.)",
+        "version": "3.6.0",
+        "github": "https://github.com/FastLED/FastLED",
+        "required": false,
+        "tags": ["led", "neopixel", "ws2812"]
+      },
+      {
+        "id": "freertos",
+        "name": "FreeRTOS",
+        "description": "Real-time operating system for embedded devices",
+        "version": "11.0.1",
+        "github": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+        "required": false,
+        "tags": ["rtos", "multitasking", "scheduler"]
+      }
+    ]
+  }
+}
