@@ -3,9 +3,11 @@
  *
  * Downloads and extracts platform headers from tar.gz files.
  * Uses DecompressionStream API for gzip decompression.
+ * Now integrates with TargetRegistry for URL resolution.
  */
 
 import { HeaderCache } from "./HeaderCache";
+import { TargetRegistry } from "../registry";
 
 const cache = new HeaderCache();
 
@@ -16,7 +18,8 @@ export interface LoadHeadersProgress {
     | "extracting"
     | "caching"
     | "ready"
-    | "error";
+    | "error"
+    | "warning";
   message: string;
   current?: number;
   total?: number;
@@ -139,7 +142,8 @@ export async function loadHeaders(
   // Download headers
   onProgress?.({ stage: "downloading", message: "Downloading headers..." });
 
-  const response = await fetch(`/platforms/${headerUrl}`);
+  // Use URL as-is (registry provides full path)
+  const response = await fetch(headerUrl);
   if (!response.ok) {
     // Handle missing headers gracefully - return empty set with warning
     if (response.status === 404) {
@@ -227,4 +231,49 @@ export async function hasCachedHeaders(
   checksum: string,
 ): Promise<boolean> {
   return cache.isValid(platformId, familyId, checksum);
+}
+
+/**
+ * Load headers using the TargetRegistry
+ * Automatically fetches the header URL from the platform manifest
+ */
+export async function loadHeadersFromRegistry(
+  platformId: string,
+  familyId: string,
+  onProgress?: (progress: LoadHeadersProgress) => void,
+): Promise<Map<string, Uint8Array>> {
+  onProgress?.({ stage: "checking", message: "Loading platform manifest..." });
+
+  // Get platform manifest from registry
+  const manifest = await TargetRegistry.getPlatformManifest(
+    platformId,
+    familyId,
+  );
+
+  if (!manifest) {
+    console.warn(
+      `[HeaderLoader] Platform not found in registry: ${platformId}/${familyId}`,
+    );
+    onProgress?.({
+      stage: "warning",
+      message: `Platform ${platformId}/${familyId} not found in registry. Headers not available.`,
+    });
+    return new Map<string, Uint8Array>();
+  }
+
+  // Get header URL from manifest
+  const headerUrl = manifest.headers.url.startsWith("/")
+    ? manifest.headers.url
+    : `${TargetRegistry.getBaseUrl()}/${manifest.headers.url}`;
+
+  const checksum = manifest.headers.hash || "unknown";
+
+  console.log(`[HeaderLoader] Loading headers from registry:`, {
+    platform: platformId,
+    family: familyId,
+    url: headerUrl,
+  });
+
+  // Use the standard loadHeaders function with registry-provided URL
+  return loadHeaders(platformId, familyId, headerUrl, checksum, onProgress);
 }

@@ -269,12 +269,35 @@ function BattleForgeIDEContent() {
         openFile(firstEditableFile.path);
       }
 
-      // Log project loaded
+      // Log project loaded with platform/board details
+      const platform = currentProject.platform;
+      const platformInfo = platform
+        ? `${platform.platformId}/${platform.familyId}/${platform.deviceId}`
+        : "none";
+      const boardInfo = platform?.boardId || "generic";
+
+      console.log(
+        `[BattleForge] Project loaded: "${currentProject.metadata.name}"`,
+        {
+          id: currentProject.metadata.id,
+          platform: platformInfo,
+          board: boardInfo,
+          architecture: platform?.architecture || "unknown",
+          files: currentProject.files.length,
+          libraries: currentProject.libraries?.length || 0,
+        },
+      );
+
       setOutput((prev) => [
         ...prev,
         {
           message: `Project "${currentProject.metadata.name}" loaded`,
           type: "success",
+          timestamp: new Date().toLocaleTimeString(),
+        },
+        {
+          message: `  Platform: ${platformInfo} | Board: ${boardInfo} | Arch: ${platform?.architecture || "unknown"}`,
+          type: "info",
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);

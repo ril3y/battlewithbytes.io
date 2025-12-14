@@ -5,12 +5,12 @@
  * Stores decompressed framework files with checksum validation.
  */
 
-import type { FrameworkId } from '../platform/types';
+import type { FrameworkId } from "../platform/types";
 
-const DB_NAME = 'battleforge-frameworks';
+const DB_NAME = "battleforge-frameworks";
 const DB_VERSION = 1;
-const STORE_NAME = 'frameworks';
-const META_STORE = 'metadata';
+const STORE_NAME = "frameworks";
+const META_STORE = "metadata";
 
 interface CacheMetadata {
   frameworkId: FrameworkId;
@@ -40,7 +40,10 @@ export class FrameworkCache {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[FrameworkCache] Failed to open database:', request.error);
+        console.error(
+          "[FrameworkCache] Failed to open database:",
+          request.error,
+        );
         reject(request.error);
       };
 
@@ -54,13 +57,17 @@ export class FrameworkCache {
 
         // Store for framework file contents
         if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-          store.createIndex('framework', ['frameworkId', 'platformId', 'familyId'], { unique: false });
+          const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+          store.createIndex(
+            "framework",
+            ["frameworkId", "platformId", "familyId"],
+            { unique: false },
+          );
         }
 
         // Store for cache metadata
         if (!db.objectStoreNames.contains(META_STORE)) {
-          db.createObjectStore(META_STORE, { keyPath: 'id' });
+          db.createObjectStore(META_STORE, { keyPath: "id" });
         }
       };
     });
@@ -74,7 +81,7 @@ export class FrameworkCache {
   async getCoreFiles(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<Map<string, Uint8Array> | null> {
     await this.init();
     if (!this.db) return null;
@@ -82,7 +89,7 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readonly');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readonly");
       const metaStore = tx.objectStore(META_STORE);
       const frameworkStore = tx.objectStore(STORE_NAME);
 
@@ -97,7 +104,7 @@ export class FrameworkCache {
         }
 
         // Get all files for this framework
-        const index = frameworkStore.index('framework');
+        const index = frameworkStore.index("framework");
         const range = IDBKeyRange.only([frameworkId, platformId, familyId]);
         const cursorRequest = index.openCursor(range);
 
@@ -106,29 +113,36 @@ export class FrameworkCache {
         cursorRequest.onsuccess = () => {
           const cursor = cursorRequest.result;
           if (cursor) {
-            const record = cursor.value as { path: string; content: Uint8Array };
+            const record = cursor.value as {
+              path: string;
+              content: Uint8Array;
+            };
             files.set(record.path, record.content);
             cursor.continue();
           } else {
             // All records processed
             if (files.size === meta.fileCount) {
-              console.log(`[FrameworkCache] Loaded ${files.size} cached files for ${metaKey}`);
+              console.log(
+                `[FrameworkCache] Loaded ${files.size} cached files for ${metaKey}`,
+              );
               resolve(files);
             } else {
-              console.warn(`[FrameworkCache] Cache incomplete: ${files.size}/${meta.fileCount}`);
+              console.warn(
+                `[FrameworkCache] Cache incomplete: ${files.size}/${meta.fileCount}`,
+              );
               resolve(null);
             }
           }
         };
 
         cursorRequest.onerror = () => {
-          console.error('[FrameworkCache] Cursor error:', cursorRequest.error);
+          console.error("[FrameworkCache] Cursor error:", cursorRequest.error);
           reject(cursorRequest.error);
         };
       };
 
       metaRequest.onerror = () => {
-        console.error('[FrameworkCache] Meta read error:', metaRequest.error);
+        console.error("[FrameworkCache] Meta read error:", metaRequest.error);
         reject(metaRequest.error);
       };
     });
@@ -142,7 +156,7 @@ export class FrameworkCache {
     platformId: string,
     familyId: string,
     files: Map<string, Uint8Array>,
-    checksum: string
+    checksum: string,
   ): Promise<void> {
     await this.init();
     if (!this.db) return;
@@ -150,12 +164,12 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
       const metaStore = tx.objectStore(META_STORE);
       const frameworkStore = tx.objectStore(STORE_NAME);
 
       // Clear existing files for this framework
-      const index = frameworkStore.index('framework');
+      const index = frameworkStore.index("framework");
       const range = IDBKeyRange.only([frameworkId, platformId, familyId]);
       const deleteRequest = index.openCursor(range);
 
@@ -182,7 +196,7 @@ export class FrameworkCache {
         checksum,
         timestamp: Date.now(),
         fileCount: files.size,
-        totalSize
+        totalSize,
       };
       metaStore.put({ id: metaKey, ...meta });
 
@@ -197,19 +211,21 @@ export class FrameworkCache {
           platformId,
           familyId,
           path,
-          content
+          content,
         };
         frameworkStore.put(record);
         stored++;
       }
 
       tx.oncomplete = () => {
-        console.log(`[FrameworkCache] Cached ${stored} files for ${metaKey} (${(totalSize / 1024).toFixed(1)} KB)`);
+        console.log(
+          `[FrameworkCache] Cached ${stored} files for ${metaKey} (${(totalSize / 1024).toFixed(1)} KB)`,
+        );
         resolve();
       };
 
       tx.onerror = () => {
-        console.error('[FrameworkCache] Transaction error:', tx.error);
+        console.error("[FrameworkCache] Transaction error:", tx.error);
         reject(tx.error);
       };
     });
@@ -222,7 +238,7 @@ export class FrameworkCache {
     frameworkId: FrameworkId,
     platformId: string,
     familyId: string,
-    expectedChecksum: string
+    expectedChecksum: string,
   ): Promise<boolean> {
     await this.init();
     if (!this.db) return false;
@@ -230,7 +246,7 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.get(metaKey);
 
@@ -263,7 +279,7 @@ export class FrameworkCache {
   async getMetadata(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<CacheMetadata | null> {
     await this.init();
     if (!this.db) return null;
@@ -271,7 +287,7 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.get(metaKey);
 
@@ -291,7 +307,7 @@ export class FrameworkCache {
   async removeFramework(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<void> {
     await this.init();
     if (!this.db) return;
@@ -299,7 +315,7 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
       const metaStore = tx.objectStore(META_STORE);
       const frameworkStore = tx.objectStore(STORE_NAME);
 
@@ -307,7 +323,7 @@ export class FrameworkCache {
       metaStore.delete(metaKey);
 
       // Delete all files for this framework
-      const index = frameworkStore.index('framework');
+      const index = frameworkStore.index("framework");
       const range = IDBKeyRange.only([frameworkId, platformId, familyId]);
       const cursorRequest = index.openCursor(range);
 
@@ -338,13 +354,13 @@ export class FrameworkCache {
     if (!this.db) return;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
 
       tx.objectStore(META_STORE).clear();
       tx.objectStore(STORE_NAME).clear();
 
       tx.oncomplete = () => {
-        console.log('[FrameworkCache] Cache cleared');
+        console.log("[FrameworkCache] Cache cleared");
         resolve();
       };
 
@@ -362,7 +378,7 @@ export class FrameworkCache {
     if (!this.db) return 0;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.getAll();
 
@@ -384,7 +400,7 @@ export class FrameworkCache {
   async getCacheSize(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<number> {
     await this.init();
     if (!this.db) return 0;
@@ -392,7 +408,7 @@ export class FrameworkCache {
     const metaKey = `${frameworkId}/${platformId}/${familyId}`;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.get(metaKey);
 
@@ -410,30 +426,34 @@ export class FrameworkCache {
   /**
    * List all cached frameworks
    */
-  async listCached(): Promise<Array<{
-    frameworkId: FrameworkId;
-    platformId: string;
-    familyId: string;
-    size: number;
-    timestamp: number;
-  }>> {
+  async listCached(): Promise<
+    Array<{
+      frameworkId: FrameworkId;
+      platformId: string;
+      familyId: string;
+      size: number;
+      timestamp: number;
+    }>
+  > {
     await this.init();
     if (!this.db) return [];
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.getAll();
 
       request.onsuccess = () => {
         const metas = request.result as CacheMetadata[];
-        resolve(metas.map(m => ({
-          frameworkId: m.frameworkId,
-          platformId: m.platformId,
-          familyId: m.familyId,
-          size: m.totalSize,
-          timestamp: m.timestamp
-        })));
+        resolve(
+          metas.map((m) => ({
+            frameworkId: m.frameworkId,
+            platformId: m.platformId,
+            familyId: m.familyId,
+            size: m.totalSize,
+            timestamp: m.timestamp,
+          })),
+        );
       };
 
       request.onerror = () => {

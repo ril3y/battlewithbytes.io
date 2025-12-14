@@ -7,16 +7,25 @@ export interface VFSFile {
   path: string;
   name: string;
   content: string | Uint8Array;
-  type: 'file';
+  type: "file";
   editable: boolean;
   modified: boolean;
-  language?: 'c' | 'cpp' | 'h' | 'ino' | 'makefile' | 'ld' | 'asm' | 'text' | 'binary';
+  language?:
+    | "c"
+    | "cpp"
+    | "h"
+    | "ino"
+    | "makefile"
+    | "ld"
+    | "asm"
+    | "text"
+    | "binary";
 }
 
 export interface VFSDirectory {
   path: string;
   name: string;
-  type: 'directory';
+  type: "directory";
   expanded: boolean;
   children: (VFSFile | VFSDirectory)[];
 }
@@ -31,59 +40,59 @@ export interface VFSState {
 }
 
 export function isDirectory(node: VFSNode): node is VFSDirectory {
-  return node.type === 'directory';
+  return node.type === "directory";
 }
 
 export function isFile(node: VFSNode): node is VFSFile {
-  return node.type === 'file';
+  return node.type === "file";
 }
 
-export function getLanguageFromPath(path: string): VFSFile['language'] {
-  const ext = path.split('.').pop()?.toLowerCase();
+export function getLanguageFromPath(path: string): VFSFile["language"] {
+  const ext = path.split(".").pop()?.toLowerCase();
   switch (ext) {
-    case 'c':
-      return 'c';
-    case 'cpp':
-    case 'cc':
-    case 'cxx':
-      return 'cpp';
-    case 'ino':
-    case 'pde':  // Legacy Arduino extension
-      return 'ino';
-    case 'h':
-    case 'hpp':
-      return 'h';
-    case 'mk':
-      return 'makefile';
-    case 'ld':
-      return 'ld';
-    case 's':
-    case 'asm':
-      return 'asm';
-    case 'o':
-    case 'elf':
-    case 'bin':
-    case 'hex':
-      return 'binary';
+    case "c":
+      return "c";
+    case "cpp":
+    case "cc":
+    case "cxx":
+      return "cpp";
+    case "ino":
+    case "pde": // Legacy Arduino extension
+      return "ino";
+    case "h":
+    case "hpp":
+      return "h";
+    case "mk":
+      return "makefile";
+    case "ld":
+      return "ld";
+    case "s":
+    case "asm":
+      return "asm";
+    case "o":
+    case "elf":
+    case "bin":
+    case "hex":
+      return "binary";
     default:
-      if (path.toLowerCase().includes('makefile')) {
-        return 'makefile';
+      if (path.toLowerCase().includes("makefile")) {
+        return "makefile";
       }
-      return 'text';
+      return "text";
   }
 }
 
 export function createFile(
   path: string,
   content: string | Uint8Array,
-  editable = true
+  editable = true,
 ): VFSFile {
-  const name = path.split('/').pop() || path;
+  const name = path.split("/").pop() || path;
   return {
     path,
     name,
     content,
-    type: 'file',
+    type: "file",
     editable,
     modified: false,
     language: getLanguageFromPath(path),
@@ -93,13 +102,13 @@ export function createFile(
 export function createDirectory(
   path: string,
   children: VFSNode[] = [],
-  expanded = false
+  expanded = false,
 ): VFSDirectory {
-  const name = path.split('/').filter(Boolean).pop() || '/';
+  const name = path.split("/").filter(Boolean).pop() || "/";
   return {
     path,
     name,
-    type: 'directory',
+    type: "directory",
     expanded,
     children,
   };

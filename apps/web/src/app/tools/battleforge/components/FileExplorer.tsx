@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useMemo, useCallback, useState, useRef, useEffect } from 'react';
-import { Tree, NodeRendererProps, TreeApi, NodeApi } from 'react-arborist';
-import { useVFS } from '../lib/vfs/VFSContext';
-import type { VFSNode } from '../lib/vfs/types';
-import { isDirectory, isFile } from '../lib/vfs/types';
+import { useMemo, useCallback, useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { Tree, NodeRendererProps, TreeApi, NodeApi } from "react-arborist";
+import { useVFS } from "../lib/vfs/VFSContext";
+import type { VFSNode } from "../lib/vfs/types";
+import { isDirectory, isFile } from "../lib/vfs/types";
 
 interface FileExplorerProps {
   onFileSelect?: (path: string, content: string | Uint8Array) => void;
@@ -27,6 +28,30 @@ interface ContextMenuState {
   nodeId: string | null;
   isFolder: boolean;
   isEditable: boolean;
+}
+
+// LocalStorage key for persisting expanded state
+const EXPANDED_STATE_KEY = "battleforge-explorer-expanded";
+
+// Load expanded state from localStorage
+function loadExpandedState(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem(EXPANDED_STATE_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Save expanded state to localStorage
+function saveExpandedState(state: Record<string, boolean>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(EXPANDED_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 // Convert VFS structure to react-arborist format
@@ -52,16 +77,26 @@ function vfsToTreeData(node: VFSNode): TreeNode {
 // File icon based on language
 function getFileIcon(language?: string) {
   switch (language) {
-    case 'c': return { bg: '#649ad2', label: 'C' };
-    case 'cpp': return { bg: '#9b4f96', label: 'C++' };
-    case 'h': return { bg: '#00ff9d', label: 'H' };
-    case 'makefile': return { bg: '#ff9800', label: 'M' };
-    case 'ld': return { bg: '#795548', label: 'LD' };
-    case 'asm': return { bg: '#607d8b', label: 'S' };
-    case 'binary': return { bg: '#0088ff', label: 'B' };
-    case 'o': return { bg: '#666', label: 'O' };
-    case 'elf': return { bg: '#c084fc', label: 'ELF' };
-    default: return { bg: '#444', label: 'T' };
+    case "c":
+      return { bg: "#649ad2", label: "C" };
+    case "cpp":
+      return { bg: "#9b4f96", label: "C++" };
+    case "h":
+      return { bg: "#00ff9d", label: "H" };
+    case "makefile":
+      return { bg: "#ff9800", label: "M" };
+    case "ld":
+      return { bg: "#795548", label: "LD" };
+    case "asm":
+      return { bg: "#607d8b", label: "S" };
+    case "binary":
+      return { bg: "#0088ff", label: "B" };
+    case "o":
+      return { bg: "#666", label: "O" };
+    case "elf":
+      return { bg: "#c084fc", label: "ELF" };
+    default:
+      return { bg: "#444", label: "T" };
   }
 }
 
@@ -74,16 +109,18 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
     <div
       ref={dragHandle}
       style={style}
-      className={`tree-node ${node.isSelected ? 'selected' : ''} ${node.data.modified ? 'modified' : ''} ${isReadOnly ? 'readonly' : ''}`}
-      onClick={() => node.isInternal ? node.toggle() : node.select()}
+      className={`tree-node ${node.isSelected ? "selected" : ""} ${node.data.modified ? "modified" : ""} ${isReadOnly ? "readonly" : ""}`}
+      onClick={() => (node.isInternal ? node.toggle() : node.select())}
     >
       {node.data.isFolder ? (
         <>
-          <span className="folder-arrow">{node.isOpen ? '▼' : '▶'}</span>
-          <span className="folder-icon">{node.isOpen ? '📂' : '📁'}</span>
+          <span className="folder-arrow">{node.isOpen ? "▼" : "▶"}</span>
+          <span className="folder-icon">{node.isOpen ? "📂" : "📁"}</span>
         </>
       ) : (
-        <span className="file-icon" style={{ background: icon?.bg }}>{icon?.label}</span>
+        <span className="file-icon" style={{ background: icon?.bg }}>
+          {icon?.label}
+        </span>
       )}
       <span className="node-name">{node.data.name}</span>
       {node.data.modified && <span className="modified-dot" />}
@@ -93,11 +130,11 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
         .tree-node {
           display: flex;
           align-items: center;
-          gap: 6px;
-          padding: 4px 8px;
+          gap: 5px;
+          padding: 3px 6px;
           cursor: pointer;
           color: var(--foreground, #ededed);
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           user-select: none;
           border-radius: 3px;
           margin: 1px 4px;
@@ -129,15 +166,15 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
         }
 
         .folder-icon {
-          font-size: 0.9rem;
+          font-size: 0.8rem;
         }
 
         .file-icon {
-          font-size: 0.65rem;
+          font-size: 0.55rem;
           font-weight: bold;
-          padding: 1px 3px;
+          padding: 1px 2px;
           border-radius: 2px;
-          min-width: 18px;
+          min-width: 14px;
           text-align: center;
           color: #fff;
           margin-left: 16px;
@@ -176,7 +213,7 @@ function ContextMenu({
   onNewFile,
   onNewFolder,
   onRename,
-  onDelete
+  onDelete,
 }: {
   state: ContextMenuState;
   onClose: () => void;
@@ -194,14 +231,14 @@ function ContextMenu({
       }
     };
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [onClose]);
 
@@ -297,14 +334,14 @@ function ContextMenu({
   );
 }
 
-// Input dialog for naming files/folders
+// Input dialog for naming files/folders - uses portal to render at body level
 function NameInputDialog({
   isOpen,
   title,
   placeholder,
   initialValue,
   onSubmit,
-  onCancel
+  onCancel,
 }: {
   isOpen: boolean;
   title: string;
@@ -313,12 +350,17 @@ function NameInputDialog({
   onSubmit: (value: string) => void;
   onCancel: () => void;
 }) {
-  const [value, setValue] = useState(initialValue || '');
+  const [value, setValue] = useState(initialValue || "");
+  const [mounted, setMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
-      setValue(initialValue || '');
+      setValue(initialValue || "");
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
@@ -327,19 +369,91 @@ function NameInputDialog({
   }, [isOpen, initialValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && value.trim()) {
+    if (e.key === "Enter" && value.trim()) {
       onSubmit(value.trim());
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       onCancel();
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="name-dialog-overlay" onClick={onCancel}>
-      <div className="name-dialog" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title">{title}</h3>
+  const overlayStyle: React.CSSProperties = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100vw",
+    height: "100vh",
+    background: "rgba(0, 0, 0, 0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+  };
+
+  const dialogStyle: React.CSSProperties = {
+    background: "#1a1a1a",
+    border: "1px solid #333",
+    borderRadius: "8px",
+    padding: "20px",
+    width: "350px",
+    maxWidth: "90vw",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+  };
+
+  const titleStyle: React.CSSProperties = {
+    margin: "0 0 16px 0",
+    fontSize: "1rem",
+    color: "#fff",
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "#0a0a0a",
+    border: "1px solid #444",
+    borderRadius: "4px",
+    color: "#ededed",
+    padding: "10px 12px",
+    fontSize: "0.9rem",
+    outline: "none",
+    marginBottom: "16px",
+    boxSizing: "border-box",
+  };
+
+  const buttonsStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+  };
+
+  const cancelBtnStyle: React.CSSProperties = {
+    padding: "8px 16px",
+    borderRadius: "4px",
+    fontSize: "0.85rem",
+    cursor: "pointer",
+    background: "transparent",
+    border: "1px solid #444",
+    color: "#888",
+  };
+
+  const confirmBtnStyle: React.CSSProperties = {
+    padding: "8px 16px",
+    borderRadius: "4px",
+    fontSize: "0.85rem",
+    cursor: value.trim() ? "pointer" : "not-allowed",
+    background: "#00ff9d",
+    border: "none",
+    color: "#000",
+    fontWeight: 600,
+    opacity: value.trim() ? 1 : 0.5,
+  };
+
+  const dialogContent = (
+    <div style={overlayStyle} onClick={onCancel}>
+      <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+        <h3 style={titleStyle}>{title}</h3>
         <input
           ref={inputRef}
           type="text"
@@ -347,112 +461,33 @@ function NameInputDialog({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="dialog-input"
+          style={inputStyle}
         />
-        <div className="dialog-buttons">
-          <button className="dialog-btn cancel" onClick={onCancel}>Cancel</button>
+        <div style={buttonsStyle}>
+          <button style={cancelBtnStyle} onClick={onCancel}>
+            Cancel
+          </button>
           <button
-            className="dialog-btn confirm"
+            style={confirmBtnStyle}
             onClick={() => value.trim() && onSubmit(value.trim())}
             disabled={!value.trim()}
           >
             Create
           </button>
         </div>
-
-        <style jsx>{`
-          .name-dialog-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-          }
-
-          .name-dialog {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 20px;
-            min-width: 300px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-          }
-
-          .dialog-title {
-            margin: 0 0 16px 0;
-            font-size: 1rem;
-            color: #fff;
-          }
-
-          .dialog-input {
-            width: 100%;
-            background: #0a0a0a;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: var(--foreground, #ededed);
-            padding: 10px 12px;
-            font-size: 0.9rem;
-            outline: none;
-            margin-bottom: 16px;
-          }
-
-          .dialog-input:focus {
-            border-color: var(--accent-primary, #00ff9d);
-          }
-
-          .dialog-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-          }
-
-          .dialog-btn {
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.15s;
-          }
-
-          .dialog-btn.cancel {
-            background: transparent;
-            border: 1px solid #444;
-            color: #888;
-          }
-
-          .dialog-btn.cancel:hover {
-            border-color: #666;
-            color: #fff;
-          }
-
-          .dialog-btn.confirm {
-            background: var(--accent-primary, #00ff9d);
-            border: none;
-            color: #000;
-            font-weight: 600;
-          }
-
-          .dialog-btn.confirm:hover:not(:disabled) {
-            filter: brightness(1.1);
-          }
-
-          .dialog-btn.confirm:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
-        `}</style>
       </div>
     </div>
   );
+
+  // Use portal to render at body level, avoiding parent container constraints
+  return createPortal(dialogContent, document.body);
 }
 
 // Rename input component (inline)
 function RenameInput({
   initialValue,
   onSubmit,
-  onCancel
+  onCancel,
 }: {
   initialValue: string;
   onSubmit: (value: string) => void;
@@ -467,9 +502,9 @@ function RenameInput({
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       onSubmit(value);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       onCancel();
     }
   };
@@ -484,14 +519,14 @@ function RenameInput({
       onBlur={() => onSubmit(value)}
       className="rename-input"
       style={{
-        background: '#0a0a0a',
-        border: '1px solid var(--accent-primary, #00ff9d)',
-        borderRadius: '3px',
-        color: 'var(--foreground, #ededed)',
-        padding: '4px 8px',
-        fontSize: '0.85rem',
-        width: '100%',
-        outline: 'none',
+        background: "#0a0a0a",
+        border: "1px solid var(--accent-primary, #00ff9d)",
+        borderRadius: "3px",
+        color: "var(--foreground, #ededed)",
+        padding: "4px 8px",
+        fontSize: "0.85rem",
+        width: "100%",
+        outline: "none",
       }}
     />
   );
@@ -507,9 +542,16 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     addDirectory,
     getFile,
     renameFile,
+    moveFile,
   } = useVFS();
 
   const treeRef = useRef<TreeApi<TreeNode>>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [treeHeight, setTreeHeight] = useState(400);
+  const [expandedState, setExpandedState] = useState<Record<string, boolean>>(
+    () => loadExpandedState(),
+  );
+
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -521,98 +563,177 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
 
   // Dialog state for new file/folder
-  const [newFileDialog, setNewFileDialog] = useState<{ open: boolean; parentPath: string }>({
+  const [newFileDialog, setNewFileDialog] = useState<{
+    open: boolean;
+    parentPath: string;
+  }>({
     open: false,
-    parentPath: '/src'
+    parentPath: "/src",
   });
-  const [newFolderDialog, setNewFolderDialog] = useState<{ open: boolean; parentPath: string }>({
+  const [newFolderDialog, setNewFolderDialog] = useState<{
+    open: boolean;
+    parentPath: string;
+  }>({
     open: false,
-    parentPath: '/'
+    parentPath: "/",
   });
+
+  // Measure container height dynamically
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateHeight = () => {
+      const rect = container.getBoundingClientRect();
+      // Subtract header height (approx 45px)
+      setTreeHeight(Math.max(200, rect.height - 45));
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Handle folder toggle and persist state
+  const handleToggle = useCallback((id: string) => {
+    setExpandedState((prev) => {
+      const newState = { ...prev, [id]: !prev[id] };
+      saveExpandedState(newState);
+      return newState;
+    });
+  }, []);
 
   // Convert VFS to tree data
   const treeData = useMemo(() => {
     return state.root.children.map(vfsToTreeData);
   }, [state.root]);
 
-  const handleSelect = useCallback((nodes: NodeApi<TreeNode>[]) => {
-    if (nodes.length === 0) return;
-    const node = nodes[0];
+  const handleSelect = useCallback(
+    (nodes: NodeApi<TreeNode>[]) => {
+      if (nodes.length === 0) return;
+      const node = nodes[0];
 
-    if (!node.data.isFolder) {
-      selectFile(node.id);
-      openFile(node.id);
-      const file = getFile(node.id);
-      if (file) {
-        onFileSelect?.(node.id, file.content);
+      if (!node.data.isFolder) {
+        selectFile(node.id);
+        openFile(node.id);
+        const file = getFile(node.id);
+        if (file) {
+          onFileSelect?.(node.id, file.content);
+        }
       }
-    }
-  }, [selectFile, openFile, getFile, onFileSelect]);
+    },
+    [selectFile, openFile, getFile, onFileSelect],
+  );
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  // Helper to find a node in the tree by path
+  const findNodeInTree = useCallback(
+    (nodes: TreeNode[], path: string): TreeNode | null => {
+      for (const node of nodes) {
+        if (node.id === path) return node;
+        if (node.children) {
+          const found = findNodeInTree(node.children, path);
+          if (found) return found;
+        }
+      }
+      return null;
+    },
+    [],
+  );
 
-    // Find the node that was right-clicked
-    const target = e.target as HTMLElement;
-    const nodeElement = target.closest('.tree-node');
-    const nodeId = nodeElement?.getAttribute('data-node-id') || state.selectedPath;
+  // Get parent directory of a path
+  const getParentPath = useCallback((path: string): string => {
+    const lastSlash = path.lastIndexOf("/");
+    if (lastSlash <= 0) return "/";
+    return path.substring(0, lastSlash);
+  }, []);
 
-    // Get node info if we have a path
-    let isFolder = false;
-    let isEditable = true;
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
 
-    if (nodeId) {
-      const file = getFile(nodeId);
-      isEditable = file?.editable !== false;
-    }
+      // Find the node that was right-clicked
+      const target = e.target as HTMLElement;
+      const nodeElement = target.closest(".tree-node");
+      const nodeId =
+        nodeElement?.getAttribute("data-node-id") || state.selectedPath;
 
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      nodeId,
-      isFolder,
-      isEditable,
-    });
-  }, [state.selectedPath, getFile]);
+      // Get node info if we have a path
+      let isFolder = false;
+      let isEditable = true;
+
+      if (nodeId) {
+        // Use findNodeInTree to properly detect if it's a folder
+        const treeNode = findNodeInTree(treeData, nodeId);
+        isFolder = treeNode?.isFolder ?? false;
+        const file = getFile(nodeId);
+        isEditable = file?.editable !== false;
+      }
+
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        nodeId,
+        isFolder,
+        isEditable,
+      });
+    },
+    [state.selectedPath, getFile, treeData, findNodeInTree],
+  );
 
   const closeContextMenu = useCallback(() => {
-    setContextMenu(prev => ({ ...prev, visible: false }));
+    setContextMenu((prev) => ({ ...prev, visible: false }));
   }, []);
 
   const handleNewFile = useCallback(() => {
-    const parentPath = contextMenu.nodeId && contextMenu.isFolder
-      ? contextMenu.nodeId
-      : '/src';
+    let parentPath = "/src";
+    if (contextMenu.nodeId) {
+      parentPath = contextMenu.isFolder
+        ? contextMenu.nodeId
+        : getParentPath(contextMenu.nodeId);
+    }
     setNewFileDialog({ open: true, parentPath });
     closeContextMenu();
-  }, [contextMenu, closeContextMenu]);
+  }, [contextMenu, closeContextMenu, getParentPath]);
 
-  const handleNewFileCreate = useCallback((fileName: string) => {
-    const { parentPath } = newFileDialog;
-    // Add .c extension if no extension provided
-    const finalName = fileName.includes('.') ? fileName : `${fileName}.c`;
-    const path = `${parentPath}/${finalName}`;
-    addFile(path, '', true);
-    selectFile(path);
-    openFile(path);
-    setNewFileDialog({ open: false, parentPath: '/src' });
-  }, [newFileDialog, addFile, selectFile, openFile]);
+  const handleNewFileCreate = useCallback(
+    (fileName: string) => {
+      const { parentPath } = newFileDialog;
+      // Add .c extension if no extension provided
+      const finalName = fileName.includes(".") ? fileName : `${fileName}.c`;
+      const path = `${parentPath}/${finalName}`;
+      addFile(path, "", true);
+      selectFile(path);
+      openFile(path);
+      setNewFileDialog({ open: false, parentPath: "/src" });
+    },
+    [newFileDialog, addFile, selectFile, openFile],
+  );
 
   const handleNewFolder = useCallback(() => {
-    const parentPath = contextMenu.nodeId && contextMenu.isFolder
-      ? contextMenu.nodeId
-      : '/';
+    let parentPath = "/";
+    if (contextMenu.nodeId) {
+      parentPath = contextMenu.isFolder
+        ? contextMenu.nodeId
+        : getParentPath(contextMenu.nodeId);
+    }
     setNewFolderDialog({ open: true, parentPath });
     closeContextMenu();
-  }, [contextMenu, closeContextMenu]);
+  }, [contextMenu, closeContextMenu, getParentPath]);
 
-  const handleNewFolderCreate = useCallback((folderName: string) => {
-    const { parentPath } = newFolderDialog;
-    const path = parentPath === '/' ? `/${folderName}` : `${parentPath}/${folderName}`;
-    addDirectory(path);
-    setNewFolderDialog({ open: false, parentPath: '/' });
-  }, [newFolderDialog, addDirectory]);
+  const handleNewFolderCreate = useCallback(
+    (folderName: string) => {
+      const { parentPath } = newFolderDialog;
+      const path =
+        parentPath === "/" ? `/${folderName}` : `${parentPath}/${folderName}`;
+      addDirectory(path);
+      setNewFolderDialog({ open: false, parentPath: "/" });
+    },
+    [newFolderDialog, addDirectory],
+  );
 
   const handleRename = useCallback(() => {
     if (contextMenu.nodeId) {
@@ -628,29 +749,63 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     closeContextMenu();
   }, [contextMenu.nodeId, deleteFile, closeContextMenu]);
 
-  const handleRenameSubmit = useCallback((oldPath: string, newName: string) => {
-    if (renameFile) {
-      renameFile(oldPath, newName);
-    }
-    setRenamingPath(null);
-  }, [renameFile]);
+  const handleRenameSubmit = useCallback(
+    (oldPath: string, newName: string) => {
+      if (renameFile) {
+        renameFile(oldPath, newName);
+      }
+      setRenamingPath(null);
+    },
+    [renameFile],
+  );
+
+  // Handle drag and drop move
+  const handleMove = useCallback(
+    (args: { dragIds: string[]; parentId: string | null; index: number }) => {
+      const { dragIds, parentId } = args;
+      // Move each dragged node to the new parent
+      const targetDir = parentId || "/";
+      for (const dragId of dragIds) {
+        moveFile(dragId, targetDir);
+      }
+    },
+    [moveFile],
+  );
 
   return (
-    <div className="file-explorer" onContextMenu={handleContextMenu}>
+    <div
+      className="file-explorer"
+      ref={containerRef}
+      onContextMenu={handleContextMenu}
+    >
       <div className="explorer-header">
         <span className="explorer-title">Explorer</span>
         <div className="explorer-actions">
           <button
             className="explorer-action-btn"
-            onClick={() => setNewFileDialog({ open: true, parentPath: '/src' })}
-            title="New File"
+            onClick={() => {
+              const parentPath = state.selectedPath
+                ? findNodeInTree(treeData, state.selectedPath)?.isFolder
+                  ? state.selectedPath
+                  : getParentPath(state.selectedPath)
+                : "/src";
+              setNewFileDialog({ open: true, parentPath });
+            }}
+            title={`New File in ${newFileDialog.parentPath}`}
           >
             +
           </button>
           <button
             className="explorer-action-btn"
-            onClick={() => setNewFolderDialog({ open: true, parentPath: '/' })}
-            title="New Folder"
+            onClick={() => {
+              const parentPath = state.selectedPath
+                ? findNodeInTree(treeData, state.selectedPath)?.isFolder
+                  ? state.selectedPath
+                  : getParentPath(state.selectedPath)
+                : "/";
+              setNewFolderDialog({ open: true, parentPath });
+            }}
+            title={`New Folder in ${newFolderDialog.parentPath}`}
           >
             +D
           </button>
@@ -661,13 +816,21 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
         <Tree<TreeNode>
           ref={treeRef}
           data={treeData}
-          openByDefault={true}
+          openByDefault={false}
+          initialOpenState={expandedState}
+          onToggle={(id) => handleToggle(id)}
           width="100%"
-          height={600}
+          height={treeHeight}
           indent={16}
-          rowHeight={28}
+          rowHeight={26}
           selection={state.selectedPath || undefined}
           onSelect={handleSelect}
+          onMove={handleMove}
+          disableDrag={false}
+          disableDrop={(args) => {
+            // Only allow dropping on folders
+            return args.parentNode !== null && !args.parentNode.data.isFolder;
+          }}
         >
           {Node}
         </Tree>
@@ -685,19 +848,19 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
       {/* New File Dialog */}
       <NameInputDialog
         isOpen={newFileDialog.open}
-        title="New File"
+        title={`New File in ${newFileDialog.parentPath}`}
         placeholder="filename.c"
         onSubmit={handleNewFileCreate}
-        onCancel={() => setNewFileDialog({ open: false, parentPath: '/src' })}
+        onCancel={() => setNewFileDialog({ open: false, parentPath: "/src" })}
       />
 
       {/* New Folder Dialog */}
       <NameInputDialog
         isOpen={newFolderDialog.open}
-        title="New Folder"
+        title={`New Folder in ${newFolderDialog.parentPath}`}
         placeholder="folder-name"
         onSubmit={handleNewFolderCreate}
-        onCancel={() => setNewFolderDialog({ open: false, parentPath: '/' })}
+        onCancel={() => setNewFolderDialog({ open: false, parentPath: "/" })}
       />
 
       <style jsx>{`

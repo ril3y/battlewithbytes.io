@@ -5,7 +5,7 @@ This document demonstrates how to use the ArduinoPreprocessor to convert Arduino
 ## Basic Example
 
 ```typescript
-import { ArduinoPreprocessor } from '../ArduinoPreprocessor';
+import { ArduinoPreprocessor } from "../ArduinoPreprocessor";
 
 const preprocessor = new ArduinoPreprocessor();
 
@@ -34,7 +34,7 @@ void loop() {
 // Preprocess the sketch
 const result = preprocessor.preprocess(sketchCode);
 
-console.log('Preprocessed C++ code:');
+console.log("Preprocessed C++ code:");
 console.log(result.code);
 // Output:
 // #include <Arduino.h>
@@ -44,7 +44,7 @@ console.log(result.code);
 //
 // [original sketch code]
 
-console.log('\nGenerated main.cpp:');
+console.log("\nGenerated main.cpp:");
 console.log(result.mainFile);
 // Output contains main() function that calls init(), setup(), and loop()
 ```
@@ -57,7 +57,9 @@ const preprocessor = new ArduinoPreprocessor();
 // Multiple .ino files
 const files = new Map<string, string>();
 
-files.set('MyProject.ino', `
+files.set(
+  "MyProject.ino",
+  `
 void setup() {
   Serial.begin(9600);
   setupSensors();
@@ -67,9 +69,12 @@ void loop() {
   readSensors();
   delay(1000);
 }
-`);
+`,
+);
 
-files.set('Sensors.ino', `
+files.set(
+  "Sensors.ino",
+  `
 void setupSensors() {
   pinMode(A0, INPUT);
 }
@@ -78,7 +83,8 @@ void readSensors() {
   int value = analogRead(A0);
   Serial.println(value);
 }
-`);
+`,
+);
 
 // Combine files
 const combined = preprocessor.combineSketchFiles(files);
@@ -90,8 +96,8 @@ const result = preprocessor.preprocess(combined);
 ## Integration with BattleForge Compiler
 
 ```typescript
-import { ArduinoPreprocessor } from '../ArduinoPreprocessor';
-import { executeClang } from '../EmscriptenClangLoader';
+import { ArduinoPreprocessor } from "../ArduinoPreprocessor";
+import { executeClang } from "../EmscriptenClangLoader";
 
 const preprocessor = new ArduinoPreprocessor();
 
@@ -101,22 +107,24 @@ const preprocessResult = preprocessor.preprocess(arduinoCode);
 // 2. Compile with Clang
 const clangResult = await executeClang(
   [
-    '-c',                          // Compile only
-    '-target', 'thumbv7em-none-eabi',
-    '-mcpu=cortex-m4',
-    '-mthumb',
-    '-o', '/sketch.o',
-    '/sketch.cpp'
+    "-c", // Compile only
+    "-target",
+    "thumbv7em-none-eabi",
+    "-mcpu=cortex-m4",
+    "-mthumb",
+    "-o",
+    "/sketch.o",
+    "/sketch.cpp",
   ],
   {
-    '/sketch.cpp': preprocessResult.code,
-    '/main.cpp': preprocessResult.mainFile
-  }
+    "/sketch.cpp": preprocessResult.code,
+    "/main.cpp": preprocessResult.mainFile,
+  },
 );
 
 // 3. Check for compilation errors
 if (!clangResult.success) {
-  console.error('Compilation failed:', clangResult.stderr);
+  console.error("Compilation failed:", clangResult.stderr);
 }
 ```
 

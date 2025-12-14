@@ -1,8 +1,8 @@
 /**
  * Platform Manager
  *
- * Handles loading and caching of platform definitions from static JSON files.
- * All platform data is served from /platforms/ directory.
+ * Handles loading and caching of platform definitions.
+ * Now integrates with TargetRegistry for platform manifests.
  */
 
 import type {
@@ -12,11 +12,13 @@ import type {
   DeviceEntry,
   SelectedPlatform,
   BuildConfig,
-  LoadingProgress
-} from './types';
-import { HeaderCache } from './HeaderCache';
+  LoadingProgress,
+} from "./types";
+import { HeaderCache } from "./HeaderCache";
+import { TargetRegistry } from "../registry";
+import { loadHeadersFromRegistry } from "./HeaderLoader";
 
-const PLATFORMS_BASE_URL = '/platforms';
+const PLATFORMS_BASE_URL = "/platforms";
 
 export class PlatformManager {
   private registry: PlatformRegistry | null = null;
@@ -44,7 +46,7 @@ export class PlatformManager {
       return this.registry;
     }
 
-    this.reportProgress('downloading', 0, 0, 'Loading platform registry...');
+    this.reportProgress("downloading", 0, 0, "Loading platform registry...");
 
     try {
       const response = await fetch(`${PLATFORMS_BASE_URL}/registry.json`);
@@ -52,17 +54,17 @@ export class PlatformManager {
         throw new Error(`Failed to load registry: ${response.status}`);
       }
 
-      this.registry = await response.json() as PlatformRegistry;
+      this.registry = (await response.json()) as PlatformRegistry;
 
       // Index platforms for quick lookup
       for (const platform of this.registry.platforms) {
         this.platformCache.set(platform.id, platform);
       }
 
-      this.reportProgress('ready', 0, 0, 'Registry loaded');
+      this.reportProgress("ready", 0, 0, "Registry loaded");
       return this.registry;
     } catch (error) {
-      this.reportProgress('error', 0, 0, `Registry load failed: ${error}`);
+      this.reportProgress("error", 0, 0, `Registry load failed: ${error}`);
       throw error;
     }
   }
@@ -94,7 +96,10 @@ export class PlatformManager {
   /**
    * Load a platform family definition
    */
-  async loadFamily(platformId: string, familyId: string): Promise<PlatformFamily> {
+  async loadFamily(
+    platformId: string,
+    familyId: string,
+  ): Promise<PlatformFamily> {
     const cacheKey = `${platformId}/${familyId}`;
 
     // Check cache
@@ -103,21 +108,28 @@ export class PlatformManager {
       return cached;
     }
 
-    this.reportProgress('downloading', 0, 0, `Loading ${platformId}/${familyId}...`);
+    this.reportProgress(
+      "downloading",
+      0,
+      0,
+      `Loading ${platformId}/${familyId}...`,
+    );
 
     try {
-      const response = await fetch(`${PLATFORMS_BASE_URL}/${platformId}/${familyId}/family.json`);
+      const response = await fetch(
+        `${PLATFORMS_BASE_URL}/${platformId}/${familyId}/family.json`,
+      );
       if (!response.ok) {
         throw new Error(`Failed to load family: ${response.status}`);
       }
 
-      const family = await response.json() as PlatformFamily;
+      const family = (await response.json()) as PlatformFamily;
       this.familyCache.set(cacheKey, family);
 
-      this.reportProgress('ready', 0, 0, `Family ${familyId} loaded`);
+      this.reportProgress("ready", 0, 0, `Family ${familyId} loaded`);
       return family;
     } catch (error) {
-      this.reportProgress('error', 0, 0, `Family load failed: ${error}`);
+      this.reportProgress("error", 0, 0, `Family load failed: ${error}`);
       throw error;
     }
   }
@@ -125,7 +137,10 @@ export class PlatformManager {
   /**
    * Get devices for a family
    */
-  async getDevices(platformId: string, familyId: string): Promise<DeviceEntry[]> {
+  async getDevices(
+    platformId: string,
+    familyId: string,
+  ): Promise<DeviceEntry[]> {
     const family = await this.loadFamily(platformId, familyId);
     return family.devices;
   }
@@ -136,17 +151,17 @@ export class PlatformManager {
   async selectPlatform(
     platformId: string,
     familyId: string,
-    deviceId: string
+    deviceId: string,
   ): Promise<SelectedPlatform> {
     const family = await this.loadFamily(platformId, familyId);
-    const device = family.devices.find(d => d.id === deviceId);
+    const device = family.devices.find((d) => d.id === deviceId);
 
     if (!device) {
       throw new Error(`Device ${deviceId} not found in family ${familyId}`);
     }
 
     // Import ARCHITECTURE_CONFIGS dynamically to avoid circular dependency
-    const { ARCHITECTURE_CONFIGS } = await import('./types');
+    const { ARCHITECTURE_CONFIGS } = await import("./types");
     const archConfig = ARCHITECTURE_CONFIGS[family.architecture];
 
     if (!archConfig) {
@@ -159,52 +174,114 @@ export class PlatformManager {
       deviceId,
       family,
       device,
-      archConfig
+      archConfig,
     };
   }
 
   /**
    * Load headers for a platform family
+   * Now uses TargetRegistry for URL resolution
    */
   async loadHeaders(
     platformId: string,
     familyId: string,
-    onProgress?: (progress: LoadingProgress) => void
+    onProgress?: (progress: LoadingProgress) => void,
   ): Promise<Map<string, Uint8Array>> {
-    const family = await this.loadFamily(platformId, familyId);
-    const headerBundle = family.headers;
-
-    // Check if already cached
-    const cached = await this.headerCache.getHeaders(platformId, familyId);
-    if (cached) {
-      onProgress?.({ stage: 'ready', current: 0, total: 0, message: 'Headers loaded from cache' });
-      return cached;
+    // First try the new registry-based loader
+    try {
+      console.log(
+        `[PlatformManager] Loading headers via registry: ${platformId}/${familyId}`,
+      );
+      const headers = await loadHeadersFromRegistry(
+        platformId,
+        familyId,
+        (progress) => {
+          onProgress?.({
+            stage: progress.stage as LoadingProgress["stage"],
+            current: progress.current || 0,
+            total: progress.total || 0,
+            message: progress.message,
+          });
+        },
+      );
+      return headers;
+    } catch (registryError) {
+      console.warn(
+        `[PlatformManager] Registry-based load failed, trying legacy path:`,
+        registryError,
+      );
     }
 
-    // Download and extract headers
-    const url = `${PLATFORMS_BASE_URL}/${headerBundle.url}`;
-    onProgress?.({ stage: 'downloading', current: 0, total: headerBundle.size, message: 'Downloading headers...' });
-
+    // Fallback to legacy loading from /platforms/ directory
     try {
+      const family = await this.loadFamily(platformId, familyId);
+      const headerBundle = family.headers;
+
+      // Check if already cached
+      const cached = await this.headerCache.getHeaders(platformId, familyId);
+      if (cached) {
+        onProgress?.({
+          stage: "ready",
+          current: 0,
+          total: 0,
+          message: "Headers loaded from cache",
+        });
+        return cached;
+      }
+
+      // Download and extract headers
+      const url = `${PLATFORMS_BASE_URL}/${headerBundle.url}`;
+      onProgress?.({
+        stage: "downloading",
+        current: 0,
+        total: headerBundle.size,
+        message: "Downloading headers...",
+      });
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to download headers: ${response.status}`);
       }
 
       const buffer = await response.arrayBuffer();
-      onProgress?.({ stage: 'extracting', current: buffer.byteLength, total: headerBundle.size, message: 'Extracting headers...' });
+      onProgress?.({
+        stage: "extracting",
+        current: buffer.byteLength,
+        total: headerBundle.size,
+        message: "Extracting headers...",
+      });
 
       // Extract tar.gz
       const headers = await this.extractTarGz(new Uint8Array(buffer));
 
       // Cache the extracted headers
-      await this.headerCache.setHeaders(platformId, familyId, headers, headerBundle.checksum);
+      await this.headerCache.setHeaders(
+        platformId,
+        familyId,
+        headers,
+        headerBundle.checksum,
+      );
 
-      onProgress?.({ stage: 'ready', current: 0, total: 0, message: 'Headers ready' });
+      onProgress?.({
+        stage: "ready",
+        current: 0,
+        total: 0,
+        message: "Headers ready",
+      });
       return headers;
     } catch (error) {
-      onProgress?.({ stage: 'error', current: 0, total: 0, message: `Header load failed: ${error}` });
-      throw error;
+      // Return empty map with warning instead of throwing
+      console.warn(
+        `[PlatformManager] Headers not available for ${platformId}/${familyId}:`,
+        error,
+      );
+      onProgress?.({
+        stage: "warning",
+        current: 0,
+        total: 0,
+        message: `Headers not available for this platform. You can still write code.`,
+      });
+      return new Map<string, Uint8Array>();
     }
   }
 
@@ -212,16 +289,16 @@ export class PlatformManager {
    * Generate build configuration for selected platform
    */
   async generateBuildConfig(selected: SelectedPlatform): Promise<BuildConfig> {
-    const { family, device, archConfig, frameworkId = 'native' } = selected;
+    const { family, device, archConfig, frameworkId = "native" } = selected;
 
     // Determine if using Arduino framework
-    const isArduino = frameworkId === 'arduino';
+    const isArduino = frameworkId === "arduino";
 
     // Build compiler arguments based on framework
     const compilerArgs: string[] = [
       `--target=${archConfig.target}`,
       `-mcpu=${archConfig.cpu}`,
-      '-mthumb'
+      "-mthumb",
     ];
 
     // Add FPU flags if present
@@ -236,21 +313,21 @@ export class PlatformManager {
     if (isArduino) {
       // Arduino-specific flags
       compilerArgs.push(
-        '-std=gnu++14',              // Arduino uses C++14
-        '-fno-rtti',
-        '-fno-exceptions',
-        '-fno-threadsafe-statics',
-        '-ffunction-sections',
-        '-fdata-sections',
-        '-Os'                        // Arduino optimizes for size
+        "-std=gnu++14", // Arduino uses C++14
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-fno-threadsafe-statics",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-Os", // Arduino optimizes for size
       );
     } else {
       // Native framework flags
       compilerArgs.push(
-        '-nostdlib',
-        '-ffreestanding',
-        '-fno-exceptions',
-        '-fno-rtti'
+        "-nostdlib",
+        "-ffreestanding",
+        "-fno-exceptions",
+        "-fno-rtti",
       );
     }
 
@@ -263,9 +340,9 @@ export class PlatformManager {
     // Add framework-specific defines
     if (isArduino) {
       defines.push(
-        'ARDUINO=10819',
+        "ARDUINO=10819",
         `ARDUINO_${device.id.toUpperCase()}`,
-        `ARDUINO_ARCH_${selected.platformId.toUpperCase()}`
+        `ARDUINO_ARCH_${selected.platformId.toUpperCase()}`,
       );
     }
 
@@ -282,22 +359,24 @@ export class PlatformManager {
       // Arduino core and variant paths
       includePaths.push(
         `/framework/arduino/cores/arduino`,
-        `/framework/arduino/variants/${device.id.toUpperCase()}`
+        `/framework/arduino/variants/${device.id.toUpperCase()}`,
       );
     }
 
     // Add platform headers
     includePaths.push(
       ...family.headers.includes.map(
-        inc => `/platform/${selected.platformId}/${selected.familyId}/headers${inc}`
-      )
+        (inc) =>
+          `/platform/${selected.platformId}/${selected.familyId}/headers${inc}`,
+      ),
     );
 
     // Build linker arguments
     const linkerArgs: string[] = [
-      '-flavor', 'gnu',
-      '-nostdlib',
-      `--script=/platform/${selected.platformId}/${selected.familyId}/linker/${device.linkerScript}`
+      "-flavor",
+      "gnu",
+      "-nostdlib",
+      `--script=/platform/${selected.platformId}/${selected.familyId}/linker/${device.linkerScript}`,
     ];
 
     if (family.linkerFlags) {
@@ -320,7 +399,7 @@ export class PlatformManager {
       libPaths,
       libs,
       linkerScript,
-      defines
+      defines,
     };
   }
 
@@ -330,7 +409,7 @@ export class PlatformManager {
   async loadLinkerScript(
     platformId: string,
     familyId: string,
-    linkerScriptName: string
+    linkerScriptName: string,
   ): Promise<string> {
     const url = `${PLATFORMS_BASE_URL}/${platformId}/${familyId}/linker/${linkerScriptName}`;
     const response = await fetch(url);
@@ -346,7 +425,9 @@ export class PlatformManager {
    * Extract a tar.gz archive
    * Uses pako for gzip decompression and a simple tar parser
    */
-  private async extractTarGz(data: Uint8Array): Promise<Map<string, Uint8Array>> {
+  private async extractTarGz(
+    data: Uint8Array,
+  ): Promise<Map<string, Uint8Array>> {
     // Dynamically import pako for gzip decompression
     // In browser, we'll use the DecompressionStream API if available
     const files = new Map<string, Uint8Array>();
@@ -356,7 +437,7 @@ export class PlatformManager {
       const decompressed = await this.decompressGzip(data);
       await this.parseTar(decompressed, files);
     } catch (error) {
-      console.error('[PlatformManager] Failed to extract tar.gz:', error);
+      console.error("[PlatformManager] Failed to extract tar.gz:", error);
       throw new Error(`Failed to extract headers: ${error}`);
     }
 
@@ -368,8 +449,8 @@ export class PlatformManager {
    */
   private async decompressGzip(data: Uint8Array): Promise<Uint8Array> {
     // Check for DecompressionStream support
-    if (typeof DecompressionStream !== 'undefined') {
-      const stream = new DecompressionStream('gzip');
+    if (typeof DecompressionStream !== "undefined") {
+      const stream = new DecompressionStream("gzip");
       const writer = stream.writable.getWriter();
       writer.write(data as unknown as BufferSource);
       writer.close();
@@ -396,13 +477,18 @@ export class PlatformManager {
     }
 
     // Fallback: use pako if available
-    throw new Error('DecompressionStream not supported. Please use a modern browser.');
+    throw new Error(
+      "DecompressionStream not supported. Please use a modern browser.",
+    );
   }
 
   /**
    * Parse tar archive
    */
-  private async parseTar(data: Uint8Array, files: Map<string, Uint8Array>): Promise<void> {
+  private async parseTar(
+    data: Uint8Array,
+    files: Map<string, Uint8Array>,
+  ): Promise<void> {
     let offset = 0;
 
     while (offset < data.length - 512) {
@@ -410,14 +496,16 @@ export class PlatformManager {
       const header = data.slice(offset, offset + 512);
 
       // Check for empty header (end of archive)
-      if (header.every(b => b === 0)) {
+      if (header.every((b) => b === 0)) {
         break;
       }
 
       // Parse filename (first 100 bytes)
       const nameBytes = header.slice(0, 100);
       const nameEnd = nameBytes.indexOf(0);
-      const name = new TextDecoder().decode(nameBytes.slice(0, nameEnd > 0 ? nameEnd : 100)).trim();
+      const name = new TextDecoder()
+        .decode(nameBytes.slice(0, nameEnd > 0 ? nameEnd : 100))
+        .trim();
 
       // Parse size (bytes 124-135, octal string)
       const sizeBytes = header.slice(124, 136);
@@ -429,10 +517,11 @@ export class PlatformManager {
 
       offset += 512; // Move past header
 
-      if (name && size > 0 && typeFlag === 48) { // 48 = '0' = regular file
+      if (name && size > 0 && typeFlag === 48) {
+        // 48 = '0' = regular file
         // Extract file content
         const content = data.slice(offset, offset + size);
-        files.set('/' + name, content);
+        files.set("/" + name, content);
       }
 
       // Move to next header (size rounded up to 512 bytes)
@@ -444,10 +533,10 @@ export class PlatformManager {
    * Report loading progress
    */
   private reportProgress(
-    stage: LoadingProgress['stage'],
+    stage: LoadingProgress["stage"],
     current: number,
     total: number,
-    message: string
+    message: string,
   ): void {
     this.onProgress?.({ stage, current, total, message });
   }

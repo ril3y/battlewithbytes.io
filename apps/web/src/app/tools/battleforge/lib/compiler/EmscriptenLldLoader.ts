@@ -22,23 +22,23 @@ export async function executeLld(
   args: string[],
   files: Record<string, string | Uint8Array>,
   onStdout?: (text: string) => void,
-  onStderr?: (text: string) => void
+  onStderr?: (text: string) => void,
 ): Promise<LldExecutionResult> {
   return new Promise((resolve, reject) => {
     // Create iframe for isolation
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
     document.body.appendChild(iframe);
 
     const iframeWindow = iframe.contentWindow as any;
     if (!iframeWindow) {
       iframe.remove();
-      reject(new Error('Failed to create iframe'));
+      reject(new Error("Failed to create iframe"));
       return;
     }
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
     let resolved = false;
 
     const cleanup = () => {
@@ -52,47 +52,66 @@ export async function executeLld(
     const timeout = setTimeout(() => {
       if (!resolved) {
         cleanup();
-        reject(new Error('LLD execution timed out'));
+        reject(new Error("LLD execution timed out"));
       }
     }, 120000);
 
     // Configure Module via inline script injection
     const baseUrl = window.location.origin;
-    console.log('[EmscriptenLld] Base URL:', baseUrl);
-    console.log('[EmscriptenLld] Args:', args);
+    console.log("[EmscriptenLld] Base URL:", baseUrl);
+    console.log("[EmscriptenLld] Args:", args);
 
     // First, inject Module configuration as inline script
-    const moduleScript = iframeWindow.document.createElement('script');
+    const moduleScript = iframeWindow.document.createElement("script");
 
     // Prepare file data for preRun
-    const fileEntries: Array<{path: string, data: string, binary: boolean}> = [];
+    const fileEntries: Array<{ path: string; data: string; binary: boolean }> =
+      [];
     for (const [path, content] of Object.entries(files)) {
-      if (typeof content === 'string') {
+      if (typeof content === "string") {
         fileEntries.push({ path, data: content, binary: false });
       } else {
         // Convert Uint8Array to base64 for transmission
-        const binary = Array.from(content).map(b => String.fromCharCode(b)).join('');
+        const binary = Array.from(content)
+          .map((b) => String.fromCharCode(b))
+          .join("");
         fileEntries.push({ path, data: btoa(binary), binary: true });
       }
     }
 
     // List of output files to look for
-    const oIndex = args.indexOf('-o');
-    const outputPath = oIndex !== -1 && oIndex + 1 < args.length ? args[oIndex + 1] : '/firmware.elf';
-    const potentialOutputs = ['/firmware.elf', '/output.elf', '/a.out', outputPath];
+    const oIndex = args.indexOf("-o");
+    const outputPath =
+      oIndex !== -1 && oIndex + 1 < args.length
+        ? args[oIndex + 1]
+        : "/firmware.elf";
+    const potentialOutputs = [
+      "/firmware.elf",
+      "/output.elf",
+      "/a.out",
+      outputPath,
+    ];
 
     // Debug: log input file info before sending to iframe
     for (const entry of fileEntries) {
       if (entry.binary) {
         try {
           const decoded = atob(entry.data);
-          const firstBytes = decoded.slice(0, 4).split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
-          console.log(`[EmscriptenLld] File ${entry.path}: ${decoded.length} bytes, magic: ${firstBytes}`);
+          const firstBytes = decoded
+            .slice(0, 4)
+            .split("")
+            .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
+            .join(" ");
+          console.log(
+            `[EmscriptenLld] File ${entry.path}: ${decoded.length} bytes, magic: ${firstBytes}`,
+          );
         } catch (e) {
           console.error(`[EmscriptenLld] Failed to decode ${entry.path}:`, e);
         }
       } else {
-        console.log(`[EmscriptenLld] File ${entry.path}: ${entry.data.length} chars (text)`);
+        console.log(
+          `[EmscriptenLld] File ${entry.path}: ${entry.data.length} chars (text)`,
+        );
       }
     }
 
@@ -260,27 +279,27 @@ export async function executeLld(
       if (event.source !== iframeWindow) return;
       const data = event.data;
 
-      if (data.type === 'iframe-console-log') {
-        console.log('[iframe]', data.text);
-      } else if (data.type === 'iframe-console-warn') {
-        console.warn('[iframe warn]', data.text);
-      } else if (data.type === 'iframe-console-error') {
-        console.error('[iframe error]', data.text);
-      } else if (data.type === 'emscripten-runtime-init') {
-        console.log('[EmscriptenLld] Runtime initialized!');
-      } else if (data.type === 'emscripten-stdout') {
-        stdout += data.text + '\n';
+      if (data.type === "iframe-console-log") {
+        console.log("[iframe]", data.text);
+      } else if (data.type === "iframe-console-warn") {
+        console.warn("[iframe warn]", data.text);
+      } else if (data.type === "iframe-console-error") {
+        console.error("[iframe error]", data.text);
+      } else if (data.type === "emscripten-runtime-init") {
+        console.log("[EmscriptenLld] Runtime initialized!");
+      } else if (data.type === "emscripten-stdout") {
+        stdout += data.text + "\n";
         onStdout?.(data.text);
-        console.log('[lld stdout]', data.text);
-      } else if (data.type === 'emscripten-stderr') {
-        stderr += data.text + '\n';
+        console.log("[lld stdout]", data.text);
+      } else if (data.type === "emscripten-stderr") {
+        stderr += data.text + "\n";
         onStderr?.(data.text);
-        console.warn('[lld stderr]', data.text);
-      } else if (data.type === 'emscripten-abort') {
-        console.error('[EmscriptenLld] Abort:', data.message);
-        stderr += 'ABORT: ' + data.message + '\n';
-      } else if (data.type === 'emscripten-done') {
-        console.log('[EmscriptenLld] Done, exit code:', data.exitCode);
+        console.warn("[lld stderr]", data.text);
+      } else if (data.type === "emscripten-abort") {
+        console.error("[EmscriptenLld] Abort:", data.message);
+        stderr += "ABORT: " + data.message + "\n";
+      } else if (data.type === "emscripten-done") {
+        console.log("[EmscriptenLld] Done, exit code:", data.exitCode);
 
         // Convert output files back to Map<string, Uint8Array>
         const outputFiles = new Map<string, Uint8Array>();
@@ -289,7 +308,7 @@ export async function executeLld(
         }
 
         clearTimeout(timeout);
-        window.removeEventListener('message', messageHandler);
+        window.removeEventListener("message", messageHandler);
         cleanup();
 
         resolve({
@@ -297,27 +316,27 @@ export async function executeLld(
           exitCode: data.exitCode,
           stdout,
           stderr,
-          outputFiles
+          outputFiles,
         });
       }
     };
-    window.addEventListener('message', messageHandler);
+    window.addEventListener("message", messageHandler);
 
     // Now load lld.js - use absolute URL
-    const script = iframeWindow.document.createElement('script');
+    const script = iframeWindow.document.createElement("script");
     script.src = `${baseUrl}/wasm/clang_arm/lld.js`;
-    console.log('[EmscriptenLld] Loading script:', script.src);
+    console.log("[EmscriptenLld] Loading script:", script.src);
 
     script.onload = () => {
-      console.log('[EmscriptenLld] Script loaded successfully');
+      console.log("[EmscriptenLld] Script loaded successfully");
     };
 
     script.onerror = (e: Event | string) => {
-      console.error('[EmscriptenLld] Script load error:', e);
+      console.error("[EmscriptenLld] Script load error:", e);
       clearTimeout(timeout);
-      window.removeEventListener('message', messageHandler);
+      window.removeEventListener("message", messageHandler);
       cleanup();
-      reject(new Error('Failed to load lld.js'));
+      reject(new Error("Failed to load lld.js"));
     };
 
     iframeWindow.document.head.appendChild(script);
@@ -327,36 +346,40 @@ export async function executeLld(
 /**
  * Load the LLD module (initial verification)
  */
-export async function loadLldModule(onProgress?: (progress: { stage: string; message: string }) => void): Promise<void> {
+export async function loadLldModule(
+  onProgress?: (progress: { stage: string; message: string }) => void,
+): Promise<void> {
   if (initialLoadDone) {
-    onProgress?.({ stage: 'ready', message: 'Linker ready' });
+    onProgress?.({ stage: "ready", message: "Linker ready" });
     return;
   }
 
-  onProgress?.({ stage: 'downloading', message: 'Loading LLD linker...' });
+  onProgress?.({ stage: "downloading", message: "Loading LLD linker..." });
 
   try {
-    onProgress?.({ stage: 'instantiating', message: 'Initializing LLD...' });
+    onProgress?.({ stage: "instantiating", message: "Initializing LLD..." });
 
-    const result = await executeLld(['--version'], {});
+    const result = await executeLld(["--version"], {});
 
-    console.log('[EmscriptenLld] Version check result:', {
+    console.log("[EmscriptenLld] Version check result:", {
       exitCode: result.exitCode,
       stdout: result.stdout,
       stderr: result.stderr,
-      success: result.success
+      success: result.success,
     });
 
     // Check both stdout and stderr for lld output
     const combinedOutput = (result.stdout + result.stderr).toLowerCase();
-    if (combinedOutput.includes('lld') || result.exitCode === 0) {
+    if (combinedOutput.includes("lld") || result.exitCode === 0) {
       initialLoadDone = true;
-      onProgress?.({ stage: 'ready', message: 'LLD linker ready' });
+      onProgress?.({ stage: "ready", message: "LLD linker ready" });
     } else {
-      throw new Error(`Version check failed (exit ${result.exitCode}): stdout="${result.stdout}" stderr="${result.stderr}"`);
+      throw new Error(
+        `Version check failed (exit ${result.exitCode}): stdout="${result.stdout}" stderr="${result.stderr}"`,
+      );
     }
   } catch (error) {
-    onProgress?.({ stage: 'error', message: `Failed to load: ${error}` });
+    onProgress?.({ stage: "error", message: `Failed to load: ${error}` });
     throw error;
   }
 }
@@ -366,12 +389,12 @@ export async function loadLldModule(onProgress?: (progress: { stage: string; mes
  */
 export async function getLldVersion(): Promise<string> {
   try {
-    const result = await executeLld(['--version'], {});
-    const lines = result.stdout.split('\n');
-    return lines[0] || 'LLD ARM';
+    const result = await executeLld(["--version"], {});
+    const lines = result.stdout.split("\n");
+    return lines[0] || "LLD ARM";
   } catch (error) {
-    console.error('[EmscriptenLld] Failed to get version:', error);
-    return 'Unknown version';
+    console.error("[EmscriptenLld] Failed to get version:", error);
+    return "Unknown version";
   }
 }
 

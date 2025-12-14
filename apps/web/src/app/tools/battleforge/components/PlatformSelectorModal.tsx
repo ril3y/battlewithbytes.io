@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import type { PlatformRegistry, PlatformEntry, PlatformFamily, DeviceEntry, SelectedPlatform, FrameworkSupport } from '../lib/platform/types';
+import { useState, useEffect, useCallback } from "react";
+import type {
+  PlatformRegistry,
+  PlatformEntry,
+  PlatformFamily,
+  DeviceEntry,
+  SelectedPlatform,
+  FrameworkSupport,
+} from "../lib/platform/types";
 
 interface PlatformSelectorModalProps {
   isOpen: boolean;
@@ -14,16 +21,24 @@ export function PlatformSelectorModal({
   isOpen,
   onClose,
   onSelect,
-  currentSelection
+  currentSelection,
 }: PlatformSelectorModalProps) {
   const [registry, setRegistry] = useState<PlatformRegistry | null>(null);
-  const [families, setFamilies] = useState<Map<string, PlatformFamily>>(new Map());
+  const [families, setFamilies] = useState<Map<string, PlatformFamily>>(
+    new Map(),
+  );
 
   // Current selections
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformEntry | null>(null);
-  const [selectedFamily, setSelectedFamily] = useState<PlatformFamily | null>(null);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceEntry | null>(null);
-  const [selectedFramework, setSelectedFramework] = useState<FrameworkSupport | null>(null);
+  const [selectedPlatform, setSelectedPlatform] =
+    useState<PlatformEntry | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<PlatformFamily | null>(
+    null,
+  );
+  const [selectedDevice, setSelectedDevice] = useState<DeviceEntry | null>(
+    null,
+  );
+  const [selectedFramework, setSelectedFramework] =
+    useState<FrameworkSupport | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +53,9 @@ export function PlatformSelectorModal({
   // Pre-populate from current selection when modal opens
   useEffect(() => {
     if (isOpen && registry && currentSelection) {
-      const platform = registry.platforms.find(p => p.id === currentSelection.platformId);
+      const platform = registry.platforms.find(
+        (p) => p.id === currentSelection.platformId,
+      );
       if (platform) {
         setSelectedPlatform(platform);
         // Load families for this platform
@@ -46,13 +63,22 @@ export function PlatformSelectorModal({
           setSelectedFamily(currentSelection.family);
           setSelectedDevice(currentSelection.device);
           // Set framework from current selection
-          if (currentSelection.frameworkId && currentSelection.family.frameworks) {
-            const fw = currentSelection.family.frameworks.find(f => f.frameworkId === currentSelection.frameworkId);
+          if (
+            currentSelection.frameworkId &&
+            currentSelection.family.frameworks
+          ) {
+            const fw = currentSelection.family.frameworks.find(
+              (f) => f.frameworkId === currentSelection.frameworkId,
+            );
             setSelectedFramework(fw || null);
           } else if (currentSelection.family.frameworks?.length) {
             // Default to native
-            const native = currentSelection.family.frameworks.find(f => f.frameworkId === 'native');
-            setSelectedFramework(native || currentSelection.family.frameworks[0]);
+            const native = currentSelection.family.frameworks.find(
+              (f) => f.frameworkId === "native",
+            );
+            setSelectedFramework(
+              native || currentSelection.family.frameworks[0],
+            );
           }
         });
       }
@@ -69,12 +95,12 @@ export function PlatformSelectorModal({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/platforms/registry.json');
-      if (!response.ok) throw new Error('Failed to load platform registry');
+      const response = await fetch("/platforms/registry.json");
+      if (!response.ok) throw new Error("Failed to load platform registry");
       const data = await response.json();
       setRegistry(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -86,36 +112,41 @@ export function PlatformSelectorModal({
       const cacheKey = `${platform.id}/${familyId}`;
       if (!families.has(cacheKey)) {
         try {
-          const response = await fetch(`/platforms/${platform.id}/${familyId}/family.json`);
+          const response = await fetch(
+            `/platforms/${platform.id}/${familyId}/family.json`,
+          );
           if (response.ok) {
             const data = await response.json();
-            setFamilies(prev => new Map(prev).set(cacheKey, data));
+            setFamilies((prev) => new Map(prev).set(cacheKey, data));
           }
         } catch (err) {
-          console.error('Failed to load family:', err);
+          console.error("Failed to load family:", err);
         }
       }
     }
     setLoading(false);
   };
 
-  const handlePlatformSelect = useCallback(async (platform: PlatformEntry) => {
-    if (!platform.supported) return;
+  const handlePlatformSelect = useCallback(
+    async (platform: PlatformEntry) => {
+      if (!platform.supported) return;
 
-    setSelectedPlatform(platform);
-    setSelectedFamily(null);
-    setSelectedDevice(null);
-    setSelectedFramework(null);
+      setSelectedPlatform(platform);
+      setSelectedFamily(null);
+      setSelectedDevice(null);
+      setSelectedFramework(null);
 
-    await loadFamiliesForPlatform(platform);
-  }, [families]);
+      await loadFamiliesForPlatform(platform);
+    },
+    [families],
+  );
 
   const handleFamilySelect = useCallback((family: PlatformFamily) => {
     setSelectedFamily(family);
     setSelectedDevice(null);
     // Auto-select native framework if available
     if (family.frameworks?.length) {
-      const native = family.frameworks.find(f => f.frameworkId === 'native');
+      const native = family.frameworks.find((f) => f.frameworkId === "native");
       setSelectedFramework(native || family.frameworks[0]);
     } else {
       setSelectedFramework(null);
@@ -133,17 +164,59 @@ export function PlatformSelectorModal({
   const handleApply = useCallback(() => {
     if (!selectedPlatform || !selectedFamily || !selectedDevice) return;
 
-    const archConfigs: Record<string, { target: string; cpu: string; fpu?: string; float?: string; libPath: string }> = {
-      'cortex-m0': { target: 'thumbv6m-none-eabi', cpu: 'cortex-m0', libPath: 'cortex-m0' },
-      'cortex-m0+': { target: 'thumbv6m-none-eabi', cpu: 'cortex-m0plus', libPath: 'cortex-m0' },
-      'cortex-m3': { target: 'thumbv7m-none-eabi', cpu: 'cortex-m3', libPath: 'cortex-m3' },
-      'cortex-m4': { target: 'thumbv7em-none-eabi', cpu: 'cortex-m4', libPath: 'cortex-m4' },
-      'cortex-m4f': { target: 'thumbv7em-none-eabihf', cpu: 'cortex-m4', fpu: 'fpv4-sp-d16', float: 'hard', libPath: 'cortex-m4f' },
-      'cortex-m7': { target: 'thumbv7em-none-eabi', cpu: 'cortex-m7', libPath: 'cortex-m7' },
-      'cortex-m7f': { target: 'thumbv7em-none-eabihf', cpu: 'cortex-m7', fpu: 'fpv5-d16', float: 'hard', libPath: 'cortex-m7f' },
+    const archConfigs: Record<
+      string,
+      {
+        target: string;
+        cpu: string;
+        fpu?: string;
+        float?: string;
+        libPath: string;
+      }
+    > = {
+      "cortex-m0": {
+        target: "thumbv6m-none-eabi",
+        cpu: "cortex-m0",
+        libPath: "cortex-m0",
+      },
+      "cortex-m0+": {
+        target: "thumbv6m-none-eabi",
+        cpu: "cortex-m0plus",
+        libPath: "cortex-m0",
+      },
+      "cortex-m3": {
+        target: "thumbv7m-none-eabi",
+        cpu: "cortex-m3",
+        libPath: "cortex-m3",
+      },
+      "cortex-m4": {
+        target: "thumbv7em-none-eabi",
+        cpu: "cortex-m4",
+        libPath: "cortex-m4",
+      },
+      "cortex-m4f": {
+        target: "thumbv7em-none-eabihf",
+        cpu: "cortex-m4",
+        fpu: "fpv4-sp-d16",
+        float: "hard",
+        libPath: "cortex-m4f",
+      },
+      "cortex-m7": {
+        target: "thumbv7em-none-eabi",
+        cpu: "cortex-m7",
+        libPath: "cortex-m7",
+      },
+      "cortex-m7f": {
+        target: "thumbv7em-none-eabihf",
+        cpu: "cortex-m7",
+        fpu: "fpv5-d16",
+        float: "hard",
+        libPath: "cortex-m7f",
+      },
     };
 
-    const archConfig = archConfigs[selectedFamily.architecture] || archConfigs['cortex-m3'];
+    const archConfig =
+      archConfigs[selectedFamily.architecture] || archConfigs["cortex-m3"];
 
     onSelect({
       platformId: selectedPlatform.id,
@@ -152,10 +225,17 @@ export function PlatformSelectorModal({
       family: selectedFamily,
       device: selectedDevice,
       archConfig,
-      frameworkId: selectedFramework?.frameworkId || 'native',
+      frameworkId: selectedFramework?.frameworkId || "native",
     });
     onClose();
-  }, [selectedPlatform, selectedFamily, selectedDevice, selectedFramework, onSelect, onClose]);
+  }, [
+    selectedPlatform,
+    selectedFamily,
+    selectedDevice,
+    selectedFramework,
+    onSelect,
+    onClose,
+  ]);
 
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -168,7 +248,7 @@ export function PlatformSelectorModal({
   // Get available families for selected platform
   const availableFamilies = selectedPlatform
     ? selectedPlatform.families
-        .map(fid => families.get(`${selectedPlatform.id}/${fid}`))
+        .map((fid) => families.get(`${selectedPlatform.id}/${fid}`))
         .filter((f): f is PlatformFamily => f !== undefined)
     : [];
 
@@ -176,10 +256,12 @@ export function PlatformSelectorModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Configure Target Platform</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="close-btn" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <div className="modal-body">
@@ -203,29 +285,43 @@ export function PlatformSelectorModal({
               <div className="section">
                 <label className="section-label">Platform</label>
                 <div className="platform-row">
-                  {registry.platforms.map(platform => (
+                  {registry.platforms.map((platform) => (
                     <button
                       key={platform.id}
-                      className={`platform-btn ${selectedPlatform?.id === platform.id ? 'selected' : ''} ${!platform.supported ? 'disabled' : ''}`}
+                      className={`platform-btn ${selectedPlatform?.id === platform.id ? "selected" : ""} ${!platform.supported ? "disabled" : ""}`}
                       onClick={() => handlePlatformSelect(platform)}
                       disabled={!platform.supported}
                     >
                       <div className="platform-icon">
-                        {platform.id === 'stm32' && (
-                          <img src="/platforms/icons/st.ico" alt="STMicroelectronics" />
+                        {platform.id === "stm32" && (
+                          <img
+                            src="/platforms/icons/st.ico"
+                            alt="STMicroelectronics"
+                          />
                         )}
-                        {platform.id === 'esp32' && (
-                          <img src="/platforms/icons/espressif.png" alt="Espressif" />
+                        {platform.id === "esp32" && (
+                          <img
+                            src="/platforms/icons/espressif.png"
+                            alt="Espressif"
+                          />
                         )}
-                        {platform.id === 'nrf' && (
-                          <img src="/platforms/icons/nordic.png" alt="Nordic Semiconductor" />
+                        {platform.id === "nrf" && (
+                          <img
+                            src="/platforms/icons/nordic.png"
+                            alt="Nordic Semiconductor"
+                          />
                         )}
-                        {platform.id === 'rp2040' && (
-                          <img src="/platforms/icons/raspberrypi.png" alt="Raspberry Pi" />
+                        {platform.id === "rp2040" && (
+                          <img
+                            src="/platforms/icons/raspberrypi.png"
+                            alt="Raspberry Pi"
+                          />
                         )}
                       </div>
                       <span className="platform-name">{platform.name}</span>
-                      {platform.comingSoon && <span className="coming-soon-badge">Soon</span>}
+                      {platform.comingSoon && (
+                        <span className="coming-soon-badge">Soon</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -239,15 +335,19 @@ export function PlatformSelectorModal({
                     <div className="inline-loading">Loading families...</div>
                   ) : availableFamilies.length > 0 ? (
                     <div className="family-row">
-                      {availableFamilies.map(family => (
+                      {availableFamilies.map((family) => (
                         <button
                           key={family.id}
-                          className={`family-btn ${selectedFamily?.id === family.id ? 'selected' : ''}`}
+                          className={`family-btn ${selectedFamily?.id === family.id ? "selected" : ""}`}
                           onClick={() => handleFamilySelect(family)}
                         >
                           <span className="family-name">{family.name}</span>
-                          <span className="family-arch">{family.architecture}</span>
-                          <span className="family-devices">{family.devices.length} devices</span>
+                          <span className="family-arch">
+                            {family.architecture}
+                          </span>
+                          <span className="family-devices">
+                            {family.devices.length} devices
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -262,17 +362,23 @@ export function PlatformSelectorModal({
                 <div className="section">
                   <label className="section-label">Device</label>
                   <div className="device-grid">
-                    {selectedFamily.devices.map(device => (
+                    {selectedFamily.devices.map((device) => (
                       <button
                         key={device.id}
-                        className={`device-btn ${selectedDevice?.id === device.id ? 'selected' : ''}`}
+                        className={`device-btn ${selectedDevice?.id === device.id ? "selected" : ""}`}
                         onClick={() => handleDeviceSelect(device)}
                       >
                         <span className="device-name">{device.name}</span>
-                        <span className="device-desc">{device.description}</span>
+                        <span className="device-desc">
+                          {device.description}
+                        </span>
                         <div className="device-specs">
-                          <span className="spec">{formatBytes(device.flash)} Flash</span>
-                          <span className="spec">{formatBytes(device.ram)} RAM</span>
+                          <span className="spec">
+                            {formatBytes(device.flash)} Flash
+                          </span>
+                          <span className="spec">
+                            {formatBytes(device.ram)} RAM
+                          </span>
                         </div>
                       </button>
                     ))}
@@ -281,32 +387,42 @@ export function PlatformSelectorModal({
               )}
 
               {/* Framework Selection */}
-              {selectedDevice && selectedFamily?.frameworks && selectedFamily.frameworks.length > 0 && (
-                <div className="section">
-                  <label className="section-label">Framework</label>
-                  <div className="framework-row">
-                    {selectedFamily.frameworks.filter(f => f.enabled).map(fw => (
-                      <button
-                        key={fw.frameworkId}
-                        className={`framework-btn ${selectedFramework?.frameworkId === fw.frameworkId ? 'selected' : ''}`}
-                        onClick={() => handleFrameworkSelect(fw)}
-                      >
-                        <div className="framework-header">
-                          <span className="framework-icon">
-                            {fw.frameworkId === 'native' && '⚡'}
-                            {fw.frameworkId === 'arduino' && '🔵'}
-                            {fw.frameworkId === 'mbed' && '🟠'}
-                            {fw.frameworkId === 'zephyr' && '🟣'}
-                          </span>
-                          <span className="framework-name">{fw.framework.name}</span>
-                        </div>
-                        <span className="framework-desc">{fw.framework.description}</span>
-                        <span className="framework-version">v{fw.version}</span>
-                      </button>
-                    ))}
+              {selectedDevice &&
+                selectedFamily?.frameworks &&
+                selectedFamily.frameworks.length > 0 && (
+                  <div className="section">
+                    <label className="section-label">Framework</label>
+                    <div className="framework-row">
+                      {selectedFamily.frameworks
+                        .filter((f) => f.enabled)
+                        .map((fw) => (
+                          <button
+                            key={fw.frameworkId}
+                            className={`framework-btn ${selectedFramework?.frameworkId === fw.frameworkId ? "selected" : ""}`}
+                            onClick={() => handleFrameworkSelect(fw)}
+                          >
+                            <div className="framework-header">
+                              <span className="framework-icon">
+                                {fw.frameworkId === "native" && "⚡"}
+                                {fw.frameworkId === "arduino" && "🔵"}
+                                {fw.frameworkId === "mbed" && "🟠"}
+                                {fw.frameworkId === "zephyr" && "🟣"}
+                              </span>
+                              <span className="framework-name">
+                                {fw.framework.name}
+                              </span>
+                            </div>
+                            <span className="framework-desc">
+                              {fw.framework.description}
+                            </span>
+                            <span className="framework-version">
+                              v{fw.version}
+                            </span>
+                          </button>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Selection Summary */}
               {canApply && (
@@ -320,7 +436,9 @@ export function PlatformSelectorModal({
                     {selectedFramework && (
                       <>
                         <span className="sep">→</span>
-                        <span className={`framework-badge ${selectedFramework.frameworkId}`}>
+                        <span
+                          className={`framework-badge ${selectedFramework.frameworkId}`}
+                        >
                           {selectedFramework.framework.name}
                         </span>
                       </>
@@ -338,7 +456,9 @@ export function PlatformSelectorModal({
         </div>
 
         <div className="modal-footer">
-          <button className="cancel-btn" onClick={onClose}>Cancel</button>
+          <button className="cancel-btn" onClick={onClose}>
+            Cancel
+          </button>
           <button
             className="apply-btn"
             onClick={handleApply}
@@ -392,7 +512,7 @@ export function PlatformSelectorModal({
           }
 
           .modal-header h2::before {
-            content: '';
+            content: "";
             display: block;
             width: 3px;
             height: 18px;
@@ -449,7 +569,9 @@ export function PlatformSelectorModal({
           }
 
           @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+              transform: rotate(360deg);
+            }
           }
 
           .inline-loading {
@@ -495,10 +617,14 @@ export function PlatformSelectorModal({
           }
 
           .section-label::after {
-            content: '';
+            content: "";
             flex: 1;
             height: 1px;
-            background: linear-gradient(90deg, rgba(0, 255, 157, 0.3), transparent);
+            background: linear-gradient(
+              90deg,
+              rgba(0, 255, 157, 0.3),
+              transparent
+            );
           }
 
           /* Platform Row */
@@ -534,7 +660,11 @@ export function PlatformSelectorModal({
 
           .platform-btn.selected {
             border-color: #00ff9d;
-            background: linear-gradient(180deg, rgba(0, 255, 157, 0.15) 0%, rgba(0, 255, 157, 0.05) 100%);
+            background: linear-gradient(
+              180deg,
+              rgba(0, 255, 157, 0.15) 0%,
+              rgba(0, 255, 157, 0.05) 100%
+            );
             box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
           }
 
@@ -640,7 +770,11 @@ export function PlatformSelectorModal({
 
           .family-btn.selected {
             border-color: #00ff9d;
-            background: linear-gradient(180deg, rgba(0, 255, 157, 0.12) 0%, rgba(0, 255, 157, 0.04) 100%);
+            background: linear-gradient(
+              180deg,
+              rgba(0, 255, 157, 0.12) 0%,
+              rgba(0, 255, 157, 0.04) 100%
+            );
             box-shadow: 0 0 15px rgba(0, 255, 157, 0.15);
           }
 
@@ -700,7 +834,11 @@ export function PlatformSelectorModal({
 
           .device-btn.selected {
             border-color: #00ff9d;
-            background: linear-gradient(180deg, rgba(0, 255, 157, 0.12) 0%, rgba(0, 255, 157, 0.04) 100%);
+            background: linear-gradient(
+              180deg,
+              rgba(0, 255, 157, 0.12) 0%,
+              rgba(0, 255, 157, 0.04) 100%
+            );
             box-shadow: 0 0 15px rgba(0, 255, 157, 0.15);
           }
 
@@ -768,7 +906,11 @@ export function PlatformSelectorModal({
 
           .framework-btn.selected {
             border-color: #00ff9d;
-            background: linear-gradient(180deg, rgba(0, 255, 157, 0.12) 0%, rgba(0, 255, 157, 0.04) 100%);
+            background: linear-gradient(
+              180deg,
+              rgba(0, 255, 157, 0.12) 0%,
+              rgba(0, 255, 157, 0.04) 100%
+            );
             box-shadow: 0 0 15px rgba(0, 255, 157, 0.15);
           }
 
@@ -841,7 +983,11 @@ export function PlatformSelectorModal({
 
           /* Summary Bar */
           .summary-bar {
-            background: linear-gradient(180deg, rgba(0, 255, 157, 0.08) 0%, rgba(0, 255, 157, 0.03) 100%);
+            background: linear-gradient(
+              180deg,
+              rgba(0, 255, 157, 0.08) 0%,
+              rgba(0, 255, 157, 0.03) 100%
+            );
             border: 1px solid rgba(0, 255, 157, 0.25);
             border-radius: 10px;
             padding: 14px 18px;
@@ -895,7 +1041,8 @@ export function PlatformSelectorModal({
             background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
           }
 
-          .cancel-btn, .apply-btn {
+          .cancel-btn,
+          .apply-btn {
             padding: 11px 24px;
             border-radius: 8px;
             font-size: 0.9rem;

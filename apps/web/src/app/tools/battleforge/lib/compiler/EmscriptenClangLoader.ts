@@ -6,11 +6,11 @@
  */
 
 export interface LoadProgress {
-  stage: 'downloading' | 'instantiating' | 'ready' | 'error';
+  stage: "downloading" | "instantiating" | "ready" | "error";
   progress: number;
   message: string;
-  current?: number;  // Bytes loaded (optional)
-  total?: number;    // Total bytes (optional)
+  current?: number; // Bytes loaded (optional)
+  total?: number; // Total bytes (optional)
 }
 
 export interface ClangExecutionResult {
@@ -30,23 +30,23 @@ export async function executeClang(
   args: string[],
   files: Record<string, string | Uint8Array>,
   onStdout?: (text: string) => void,
-  onStderr?: (text: string) => void
+  onStderr?: (text: string) => void,
 ): Promise<ClangExecutionResult> {
   return new Promise((resolve, reject) => {
     // Create iframe for isolation
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
     document.body.appendChild(iframe);
 
     const iframeWindow = iframe.contentWindow as any;
     if (!iframeWindow) {
       iframe.remove();
-      reject(new Error('Failed to create iframe'));
+      reject(new Error("Failed to create iframe"));
       return;
     }
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
     let exitCode = 0;
     let resolved = false;
 
@@ -61,35 +61,38 @@ export async function executeClang(
     const timeout = setTimeout(() => {
       if (!resolved) {
         cleanup();
-        reject(new Error('Clang execution timed out'));
+        reject(new Error("Clang execution timed out"));
       }
     }, 60000);
 
     // Configure Module via inline script injection
     const baseUrl = window.location.origin;
-    console.log('[EmscriptenClang] Base URL:', baseUrl);
-    console.log('[EmscriptenClang] Args:', args);
+    console.log("[EmscriptenClang] Base URL:", baseUrl);
+    console.log("[EmscriptenClang] Args:", args);
 
     // First, inject Module configuration as inline script
     // This ensures Module is defined BEFORE clang.js parses
-    const moduleScript = iframeWindow.document.createElement('script');
+    const moduleScript = iframeWindow.document.createElement("script");
 
     // Prepare file data for preRun
-    const fileEntries: Array<{path: string, data: string}> = [];
+    const fileEntries: Array<{ path: string; data: string }> = [];
     for (const [path, content] of Object.entries(files)) {
-      if (typeof content === 'string') {
+      if (typeof content === "string") {
         fileEntries.push({ path, data: content });
       } else {
         // Convert Uint8Array to base64 for transmission
-        const binary = Array.from(content).map(b => String.fromCharCode(b)).join('');
-        fileEntries.push({ path, data: 'BASE64:' + btoa(binary) });
+        const binary = Array.from(content)
+          .map((b) => String.fromCharCode(b))
+          .join("");
+        fileEntries.push({ path, data: "BASE64:" + btoa(binary) });
       }
     }
 
     // List of output files to look for
-    const oIndex = args.indexOf('-o');
-    const outputPath = oIndex !== -1 && oIndex + 1 < args.length ? args[oIndex + 1] : '/main.o';
-    const potentialOutputs = ['/main.o', '/a.out', '/output.o', outputPath];
+    const oIndex = args.indexOf("-o");
+    const outputPath =
+      oIndex !== -1 && oIndex + 1 < args.length ? args[oIndex + 1] : "/main.o";
+    const potentialOutputs = ["/main.o", "/a.out", "/output.o", outputPath];
 
     moduleScript.textContent = `
       var _clangExitCode = 0;
@@ -175,6 +178,21 @@ export async function executeClang(
             console.log('[clang] Wrote:', file.path, '(' + data.length + ' bytes)');
           }
 
+          // Create directories for output files
+          for (var i = 0; i < _outputPaths.length; i++) {
+            var outPath = _outputPaths[i];
+            var outDir = outPath.substring(0, outPath.lastIndexOf('/'));
+            if (outDir && outDir !== '/' && outDir !== '') {
+              var parts = outDir.split('/').filter(function(p) { return p; });
+              var currentPath = '';
+              for (var k = 0; k < parts.length; k++) {
+                currentPath += '/' + parts[k];
+                try { FS.mkdir(currentPath); } catch(e) {}
+              }
+              console.log('[clang] Created output dir:', outDir);
+            }
+          }
+
           // Call clang main with arguments
           console.log('[clang] Calling main with args:', Module._clangArgs);
           try {
@@ -242,27 +260,27 @@ export async function executeClang(
       if (event.source !== iframeWindow) return;
       const data = event.data;
 
-      if (data.type === 'iframe-console-log') {
-        console.log('[iframe]', data.text);
-      } else if (data.type === 'iframe-console-warn') {
-        console.warn('[iframe warn]', data.text);
-      } else if (data.type === 'iframe-console-error') {
-        console.error('[iframe error]', data.text);
-      } else if (data.type === 'emscripten-runtime-init') {
-        console.log('[EmscriptenClang] Runtime initialized!');
-      } else if (data.type === 'emscripten-stdout') {
-        stdout += data.text + '\n';
+      if (data.type === "iframe-console-log") {
+        console.log("[iframe]", data.text);
+      } else if (data.type === "iframe-console-warn") {
+        console.warn("[iframe warn]", data.text);
+      } else if (data.type === "iframe-console-error") {
+        console.error("[iframe error]", data.text);
+      } else if (data.type === "emscripten-runtime-init") {
+        console.log("[EmscriptenClang] Runtime initialized!");
+      } else if (data.type === "emscripten-stdout") {
+        stdout += data.text + "\n";
         onStdout?.(data.text);
-        console.log('[clang stdout]', data.text);
-      } else if (data.type === 'emscripten-stderr') {
-        stderr += data.text + '\n';
+        console.log("[clang stdout]", data.text);
+      } else if (data.type === "emscripten-stderr") {
+        stderr += data.text + "\n";
         onStderr?.(data.text);
-        console.warn('[clang stderr]', data.text);
-      } else if (data.type === 'emscripten-abort') {
-        console.error('[EmscriptenClang] Abort:', data.message);
-        stderr += 'ABORT: ' + data.message + '\n';
-      } else if (data.type === 'emscripten-done') {
-        console.log('[EmscriptenClang] Done, exit code:', data.exitCode);
+        console.warn("[clang stderr]", data.text);
+      } else if (data.type === "emscripten-abort") {
+        console.error("[EmscriptenClang] Abort:", data.message);
+        stderr += "ABORT: " + data.message + "\n";
+      } else if (data.type === "emscripten-done") {
+        console.log("[EmscriptenClang] Done, exit code:", data.exitCode);
 
         // Convert output files back to Map<string, Uint8Array>
         const outputFiles = new Map<string, Uint8Array>();
@@ -271,7 +289,7 @@ export async function executeClang(
         }
 
         clearTimeout(timeout);
-        window.removeEventListener('message', messageHandler);
+        window.removeEventListener("message", messageHandler);
         cleanup();
 
         resolve({
@@ -279,27 +297,27 @@ export async function executeClang(
           exitCode: data.exitCode,
           stdout,
           stderr,
-          outputFiles
+          outputFiles,
         });
       }
     };
-    window.addEventListener('message', messageHandler);
+    window.addEventListener("message", messageHandler);
 
     // Now load clang.js - use absolute URL
-    const script = iframeWindow.document.createElement('script');
+    const script = iframeWindow.document.createElement("script");
     script.src = `${baseUrl}/wasm/clang_arm/clang.js`;
-    console.log('[EmscriptenClang] Loading script:', script.src);
+    console.log("[EmscriptenClang] Loading script:", script.src);
 
     script.onload = () => {
-      console.log('[EmscriptenClang] Script loaded successfully');
+      console.log("[EmscriptenClang] Script loaded successfully");
     };
 
     script.onerror = (e: Event | string) => {
-      console.error('[EmscriptenClang] Script load error:', e);
+      console.error("[EmscriptenClang] Script load error:", e);
       clearTimeout(timeout);
-      window.removeEventListener('message', messageHandler);
+      window.removeEventListener("message", messageHandler);
       cleanup();
-      reject(new Error('Failed to load clang.js'));
+      reject(new Error("Failed to load clang.js"));
     };
 
     iframeWindow.document.head.appendChild(script);
@@ -309,36 +327,56 @@ export async function executeClang(
 /**
  * Load the Clang module (initial verification)
  */
-export async function loadClangModule(onProgress?: (progress: LoadProgress) => void): Promise<void> {
+export async function loadClangModule(
+  onProgress?: (progress: LoadProgress) => void,
+): Promise<void> {
   if (initialLoadDone) {
-    onProgress?.({ stage: 'ready', progress: 100, message: 'Compiler ready' });
+    onProgress?.({ stage: "ready", progress: 100, message: "Compiler ready" });
     return;
   }
 
-  onProgress?.({ stage: 'downloading', progress: 0, message: 'Loading Clang compiler...' });
+  onProgress?.({
+    stage: "downloading",
+    progress: 0,
+    message: "Loading Clang compiler...",
+  });
 
   try {
-    onProgress?.({ stage: 'instantiating', progress: 50, message: 'Initializing Clang...' });
+    onProgress?.({
+      stage: "instantiating",
+      progress: 50,
+      message: "Initializing Clang...",
+    });
 
-    const result = await executeClang(['--version'], {});
+    const result = await executeClang(["--version"], {});
 
-    console.log('[EmscriptenClang] Version check result:', {
+    console.log("[EmscriptenClang] Version check result:", {
       exitCode: result.exitCode,
       stdout: result.stdout,
       stderr: result.stderr,
-      success: result.success
+      success: result.success,
     });
 
     // Check both stdout and stderr for clang output
     const combinedOutput = (result.stdout + result.stderr).toLowerCase();
-    if (combinedOutput.includes('clang') || result.exitCode === 0) {
+    if (combinedOutput.includes("clang") || result.exitCode === 0) {
       initialLoadDone = true;
-      onProgress?.({ stage: 'ready', progress: 100, message: 'Clang compiler ready' });
+      onProgress?.({
+        stage: "ready",
+        progress: 100,
+        message: "Clang compiler ready",
+      });
     } else {
-      throw new Error(`Version check failed (exit ${result.exitCode}): stdout="${result.stdout}" stderr="${result.stderr}"`);
+      throw new Error(
+        `Version check failed (exit ${result.exitCode}): stdout="${result.stdout}" stderr="${result.stderr}"`,
+      );
     }
   } catch (error) {
-    onProgress?.({ stage: 'error', progress: 0, message: `Failed to load: ${error}` });
+    onProgress?.({
+      stage: "error",
+      progress: 0,
+      message: `Failed to load: ${error}`,
+    });
     throw error;
   }
 }
@@ -348,12 +386,12 @@ export async function loadClangModule(onProgress?: (progress: LoadProgress) => v
  */
 export async function getClangVersion(): Promise<string> {
   try {
-    const result = await executeClang(['--version'], {});
-    const lines = result.stdout.split('\n');
-    return lines[0] || 'Clang ARM';
+    const result = await executeClang(["--version"], {});
+    const lines = result.stdout.split("\n");
+    return lines[0] || "Clang ARM";
   } catch (error) {
-    console.error('[EmscriptenClang] Failed to get version:', error);
-    return 'Unknown version';
+    console.error("[EmscriptenClang] Failed to get version:", error);
+    return "Unknown version";
   }
 }
 

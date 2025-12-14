@@ -10,9 +10,9 @@
  */
 
 export interface PreprocessResult {
-  code: string;           // The transformed C++ code
-  mainFile: string;       // Generated main.cpp content
-  warnings: string[];     // Any preprocessing warnings
+  code: string; // The transformed C++ code
+  mainFile: string; // Generated main.cpp content
+  warnings: string[]; // Any preprocessing warnings
 }
 
 export class ArduinoPreprocessor {
@@ -26,18 +26,18 @@ export class ArduinoPreprocessor {
     const prototypes = this.extractFunctionPrototypes(inoContent);
 
     // Build the final C++ code
-    let code = '';
+    let code = "";
 
     // Add Arduino.h include
-    code += '#include <Arduino.h>\n\n';
+    code += "#include <Arduino.h>\n\n";
 
     // Add function prototypes
     if (prototypes.length > 0) {
-      code += '// Function prototypes\n';
+      code += "// Function prototypes\n";
       for (const prototype of prototypes) {
-        code += prototype + '\n';
+        code += prototype + "\n";
       }
-      code += '\n';
+      code += "\n";
     }
 
     // Add the sketch code
@@ -49,7 +49,7 @@ export class ArduinoPreprocessor {
     return {
       code,
       mainFile,
-      warnings
+      warnings,
     };
   }
 
@@ -67,7 +67,8 @@ export class ArduinoPreprocessor {
     // Matches: returnType functionName(parameters) {
     // Handles various C++ return types including pointers, references, templates, multi-word types
     // Return type can be: "int", "unsigned long*", "const char&", etc.
-    const functionRegex = /^\s*(?:(?:static|inline|virtual|extern)\s+)*((?:const\s+)?(?:unsigned\s+)?(?:signed\s+)?\w+(?:\s*\*|\s*&)?(?:\s*<[^>]+>)?)\s+(\w+)\s*\(([^)]*)\)\s*(?:const)?\s*\{/gm;
+    const functionRegex =
+      /^\s*(?:(?:static|inline|virtual|extern)\s+)*((?:const\s+)?(?:unsigned\s+)?(?:signed\s+)?\w+(?:\s*\*|\s*&)?(?:\s*<[^>]+>)?)\s+(\w+)\s*\(([^)]*)\)\s*(?:const)?\s*\{/gm;
 
     let match;
     while ((match = functionRegex.exec(codeWithoutComments)) !== null) {
@@ -76,7 +77,7 @@ export class ArduinoPreprocessor {
       const params = match[3].trim();
 
       // Skip setup() and loop() - they're Arduino special functions
-      if (functionName === 'setup' || functionName === 'loop') {
+      if (functionName === "setup" || functionName === "loop") {
         continue;
       }
 
@@ -93,10 +94,10 @@ export class ArduinoPreprocessor {
    */
   private removeComments(code: string): string {
     // Remove single-line comments
-    let result = code.replace(/\/\/.*$/gm, '');
+    let result = code.replace(/\/\/.*$/gm, "");
 
     // Remove multi-line comments
-    result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+    result = result.replace(/\/\*[\s\S]*?\*\//g, "");
 
     return result;
   }
@@ -140,21 +141,21 @@ int main(void) {
    */
   combineSketchFiles(files: Map<string, string>): string {
     if (files.size === 0) {
-      return '';
+      return "";
     }
 
     // Find the main sketch file (same name as folder or first alphabetically)
     const fileNames = Array.from(files.keys()).sort();
 
-    let combined = '';
+    let combined = "";
 
     // Add all files in alphabetical order
     for (const fileName of fileNames) {
-      const content = files.get(fileName) || '';
+      const content = files.get(fileName) || "";
 
       combined += `// ===== ${fileName} =====\n`;
       combined += content;
-      combined += '\n\n';
+      combined += "\n\n";
     }
 
     return combined;

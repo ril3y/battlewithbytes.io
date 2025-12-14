@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useVFS } from '../lib/vfs/VFSContext';
-import { getLanguageFromPath } from '../lib/vfs/types';
+import { useVFS } from "../lib/vfs/VFSContext";
+import { getLanguageFromPath } from "../lib/vfs/types";
 
 interface FileTabsProps {
   onTabSelect?: (path: string) => void;
@@ -23,27 +23,27 @@ export function FileTabs({ onTabSelect }: FileTabsProps) {
   const getTabIcon = (path: string) => {
     const lang = getLanguageFromPath(path);
     switch (lang) {
-      case 'c':
-        return 'C';
-      case 'cpp':
-        return 'C++';
-      case 'h':
-        return 'H';
-      case 'makefile':
-        return 'M';
-      case 'ld':
-        return 'LD';
-      case 'asm':
-        return 'S';
-      case 'binary':
-        return 'B';
+      case "c":
+        return "C";
+      case "cpp":
+        return "C++";
+      case "h":
+        return "H";
+      case "makefile":
+        return "M";
+      case "ld":
+        return "LD";
+      case "asm":
+        return "S";
+      case "binary":
+        return "B";
       default:
-        return 'T';
+        return "T";
     }
   };
 
   const getFileName = (path: string) => {
-    return path.split('/').pop() || path;
+    return path.split("/").pop() || path;
   };
 
   if (state.openFiles.length === 0) {
@@ -52,7 +52,7 @@ export function FileTabs({ onTabSelect }: FileTabsProps) {
 
   return (
     <div className="file-tabs">
-      {state.openFiles.map(path => {
+      {state.openFiles.map((path) => {
         const file = getFile(path);
         const isActive = state.activeFile === path;
         const isModified = file?.modified || false;
@@ -61,15 +61,13 @@ export function FileTabs({ onTabSelect }: FileTabsProps) {
         return (
           <div
             key={path}
-            className={`file-tab ${isActive ? 'active' : ''}`}
+            className={`file-tab ${isActive ? "active" : ""}`}
             onClick={() => handleTabClick(path)}
           >
-            <span className={`tab-icon lang-${lang}`}>
-              {getTabIcon(path)}
-            </span>
+            <span className={`tab-icon lang-${lang}`}>{getTabIcon(path)}</span>
             <span className="tab-name">
               {getFileName(path)}
-              {isModified && ' *'}
+              {isModified && " *"}
             </span>
             <button
               className="tab-close"

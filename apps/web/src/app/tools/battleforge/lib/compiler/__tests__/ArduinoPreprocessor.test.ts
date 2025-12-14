@@ -2,17 +2,17 @@
  * Tests for Arduino Preprocessor
  */
 
-import { ArduinoPreprocessor } from '../ArduinoPreprocessor';
+import { ArduinoPreprocessor } from "../ArduinoPreprocessor";
 
-describe('ArduinoPreprocessor', () => {
+describe("ArduinoPreprocessor", () => {
   let preprocessor: ArduinoPreprocessor;
 
   beforeEach(() => {
     preprocessor = new ArduinoPreprocessor();
   });
 
-  describe('Simple blink sketch preprocessing', () => {
-    it('should preprocess a basic blink sketch', () => {
+  describe("Simple blink sketch preprocessing", () => {
+    it("should preprocess a basic blink sketch", () => {
       const inoContent = `void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 }
@@ -27,29 +27,29 @@ void loop() {
       const result = preprocessor.preprocess(inoContent);
 
       // Should include Arduino.h
-      expect(result.code).toContain('#include <Arduino.h>');
+      expect(result.code).toContain("#include <Arduino.h>");
 
       // Should contain the original code
-      expect(result.code).toContain('void setup()');
-      expect(result.code).toContain('void loop()');
+      expect(result.code).toContain("void setup()");
+      expect(result.code).toContain("void loop()");
 
       // Should not generate prototypes for setup/loop
-      expect(result.code).not.toContain('void setup();');
-      expect(result.code).not.toContain('void loop();');
+      expect(result.code).not.toContain("void setup();");
+      expect(result.code).not.toContain("void loop();");
 
       // Should generate main.cpp
-      expect(result.mainFile).toContain('int main(void)');
-      expect(result.mainFile).toContain('init()');
-      expect(result.mainFile).toContain('setup()');
-      expect(result.mainFile).toContain('loop()');
+      expect(result.mainFile).toContain("int main(void)");
+      expect(result.mainFile).toContain("init()");
+      expect(result.mainFile).toContain("setup()");
+      expect(result.mainFile).toContain("loop()");
 
       // Should have no warnings
       expect(result.warnings).toHaveLength(0);
     });
   });
 
-  describe('Function prototype generation', () => {
-    it('should generate prototypes for user-defined functions', () => {
+  describe("Function prototype generation", () => {
+    it("should generate prototypes for user-defined functions", () => {
       const inoContent = `void myHelper(int x) {
   Serial.println(x);
 }
@@ -69,16 +69,16 @@ void loop() {
       const result = preprocessor.preprocess(inoContent);
 
       // Should generate prototypes for myHelper and calculate
-      expect(result.code).toContain('void myHelper(int x);');
-      expect(result.code).toContain('int calculate(int a, int b);');
+      expect(result.code).toContain("void myHelper(int x);");
+      expect(result.code).toContain("int calculate(int a, int b);");
 
       // Prototypes should come before the function definitions
-      const myHelperProtoIndex = result.code.indexOf('void myHelper(int x);');
-      const myHelperDefIndex = result.code.indexOf('void myHelper(int x) {');
+      const myHelperProtoIndex = result.code.indexOf("void myHelper(int x);");
+      const myHelperDefIndex = result.code.indexOf("void myHelper(int x) {");
       expect(myHelperProtoIndex).toBeLessThan(myHelperDefIndex);
     });
 
-    it('should handle functions with no parameters', () => {
+    it("should handle functions with no parameters", () => {
       const inoContent = `int getValue() {
   return 42;
 }
@@ -88,10 +88,10 @@ void loop() {}`;
 
       const result = preprocessor.preprocess(inoContent);
 
-      expect(result.code).toContain('int getValue();');
+      expect(result.code).toContain("int getValue();");
     });
 
-    it('should handle functions with complex return types', () => {
+    it("should handle functions with complex return types", () => {
       const inoContent = `unsigned long* getPointer() {
   static unsigned long value = 0;
   return &value;
@@ -107,11 +107,11 @@ void loop() {}`;
 
       const result = preprocessor.preprocess(inoContent);
 
-      expect(result.code).toContain('unsigned long* getPointer();');
-      expect(result.code).toContain('const char& getReference();');
+      expect(result.code).toContain("unsigned long* getPointer();");
+      expect(result.code).toContain("const char& getReference();");
     });
 
-    it('should skip functions in comments', () => {
+    it("should skip functions in comments", () => {
       const inoContent = `// void commentedFunction() {
 //   return;
 // }
@@ -132,14 +132,14 @@ void loop() {}`;
       const result = preprocessor.preprocess(inoContent);
 
       // Should only have prototype for realFunction
-      expect(result.code).toContain('void realFunction();');
-      expect(result.code).not.toContain('void commentedFunction();');
-      expect(result.code).not.toContain('void multilineCommentFunction();');
+      expect(result.code).toContain("void realFunction();");
+      expect(result.code).not.toContain("void commentedFunction();");
+      expect(result.code).not.toContain("void multilineCommentFunction();");
     });
   });
 
-  describe('Multiple function detection', () => {
-    it('should detect multiple functions correctly', () => {
+  describe("Multiple function detection", () => {
+    it("should detect multiple functions correctly", () => {
       const inoContent = `void func1() {}
 int func2(int x) { return x; }
 float func3(float a, float b) { return a + b; }
@@ -150,13 +150,13 @@ void loop() {}`;
 
       const result = preprocessor.preprocess(inoContent);
 
-      expect(result.code).toContain('void func1();');
-      expect(result.code).toContain('int func2(int x);');
-      expect(result.code).toContain('float func3(float a, float b);');
-      expect(result.code).toContain('void func4(char* str, int len);');
+      expect(result.code).toContain("void func1();");
+      expect(result.code).toContain("int func2(int x);");
+      expect(result.code).toContain("float func3(float a, float b);");
+      expect(result.code).toContain("void func4(char* str, int len);");
     });
 
-    it('should handle static and inline functions', () => {
+    it("should handle static and inline functions", () => {
       const inoContent = `static void staticFunc() {}
 inline int inlineFunc() { return 0; }
 
@@ -165,104 +165,106 @@ void loop() {}`;
 
       const result = preprocessor.preprocess(inoContent);
 
-      expect(result.code).toContain('void staticFunc();');
-      expect(result.code).toContain('int inlineFunc();');
+      expect(result.code).toContain("void staticFunc();");
+      expect(result.code).toContain("int inlineFunc();");
     });
   });
 
-  describe('main() generation', () => {
-    it('should generate proper Arduino main() function', () => {
+  describe("main() generation", () => {
+    it("should generate proper Arduino main() function", () => {
       const mainFile = preprocessor.generateMain();
 
       // Should include Arduino.h
-      expect(mainFile).toContain('#include <Arduino.h>');
+      expect(mainFile).toContain("#include <Arduino.h>");
 
       // Should declare setup and loop as extern C
       expect(mainFile).toContain('extern "C" void setup()');
       expect(mainFile).toContain('extern "C" void loop()');
 
       // Should have main function
-      expect(mainFile).toContain('int main(void)');
+      expect(mainFile).toContain("int main(void)");
 
       // Should call init(), setup(), and loop()
-      expect(mainFile).toContain('init()');
-      expect(mainFile).toContain('setup()');
-      expect(mainFile).toContain('loop()');
+      expect(mainFile).toContain("init()");
+      expect(mainFile).toContain("setup()");
+      expect(mainFile).toContain("loop()");
 
       // Should have infinite loop
-      expect(mainFile).toContain('for (;;)');
+      expect(mainFile).toContain("for (;;)");
 
       // Should handle serial events
-      expect(mainFile).toContain('serialEventRun');
+      expect(mainFile).toContain("serialEventRun");
 
       // Should return 0
-      expect(mainFile).toContain('return 0');
+      expect(mainFile).toContain("return 0");
     });
   });
 
-  describe('Multi-file sketch combination', () => {
-    it('should combine multiple .ino files alphabetically', () => {
+  describe("Multi-file sketch combination", () => {
+    it("should combine multiple .ino files alphabetically", () => {
       const files = new Map<string, string>();
-      files.set('Sketch.ino', 'void setup() {}\nvoid loop() {}');
-      files.set('Helpers.ino', 'void helper() {}');
-      files.set('Utils.ino', 'int util() { return 0; }');
+      files.set("Sketch.ino", "void setup() {}\nvoid loop() {}");
+      files.set("Helpers.ino", "void helper() {}");
+      files.set("Utils.ino", "int util() { return 0; }");
 
       const combined = preprocessor.combineSketchFiles(files);
 
       // Should include all files
-      expect(combined).toContain('void setup()');
-      expect(combined).toContain('void helper()');
-      expect(combined).toContain('int util()');
+      expect(combined).toContain("void setup()");
+      expect(combined).toContain("void helper()");
+      expect(combined).toContain("int util()");
 
       // Should have file markers
-      expect(combined).toContain('// ===== Helpers.ino =====');
-      expect(combined).toContain('// ===== Sketch.ino =====');
-      expect(combined).toContain('// ===== Utils.ino =====');
+      expect(combined).toContain("// ===== Helpers.ino =====");
+      expect(combined).toContain("// ===== Sketch.ino =====");
+      expect(combined).toContain("// ===== Utils.ino =====");
 
       // Check alphabetical order (Helpers, Sketch, Utils)
-      const helpersIndex = combined.indexOf('Helpers.ino');
-      const sketchIndex = combined.indexOf('Sketch.ino');
-      const utilsIndex = combined.indexOf('Utils.ino');
+      const helpersIndex = combined.indexOf("Helpers.ino");
+      const sketchIndex = combined.indexOf("Sketch.ino");
+      const utilsIndex = combined.indexOf("Utils.ino");
 
       expect(helpersIndex).toBeLessThan(sketchIndex);
       expect(sketchIndex).toBeLessThan(utilsIndex);
     });
 
-    it('should handle single file', () => {
+    it("should handle single file", () => {
       const files = new Map<string, string>();
-      files.set('Single.ino', 'void setup() {}\nvoid loop() {}');
+      files.set("Single.ino", "void setup() {}\nvoid loop() {}");
 
       const combined = preprocessor.combineSketchFiles(files);
 
-      expect(combined).toContain('void setup()');
-      expect(combined).toContain('// ===== Single.ino =====');
+      expect(combined).toContain("void setup()");
+      expect(combined).toContain("// ===== Single.ino =====");
     });
 
-    it('should handle empty files map', () => {
+    it("should handle empty files map", () => {
       const files = new Map<string, string>();
       const combined = preprocessor.combineSketchFiles(files);
 
-      expect(combined).toBe('');
+      expect(combined).toBe("");
     });
 
-    it('should preserve code structure when combining', () => {
+    it("should preserve code structure when combining", () => {
       const files = new Map<string, string>();
-      files.set('A.ino', 'int globalA = 1;');
-      files.set('B.ino', 'int globalB = 2;');
+      files.set("A.ino", "int globalA = 1;");
+      files.set("B.ino", "int globalB = 2;");
 
       const combined = preprocessor.combineSketchFiles(files);
 
       // Should have both globals
-      expect(combined).toContain('int globalA = 1;');
-      expect(combined).toContain('int globalB = 2;');
+      expect(combined).toContain("int globalA = 1;");
+      expect(combined).toContain("int globalB = 2;");
 
       // Should be separated
-      expect(combined).toMatch(/A\.ino[\s\S]*globalA[\s\S]*B\.ino[\s\S]*globalB/);
+      expect(combined).toMatch(
+        /A\.ino[\s\S]*globalA[\s\S]*B\.ino[\s\S]*globalB/,
+      );
     });
   });
 
-  describe('Integration tests', () => {
-    it('should handle a complete Arduino sketch with preprocessing', () => {
+  describe("Integration tests", () => {
+    it("should handle a complete Arduino sketch with preprocessing", () => {
       const inoContent = `// Complete Arduino sketch
 int ledPin = 13;
 
@@ -288,21 +290,21 @@ void loop() {
       const result = preprocessor.preprocess(inoContent);
 
       // Should have Arduino.h
-      expect(result.code).toContain('#include <Arduino.h>');
+      expect(result.code).toContain("#include <Arduino.h>");
 
       // Should have function prototype
-      expect(result.code).toContain('void blinkLed(int times);');
+      expect(result.code).toContain("void blinkLed(int times);");
 
       // Should preserve all code
-      expect(result.code).toContain('int ledPin = 13;');
-      expect(result.code).toContain('void setup()');
-      expect(result.code).toContain('void loop()');
+      expect(result.code).toContain("int ledPin = 13;");
+      expect(result.code).toContain("void setup()");
+      expect(result.code).toContain("void loop()");
 
       // Should have valid main file
-      expect(result.mainFile).toContain('int main(void)');
+      expect(result.mainFile).toContain("int main(void)");
     });
 
-    it('should handle sketch with no user functions', () => {
+    it("should handle sketch with no user functions", () => {
       const inoContent = `void setup() {
   pinMode(13, OUTPUT);
 }
@@ -317,14 +319,14 @@ void loop() {
       const result = preprocessor.preprocess(inoContent);
 
       // Should still include Arduino.h
-      expect(result.code).toContain('#include <Arduino.h>');
+      expect(result.code).toContain("#include <Arduino.h>");
 
       // Should not have function prototypes section
-      expect(result.code).not.toContain('// Function prototypes');
+      expect(result.code).not.toContain("// Function prototypes");
 
       // Should still work
-      expect(result.code).toContain('void setup()');
-      expect(result.code).toContain('void loop()');
+      expect(result.code).toContain("void setup()");
+      expect(result.code).toContain("void loop()");
     });
   });
 });

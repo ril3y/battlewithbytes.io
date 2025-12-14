@@ -5,10 +5,10 @@
  * Stores decompressed headers with checksum validation.
  */
 
-const DB_NAME = 'battleforge-headers';
+const DB_NAME = "battleforge-headers";
 const DB_VERSION = 1;
-const STORE_NAME = 'headers';
-const META_STORE = 'metadata';
+const STORE_NAME = "headers";
+const META_STORE = "metadata";
 
 interface CacheMetadata {
   platformId: string;
@@ -37,7 +37,7 @@ export class HeaderCache {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[HeaderCache] Failed to open database:', request.error);
+        console.error("[HeaderCache] Failed to open database:", request.error);
         reject(request.error);
       };
 
@@ -51,13 +51,15 @@ export class HeaderCache {
 
         // Store for header file contents
         if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-          store.createIndex('family', ['platformId', 'familyId'], { unique: false });
+          const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+          store.createIndex("family", ["platformId", "familyId"], {
+            unique: false,
+          });
         }
 
         // Store for cache metadata
         if (!db.objectStoreNames.contains(META_STORE)) {
-          db.createObjectStore(META_STORE, { keyPath: 'id' });
+          db.createObjectStore(META_STORE, { keyPath: "id" });
         }
       };
     });
@@ -68,14 +70,17 @@ export class HeaderCache {
   /**
    * Get cached headers for a platform family
    */
-  async getHeaders(platformId: string, familyId: string): Promise<Map<string, Uint8Array> | null> {
+  async getHeaders(
+    platformId: string,
+    familyId: string,
+  ): Promise<Map<string, Uint8Array> | null> {
     await this.init();
     if (!this.db) return null;
 
     const metaKey = `${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readonly');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readonly");
       const metaStore = tx.objectStore(META_STORE);
       const headerStore = tx.objectStore(STORE_NAME);
 
@@ -90,7 +95,7 @@ export class HeaderCache {
         }
 
         // Get all headers for this family
-        const index = headerStore.index('family');
+        const index = headerStore.index("family");
         const range = IDBKeyRange.only([platformId, familyId]);
         const cursorRequest = index.openCursor(range);
 
@@ -99,29 +104,36 @@ export class HeaderCache {
         cursorRequest.onsuccess = () => {
           const cursor = cursorRequest.result;
           if (cursor) {
-            const record = cursor.value as { path: string; content: Uint8Array };
+            const record = cursor.value as {
+              path: string;
+              content: Uint8Array;
+            };
             headers.set(record.path, record.content);
             cursor.continue();
           } else {
             // All records processed
             if (headers.size === meta.fileCount) {
-              console.log(`[HeaderCache] Loaded ${headers.size} cached headers for ${metaKey}`);
+              console.log(
+                `[HeaderCache] Loaded ${headers.size} cached headers for ${metaKey}`,
+              );
               resolve(headers);
             } else {
-              console.warn(`[HeaderCache] Cache incomplete: ${headers.size}/${meta.fileCount}`);
+              console.warn(
+                `[HeaderCache] Cache incomplete: ${headers.size}/${meta.fileCount}`,
+              );
               resolve(null);
             }
           }
         };
 
         cursorRequest.onerror = () => {
-          console.error('[HeaderCache] Cursor error:', cursorRequest.error);
+          console.error("[HeaderCache] Cursor error:", cursorRequest.error);
           reject(cursorRequest.error);
         };
       };
 
       metaRequest.onerror = () => {
-        console.error('[HeaderCache] Meta read error:', metaRequest.error);
+        console.error("[HeaderCache] Meta read error:", metaRequest.error);
         reject(metaRequest.error);
       };
     });
@@ -134,7 +146,7 @@ export class HeaderCache {
     platformId: string,
     familyId: string,
     headers: Map<string, Uint8Array>,
-    checksum: string
+    checksum: string,
   ): Promise<void> {
     await this.init();
     if (!this.db) return;
@@ -142,12 +154,12 @@ export class HeaderCache {
     const metaKey = `${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
       const metaStore = tx.objectStore(META_STORE);
       const headerStore = tx.objectStore(STORE_NAME);
 
       // Clear existing headers for this family
-      const index = headerStore.index('family');
+      const index = headerStore.index("family");
       const range = IDBKeyRange.only([platformId, familyId]);
       const deleteRequest = index.openCursor(range);
 
@@ -172,7 +184,7 @@ export class HeaderCache {
         checksum,
         timestamp: Date.now(),
         fileCount: headers.size,
-        totalSize
+        totalSize,
       };
       metaStore.put({ id: metaKey, ...meta });
 
@@ -184,19 +196,21 @@ export class HeaderCache {
           platformId,
           familyId,
           path,
-          content
+          content,
         };
         headerStore.put(record);
         stored++;
       }
 
       tx.oncomplete = () => {
-        console.log(`[HeaderCache] Cached ${stored} headers for ${metaKey} (${(totalSize / 1024).toFixed(1)} KB)`);
+        console.log(
+          `[HeaderCache] Cached ${stored} headers for ${metaKey} (${(totalSize / 1024).toFixed(1)} KB)`,
+        );
         resolve();
       };
 
       tx.onerror = () => {
-        console.error('[HeaderCache] Transaction error:', tx.error);
+        console.error("[HeaderCache] Transaction error:", tx.error);
         reject(tx.error);
       };
     });
@@ -205,14 +219,18 @@ export class HeaderCache {
   /**
    * Check if headers are cached and valid
    */
-  async isValid(platformId: string, familyId: string, expectedChecksum: string): Promise<boolean> {
+  async isValid(
+    platformId: string,
+    familyId: string,
+    expectedChecksum: string,
+  ): Promise<boolean> {
     await this.init();
     if (!this.db) return false;
 
     const metaKey = `${platformId}/${familyId}`;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.get(metaKey);
 
@@ -242,14 +260,17 @@ export class HeaderCache {
   /**
    * Get cache metadata
    */
-  async getMetadata(platformId: string, familyId: string): Promise<CacheMetadata | null> {
+  async getMetadata(
+    platformId: string,
+    familyId: string,
+  ): Promise<CacheMetadata | null> {
     await this.init();
     if (!this.db) return null;
 
     const metaKey = `${platformId}/${familyId}`;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.get(metaKey);
 
@@ -273,7 +294,7 @@ export class HeaderCache {
     const metaKey = `${platformId}/${familyId}`;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
       const metaStore = tx.objectStore(META_STORE);
       const headerStore = tx.objectStore(STORE_NAME);
 
@@ -281,7 +302,7 @@ export class HeaderCache {
       metaStore.delete(metaKey);
 
       // Delete all headers for this family
-      const index = headerStore.index('family');
+      const index = headerStore.index("family");
       const range = IDBKeyRange.only([platformId, familyId]);
       const cursorRequest = index.openCursor(range);
 
@@ -312,13 +333,13 @@ export class HeaderCache {
     if (!this.db) return;
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction([META_STORE, STORE_NAME], 'readwrite');
+      const tx = this.db!.transaction([META_STORE, STORE_NAME], "readwrite");
 
       tx.objectStore(META_STORE).clear();
       tx.objectStore(STORE_NAME).clear();
 
       tx.oncomplete = () => {
-        console.log('[HeaderCache] Cache cleared');
+        console.log("[HeaderCache] Cache cleared");
         resolve();
       };
 
@@ -336,7 +357,7 @@ export class HeaderCache {
     if (!this.db) return 0;
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.getAll();
 
@@ -355,23 +376,32 @@ export class HeaderCache {
   /**
    * List all cached families
    */
-  async listCached(): Promise<Array<{ platformId: string; familyId: string; size: number; timestamp: number }>> {
+  async listCached(): Promise<
+    Array<{
+      platformId: string;
+      familyId: string;
+      size: number;
+      timestamp: number;
+    }>
+  > {
     await this.init();
     if (!this.db) return [];
 
     return new Promise((resolve) => {
-      const tx = this.db!.transaction(META_STORE, 'readonly');
+      const tx = this.db!.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const request = store.getAll();
 
       request.onsuccess = () => {
         const metas = request.result as CacheMetadata[];
-        resolve(metas.map(m => ({
-          platformId: m.platformId,
-          familyId: m.familyId,
-          size: m.totalSize,
-          timestamp: m.timestamp
-        })));
+        resolve(
+          metas.map((m) => ({
+            platformId: m.platformId,
+            familyId: m.familyId,
+            size: m.totalSize,
+            timestamp: m.timestamp,
+          })),
+        );
       };
 
       request.onerror = () => {

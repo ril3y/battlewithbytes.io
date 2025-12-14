@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import battleforgeLogo from '../battleforge.png';
+import Image from "next/image";
+import battleforgeLogo from "../battleforge.png";
 
 interface ToolbarPanelProps {
   onLoadCompiler: () => void;
@@ -19,7 +19,21 @@ interface ToolbarPanelProps {
   hasBuildArtifacts?: boolean;
 }
 
-export function ToolbarPanel({ onLoadCompiler, onCompile, onClean, onFlash, onSave, onCloseProject, onEditProject, onToggleConsole, isLoading, compilerReady, showConsole, canSave, hasBuildArtifacts }: ToolbarPanelProps) {
+export function ToolbarPanel({
+  onLoadCompiler,
+  onCompile,
+  onClean,
+  onFlash,
+  onSave,
+  onCloseProject,
+  onEditProject,
+  onToggleConsole,
+  isLoading,
+  compilerReady,
+  showConsole,
+  canSave,
+  hasBuildArtifacts,
+}: ToolbarPanelProps) {
   // Show simplified loading view when compiler is loading
   if (isLoading) {
     return (
@@ -29,7 +43,7 @@ export function ToolbarPanel({ onLoadCompiler, onCompile, onClean, onFlash, onSa
           alt="BattleForge"
           height={80}
           className="toolbar-logo"
-          style={{ marginRight: '20px' }}
+          style={{ marginRight: "20px" }}
         />
         <div className="toolbar-loading-indicator">
           <span className="loading-spinner-small" />
@@ -46,12 +60,10 @@ export function ToolbarPanel({ onLoadCompiler, onCompile, onClean, onFlash, onSa
         alt="BattleForge"
         height={80}
         className="toolbar-logo"
-        style={{ marginRight: '20px' }}
+        style={{ marginRight: "20px" }}
       />
       {!compilerReady && (
-        <button onClick={onLoadCompiler}>
-          Load Compiler
-        </button>
+        <button onClick={onLoadCompiler}>Load Compiler</button>
       )}
       <button
         onClick={onCompile}
@@ -82,12 +94,8 @@ export function ToolbarPanel({ onLoadCompiler, onCompile, onClean, onFlash, onSa
         Save
       </button>
       <div style={{ flex: 1 }} />
-      <button onClick={onEditProject}>
-        Edit Project
-      </button>
-      <button onClick={onCloseProject}>
-        Close Project
-      </button>
+      <button onClick={onEditProject}>Edit Project</button>
+      <button onClick={onCloseProject}>Close Project</button>
     </div>
   );
 }

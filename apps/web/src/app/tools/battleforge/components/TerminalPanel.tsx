@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface TerminalPanelProps {
   output: Array<{
     message: string;
-    type: 'info' | 'success' | 'error' | 'warning';
+    type: "info" | "success" | "error" | "warning";
     timestamp?: string;
   }>;
 }
 
 export function TerminalPanel({ output }: TerminalPanelProps) {
   const outputRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (outputRef.current) {
@@ -21,29 +22,67 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
 
   const getTypePrefix = (type: string) => {
     switch (type) {
-      case 'error':
-        return '[ERR]';
-      case 'warning':
-        return '[WRN]';
-      case 'success':
-        return '[OK]';
+      case "error":
+        return "[ERR]";
+      case "warning":
+        return "[WRN]";
+      case "success":
+        return "[OK]";
       default:
-        return '[INF]';
+        return "[INF]";
     }
   };
+
+  const handleCopy = useCallback(async () => {
+    const text = output
+      .map((line) => {
+        const prefix = getTypePrefix(line.type);
+        const timestamp = line.timestamp ? `[${line.timestamp}] ` : "";
+        return `${prefix} ${timestamp}${line.message}`;
+      })
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }, [output]);
+
+  const handleClear = useCallback(() => {
+    // Note: This would need to be lifted to parent to actually clear
+    // For now it's a placeholder - parent would need to pass onClear prop
+  }, []);
 
   return (
     <div className="terminal-panel">
       <div className="terminal-header">
         <span className="terminal-title">Output</span>
-        <span className="terminal-count">{output.length} lines</span>
+        <div className="terminal-actions">
+          <button
+            className="terminal-btn"
+            onClick={handleCopy}
+            title="Copy output to clipboard"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+          <span className="terminal-count">{output.length} lines</span>
+        </div>
       </div>
       <div className="terminal-output" ref={outputRef}>
         {output.map((line, index) => (
           <div key={index} className={`terminal-line ${line.type}`}>
-            <span className="line-number">{(index + 1).toString().padStart(3, ' ')}</span>
-            <span className={`line-prefix ${line.type}`}>{getTypePrefix(line.type)}</span>
-            {line.timestamp && <span className="line-timestamp">[{line.timestamp}]</span>}
+            <span className="line-number">
+              {(index + 1).toString().padStart(3, " ")}
+            </span>
+            <span className={`line-prefix ${line.type}`}>
+              {getTypePrefix(line.type)}
+            </span>
+            {line.timestamp && (
+              <span className="line-timestamp">[{line.timestamp}]</span>
+            )}
             <span className="line-message">{line.message}</span>
           </div>
         ))}
@@ -69,14 +108,37 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
         }
 
         .terminal-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: "JetBrains Mono", monospace;
           font-size: 0.85rem;
           font-weight: 600;
           color: #ededed;
         }
 
+        .terminal-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .terminal-btn {
+          font-family: "JetBrains Mono", monospace;
+          font-size: 0.7rem;
+          padding: 4px 10px;
+          background: rgba(0, 255, 157, 0.1);
+          border: 1px solid rgba(0, 255, 157, 0.3);
+          color: #00ff9d;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .terminal-btn:hover {
+          background: rgba(0, 255, 157, 0.2);
+          border-color: rgba(0, 255, 157, 0.5);
+        }
+
         .terminal-count {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: "JetBrains Mono", monospace;
           font-size: 0.75rem;
           color: #666;
         }
@@ -86,7 +148,7 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
           overflow-y: auto;
           overflow-x: auto;
           padding: 8px 0;
-          font-family: 'JetBrains Mono', 'Fira Code', monospace;
+          font-family: "JetBrains Mono", "Fira Code", monospace;
           font-size: 12px;
           line-height: 1.5;
         }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import type { LoadingProgress, ToolchainState } from '../lib/platform/types';
+import { useEffect, useState } from "react";
+import type { LoadingProgress, ToolchainState } from "../lib/platform/types";
 
 interface LoadingOverlayProps {
   isVisible: boolean;
@@ -10,17 +10,18 @@ interface LoadingOverlayProps {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 function ProgressBar({ progress }: { progress: LoadingProgress }) {
-  const percent = progress.total > 0
-    ? Math.round((progress.current / progress.total) * 100)
-    : 0;
+  const percent =
+    progress.total > 0
+      ? Math.round((progress.current / progress.total) * 100)
+      : 0;
 
   return (
     <div className="loading-progress-item">
@@ -42,36 +43,40 @@ function ProgressBar({ progress }: { progress: LoadingProgress }) {
   );
 }
 
-function StatusIcon({ stage }: { stage: LoadingProgress['stage'] }) {
+function StatusIcon({ stage }: { stage: LoadingProgress["stage"] }) {
   switch (stage) {
-    case 'ready':
+    case "ready":
       return <span className="status-icon ready">&#10003;</span>;
-    case 'error':
+    case "error":
       return <span className="status-icon error">&#10007;</span>;
-    case 'downloading':
-    case 'extracting':
+    case "downloading":
+    case "extracting":
       return <span className="status-icon loading">&#8635;</span>;
     default:
       return <span className="status-icon idle">&#9675;</span>;
   }
 }
 
-export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: LoadingOverlayProps) {
+export function LoadingOverlay({
+  isVisible,
+  toolchainState,
+  onDismiss,
+}: LoadingOverlayProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   // Auto-dismiss when all components are ready
   const allReady =
-    toolchainState.clang.stage === 'ready' &&
-    toolchainState.lld.stage === 'ready';
+    toolchainState.clang.stage === "ready" &&
+    toolchainState.lld.stage === "ready";
 
   // Check if any component is loading
   const isLoading =
-    toolchainState.clang.stage === 'downloading' ||
-    toolchainState.clang.stage === 'extracting' ||
-    toolchainState.lld.stage === 'downloading' ||
-    toolchainState.lld.stage === 'extracting' ||
-    toolchainState.headers.stage === 'downloading' ||
-    toolchainState.headers.stage === 'extracting';
+    toolchainState.clang.stage === "downloading" ||
+    toolchainState.clang.stage === "extracting" ||
+    toolchainState.lld.stage === "downloading" ||
+    toolchainState.lld.stage === "extracting" ||
+    toolchainState.headers.stage === "downloading" ||
+    toolchainState.headers.stage === "extracting";
 
   if (!isVisible) return null;
 
@@ -91,7 +96,9 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
             <div className="loading-status-info">
               <span className="loading-status-name">Clang Compiler</span>
               <span className="loading-status-detail">
-                {toolchainState.clang.stage === 'ready' ? '~42 MB loaded' : toolchainState.clang.message}
+                {toolchainState.clang.stage === "ready"
+                  ? "~42 MB loaded"
+                  : toolchainState.clang.message}
               </span>
             </div>
           </div>
@@ -101,13 +108,17 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
             <div className="loading-status-info">
               <span className="loading-status-name">LLD Linker</span>
               <span className="loading-status-detail">
-                {toolchainState.lld.stage === 'ready' ? '~33 MB loaded' : toolchainState.lld.message}
+                {toolchainState.lld.stage === "ready"
+                  ? "~33 MB loaded"
+                  : toolchainState.lld.message}
               </span>
             </div>
           </div>
 
-          {(toolchainState.headers.stage !== 'idle') && (
-            <div className={`loading-status-item ${toolchainState.headers.stage}`}>
+          {toolchainState.headers.stage !== "idle" && (
+            <div
+              className={`loading-status-item ${toolchainState.headers.stage}`}
+            >
               <StatusIcon stage={toolchainState.headers.stage} />
               <div className="loading-status-info">
                 <span className="loading-status-name">Platform Headers</span>
@@ -118,7 +129,7 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
             </div>
           )}
 
-          {(toolchainState.libs.stage !== 'idle') && (
+          {toolchainState.libs.stage !== "idle" && (
             <div className={`loading-status-item ${toolchainState.libs.stage}`}>
               <StatusIcon stage={toolchainState.libs.stage} />
               <div className="loading-status-info">
@@ -133,13 +144,13 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
 
         {isLoading && (
           <div className="loading-progress-section">
-            {toolchainState.clang.stage === 'downloading' && (
+            {toolchainState.clang.stage === "downloading" && (
               <ProgressBar progress={toolchainState.clang} />
             )}
-            {toolchainState.lld.stage === 'downloading' && (
+            {toolchainState.lld.stage === "downloading" && (
               <ProgressBar progress={toolchainState.lld} />
             )}
-            {toolchainState.headers.stage === 'downloading' && (
+            {toolchainState.headers.stage === "downloading" && (
               <ProgressBar progress={toolchainState.headers} />
             )}
           </div>
@@ -163,14 +174,14 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
           className="loading-details-toggle"
           onClick={() => setShowDetails(!showDetails)}
         >
-          {showDetails ? 'Hide Details' : 'Show Details'}
+          {showDetails ? "Hide Details" : "Show Details"}
         </button>
 
         {showDetails && (
           <div className="loading-details">
             <p>
-              BattleForge uses WebAssembly versions of LLVM Clang and LLD to compile
-              and link ARM firmware directly in your browser.
+              BattleForge uses WebAssembly versions of LLVM Clang and LLD to
+              compile and link ARM firmware directly in your browser.
             </p>
             <ul>
               <li>No server required - all processing happens locally</li>
@@ -255,17 +266,27 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
           text-align: center;
         }
 
-        .status-icon.ready { color: #4ade80; }
-        .status-icon.error { color: #f87171; }
+        .status-icon.ready {
+          color: #4ade80;
+        }
+        .status-icon.error {
+          color: #f87171;
+        }
         .status-icon.loading {
           color: #60a5fa;
           animation: spin 1s linear infinite;
         }
-        .status-icon.idle { color: #666; }
+        .status-icon.idle {
+          color: #666;
+        }
 
         @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         .loading-status-info {
@@ -315,8 +336,12 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
           transition: width 0.3s ease;
         }
 
-        .loading-progress-fill.ready { background: #4ade80; }
-        .loading-progress-fill.error { background: #f87171; }
+        .loading-progress-fill.ready {
+          background: #4ade80;
+        }
+        .loading-progress-fill.error {
+          background: #f87171;
+        }
 
         .loading-actions {
           margin-bottom: 16px;
@@ -331,7 +356,9 @@ export function LoadingOverlay({ isVisible, toolchainState, onDismiss }: Loading
           font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: transform 0.1s, background 0.2s;
+          transition:
+            transform 0.1s,
+            background 0.2s;
         }
 
         .loading-continue-btn:hover {

@@ -5,13 +5,19 @@
  * Handles framework definitions and their associated core files (e.g., Arduino cores).
  */
 
-import type { FrameworkId, Framework } from '../platform/types';
-import { FrameworkCache } from './FrameworkCache';
+import type { FrameworkId, Framework } from "../platform/types";
+import { FrameworkCache } from "./FrameworkCache";
 
 const cache = new FrameworkCache();
 
 export interface LoadFrameworkProgress {
-  stage: 'checking' | 'downloading' | 'extracting' | 'caching' | 'ready' | 'error';
+  stage:
+    | "checking"
+    | "downloading"
+    | "extracting"
+    | "caching"
+    | "ready"
+    | "error";
   message: string;
   current?: number;
   total?: number;
@@ -30,18 +36,18 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
     const header = data.slice(offset, offset + 512);
 
     // Check for empty block (end of archive)
-    if (header.every(b => b === 0)) {
+    if (header.every((b) => b === 0)) {
       break;
     }
 
     // Extract filename (bytes 0-99)
-    let filename = '';
+    let filename = "";
     for (let i = 0; i < 100 && header[i] !== 0; i++) {
       filename += String.fromCharCode(header[i]);
     }
 
     // Extract file size (bytes 124-135, octal string)
-    let sizeStr = '';
+    let sizeStr = "";
     for (let i = 124; i < 136 && header[i] !== 0 && header[i] !== 32; i++) {
       sizeStr += String.fromCharCode(header[i]);
     }
@@ -57,16 +63,16 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
     if ((typeflag === 48 || typeflag === 0) && fileSize > 0) {
       // Normalize path - remove leading ./
       let normalizedPath = filename;
-      if (normalizedPath.startsWith('./')) {
+      if (normalizedPath.startsWith("./")) {
         normalizedPath = normalizedPath.substring(2);
       }
-      if (normalizedPath.startsWith('/')) {
+      if (normalizedPath.startsWith("/")) {
         normalizedPath = normalizedPath.substring(1);
       }
 
       // Read file content
       const content = data.slice(offset, offset + fileSize);
-      files.set('/' + normalizedPath, content);
+      files.set("/" + normalizedPath, content);
     }
 
     // Advance to next header (512-byte aligned)
@@ -80,7 +86,7 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
  * Decompress gzip data using DecompressionStream API
  */
 async function decompressGzip(compressed: Uint8Array): Promise<Uint8Array> {
-  const ds = new DecompressionStream('gzip');
+  const ds = new DecompressionStream("gzip");
   const blob = new Blob([compressed as unknown as BlobPart]);
   const decompressedStream = blob.stream().pipeThrough(ds);
 
@@ -114,7 +120,7 @@ export class FrameworkManager {
   async loadFramework(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<Framework | null> {
     // Check memory cache first
     const cacheKey = `${frameworkId}/${platformId}/${familyId}`;
@@ -133,15 +139,20 @@ export class FrameworkManager {
         return null;
       }
 
-      const framework = await response.json() as Framework;
+      const framework = (await response.json()) as Framework;
 
       // Store in memory cache
       this.frameworkCache.set(cacheKey, framework);
 
-      console.log(`[FrameworkManager] Loaded framework definition: ${frameworkId}`);
+      console.log(
+        `[FrameworkManager] Loaded framework definition: ${frameworkId}`,
+      );
       return framework;
     } catch (error) {
-      console.error(`[FrameworkManager] Failed to load framework ${frameworkId}:`, error);
+      console.error(
+        `[FrameworkManager] Failed to load framework ${frameworkId}:`,
+        error,
+      );
       return null;
     }
   }
@@ -153,39 +164,61 @@ export class FrameworkManager {
     framework: Framework,
     platformId: string,
     familyId: string,
-    onProgress?: (progress: LoadFrameworkProgress) => void
+    onProgress?: (progress: LoadFrameworkProgress) => void,
   ): Promise<Map<string, Uint8Array>> {
     const { id: frameworkId, coreUrl, coreChecksum } = framework;
 
     // Framework must have core files defined
     if (!coreUrl || !coreChecksum) {
-      throw new Error(`Framework ${frameworkId} does not have core files defined`);
+      throw new Error(
+        `Framework ${frameworkId} does not have core files defined`,
+      );
     }
 
-    onProgress?.({ stage: 'checking', message: 'Checking cache...' });
+    onProgress?.({ stage: "checking", message: "Checking cache..." });
 
     // Check cache first
-    const isValid = await cache.isValid(frameworkId, platformId, familyId, coreChecksum);
+    const isValid = await cache.isValid(
+      frameworkId,
+      platformId,
+      familyId,
+      coreChecksum,
+    );
     if (isValid) {
-      const cached = await cache.getCoreFiles(frameworkId, platformId, familyId);
+      const cached = await cache.getCoreFiles(
+        frameworkId,
+        platformId,
+        familyId,
+      );
       if (cached) {
-        onProgress?.({ stage: 'ready', message: `Loaded ${cached.size} files from cache` });
+        onProgress?.({
+          stage: "ready",
+          message: `Loaded ${cached.size} files from cache`,
+        });
         return cached;
       }
     }
 
     // Download core files
-    onProgress?.({ stage: 'downloading', message: 'Downloading framework core files...' });
+    onProgress?.({
+      stage: "downloading",
+      message: "Downloading framework core files...",
+    });
 
     const response = await fetch(`/platforms/${coreUrl}`);
     if (!response.ok) {
-      throw new Error(`Failed to download framework core files: ${response.status}`);
+      throw new Error(
+        `Failed to download framework core files: ${response.status}`,
+      );
     }
 
-    const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+    const contentLength = parseInt(
+      response.headers.get("content-length") || "0",
+      10,
+    );
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error('Failed to get response reader');
+      throw new Error("Failed to get response reader");
     }
 
     const chunks: Uint8Array[] = [];
@@ -201,10 +234,10 @@ export class FrameworkManager {
       if (contentLength > 0) {
         const percent = Math.round((receivedLength / contentLength) * 100);
         onProgress?.({
-          stage: 'downloading',
+          stage: "downloading",
           message: `Downloading... ${(receivedLength / 1024).toFixed(0)} KB`,
           current: receivedLength,
-          total: contentLength
+          total: contentLength,
         });
       }
     }
@@ -218,17 +251,29 @@ export class FrameworkManager {
     }
 
     // Decompress
-    onProgress?.({ stage: 'extracting', message: 'Extracting framework files...' });
+    onProgress?.({
+      stage: "extracting",
+      message: "Extracting framework files...",
+    });
     const tarData = await decompressGzip(compressed);
 
     // Parse tar
     const files = parseTar(tarData);
 
     // Cache the results
-    onProgress?.({ stage: 'caching', message: 'Caching framework files...' });
-    await cache.setCoreFiles(frameworkId, platformId, familyId, files, coreChecksum);
+    onProgress?.({ stage: "caching", message: "Caching framework files..." });
+    await cache.setCoreFiles(
+      frameworkId,
+      platformId,
+      familyId,
+      files,
+      coreChecksum,
+    );
 
-    onProgress?.({ stage: 'ready', message: `Loaded ${files.size} framework files` });
+    onProgress?.({
+      stage: "ready",
+      message: `Loaded ${files.size} framework files`,
+    });
     return files;
   }
 
@@ -239,7 +284,7 @@ export class FrameworkManager {
     frameworkId: FrameworkId,
     platformId: string,
     familyId: string,
-    checksum: string
+    checksum: string,
   ): Promise<boolean> {
     return cache.isValid(frameworkId, platformId, familyId, checksum);
   }
@@ -250,7 +295,7 @@ export class FrameworkManager {
   async clearCache(
     frameworkId?: FrameworkId,
     platformId?: string,
-    familyId?: string
+    familyId?: string,
   ): Promise<void> {
     if (frameworkId && platformId && familyId) {
       // Clear specific framework
@@ -269,7 +314,7 @@ export class FrameworkManager {
   async getCacheSize(
     frameworkId: FrameworkId,
     platformId: string,
-    familyId: string
+    familyId: string,
   ): Promise<number> {
     return cache.getCacheSize(frameworkId, platformId, familyId);
   }
@@ -284,13 +329,15 @@ export class FrameworkManager {
   /**
    * List all cached frameworks
    */
-  async listCached(): Promise<Array<{
-    frameworkId: FrameworkId;
-    platformId: string;
-    familyId: string;
-    size: number;
-    timestamp: number;
-  }>> {
+  async listCached(): Promise<
+    Array<{
+      frameworkId: FrameworkId;
+      platformId: string;
+      familyId: string;
+      size: number;
+      timestamp: number;
+    }>
+  > {
     return cache.listCached();
   }
 }
@@ -306,7 +353,7 @@ export const frameworkManager = new FrameworkManager();
 export async function clearCachedFramework(
   frameworkId: FrameworkId,
   platformId: string,
-  familyId: string
+  familyId: string,
 ): Promise<void> {
   await frameworkManager.clearCache(frameworkId, platformId, familyId);
 }
@@ -318,7 +365,12 @@ export async function hasCachedFramework(
   frameworkId: FrameworkId,
   platformId: string,
   familyId: string,
-  checksum: string
+  checksum: string,
 ): Promise<boolean> {
-  return frameworkManager.isFrameworkCached(frameworkId, platformId, familyId, checksum);
+  return frameworkManager.isFrameworkCached(
+    frameworkId,
+    platformId,
+    familyId,
+    checksum,
+  );
 }

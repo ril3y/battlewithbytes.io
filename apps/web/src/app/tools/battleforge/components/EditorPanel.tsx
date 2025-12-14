@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useRef, useCallback, useEffect } from 'react';
-import Editor, { OnMount, BeforeMount } from '@monaco-editor/react';
-import type { editor } from 'monaco-editor';
-import type * as Monaco from 'monaco-editor';
-import { registerCHeaderCompletion } from '../lib/editor';
+import { useRef, useCallback, useEffect } from "react";
+import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
+import { registerCHeaderCompletion } from "../lib/editor";
 
 interface VFSFile {
   content: string | Uint8Array;
@@ -25,31 +25,31 @@ interface EditorPanelProps {
  */
 function getMonacoLanguage(language: string): string {
   switch (language) {
-    case 'c':
-      return 'c';
-    case 'cpp':
-      return 'cpp';
-    case 'h':
-      return 'cpp';  // Headers use C++ mode
-    case 'ino':
-      return 'cpp';  // Arduino sketches are essentially C++
-    case 'makefile':
-      return 'makefile';
-    case 'ld':
-      return 'plaintext';  // Linker scripts
-    case 'asm':
-      return 'plaintext';  // Assembly
+    case "c":
+      return "c";
+    case "cpp":
+      return "cpp";
+    case "h":
+      return "cpp"; // Headers use C++ mode
+    case "ino":
+      return "cpp"; // Arduino sketches are essentially C++
+    case "makefile":
+      return "makefile";
+    case "ld":
+      return "plaintext"; // Linker scripts
+    case "asm":
+      return "plaintext"; // Assembly
     default:
-      return 'plaintext';
+      return "plaintext";
   }
 }
 
 export function EditorPanel({
   sourceCode,
   onChange,
-  language = 'c',
+  language = "c",
   readOnly = false,
-  getVFSFiles
+  getVFSFiles,
 }: EditorPanelProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
@@ -63,38 +63,38 @@ export function EditorPanel({
     monacoRef.current = monaco;
 
     // Define custom dark theme matching site colors
-    monaco.editor.defineTheme('battleforge-dark', {
-      base: 'vs-dark',
+    monaco.editor.defineTheme("battleforge-dark", {
+      base: "vs-dark",
       inherit: true,
       rules: [
-        { token: 'comment', foreground: '6a9955', fontStyle: 'italic' },
-        { token: 'keyword', foreground: '569cd6' },
-        { token: 'string', foreground: 'ce9178' },
-        { token: 'number', foreground: 'b5cea8' },
-        { token: 'type', foreground: '4ec9b0' },
-        { token: 'function', foreground: 'dcdcaa' },
-        { token: 'variable', foreground: '9cdcfe' },
-        { token: 'constant', foreground: '4fc1ff' },
-        { token: 'operator', foreground: 'd4d4d4' },
-        { token: 'delimiter', foreground: 'd4d4d4' },
-        { token: 'preprocessor', foreground: 'c586c0' },
+        { token: "comment", foreground: "6a9955", fontStyle: "italic" },
+        { token: "keyword", foreground: "569cd6" },
+        { token: "string", foreground: "ce9178" },
+        { token: "number", foreground: "b5cea8" },
+        { token: "type", foreground: "4ec9b0" },
+        { token: "function", foreground: "dcdcaa" },
+        { token: "variable", foreground: "9cdcfe" },
+        { token: "constant", foreground: "4fc1ff" },
+        { token: "operator", foreground: "d4d4d4" },
+        { token: "delimiter", foreground: "d4d4d4" },
+        { token: "preprocessor", foreground: "c586c0" },
       ],
       colors: {
-        'editor.background': '#0a0a0a',
-        'editor.foreground': '#ededed',
-        'editor.lineHighlightBackground': '#1a1a1a',
-        'editor.selectionBackground': '#264f78',
-        'editor.inactiveSelectionBackground': '#3a3d41',
-        'editorLineNumber.foreground': '#555555',
-        'editorLineNumber.activeForeground': '#00ff9d',
-        'editorCursor.foreground': '#00ff9d',
-        'editor.selectionHighlightBackground': '#add6ff26',
-        'editorIndentGuide.background': '#333333',
-        'editorIndentGuide.activeBackground': '#555555',
-        'editorGutter.background': '#0a0a0a',
-        'scrollbarSlider.background': '#33333380',
-        'scrollbarSlider.hoverBackground': '#44444480',
-        'scrollbarSlider.activeBackground': '#55555580',
+        "editor.background": "#0a0a0a",
+        "editor.foreground": "#ededed",
+        "editor.lineHighlightBackground": "#1a1a1a",
+        "editor.selectionBackground": "#264f78",
+        "editor.inactiveSelectionBackground": "#3a3d41",
+        "editorLineNumber.foreground": "#555555",
+        "editorLineNumber.activeForeground": "#00ff9d",
+        "editorCursor.foreground": "#00ff9d",
+        "editor.selectionHighlightBackground": "#add6ff26",
+        "editorIndentGuide.background": "#333333",
+        "editorIndentGuide.activeBackground": "#555555",
+        "editorGutter.background": "#0a0a0a",
+        "scrollbarSlider.background": "#33333380",
+        "scrollbarSlider.hoverBackground": "#44444480",
+        "scrollbarSlider.activeBackground": "#55555580",
       },
     });
   }, []);
@@ -110,9 +110,9 @@ export function EditorPanel({
       fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
       fontLigatures: true,
       lineHeight: 1.6,
-      renderLineHighlight: 'line',
-      cursorBlinking: 'smooth',
-      cursorSmoothCaretAnimation: 'on',
+      renderLineHighlight: "line",
+      cursorBlinking: "smooth",
+      cursorSmoothCaretAnimation: "on",
       smoothScrolling: true,
       padding: { top: 12, bottom: 12 },
       bracketPairColorization: { enabled: true },
@@ -124,17 +124,20 @@ export function EditorPanel({
       quickSuggestions: {
         other: true,
         comments: false,
-        strings: true,  // This enables suggestions inside "..." strings
+        strings: true, // This enables suggestions inside "..." strings
       },
       suggestOnTriggerCharacters: true,
     });
   }, []);
 
-  const handleEditorChange = useCallback((value: string | undefined) => {
-    if (value !== undefined) {
-      onChange(value);
-    }
-  }, [onChange]);
+  const handleEditorChange = useCallback(
+    (value: string | undefined) => {
+      if (value !== undefined) {
+        onChange(value);
+      }
+    },
+    [onChange],
+  );
 
   // Register C header completion provider when Monaco and VFS files getter are available
   useEffect(() => {
@@ -150,7 +153,7 @@ export function EditorPanel({
     // Register the completion provider
     completionDisposableRef.current = registerCHeaderCompletion(
       monacoRef.current,
-      getVFSFiles
+      getVFSFiles,
     );
 
     // Cleanup on unmount
@@ -163,13 +166,16 @@ export function EditorPanel({
   }, [getVFSFiles]);
 
   return (
-    <div className="editor-panel" style={{
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      background: '#0a0a0a',
-    }}>
+    <div
+      className="editor-panel"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        background: "#0a0a0a",
+      }}
+    >
       <Editor
         height="100%"
         language={monacoLanguage}
@@ -185,14 +191,16 @@ export function EditorPanel({
           automaticLayout: true,
         }}
         loading={
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: '#888',
-            fontFamily: 'monospace',
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              color: "#888",
+              fontFamily: "monospace",
+            }}
+          >
             Loading editor...
           </div>
         }

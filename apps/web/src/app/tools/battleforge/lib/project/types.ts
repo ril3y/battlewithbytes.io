@@ -15,6 +15,7 @@ export interface ProjectPlatform {
   deviceId: string; // "stm32f103c8"
   architecture: string; // "cortex-m3"
   frameworkId?: FrameworkId; // "native" | "arduino" | "mbed" | "zephyr" (defaults to 'native')
+  boardId?: string; // Optional board ID from boards registry (e.g., "feather_nrf52840_express")
 }
 
 export interface ProjectFile {

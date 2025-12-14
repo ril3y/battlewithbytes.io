@@ -12,64 +12,64 @@ import type {
   HeaderBundle,
   LibBundle,
   Architecture,
-} from '../types';
+} from "../types";
 
-describe('Framework Types', () => {
-  it('should accept valid FrameworkId values', () => {
-    const validIds: FrameworkId[] = ['native', 'arduino', 'mbed', 'zephyr'];
+describe("Framework Types", () => {
+  it("should accept valid FrameworkId values", () => {
+    const validIds: FrameworkId[] = ["native", "arduino", "mbed", "zephyr"];
 
-    validIds.forEach(id => {
-      expect(['native', 'arduino', 'mbed', 'zephyr']).toContain(id);
+    validIds.forEach((id) => {
+      expect(["native", "arduino", "mbed", "zephyr"]).toContain(id);
     });
   });
 
-  it('should create a valid Framework object', () => {
+  it("should create a valid Framework object", () => {
     const framework: Framework = {
-      id: 'native',
-      name: 'Native STM32Cube HAL',
-      description: 'Native STM32Cube Hardware Abstraction Layer',
-      version: '1.0.0',
-      compilerFlags: ['-DUSE_HAL_DRIVER'],
+      id: "native",
+      name: "Native STM32Cube HAL",
+      description: "Native STM32Cube Hardware Abstraction Layer",
+      version: "1.0.0",
+      compilerFlags: ["-DUSE_HAL_DRIVER"],
       linkerFlags: [],
-      defines: ['STM32F1', 'USE_HAL_DRIVER'],
-      includePaths: ['/hal/include', '/cmsis/include'],
+      defines: ["STM32F1", "USE_HAL_DRIVER"],
+      includePaths: ["/hal/include", "/cmsis/include"],
     };
 
-    expect(framework.id).toBe('native');
-    expect(framework.name).toBe('Native STM32Cube HAL');
+    expect(framework.id).toBe("native");
+    expect(framework.name).toBe("Native STM32Cube HAL");
     expect(framework.compilerFlags).toHaveLength(1);
-    expect(framework.defines).toContain('USE_HAL_DRIVER');
+    expect(framework.defines).toContain("USE_HAL_DRIVER");
   });
 
-  it('should create a Framework with optional fields', () => {
+  it("should create a Framework with optional fields", () => {
     const arduinoFramework: Framework = {
-      id: 'arduino',
-      name: 'Arduino Framework',
-      description: 'Arduino API for embedded systems',
-      version: '1.8.19',
-      compilerFlags: ['-DARDUINO=10819'],
-      linkerFlags: ['-lm'],
-      defines: ['ARDUINO'],
-      includePaths: ['/cores/arduino', '/variants/standard'],
-      coreUrl: 'https://example.com/arduino-core.tar.gz',
-      coreChecksum: 'sha256:abc123...',
-      variantsUrl: 'https://example.com/arduino-variants.tar.gz',
+      id: "arduino",
+      name: "Arduino Framework",
+      description: "Arduino API for embedded systems",
+      version: "1.8.19",
+      compilerFlags: ["-DARDUINO=10819"],
+      linkerFlags: ["-lm"],
+      defines: ["ARDUINO"],
+      includePaths: ["/cores/arduino", "/variants/standard"],
+      coreUrl: "https://example.com/arduino-core.tar.gz",
+      coreChecksum: "sha256:abc123...",
+      variantsUrl: "https://example.com/arduino-variants.tar.gz",
       requiresPreprocessing: true,
-      fileExtension: '.ino',
+      fileExtension: ".ino",
     };
 
     expect(arduinoFramework.requiresPreprocessing).toBe(true);
-    expect(arduinoFramework.fileExtension).toBe('.ino');
+    expect(arduinoFramework.fileExtension).toBe(".ino");
     expect(arduinoFramework.coreUrl).toBeDefined();
     expect(arduinoFramework.variantsUrl).toBeDefined();
   });
 
-  it('should create a valid FrameworkSupport object', () => {
+  it("should create a valid FrameworkSupport object", () => {
     const framework: Framework = {
-      id: 'arduino',
-      name: 'Arduino Framework',
-      description: 'Arduino API for STM32',
-      version: '2.0.0',
+      id: "arduino",
+      name: "Arduino Framework",
+      description: "Arduino API for STM32",
+      version: "2.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
@@ -77,64 +77,64 @@ describe('Framework Types', () => {
     };
 
     const frameworkSupport: FrameworkSupport = {
-      frameworkId: 'arduino',
+      frameworkId: "arduino",
       enabled: true,
-      version: '2.0.0',
+      version: "2.0.0",
       framework: framework,
     };
 
-    expect(frameworkSupport.frameworkId).toBe('arduino');
+    expect(frameworkSupport.frameworkId).toBe("arduino");
     expect(frameworkSupport.enabled).toBe(true);
-    expect(frameworkSupport.framework.id).toBe('arduino');
+    expect(frameworkSupport.framework.id).toBe("arduino");
   });
 });
 
-describe('PlatformFamily with Frameworks', () => {
-  it('should create a PlatformFamily without frameworks', () => {
+describe("PlatformFamily with Frameworks", () => {
+  it("should create a PlatformFamily without frameworks", () => {
     const devices: DeviceEntry[] = [
       {
-        id: 'stm32f103c8',
-        name: 'STM32F103C8T6',
+        id: "stm32f103c8",
+        name: "STM32F103C8T6",
         flash: 65536,
         ram: 20480,
-        linkerScript: 'stm32f103c8.ld',
+        linkerScript: "stm32f103c8.ld",
       },
     ];
 
     const headers: HeaderBundle = {
-      url: 'stm32/f1/headers.tar.gz',
+      url: "stm32/f1/headers.tar.gz",
       size: 1024000,
-      checksum: 'sha256:def456...',
-      includes: ['/cmsis', '/device'],
+      checksum: "sha256:def456...",
+      includes: ["/cmsis", "/device"],
     };
 
     const libs: LibBundle = {
-      architecture: 'cortex-m3' as Architecture,
-      required: ['libc_nano.a', 'libnosys.a'],
-      optional: ['libm.a'],
+      architecture: "cortex-m3" as Architecture,
+      required: ["libc_nano.a", "libnosys.a"],
+      optional: ["libm.a"],
     };
 
     const family: PlatformFamily = {
-      id: 'f1',
-      name: 'STM32F1 Series',
-      architecture: 'cortex-m3',
+      id: "f1",
+      name: "STM32F1 Series",
+      architecture: "cortex-m3",
       devices: devices,
       headers: headers,
       libs: libs,
-      compilerFlags: ['-mcpu=cortex-m3', '-mthumb'],
-      linkerFlags: ['-nostdlib'],
+      compilerFlags: ["-mcpu=cortex-m3", "-mthumb"],
+      linkerFlags: ["-nostdlib"],
     };
 
-    expect(family.id).toBe('f1');
+    expect(family.id).toBe("f1");
     expect(family.frameworks).toBeUndefined();
   });
 
-  it('should create a PlatformFamily with frameworks array', () => {
+  it("should create a PlatformFamily with frameworks array", () => {
     const nativeFramework: Framework = {
-      id: 'native',
-      name: 'Native HAL',
-      description: 'Native hardware abstraction',
-      version: '1.0.0',
+      id: "native",
+      name: "Native HAL",
+      description: "Native hardware abstraction",
+      version: "1.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
@@ -142,46 +142,46 @@ describe('PlatformFamily with Frameworks', () => {
     };
 
     const arduinoFramework: Framework = {
-      id: 'arduino',
-      name: 'Arduino',
-      description: 'Arduino framework',
-      version: '2.0.0',
+      id: "arduino",
+      name: "Arduino",
+      description: "Arduino framework",
+      version: "2.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
       includePaths: [],
       requiresPreprocessing: true,
-      fileExtension: '.ino',
+      fileExtension: ".ino",
     };
 
     const frameworks: FrameworkSupport[] = [
       {
-        frameworkId: 'native',
+        frameworkId: "native",
         enabled: true,
-        version: '1.0.0',
+        version: "1.0.0",
         framework: nativeFramework,
       },
       {
-        frameworkId: 'arduino',
+        frameworkId: "arduino",
         enabled: true,
-        version: '2.0.0',
+        version: "2.0.0",
         framework: arduinoFramework,
       },
     ];
 
     const family: PlatformFamily = {
-      id: 'f1',
-      name: 'STM32F1 Series',
-      architecture: 'cortex-m3',
+      id: "f1",
+      name: "STM32F1 Series",
+      architecture: "cortex-m3",
       devices: [],
       headers: {
-        url: 'headers.tar.gz',
+        url: "headers.tar.gz",
         size: 1024,
-        checksum: 'sha256:123',
+        checksum: "sha256:123",
         includes: [],
       },
       libs: {
-        architecture: 'cortex-m3',
+        architecture: "cortex-m3",
         required: [],
         optional: [],
       },
@@ -191,22 +191,22 @@ describe('PlatformFamily with Frameworks', () => {
 
     expect(family.frameworks).toBeDefined();
     expect(family.frameworks).toHaveLength(2);
-    expect(family.frameworks?.[0].frameworkId).toBe('native');
-    expect(family.frameworks?.[1].frameworkId).toBe('arduino');
+    expect(family.frameworks?.[0].frameworkId).toBe("native");
+    expect(family.frameworks?.[1].frameworkId).toBe("arduino");
     expect(family.frameworks?.[1].framework.requiresPreprocessing).toBe(true);
   });
 
-  it('should filter enabled frameworks', () => {
+  it("should filter enabled frameworks", () => {
     const frameworks: FrameworkSupport[] = [
       {
-        frameworkId: 'native',
+        frameworkId: "native",
         enabled: true,
-        version: '1.0.0',
+        version: "1.0.0",
         framework: {
-          id: 'native',
-          name: 'Native',
-          description: 'Native',
-          version: '1.0.0',
+          id: "native",
+          name: "Native",
+          description: "Native",
+          version: "1.0.0",
           compilerFlags: [],
           linkerFlags: [],
           defines: [],
@@ -214,14 +214,14 @@ describe('PlatformFamily with Frameworks', () => {
         },
       },
       {
-        frameworkId: 'arduino',
+        frameworkId: "arduino",
         enabled: false,
-        version: '2.0.0',
+        version: "2.0.0",
         framework: {
-          id: 'arduino',
-          name: 'Arduino',
-          description: 'Arduino',
-          version: '2.0.0',
+          id: "arduino",
+          name: "Arduino",
+          description: "Arduino",
+          version: "2.0.0",
           compilerFlags: [],
           linkerFlags: [],
           defines: [],
@@ -230,54 +230,54 @@ describe('PlatformFamily with Frameworks', () => {
       },
     ];
 
-    const enabledFrameworks = frameworks.filter(f => f.enabled);
+    const enabledFrameworks = frameworks.filter((f) => f.enabled);
 
     expect(enabledFrameworks).toHaveLength(1);
-    expect(enabledFrameworks[0].frameworkId).toBe('native');
+    expect(enabledFrameworks[0].frameworkId).toBe("native");
   });
 });
 
-describe('Framework Build Configuration', () => {
-  it('should merge framework flags with platform flags', () => {
-    const platformFlags = ['-mcpu=cortex-m3', '-mthumb'];
+describe("Framework Build Configuration", () => {
+  it("should merge framework flags with platform flags", () => {
+    const platformFlags = ["-mcpu=cortex-m3", "-mthumb"];
 
     const framework: Framework = {
-      id: 'arduino',
-      name: 'Arduino',
-      description: 'Arduino framework',
-      version: '1.0.0',
-      compilerFlags: ['-DARDUINO=10819', '-DF_CPU=72000000L'],
-      linkerFlags: ['-lm'],
-      defines: ['ARDUINO', 'ARDUINO_ARCH_STM32'],
-      includePaths: ['/cores/arduino', '/variants/bluepill'],
+      id: "arduino",
+      name: "Arduino",
+      description: "Arduino framework",
+      version: "1.0.0",
+      compilerFlags: ["-DARDUINO=10819", "-DF_CPU=72000000L"],
+      linkerFlags: ["-lm"],
+      defines: ["ARDUINO", "ARDUINO_ARCH_STM32"],
+      includePaths: ["/cores/arduino", "/variants/bluepill"],
     };
 
     const mergedFlags = [...platformFlags, ...framework.compilerFlags];
 
     expect(mergedFlags).toHaveLength(4);
-    expect(mergedFlags).toContain('-mcpu=cortex-m3');
-    expect(mergedFlags).toContain('-DARDUINO=10819');
+    expect(mergedFlags).toContain("-mcpu=cortex-m3");
+    expect(mergedFlags).toContain("-DARDUINO=10819");
   });
 
-  it('should handle framework-specific preprocessing', () => {
+  it("should handle framework-specific preprocessing", () => {
     const arduinoFramework: Framework = {
-      id: 'arduino',
-      name: 'Arduino',
-      description: 'Arduino framework',
-      version: '1.0.0',
+      id: "arduino",
+      name: "Arduino",
+      description: "Arduino framework",
+      version: "1.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
       includePaths: [],
       requiresPreprocessing: true,
-      fileExtension: '.ino',
+      fileExtension: ".ino",
     };
 
     const nativeFramework: Framework = {
-      id: 'native',
-      name: 'Native',
-      description: 'Native framework',
-      version: '1.0.0',
+      id: "native",
+      name: "Native",
+      description: "Native framework",
+      version: "1.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
@@ -285,31 +285,31 @@ describe('Framework Build Configuration', () => {
     };
 
     expect(arduinoFramework.requiresPreprocessing).toBe(true);
-    expect(arduinoFramework.fileExtension).toBe('.ino');
+    expect(arduinoFramework.fileExtension).toBe(".ino");
     expect(nativeFramework.requiresPreprocessing).toBeUndefined();
     expect(nativeFramework.fileExtension).toBeUndefined();
   });
 });
 
-describe('Type Safety', () => {
-  it('should enforce FrameworkId type constraints', () => {
+describe("Type Safety", () => {
+  it("should enforce FrameworkId type constraints", () => {
     // This test verifies compile-time type safety
-    const validId: FrameworkId = 'native';
-    const anotherValidId: FrameworkId = 'arduino';
+    const validId: FrameworkId = "native";
+    const anotherValidId: FrameworkId = "arduino";
 
     // TypeScript would catch invalid values at compile time
     // For example: const invalidId: FrameworkId = 'invalid'; // TS Error
 
-    expect(validId).toBe('native');
-    expect(anotherValidId).toBe('arduino');
+    expect(validId).toBe("native");
+    expect(anotherValidId).toBe("arduino");
   });
 
-  it('should ensure Framework.id matches FrameworkSupport.frameworkId', () => {
+  it("should ensure Framework.id matches FrameworkSupport.frameworkId", () => {
     const framework: Framework = {
-      id: 'mbed',
-      name: 'Mbed OS',
-      description: 'ARM Mbed OS',
-      version: '6.0.0',
+      id: "mbed",
+      name: "Mbed OS",
+      description: "ARM Mbed OS",
+      version: "6.0.0",
       compilerFlags: [],
       linkerFlags: [],
       defines: [],
@@ -317,9 +317,9 @@ describe('Type Safety', () => {
     };
 
     const support: FrameworkSupport = {
-      frameworkId: 'mbed',
+      frameworkId: "mbed",
       enabled: true,
-      version: '6.0.0',
+      version: "6.0.0",
       framework: framework,
     };
 
