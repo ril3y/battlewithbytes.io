@@ -1,23 +1,24 @@
-import type { ProjectTemplate } from './types';
+import type { ProjectTemplate } from "./types";
 
 /**
  * STM32 Blink Template
  * LED blink example for STM32F103C8T6 (Blue Pill)
  */
 const stm32BlinkTemplate: ProjectTemplate = {
-  id: 'stm32-blink',
-  name: 'STM32 LED Blink',
-  description: 'Blink the onboard LED on STM32F103C8T6 (Blue Pill)',
-  icon: '💡',
+  id: "stm32-blink",
+  name: "STM32 LED Blink",
+  description: "Blink the onboard LED on STM32F103C8T6 (Blue Pill)",
+  icon: "💡",
+  framework: "native",
   platformPreset: {
-    platformId: 'stm32',
-    familyId: 'f1',
-    deviceId: 'stm32f103c8',
-    frameworkId: 'native',
+    platformId: "stm32",
+    familyId: "f1",
+    deviceId: "stm32f103c8",
+    frameworkId: "native",
   },
   files: [
     {
-      path: '/src/main.c',
+      path: "/src/main.c",
       editable: true,
       content: `/**
  * STM32F103C8T6 (Blue Pill) LED Blink Example
@@ -143,7 +144,7 @@ int main(void) {
 `,
     },
     {
-      path: '/libs/utils.h',
+      path: "/libs/utils.h",
       editable: true,
       content: `/**
  * Utility Library Header
@@ -183,7 +184,7 @@ uint32_t utils_clamp(uint32_t value, uint32_t min, uint32_t max);
 `,
     },
     {
-      path: '/libs/utils.c',
+      path: "/libs/utils.c",
       editable: true,
       content: `/**
  * Utility Library Implementation
@@ -218,19 +219,20 @@ uint32_t utils_clamp(uint32_t value, uint32_t min, uint32_t max) {
  * Simple UART echo example for STM32F103C8T6
  */
 const stm32UartEchoTemplate: ProjectTemplate = {
-  id: 'stm32-uart-echo',
-  name: 'STM32 UART Echo',
-  description: 'Echo characters received on USART1 (PA9/PA10)',
-  icon: '📡',
+  id: "stm32-uart-echo",
+  name: "STM32 UART Echo",
+  description: "Echo characters received on USART1 (PA9/PA10)",
+  icon: "📡",
+  framework: "native",
   platformPreset: {
-    platformId: 'stm32',
-    familyId: 'f1',
-    deviceId: 'stm32f103c8',
-    frameworkId: 'native',
+    platformId: "stm32",
+    familyId: "f1",
+    deviceId: "stm32f103c8",
+    frameworkId: "native",
   },
   files: [
     {
-      path: '/src/main.c',
+      path: "/src/main.c",
       editable: true,
       content: `/**
  * STM32F103C8T6 UART Echo Example
@@ -384,19 +386,20 @@ int main(void) {
  * FreeRTOS example with two tasks for STM32F103C8T6
  */
 const stm32FreeRtosTemplate: ProjectTemplate = {
-  id: 'stm32-freertos',
-  name: 'STM32 FreeRTOS',
-  description: 'FreeRTOS with two LED blink tasks on STM32F103C8T6',
-  icon: '⚡',
+  id: "stm32-freertos",
+  name: "STM32 FreeRTOS",
+  description: "FreeRTOS with two LED blink tasks on STM32F103C8T6",
+  icon: "⚡",
+  framework: "native",
   platformPreset: {
-    platformId: 'stm32',
-    familyId: 'f1',
-    deviceId: 'stm32f103c8',
-    frameworkId: 'native',
+    platformId: "stm32",
+    familyId: "f1",
+    deviceId: "stm32f103c8",
+    frameworkId: "native",
   },
   files: [
     {
-      path: '/src/main.c',
+      path: "/src/main.c",
       editable: true,
       content: `/**
  * STM32F103C8T6 FreeRTOS Example
@@ -546,22 +549,27 @@ int main(void) {
 
 /**
  * Arduino Blink Template
- * Classic Arduino blink example for STM32
+ * Classic Arduino blink example - works with any ARM Cortex-M platform supporting Arduino
  */
 const arduinoBlinkTemplate: ProjectTemplate = {
-  id: 'arduino-blink',
-  name: 'Arduino Blink',
-  description: 'Classic Arduino LED blink using digitalWrite()',
-  icon: '🔵',
-  platformPreset: {
-    platformId: 'stm32',
-    familyId: 'f1',
-    deviceId: 'stm32f103c8',
-    frameworkId: 'arduino',
-  },
+  id: "arduino-blink",
+  name: "Arduino Blink",
+  description: "Classic Arduino LED blink using digitalWrite()",
+  icon: "🔵",
+  framework: "arduino",
+  architectureRequirements: [
+    "cortex-m0",
+    "cortex-m0+",
+    "cortex-m3",
+    "cortex-m4",
+    "cortex-m4f",
+    "cortex-m7",
+    "cortex-m7f",
+  ],
+  platformPreset: null, // User selects platform in wizard
   files: [
     {
-      path: '/src/Blink.ino',
+      path: "/src/Blink.ino",
       editable: true,
       content: `/**
  * Arduino Blink Example for STM32F103C8 (Blue Pill)
@@ -605,22 +613,27 @@ void loop() {
 
 /**
  * Arduino Serial Template
- * Arduino serial communication example
+ * Arduino serial communication example - works with any ARM Cortex-M platform supporting Arduino
  */
 const arduinoSerialTemplate: ProjectTemplate = {
-  id: 'arduino-serial',
-  name: 'Arduino Serial',
-  description: 'Serial communication using Arduino Serial API',
-  icon: '🔵',
-  platformPreset: {
-    platformId: 'stm32',
-    familyId: 'f1',
-    deviceId: 'stm32f103c8',
-    frameworkId: 'arduino',
-  },
+  id: "arduino-serial",
+  name: "Arduino Serial",
+  description: "Serial communication using Arduino Serial API",
+  icon: "🔵",
+  framework: "arduino",
+  architectureRequirements: [
+    "cortex-m0",
+    "cortex-m0+",
+    "cortex-m3",
+    "cortex-m4",
+    "cortex-m4f",
+    "cortex-m7",
+    "cortex-m7f",
+  ],
+  platformPreset: null, // User selects platform in wizard
   files: [
     {
-      path: '/src/Serial.ino',
+      path: "/src/Serial.ino",
       editable: true,
       content: `/**
  * Arduino Serial Example for STM32F103C8 (Blue Pill)
@@ -688,14 +701,14 @@ void loop() {
  * Minimal starting point for any project
  */
 const blankProjectTemplate: ProjectTemplate = {
-  id: 'blank',
-  name: 'Blank Project',
-  description: 'Empty project with minimal startup code',
-  icon: '📄',
+  id: "blank",
+  name: "Blank Project",
+  description: "Empty project with minimal startup code",
+  icon: "📄",
   platformPreset: null,
   files: [
     {
-      path: '/src/main.c',
+      path: "/src/main.c",
       editable: true,
       content: `/**
  * Blank Project
@@ -730,5 +743,56 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
  * Get a template by ID
  */
 export function getTemplateById(id: string): ProjectTemplate | null {
-  return PROJECT_TEMPLATES.find(t => t.id === id) || null;
+  return PROJECT_TEMPLATES.find((t) => t.id === id) || null;
+}
+
+/**
+ * Get all templates that require a specific framework
+ * @param framework - The framework ID to filter by
+ * @returns Array of templates requiring the specified framework
+ */
+export function getTemplatesByFramework(framework: string): ProjectTemplate[] {
+  return PROJECT_TEMPLATES.filter((t) => t.framework === framework);
+}
+
+/**
+ * Get all templates compatible with a specific platform
+ * Checks architecture requirements against the platform's architecture
+ * @param platformId - Platform ID (e.g., 'stm32')
+ * @param familyId - Family ID (e.g., 'f1')
+ * @param architecture - Platform architecture (e.g., 'cortex-m3')
+ * @returns Array of compatible templates
+ */
+export function getTemplatesForPlatform(
+  platformId: string,
+  familyId: string,
+  architecture: string,
+): ProjectTemplate[] {
+  return PROJECT_TEMPLATES.filter((template) => {
+    // Templates without architecture requirements are compatible with all platforms
+    if (!template.architectureRequirements) {
+      return true;
+    }
+
+    // Check if platform's architecture is in the template's requirements
+    return template.architectureRequirements.includes(architecture as any);
+  });
+}
+
+/**
+ * Check if a template is compatible with a specific platform
+ * @param template - The template to check
+ * @param architecture - Platform architecture (e.g., 'cortex-m3')
+ * @returns true if compatible, false otherwise
+ */
+export function isTemplateCompatibleWithPlatform(
+  template: ProjectTemplate,
+  architecture: string,
+): boolean {
+  // No architecture requirements means compatible with all
+  if (!template.architectureRequirements) {
+    return true;
+  }
+
+  return template.architectureRequirements.includes(architecture as any);
 }

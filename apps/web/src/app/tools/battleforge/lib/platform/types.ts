@@ -22,17 +22,17 @@ export interface PlatformRegistry {
  * Top-level platform entry (e.g., STM32, ESP32, NXP)
  */
 export interface PlatformEntry {
-  id: string;           // "stm32"
-  name: string;         // "STMicroelectronics STM32"
+  id: string; // "stm32"
+  name: string; // "STMicroelectronics STM32"
   description?: string;
   manufacturer?: string; // "STMicroelectronics"
-  icon?: string;        // "stm32.svg"
-  color?: string;       // Brand color "#03234B"
-  website?: string;     // Official website
-  github?: string;      // GitHub organization URL
-  families: string[];   // ["f1", "f4", "l4"]
-  tags?: string[];      // ["arm", "cortex-m", "industrial"]
-  supported: boolean;   // true if we have toolchain support
+  icon?: string; // "stm32.svg"
+  color?: string; // Brand color "#03234B"
+  website?: string; // Official website
+  github?: string; // GitHub organization URL
+  families: string[]; // ["f1", "f4", "l4"]
+  tags?: string[]; // ["arm", "cortex-m", "industrial"]
+  supported: boolean; // true if we have toolchain support
   comingSoon?: boolean; // true if planned for future
 }
 
@@ -65,7 +65,7 @@ export interface LibraryRegistry {
 /**
  * Framework IDs - Supported software frameworks
  */
-export type FrameworkId = 'native' | 'arduino' | 'mbed' | 'zephyr';
+export type FrameworkId = "native" | "arduino" | "mbed" | "zephyr";
 
 /**
  * Framework definition - Software framework for a platform
@@ -83,13 +83,13 @@ export interface Framework {
   includePaths: string[];
 
   // Resources
-  coreUrl?: string;         // URL to core files tar.gz
+  coreUrl?: string; // URL to core files tar.gz
   coreChecksum?: string;
-  variantsUrl?: string;     // URL to variants tar.gz
+  variantsUrl?: string; // URL to variants tar.gz
 
   // Preprocessing
-  requiresPreprocessing?: boolean;  // true for Arduino (.ino → .cpp)
-  fileExtension?: string;           // e.g., '.ino' for Arduino
+  requiresPreprocessing?: boolean; // true for Arduino (.ino → .cpp)
+  fileExtension?: string; // e.g., '.ino' for Arduino
 }
 
 /**
@@ -110,29 +110,29 @@ export interface FrameworkSupport {
  * Platform family definition - fetched from /platforms/{platform}/{family}/family.json
  */
 export interface PlatformFamily {
-  id: string;                     // "f1"
-  name: string;                   // "STM32F1 Series (Cortex-M3)"
+  id: string; // "f1"
+  name: string; // "STM32F1 Series (Cortex-M3)"
   description?: string;
-  architecture: Architecture;      // "cortex-m3"
+  architecture: Architecture; // "cortex-m3"
   devices: DeviceEntry[];
   headers: HeaderBundle;
   libs: LibBundle;
   compilerFlags: string[];
   linkerFlags?: string[];
-  frameworks?: FrameworkSupport[];  // Supported frameworks for this family
+  frameworks?: FrameworkSupport[]; // Supported frameworks for this family
 }
 
 /**
  * Device entry within a family
  */
 export interface DeviceEntry {
-  id: string;           // "stm32f103c8"
-  name: string;         // "STM32F103C8T6 (Blue Pill)"
+  id: string; // "stm32f103c8"
+  name: string; // "STM32F103C8T6 (Blue Pill)"
   description?: string;
-  flash: number;        // 65536 (bytes)
-  ram: number;          // 20480 (bytes)
+  flash: number; // 65536 (bytes)
+  ram: number; // 20480 (bytes)
   linkerScript: string; // "stm32f103c8.ld"
-  defines?: string[];   // ["STM32F103xB"]
+  defines?: string[]; // ["STM32F103xB"]
 }
 
 // ============================================================================
@@ -143,10 +143,10 @@ export interface DeviceEntry {
  * Header files bundle
  */
 export interface HeaderBundle {
-  url: string;          // Relative to /platforms/ - e.g., "stm32/f1/headers.tar.gz"
-  size: number;         // Compressed size in bytes
-  checksum: string;     // "sha256:abc123..."
-  includes: string[];   // Include paths relative to extracted root ["/cmsis", "/device"]
+  url: string; // Relative to /platforms/ - e.g., "stm32/f1/headers.tar.gz"
+  size: number; // Compressed size in bytes
+  checksum: string; // "sha256:abc123..."
+  includes: string[]; // Include paths relative to extracted root ["/cmsis", "/device"]
 }
 
 /**
@@ -154,8 +154,8 @@ export interface HeaderBundle {
  */
 export interface LibBundle {
   architecture: Architecture;
-  required: string[];   // ["libc_nano.a", "libnosys.a"]
-  optional: string[];   // ["libm.a", "libgcc.a"]
+  required: string[]; // ["libc_nano.a", "libnosys.a"]
+  optional: string[]; // ["libm.a", "libgcc.a"]
 }
 
 // ============================================================================
@@ -166,86 +166,94 @@ export interface LibBundle {
  * Supported CPU architectures
  */
 export type Architecture =
-  | 'cortex-m0'
-  | 'cortex-m0+'
-  | 'cortex-m3'
-  | 'cortex-m4'
-  | 'cortex-m4f'
-  | 'cortex-m7'
-  | 'cortex-m7f'
-  | 'xtensa-lx6'   // ESP32
-  | 'xtensa-lx7'   // ESP32-S2/S3
-  | 'riscv32';     // ESP32-C3
+  | "cortex-m0"
+  | "cortex-m0+"
+  | "cortex-m3"
+  | "cortex-m4"
+  | "cortex-m4f"
+  | "cortex-m7"
+  | "cortex-m7f"
+  | "cortex-m33" // nRF53
+  | "xtensa-lx6" // ESP32
+  | "xtensa-lx7" // ESP32-S2/S3
+  | "riscv32"; // ESP32-C3
 
 /**
  * Architecture-specific configuration
  */
 export interface ArchitectureConfig {
-  target: string;       // Clang target triple - "thumbv7m-none-eabi"
-  cpu: string;          // "-mcpu=cortex-m3"
-  fpu?: string;         // "-mfpu=fpv4-sp-d16"
-  float?: string;       // "-mfloat-abi=hard"
-  libPath: string;      // Path under /libs/ - "cortex-m3"
+  target: string; // Clang target triple - "thumbv7m-none-eabi"
+  cpu: string; // "-mcpu=cortex-m3"
+  fpu?: string; // "-mfpu=fpv4-sp-d16"
+  float?: string; // "-mfloat-abi=hard"
+  libPath: string; // Path under /libs/ - "cortex-m3"
 }
 
 /**
  * Map of architecture to configuration
  */
 export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
-  'cortex-m0': {
-    target: 'thumbv6m-none-eabi',
-    cpu: 'cortex-m0',
-    libPath: 'cortex-m0'
+  "cortex-m0": {
+    target: "thumbv6m-none-eabi",
+    cpu: "cortex-m0",
+    libPath: "cortex-m0",
   },
-  'cortex-m0+': {
-    target: 'thumbv6m-none-eabi',
-    cpu: 'cortex-m0plus',
-    libPath: 'cortex-m0'
+  "cortex-m0+": {
+    target: "thumbv6m-none-eabi",
+    cpu: "cortex-m0plus",
+    libPath: "cortex-m0",
   },
-  'cortex-m3': {
-    target: 'thumbv7m-none-eabi',
-    cpu: 'cortex-m3',
-    libPath: 'cortex-m3'
+  "cortex-m3": {
+    target: "thumbv7m-none-eabi",
+    cpu: "cortex-m3",
+    libPath: "cortex-m3",
   },
-  'cortex-m4': {
-    target: 'thumbv7em-none-eabi',
-    cpu: 'cortex-m4',
-    libPath: 'cortex-m4'
+  "cortex-m4": {
+    target: "thumbv7em-none-eabi",
+    cpu: "cortex-m4",
+    libPath: "cortex-m4",
   },
-  'cortex-m4f': {
-    target: 'thumbv7em-none-eabihf',
-    cpu: 'cortex-m4',
-    fpu: 'fpv4-sp-d16',
-    float: 'hard',
-    libPath: 'cortex-m4f'
+  "cortex-m4f": {
+    target: "thumbv7em-none-eabihf",
+    cpu: "cortex-m4",
+    fpu: "fpv4-sp-d16",
+    float: "hard",
+    libPath: "cortex-m4f",
   },
-  'cortex-m7': {
-    target: 'thumbv7em-none-eabi',
-    cpu: 'cortex-m7',
-    libPath: 'cortex-m7'
+  "cortex-m7": {
+    target: "thumbv7em-none-eabi",
+    cpu: "cortex-m7",
+    libPath: "cortex-m7",
   },
-  'cortex-m7f': {
-    target: 'thumbv7em-none-eabihf',
-    cpu: 'cortex-m7',
-    fpu: 'fpv5-d16',
-    float: 'hard',
-    libPath: 'cortex-m7f'
+  "cortex-m7f": {
+    target: "thumbv7em-none-eabihf",
+    cpu: "cortex-m7",
+    fpu: "fpv5-d16",
+    float: "hard",
+    libPath: "cortex-m7f",
   },
-  'xtensa-lx6': {
-    target: 'xtensa-esp32-elf',
-    cpu: 'esp32',
-    libPath: 'esp32'
+  "cortex-m33": {
+    target: "thumbv8m.main-none-eabihf",
+    cpu: "cortex-m33",
+    fpu: "fpv5-sp-d16",
+    float: "hard",
+    libPath: "cortex-m33",
   },
-  'xtensa-lx7': {
-    target: 'xtensa-esp32s3-elf',
-    cpu: 'esp32s3',
-    libPath: 'esp32s3'
+  "xtensa-lx6": {
+    target: "xtensa-esp32-elf",
+    cpu: "esp32",
+    libPath: "esp32",
   },
-  'riscv32': {
-    target: 'riscv32-unknown-elf',
-    cpu: 'generic-rv32',
-    libPath: 'riscv32'
-  }
+  "xtensa-lx7": {
+    target: "xtensa-esp32s3-elf",
+    cpu: "esp32s3",
+    libPath: "esp32s3",
+  },
+  riscv32: {
+    target: "riscv32-unknown-elf",
+    cpu: "generic-rv32",
+    libPath: "riscv32",
+  },
 };
 
 // ============================================================================
@@ -256,16 +264,16 @@ export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
  * Loading progress for WASM/platform assets
  */
 export interface LoadingProgress {
-  stage: 'idle' | 'downloading' | 'extracting' | 'ready' | 'error';
-  current: number;      // Bytes loaded
-  total: number;        // Total bytes
+  stage: "idle" | "downloading" | "extracting" | "ready" | "error";
+  current: number; // Bytes loaded
+  total: number; // Total bytes
   message: string;
 }
 
 /**
  * Component loading state
  */
-export type ComponentState = 'idle' | 'loading' | 'ready' | 'error';
+export type ComponentState = "idle" | "loading" | "ready" | "error";
 
 /**
  * Toolchain state
@@ -287,7 +295,7 @@ export interface SelectedPlatform {
   family: PlatformFamily;
   device: DeviceEntry;
   archConfig: ArchitectureConfig;
-  frameworkId?: FrameworkId;  // Optional framework selection (defaults to 'native')
+  frameworkId?: FrameworkId; // Optional framework selection (defaults to 'native')
 }
 
 // ============================================================================

@@ -1,0 +1,173 @@
+{
+  "id": "c3",
+  "name": "ESP32-C3 Series (RISC-V)",
+  "description": "Single-core RISC-V MCU with WiFi and BLE. Cost-effective solution for IoT applications.",
+  "architecture": "riscv32",
+  "releaseYear": 2020,
+  "status": "active",
+  "documentation": {
+    "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32-c3_datasheet_en.pdf",
+    "reference": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/",
+    "programming": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-guides/index.html"
+  },
+  "features": {
+    "maxFrequency": 160,
+    "fpu": true,
+    "dsp": false,
+    "mpu": true,
+    "peripherals": ["WiFi", "BLE", "USB-Serial-JTAG", "I2C", "SPI", "UART", "ADC", "Timer", "DMA", "GPIO", "RTC"]
+  },
+  "compilerFlags": [
+    "--target=riscv32-unknown-elf",
+    "-march=rv32imc",
+    "-mabi=ilp32",
+    "-nostdlib",
+    "-ffreestanding",
+    "-fno-exceptions",
+    "-fno-rtti"
+  ],
+  "linkerFlags": [
+    "-nostdlib",
+    "--gc-sections"
+  ],
+  "devices": [
+    {
+      "id": "esp32c3_wroom02",
+      "name": "ESP32-C3-WROOM-02",
+      "description": "4MB Flash, 400KB SRAM, WiFi+BLE - Standard module",
+      "flash": 4194304,
+      "ram": 409600,
+      "package": "SMD-18",
+      "pins": 18,
+      "linkerScript": "esp32c3.ld",
+      "defines": ["CONFIG_IDF_TARGET_ESP32C3", "ESP32C3"],
+      "boards": [
+        {
+          "name": "ESP32-C3-WROOM-02",
+          "led": "GPIO8",
+          "crystal": 40000000,
+          "buy": "https://www.espressif.com/en/products/modules"
+        }
+      ]
+    },
+    {
+      "id": "esp32c3_devkitm",
+      "name": "ESP32-C3-DevKitM-1",
+      "description": "4MB Flash, 400KB SRAM, WiFi+BLE - Development board",
+      "flash": 4194304,
+      "ram": 409600,
+      "package": "Development Board",
+      "pins": 22,
+      "linkerScript": "esp32c3.ld",
+      "defines": ["CONFIG_IDF_TARGET_ESP32C3", "ESP32C3", "ARDUINO_ESP32C3_DEV"],
+      "boards": [
+        {
+          "name": "ESP32-C3-DevKitM-1",
+          "led": "GPIO8",
+          "crystal": 40000000,
+          "buy": "https://www.espressif.com/en/products/devkits/esp32-c3-devkitm-1"
+        }
+      ]
+    },
+    {
+      "id": "esp32c3_devkitc",
+      "name": "ESP32-C3-DevKitC-02",
+      "description": "4MB Flash, 400KB SRAM, WiFi+BLE - Development board with USB-C",
+      "flash": 4194304,
+      "ram": 409600,
+      "package": "Development Board",
+      "pins": 22,
+      "linkerScript": "esp32c3.ld",
+      "defines": ["CONFIG_IDF_TARGET_ESP32C3", "ESP32C3", "ARDUINO_ESP32C3_DEV"],
+      "boards": [
+        {
+          "name": "ESP32-C3-DevKitC-02",
+          "led": "GPIO8",
+          "crystal": 40000000,
+          "buy": "https://www.espressif.com/en/products/devkits/esp32-c3-devkitc-02"
+        }
+      ]
+    }
+  ],
+  "headers": {
+    "url": "esp32/c3/headers.tar.gz",
+    "size": 200000,
+    "checksum": "sha256:pending",
+    "includes": ["/esp-idf", "/riscv", "/soc"],
+    "source": {
+      "esp-idf": "https://github.com/espressif/esp-idf",
+      "riscv": "https://github.com/espressif/riscv-gnu-toolchain"
+    }
+  },
+  "libs": {
+    "architecture": "riscv32",
+    "required": ["libc.a", "libgcc.a", "libhal.a"],
+    "optional": ["libm.a", "libstdc++.a"]
+  },
+  "frameworks": [
+    {
+      "frameworkId": "native",
+      "enabled": true,
+      "version": "5.1.0",
+      "framework": {
+        "id": "native",
+        "name": "Native (ESP-IDF)",
+        "description": "ESP-IDF bare metal development with direct register access and FreeRTOS support.",
+        "version": "5.1.0",
+        "compilerFlags": ["-nostdlib", "-ffreestanding", "-march=rv32imc", "-mabi=ilp32"],
+        "linkerFlags": ["-nostdlib", "--gc-sections"],
+        "defines": ["ESP_PLATFORM", "IDF_VER=\"v5.1\""],
+        "includePaths": ["/esp-idf/components", "/soc/esp32c3/include"]
+      }
+    },
+    {
+      "frameworkId": "arduino",
+      "enabled": true,
+      "version": "3.0.0",
+      "framework": {
+        "id": "arduino",
+        "name": "Arduino-ESP32",
+        "description": "Arduino framework for ESP32-C3 with WiFi, BLE, and extensive library support.",
+        "version": "3.0.0",
+        "compilerFlags": ["-std=gnu++17", "-fno-rtti", "-fno-exceptions", "-march=rv32imc", "-mabi=ilp32", "-Os"],
+        "linkerFlags": ["--gc-sections"],
+        "defines": ["ARDUINO=10819", "ARDUINO_ARCH_ESP32", "ARDUINO_ESP32C3_DEV", "ESP32"],
+        "includePaths": ["/cores/esp32", "/variants/esp32c3"],
+        "coreUrl": "esp32/c3/frameworks/arduino/core.tar.gz",
+        "coreChecksum": "sha256:pending",
+        "requiresPreprocessing": true,
+        "fileExtension": ".ino"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "id": "blink",
+      "name": "LED Blink",
+      "description": "Toggle LED on GPIO8",
+      "file": "examples/blink.c",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "wifi_scan",
+      "name": "WiFi Scan",
+      "description": "Scan for available WiFi networks",
+      "file": "examples/wifi_scan.c",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "ble_beacon",
+      "name": "BLE Beacon",
+      "description": "Create a BLE beacon advertising device",
+      "file": "examples/ble_beacon.c",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "low_power",
+      "name": "Low Power Mode",
+      "description": "Demonstrate deep sleep and wake-up features",
+      "file": "examples/low_power.c",
+      "difficulty": "intermediate"
+    }
+  ]
+}
