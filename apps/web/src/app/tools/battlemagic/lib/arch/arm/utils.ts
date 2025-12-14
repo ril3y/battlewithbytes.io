@@ -36,7 +36,7 @@ import {
   RegisterMetadata,
   RegisterSize,
   ArmArchitecture,
-} from './types';
+} from "./types";
 
 /**
  * ============================================================================
@@ -47,7 +47,11 @@ import {
 /**
  * Extract a bit field from a 32-bit value
  */
-export function extractBitField(value: number, startBit: number, numBits: number): number {
+export function extractBitField(
+  value: number,
+  startBit: number,
+  numBits: number,
+): number {
   const mask = (1 << numBits) - 1;
   return (value >>> startBit) & mask;
 }
@@ -66,7 +70,7 @@ export function setBitField(
   original: number,
   startBit: number,
   numBits: number,
-  value: number
+  value: number,
 ): number {
   const mask = (1 << numBits) - 1;
   const cleared = original & ~(mask << startBit);
@@ -155,7 +159,7 @@ export function decodePsr(value: number): ProgramStatusRegister {
  * Get condition code flags as string (NZCV)
  */
 export function formatConditionFlags(apsr: ApsrFlags): string {
-  return `${apsr.N ? 'N' : '-'}${apsr.Z ? 'Z' : '-'}${apsr.C ? 'C' : '-'}${apsr.V ? 'V' : '-'}`;
+  return `${apsr.N ? "N" : "-"}${apsr.Z ? "Z" : "-"}${apsr.C ? "C" : "-"}${apsr.V ? "V" : "-"}`;
 }
 
 /**
@@ -236,17 +240,19 @@ export function getCpuName(cpuid: CpuidRegister): string {
   }
 
   const partNames: Record<number, string> = {
-    0xC20: 'Cortex-M0',
-    0xC60: 'Cortex-M0+',
-    0xC21: 'Cortex-M1',
-    0xC23: 'Cortex-M3',
-    0xC24: 'Cortex-M4',
-    0xC27: 'Cortex-M7',
-    0xD20: 'Cortex-M23',
-    0xD21: 'Cortex-M33',
+    0xc20: "Cortex-M0",
+    0xc60: "Cortex-M0+",
+    0xc21: "Cortex-M1",
+    0xc23: "Cortex-M3",
+    0xc24: "Cortex-M4",
+    0xc27: "Cortex-M7",
+    0xd20: "Cortex-M23",
+    0xd21: "Cortex-M33",
   };
 
-  return partNames[cpuid.partno] || `Unknown Cortex (0x${cpuid.partno.toString(16)})`;
+  return (
+    partNames[cpuid.partno] || `Unknown Cortex (0x${cpuid.partno.toString(16)})`
+  );
 }
 
 /**
@@ -254,14 +260,15 @@ export function getCpuName(cpuid: CpuidRegister): string {
  */
 export function getArchitecture(cpuid: CpuidRegister): ArmArchitecture {
   const archMap: Record<number, ArmArchitecture> = {
-    0xC: ArmArchitecture.ARMv6M,   // ARMv6-M
-    0xF: ArmArchitecture.ARMv7M,   // ARMv7-M and ARMv7E-M
+    0xc: ArmArchitecture.ARMv6M, // ARMv6-M
+    0xf: ArmArchitecture.ARMv7M, // ARMv7-M and ARMv7E-M
   };
 
   // Default based on part number if architecture field doesn't distinguish
-  if (cpuid.architecture === 0xF) {
-    if (cpuid.partno === 0xC23) return ArmArchitecture.ARMv7M;
-    if (cpuid.partno === 0xC24 || cpuid.partno === 0xC27) return ArmArchitecture.ARMv7EM;
+  if (cpuid.architecture === 0xf) {
+    if (cpuid.partno === 0xc23) return ArmArchitecture.ARMv7M;
+    if (cpuid.partno === 0xc24 || cpuid.partno === 0xc27)
+      return ArmArchitecture.ARMv7EM;
   }
 
   return archMap[cpuid.architecture] || ArmArchitecture.ARMv7M;
@@ -315,8 +322,9 @@ export function decodeAircr(value: number): AircrRegister {
  * Encode AIRCR register (with proper key)
  */
 export function encodeAircr(aircr: Partial<AircrRegister>): number {
-  let value = 0x05FA0000; // Always include the key
-  if (aircr.PRIGROUP !== undefined) value = setBitField(value, 8, 3, aircr.PRIGROUP);
+  let value = 0x05fa0000; // Always include the key
+  if (aircr.PRIGROUP !== undefined)
+    value = setBitField(value, 8, 3, aircr.PRIGROUP);
   if (aircr.SYSRESETREQ) value = setBit(value, 2, true);
   if (aircr.VECTCLRACTIVE) value = setBit(value, 1, true);
   if (aircr.VECTRESET) value = setBit(value, 0, true);
@@ -414,27 +422,30 @@ export function describeCfsr(cfsr: CfsrRegister): string[] {
   const faults: string[] = [];
 
   // MemManage faults
-  if (cfsr.MMFSR.IACCVIOL) faults.push('MemManage: Instruction access violation');
-  if (cfsr.MMFSR.DACCVIOL) faults.push('MemManage: Data access violation');
-  if (cfsr.MMFSR.MUNSTKERR) faults.push('MemManage: Unstacking error');
-  if (cfsr.MMFSR.MSTKERR) faults.push('MemManage: Stacking error');
-  if (cfsr.MMFSR.MLSPERR) faults.push('MemManage: FP lazy state preservation error');
+  if (cfsr.MMFSR.IACCVIOL)
+    faults.push("MemManage: Instruction access violation");
+  if (cfsr.MMFSR.DACCVIOL) faults.push("MemManage: Data access violation");
+  if (cfsr.MMFSR.MUNSTKERR) faults.push("MemManage: Unstacking error");
+  if (cfsr.MMFSR.MSTKERR) faults.push("MemManage: Stacking error");
+  if (cfsr.MMFSR.MLSPERR)
+    faults.push("MemManage: FP lazy state preservation error");
 
   // BusFault faults
-  if (cfsr.BFSR.IBUSERR) faults.push('BusFault: Instruction bus error');
-  if (cfsr.BFSR.PRECISERR) faults.push('BusFault: Precise data bus error');
-  if (cfsr.BFSR.IMPRECISERR) faults.push('BusFault: Imprecise data bus error');
-  if (cfsr.BFSR.UNSTKERR) faults.push('BusFault: Unstacking error');
-  if (cfsr.BFSR.STKERR) faults.push('BusFault: Stacking error');
-  if (cfsr.BFSR.LSPERR) faults.push('BusFault: FP lazy state preservation error');
+  if (cfsr.BFSR.IBUSERR) faults.push("BusFault: Instruction bus error");
+  if (cfsr.BFSR.PRECISERR) faults.push("BusFault: Precise data bus error");
+  if (cfsr.BFSR.IMPRECISERR) faults.push("BusFault: Imprecise data bus error");
+  if (cfsr.BFSR.UNSTKERR) faults.push("BusFault: Unstacking error");
+  if (cfsr.BFSR.STKERR) faults.push("BusFault: Stacking error");
+  if (cfsr.BFSR.LSPERR)
+    faults.push("BusFault: FP lazy state preservation error");
 
   // UsageFault faults
-  if (cfsr.UFSR.UNDEFINSTR) faults.push('UsageFault: Undefined instruction');
-  if (cfsr.UFSR.INVSTATE) faults.push('UsageFault: Invalid state');
-  if (cfsr.UFSR.INVPC) faults.push('UsageFault: Invalid PC load');
-  if (cfsr.UFSR.NOCP) faults.push('UsageFault: No coprocessor');
-  if (cfsr.UFSR.UNALIGNED) faults.push('UsageFault: Unaligned access');
-  if (cfsr.UFSR.DIVBYZERO) faults.push('UsageFault: Divide by zero');
+  if (cfsr.UFSR.UNDEFINSTR) faults.push("UsageFault: Undefined instruction");
+  if (cfsr.UFSR.INVSTATE) faults.push("UsageFault: Invalid state");
+  if (cfsr.UFSR.INVPC) faults.push("UsageFault: Invalid PC load");
+  if (cfsr.UFSR.NOCP) faults.push("UsageFault: No coprocessor");
+  if (cfsr.UFSR.UNALIGNED) faults.push("UsageFault: Unaligned access");
+  if (cfsr.UFSR.DIVBYZERO) faults.push("UsageFault: Divide by zero");
 
   return faults;
 }
@@ -496,7 +507,7 @@ export function decodeDhcsr(value: number): DhcsrRegister {
  * Encode DHCSR register (with proper key)
  */
 export function encodeDhcsr(dhcsr: Partial<DhcsrRegister>): number {
-  let value = 0xA05F0000; // Always include the debug key
+  let value = 0xa05f0000; // Always include the debug key
   if (dhcsr.C_SNAPSTALL) value = setBit(value, 5, true);
   if (dhcsr.C_MASKINTS) value = setBit(value, 3, true);
   if (dhcsr.C_STEP) value = setBit(value, 2, true);
@@ -520,14 +531,14 @@ export function decodeDcrsr(value: number): DcrsrRegister {
  * Encode DCRSR for reading a register
  */
 export function encodeDcrsrRead(regNum: number): number {
-  return regNum & 0x1F;
+  return regNum & 0x1f;
 }
 
 /**
  * Encode DCRSR for writing a register
  */
 export function encodeDcrsrWrite(regNum: number): number {
-  return (1 << 16) | (regNum & 0x1F);
+  return (1 << 16) | (regNum & 0x1f);
 }
 
 /**
@@ -683,9 +694,13 @@ export function decodeFpscr(value: number): FpscrRegister {
  * Get rounding mode as string
  */
 export function getRoundingMode(fpscr: FpscrRegister): string {
-  const modes = ['RN (Round to Nearest)', 'RP (Round towards Plus Infinity)',
-                 'RM (Round towards Minus Infinity)', 'RZ (Round towards Zero)'];
-  return modes[fpscr.RMode] || 'Unknown';
+  const modes = [
+    "RN (Round to Nearest)",
+    "RP (Round towards Plus Infinity)",
+    "RM (Round towards Minus Infinity)",
+    "RZ (Round towards Zero)",
+  ];
+  return modes[fpscr.RMode] || "Unknown";
 }
 
 /**
@@ -699,32 +714,188 @@ export function getRoundingMode(fpscr: FpscrRegister): string {
  */
 export function getRegisterMetadata(name: CoreRegisterName): RegisterMetadata {
   const coreRegs: Record<CoreRegisterName, RegisterMetadata> = {
-    r0: { name: 'r0', number: 0, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 0' },
-    r1: { name: 'r1', number: 1, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 1' },
-    r2: { name: 'r2', number: 2, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 2' },
-    r3: { name: 'r3', number: 3, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 3' },
-    r4: { name: 'r4', number: 4, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 4' },
-    r5: { name: 'r5', number: 5, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 5' },
-    r6: { name: 'r6', number: 6, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 6' },
-    r7: { name: 'r7', number: 7, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 7' },
-    r8: { name: 'r8', number: 8, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 8' },
-    r9: { name: 'r9', number: 9, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 9' },
-    r10: { name: 'r10', number: 10, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 10' },
-    r11: { name: 'r11', number: 11, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 11 (Frame Pointer)' },
-    r12: { name: 'r12', number: 12, size: 32, permissions: { readable: true, writable: true }, description: 'General Purpose Register 12' },
-    sp: { name: 'sp', number: 13, size: 32, permissions: { readable: true, writable: true }, description: 'Stack Pointer' },
-    lr: { name: 'lr', number: 14, size: 32, permissions: { readable: true, writable: true }, description: 'Link Register' },
-    pc: { name: 'pc', number: 15, size: 32, permissions: { readable: true, writable: true }, description: 'Program Counter' },
-    xpsr: { name: 'xpsr', number: 16, size: 32, permissions: { readable: true, writable: true }, description: 'Combined Program Status Register' },
-    apsr: { name: 'apsr', number: 16, size: 32, permissions: { readable: true, writable: false }, description: 'Application Program Status Register' },
-    ipsr: { name: 'ipsr', number: 16, size: 32, permissions: { readable: true, writable: false }, description: 'Interrupt Program Status Register' },
-    epsr: { name: 'epsr', number: 16, size: 32, permissions: { readable: true, writable: false }, description: 'Execution Program Status Register' },
-    msp: { name: 'msp', number: 17, size: 32, permissions: { readable: true, writable: true, privileged: true }, description: 'Main Stack Pointer' },
-    psp: { name: 'psp', number: 18, size: 32, permissions: { readable: true, writable: true }, description: 'Process Stack Pointer' },
-    primask: { name: 'primask', number: 19, size: 32, permissions: { readable: true, writable: true, privileged: true }, description: 'Priority Mask Register' },
-    faultmask: { name: 'faultmask', number: 20, size: 32, permissions: { readable: true, writable: true, privileged: true }, description: 'Fault Mask Register' },
-    basepri: { name: 'basepri', number: 21, size: 32, permissions: { readable: true, writable: true, privileged: true }, description: 'Base Priority Register' },
-    control: { name: 'control', number: 22, size: 32, permissions: { readable: true, writable: true }, description: 'Control Register' },
+    r0: {
+      name: "r0",
+      number: 0,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 0",
+    },
+    r1: {
+      name: "r1",
+      number: 1,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 1",
+    },
+    r2: {
+      name: "r2",
+      number: 2,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 2",
+    },
+    r3: {
+      name: "r3",
+      number: 3,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 3",
+    },
+    r4: {
+      name: "r4",
+      number: 4,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 4",
+    },
+    r5: {
+      name: "r5",
+      number: 5,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 5",
+    },
+    r6: {
+      name: "r6",
+      number: 6,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 6",
+    },
+    r7: {
+      name: "r7",
+      number: 7,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 7",
+    },
+    r8: {
+      name: "r8",
+      number: 8,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 8",
+    },
+    r9: {
+      name: "r9",
+      number: 9,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 9",
+    },
+    r10: {
+      name: "r10",
+      number: 10,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 10",
+    },
+    r11: {
+      name: "r11",
+      number: 11,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 11 (Frame Pointer)",
+    },
+    r12: {
+      name: "r12",
+      number: 12,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "General Purpose Register 12",
+    },
+    sp: {
+      name: "sp",
+      number: 13,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Stack Pointer",
+    },
+    lr: {
+      name: "lr",
+      number: 14,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Link Register",
+    },
+    pc: {
+      name: "pc",
+      number: 15,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Program Counter",
+    },
+    xpsr: {
+      name: "xpsr",
+      number: 16,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Combined Program Status Register",
+    },
+    apsr: {
+      name: "apsr",
+      number: 16,
+      size: 32,
+      permissions: { readable: true, writable: false },
+      description: "Application Program Status Register",
+    },
+    ipsr: {
+      name: "ipsr",
+      number: 16,
+      size: 32,
+      permissions: { readable: true, writable: false },
+      description: "Interrupt Program Status Register",
+    },
+    epsr: {
+      name: "epsr",
+      number: 16,
+      size: 32,
+      permissions: { readable: true, writable: false },
+      description: "Execution Program Status Register",
+    },
+    msp: {
+      name: "msp",
+      number: 17,
+      size: 32,
+      permissions: { readable: true, writable: true, privileged: true },
+      description: "Main Stack Pointer",
+    },
+    psp: {
+      name: "psp",
+      number: 18,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Process Stack Pointer",
+    },
+    primask: {
+      name: "primask",
+      number: 19,
+      size: 32,
+      permissions: { readable: true, writable: true, privileged: true },
+      description: "Priority Mask Register",
+    },
+    faultmask: {
+      name: "faultmask",
+      number: 20,
+      size: 32,
+      permissions: { readable: true, writable: true, privileged: true },
+      description: "Fault Mask Register",
+    },
+    basepri: {
+      name: "basepri",
+      number: 21,
+      size: 32,
+      permissions: { readable: true, writable: true, privileged: true },
+      description: "Base Priority Register",
+    },
+    control: {
+      name: "control",
+      number: 22,
+      size: 32,
+      permissions: { readable: true, writable: true },
+      description: "Control Register",
+    },
   };
 
   return coreRegs[name];
@@ -739,9 +910,12 @@ export function getRegisterMetadata(name: CoreRegisterName): RegisterMetadata {
 /**
  * Format register value as hex string with appropriate width
  */
-export function formatRegisterValue(value: number, size: RegisterSize = 32): string {
+export function formatRegisterValue(
+  value: number,
+  size: RegisterSize = 32,
+): string {
   const hexDigits = size / 4;
-  return '0x' + value.toString(16).toUpperCase().padStart(hexDigits, '0');
+  return "0x" + value.toString(16).toUpperCase().padStart(hexDigits, "0");
 }
 
 /**
@@ -749,26 +923,29 @@ export function formatRegisterValue(value: number, size: RegisterSize = 32): str
  */
 export function formatExceptionNumber(exceptionNum: number): string {
   const exceptions: Record<number, string> = {
-    0: 'Thread mode',
-    1: 'Reserved',
-    2: 'NMI',
-    3: 'HardFault',
-    4: 'MemManage',
-    5: 'BusFault',
-    6: 'UsageFault',
-    11: 'SVCall',
-    12: 'DebugMonitor',
-    14: 'PendSV',
-    15: 'SysTick',
+    0: "Thread mode",
+    1: "Reserved",
+    2: "NMI",
+    3: "HardFault",
+    4: "MemManage",
+    5: "BusFault",
+    6: "UsageFault",
+    11: "SVCall",
+    12: "DebugMonitor",
+    14: "PendSV",
+    15: "SysTick",
   };
 
-  return exceptions[exceptionNum] || (exceptionNum >= 16 ? `IRQ${exceptionNum - 16}` : 'Reserved');
+  return (
+    exceptions[exceptionNum] ||
+    (exceptionNum >= 16 ? `IRQ${exceptionNum - 16}` : "Reserved")
+  );
 }
 
 /**
  * Parse hex string to number
  */
 export function parseHexValue(hexStr: string): number {
-  const cleaned = hexStr.replace(/^0x/i, '');
+  const cleaned = hexStr.replace(/^0x/i, "");
   return parseInt(cleaned, 16);
 }

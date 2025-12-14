@@ -5,19 +5,21 @@
  * Handles vector table parsing, Thumb mode, and ARM-specific binary formats.
  */
 
-import { BinaryParser } from '../BinaryParser';
+import { BinaryParser } from "../../../binary/BinaryParser";
 import {
   Architecture,
   ParserCapabilities,
   VectorInfo,
-  VectorType,
+  BinaryInfo,
+  ElfMachine,
+  MemoryRegion,
+} from "../../../binary/types";
+import {
   ArmMetadata,
   CORTEX_M_VECTORS,
   CortexMException,
-  BinaryInfo,
-  ElfMachine,
-  MemoryRegion
-} from '../types';
+  VectorType,
+} from "../types";
 
 /**
  * ARM Binary Parser Implementation
@@ -31,23 +33,23 @@ import {
  */
 export class ArmBinaryParser extends BinaryParser {
   private armMetadata: ArmMetadata = {
-    archVersion: 'v7-M',
+    archVersion: "v7-M",
     thumbMode: true,
-    fpuSupport: 'none'
+    fpuSupport: "none",
   };
 
   getArchitecture(): Architecture {
-    return 'ARM';
+    return "ARM";
   }
 
   getCapabilities(): ParserCapabilities {
     return {
-      formats: ['RAW', 'ELF', 'AXF'],
+      formats: ["RAW", "ELF", "AXF"],
       canParseSymbols: true,
       canParseDebugInfo: false,
       canDetectEntryPoint: true,
       canParseVectorTable: true,
-      supportsStreaming: false
+      supportsStreaming: false,
     };
   }
 
@@ -67,7 +69,9 @@ export class ArmBinaryParser extends BinaryParser {
     // Calculate offset in the binary data
     const dataOffset = tableAddress - baseAddress;
     if (dataOffset < 0 || dataOffset >= this.data.length) {
-      this.addWarning(`Vector table at 0x${tableAddress.toString(16)} is outside binary range`);
+      this.addWarning(
+        `Vector table at 0x${tableAddress.toString(16)} is outside binary range`,
+      );
       return vectors;
     }
 
@@ -75,12 +79,12 @@ export class ArmBinaryParser extends BinaryParser {
     const stackPointer = this.readU32(dataOffset);
     if (this.isValidStackPointer(stackPointer)) {
       vectors.push({
-        name: 'Initial_SP',
+        name: "Initial_SP",
         address: tableAddress,
         handlerAddress: stackPointer,
-        type: 'reset',
+        type: "reset",
         index: 0,
-        metadata: { isStackPointer: true }
+        metadata: { isStackPointer: true },
       });
 
       // Store for later use
@@ -89,58 +93,59 @@ export class ArmBinaryParser extends BinaryParser {
 
     // Parse system exception vectors (1-15)
     for (let i = 1; i < 16; i++) {
-      const offset = dataOffset + (i * 4);
+      const offset = dataOffset + i * 4;
       if (offset + 4 > this.data.length) break;
 
       const handlerAddress = this.readU32(offset);
-      const vectorName = i < CORTEX_M_VECTORS.length ?
-        CORTEX_M_VECTORS[i] : `Exception_${i}`;
+      const vectorName =
+        i < CORTEX_M_VECTORS.length ? CORTEX_M_VECTORS[i] : `Exception_${i}`;
 
       // Clear thumb bit for actual address
       const cleanAddress = handlerAddress & ~1;
 
       vectors.push({
         name: vectorName,
-        address: tableAddress + (i * 4),
+        address: tableAddress + i * 4,
         handlerAddress: cleanAddress,
         type: this.getVectorType(i),
         index: i,
-        enabled: handlerAddress !== 0 && handlerAddress !== 0xFFFFFFFF,
+        enabled: handlerAddress !== 0 && handlerAddress !== 0xffffffff,
         metadata: {
           thumbBit: (handlerAddress & 1) !== 0,
-          isSystemException: true
-        }
+          isSystemException: true,
+        },
       });
     }
 
     // Parse external interrupt vectors (16+)
-    const numExternalInterrupts = await this.detectNumExternalInterrupts(dataOffset);
+    const numExternalInterrupts =
+      await this.detectNumExternalInterrupts(dataOffset);
     this.armMetadata.numExternalInterrupts = numExternalInterrupts;
 
     for (let i = 16; i < 16 + numExternalInterrupts; i++) {
-      const offset = dataOffset + (i * 4);
+      const offset = dataOffset + i * 4;
       if (offset + 4 > this.data.length) break;
 
       const handlerAddress = this.readU32(offset);
       const cleanAddress = handlerAddress & ~1;
 
       // Skip invalid entries
-      if (handlerAddress === 0 || handlerAddress === 0xFFFFFFFF) {
+      if (handlerAddress === 0 || handlerAddress === 0xffffffff) {
         continue;
       }
 
       vectors.push({
         name: `IRQ_${i - 16}`,
-        address: tableAddress + (i * 4),
+        address: tableAddress + i * 4,
         handlerAddress: cleanAddress,
-        type: 'irq',
+        type: "irq",
         index: i,
         priority: 0, // Default priority, would need NVIC registers to get actual
         enabled: true,
         metadata: {
           thumbBit: (handlerAddress & 1) !== 0,
-          irqNumber: i - 16
-        }
+          irqNumber: i - 16,
+        },
       });
     }
 
@@ -164,7 +169,10 @@ export class ArmBinaryParser extends BinaryParser {
   /**
    * Extract ARM-specific metadata
    */
-  protected async extractArchitectureMetadata(): Promise<{ arch: 'ARM'; specific: ArmMetadata }> {
+  protected async extractArchitectureMetadata(): Promise<{
+    arch: "ARM";
+    specific: ArmMetadata;
+  }> {
     // Detect processor type from patterns in the binary
     this.armMetadata.processorType = await this.detectProcessorType();
 
@@ -181,8 +189,8 @@ export class ArmBinaryParser extends BinaryParser {
     this.armMetadata.mpuRegions = await this.detectMpuRegions();
 
     return {
-      arch: 'ARM',
-      specific: this.armMetadata
+      arch: "ARM",
+      specific: this.armMetadata,
     };
   }
 
@@ -197,9 +205,11 @@ export class ArmBinaryParser extends BinaryParser {
 
     // Ensure all handler addresses have thumb bit cleared in the address field
     // but preserved in metadata
-    info.vectors = info.vectors.map(v => ({
+    info.vectors = info.vectors.map((v) => ({
       ...v,
-      handlerAddress: v.handlerAddress ? (v.handlerAddress & ~1) : v.handlerAddress
+      handlerAddress: v.handlerAddress
+        ? v.handlerAddress & ~1
+        : v.handlerAddress,
     }));
 
     // Add memory regions based on typical ARM Cortex-M layout
@@ -223,8 +233,8 @@ export class ArmBinaryParser extends BinaryParser {
     ];
 
     // Check if value is in a RAM range and is word-aligned
-    const isInRam = ramRanges.some(range =>
-      value >= range.start && value <= range.end
+    const isInRam = ramRanges.some(
+      (range) => value >= range.start && value <= range.end,
     );
     const isAligned = (value & 0x3) === 0;
 
@@ -237,51 +247,53 @@ export class ArmBinaryParser extends BinaryParser {
   private getVectorType(exceptionNum: number): VectorType {
     switch (exceptionNum) {
       case CortexMException.Reset:
-        return 'reset';
+        return "reset";
       case CortexMException.NMI:
-        return 'nmi';
+        return "nmi";
       case CortexMException.HardFault:
-        return 'hardfault';
+        return "hardfault";
       case CortexMException.MemManage:
-        return 'memfault';
+        return "memfault";
       case CortexMException.BusFault:
-        return 'busfault';
+        return "busfault";
       case CortexMException.UsageFault:
-        return 'usagefault';
+        return "usagefault";
       case CortexMException.SVCall:
-        return 'svc';
+        return "svc";
       case CortexMException.PendSV:
-        return 'pendsv';
+        return "pendsv";
       case CortexMException.SysTick:
-        return 'systick';
+        return "systick";
       default:
-        return exceptionNum >= 16 ? 'irq' : 'exception';
+        return exceptionNum >= 16 ? "irq" : "exception";
     }
   }
 
   /**
    * Detect number of external interrupts by analyzing the vector table
    */
-  private async detectNumExternalInterrupts(vtorOffset: number): Promise<number> {
+  private async detectNumExternalInterrupts(
+    vtorOffset: number,
+  ): Promise<number> {
     let count = 0;
     const maxInterrupts = 240; // Maximum for Cortex-M
 
     for (let i = 16; i < 16 + maxInterrupts; i++) {
-      const offset = vtorOffset + (i * 4);
+      const offset = vtorOffset + i * 4;
       if (offset + 4 > this.data.length) break;
 
       const handler = this.readU32(offset);
 
       // Stop counting when we hit invalid entries
       // Some devices fill unused vectors with 0, others with 0xFFFFFFFF
-      if (handler === 0 || handler === 0xFFFFFFFF) {
+      if (handler === 0 || handler === 0xffffffff) {
         // Check if this is just a gap
         let hasMoreValid = false;
         for (let j = i + 1; j < Math.min(i + 10, 16 + maxInterrupts); j++) {
-          const nextOffset = vtorOffset + (j * 4);
+          const nextOffset = vtorOffset + j * 4;
           if (nextOffset + 4 > this.data.length) break;
           const nextHandler = this.readU32(nextOffset);
-          if (nextHandler !== 0 && nextHandler !== 0xFFFFFFFF) {
+          if (nextHandler !== 0 && nextHandler !== 0xffffffff) {
             hasMoreValid = true;
             break;
           }
@@ -307,15 +319,15 @@ export class ArmBinaryParser extends BinaryParser {
       const numInterrupts = this.armMetadata.numExternalInterrupts || 0;
 
       if (numInterrupts <= 32) {
-        return 'Cortex-M0';
+        return "Cortex-M0";
       } else if (numInterrupts <= 240) {
         // Check for FPU instructions to distinguish M4F from M3
         if (await this.hasFpuInstructions()) {
-          return 'Cortex-M4F';
+          return "Cortex-M4F";
         }
-        return 'Cortex-M3';
+        return "Cortex-M3";
       } else {
-        return 'Cortex-M7';
+        return "Cortex-M7";
       }
     }
 
@@ -331,27 +343,28 @@ export class ArmBinaryParser extends BinaryParser {
 
     const processorType = this.armMetadata.processorType;
     if (processorType) {
-      if (processorType.includes('M0')) return 'v6-M';
-      if (processorType.includes('M3') || processorType.includes('M4')) return 'v7-M';
-      if (processorType.includes('M7')) return 'v7E-M';
-      if (processorType.includes('M33')) return 'v8-M';
+      if (processorType.includes("M0")) return "v6-M";
+      if (processorType.includes("M3") || processorType.includes("M4"))
+        return "v7-M";
+      if (processorType.includes("M7")) return "v7E-M";
+      if (processorType.includes("M33")) return "v8-M";
     }
 
-    return 'v7-M'; // Default
+    return "v7-M"; // Default
   }
 
   /**
    * Detect FPU support by looking for FPU instructions
    */
-  private async detectFpuSupport(): Promise<'none' | 'single' | 'double'> {
+  private async detectFpuSupport(): Promise<"none" | "single" | "double"> {
     if (await this.hasFpuInstructions()) {
       // Check for double precision instructions
       if (await this.hasDoublePrecisionFpu()) {
-        return 'double';
+        return "double";
       }
-      return 'single';
+      return "single";
     }
-    return 'none';
+    return "none";
   }
 
   /**
@@ -365,7 +378,7 @@ export class ArmBinaryParser extends BinaryParser {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 2) {
       const inst = this.readU16(i);
       // Check for VFP/NEON instruction encoding
-      if ((inst & 0xEF00) === 0xEE00) {
+      if ((inst & 0xef00) === 0xee00) {
         return true;
       }
     }
@@ -407,43 +420,43 @@ export class ArmBinaryParser extends BinaryParser {
 
     // Typical STM32 memory layout
     regions.push({
-      name: 'FLASH',
+      name: "FLASH",
       start: 0x08000000,
       end: 0x08100000,
       size: 0x100000,
-      type: 'flash',
-      permissions: ['read', 'execute'],
-      cacheable: true
+      type: "flash",
+      permissions: ["read", "execute"],
+      cacheable: true,
     });
 
     regions.push({
-      name: 'SRAM',
+      name: "SRAM",
       start: 0x20000000,
       end: 0x20020000,
       size: 0x20000,
-      type: 'ram',
-      permissions: ['read', 'write', 'execute'],
-      cacheable: true
+      type: "ram",
+      permissions: ["read", "write", "execute"],
+      cacheable: true,
     });
 
     regions.push({
-      name: 'PERIPHERALS',
+      name: "PERIPHERALS",
       start: 0x40000000,
       end: 0x60000000,
       size: 0x20000000,
-      type: 'peripheral',
-      permissions: ['read', 'write'],
-      cacheable: false
+      type: "peripheral",
+      permissions: ["read", "write"],
+      cacheable: false,
     });
 
     regions.push({
-      name: 'SYSTEM',
-      start: 0xE0000000,
-      end: 0xFFFFFFFF,
-      size: 0x1FFFFFFF,
-      type: 'peripheral',
-      permissions: ['read', 'write'],
-      cacheable: false
+      name: "SYSTEM",
+      start: 0xe0000000,
+      end: 0xffffffff,
+      size: 0x1fffffff,
+      type: "peripheral",
+      permissions: ["read", "write"],
+      cacheable: false,
     });
 
     return regions;

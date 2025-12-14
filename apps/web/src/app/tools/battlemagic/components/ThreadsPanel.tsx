@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Threads Panel Component
@@ -7,12 +7,12 @@
  * Shows thread ID, state, PC, and name/function.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { GdbClient } from '../lib/gdb/GdbClient';
+import React, { useState, useEffect, useCallback } from "react";
+import { GdbClient } from "../lib/gdb/GdbClient";
 
 interface ThreadInfo {
   id: number;
-  state: 'running' | 'stopped' | 'unknown';
+  state: "running" | "stopped" | "unknown";
   pc?: number;
   name?: string;
   targetId?: string;
@@ -31,7 +31,7 @@ export default function ThreadsPanel({
   isConnected,
   currentThreadId,
   onThreadSelect,
-  onOutput
+  onOutput,
 }: ThreadsPanelProps) {
   const [threads, setThreads] = useState<ThreadInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,15 +55,15 @@ export default function ThreadsPanel({
       const mockThreads: ThreadInfo[] = [
         {
           id: 1,
-          state: 'stopped',
-          name: 'main',
-        }
+          state: "stopped",
+          name: "main",
+        },
       ];
 
       setThreads(mockThreads);
     } catch (err) {
       setError(`Failed to load threads: ${err}`);
-      console.error('[ThreadsPanel] Error loading threads:', err);
+      console.error("[ThreadsPanel] Error loading threads:", err);
     } finally {
       setIsLoading(false);
     }
@@ -79,17 +79,20 @@ export default function ThreadsPanel({
   }, [isConnected, loadThreads]);
 
   // Handle thread selection
-  const handleThreadClick = useCallback((threadId: number) => {
-    if (onThreadSelect) {
-      onThreadSelect(threadId);
-      onOutput?.(`[Switched to thread ${threadId}]`);
-    }
-  }, [onThreadSelect, onOutput]);
+  const handleThreadClick = useCallback(
+    (threadId: number) => {
+      if (onThreadSelect) {
+        onThreadSelect(threadId);
+        onOutput?.(`[Switched to thread ${threadId}]`);
+      }
+    },
+    [onThreadSelect, onOutput],
+  );
 
   // Format address
   const formatAddress = (addr?: number): string => {
-    if (addr === undefined) return '—';
-    return `0x${addr.toString(16).toUpperCase().padStart(8, '0')}`;
+    if (addr === undefined) return "—";
+    return `0x${addr.toString(16).toUpperCase().padStart(8, "0")}`;
   };
 
   return (
@@ -102,7 +105,7 @@ export default function ThreadsPanel({
           disabled={!isConnected || isLoading}
           className="px-2 py-1 text-xs font-mono bg-gray-800 text-green-400 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Loading...' : 'Refresh'}
+          {isLoading ? "Loading..." : "Refresh"}
         </button>
       </div>
 
@@ -140,7 +143,7 @@ export default function ThreadsPanel({
                   key={thread.id}
                   className={`
                     border-b border-gray-800 cursor-pointer hover:bg-gray-800
-                    ${thread.id === currentThreadId ? 'bg-blue-900/20' : ''}
+                    ${thread.id === currentThreadId ? "bg-blue-900/20" : ""}
                   `}
                   onClick={() => handleThreadClick(thread.id)}
                 >
@@ -151,11 +154,17 @@ export default function ThreadsPanel({
                   </td>
                   <td className="px-3 py-2 text-cyan-400">{thread.id}</td>
                   <td className="px-3 py-2">
-                    <span className={`
-                      ${thread.state === 'running' ? 'text-yellow-400' :
-                        thread.state === 'stopped' ? 'text-gray-400' :
-                        'text-gray-600'}
-                    `}>
+                    <span
+                      className={`
+                      ${
+                        thread.state === "running"
+                          ? "text-yellow-400"
+                          : thread.state === "stopped"
+                            ? "text-gray-400"
+                            : "text-gray-600"
+                      }
+                    `}
+                    >
                       {thread.state}
                     </span>
                   </td>
@@ -163,7 +172,7 @@ export default function ThreadsPanel({
                     {formatAddress(thread.pc)}
                   </td>
                   <td className="px-3 py-2 text-gray-300">
-                    {thread.name || thread.targetId || '—'}
+                    {thread.name || thread.targetId || "—"}
                   </td>
                 </tr>
               ))}
@@ -174,7 +183,8 @@ export default function ThreadsPanel({
 
       {/* Footer */}
       <div className="px-3 py-1 bg-gray-900 border-t border-gray-700 text-xs text-gray-400">
-        {threads.length > 0 && `${threads.length} thread${threads.length !== 1 ? 's' : ''}`}
+        {threads.length > 0 &&
+          `${threads.length} thread${threads.length !== 1 ? "s" : ""}`}
       </div>
     </div>
   );

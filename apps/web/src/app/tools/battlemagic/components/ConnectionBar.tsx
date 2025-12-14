@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Connection Bar Component
@@ -7,9 +7,9 @@
  * Plus target control buttons for debugging operations
  */
 
-import React from 'react';
-import { ConnectionState, BmpVersion } from '../lib/gdb/types';
-import { versionManager } from '../lib/version/VersionManager';
+import React from "react";
+import { ConnectionState, BmpVersion } from "../lib/gdb/types";
+import { versionManager } from "../lib/version/VersionManager";
 
 interface ConnectionBarProps {
   gdbState: ConnectionState;
@@ -37,12 +37,12 @@ interface ConnectionBarProps {
 // Note: Black Magic Probe over USB CDC ignores baudrate (runs at USB speed)
 // These settings only matter for hardware UART connections
 const BAUD_RATES = [
-  115200,   // Standard - always works
-  230400,   // 2x - widely supported
-  460800,   // 4x - good performance
-  921600,   // 8x - may not work on all hardware
-  1000000,  // 1M - requires good signal quality
-  2000000,  // 2M - rarely supported
+  115200, // Standard - always works
+  230400, // 2x - widely supported
+  460800, // 4x - good performance
+  921600, // 8x - may not work on all hardware
+  1000000, // 1M - requires good signal quality
+  2000000, // 2M - rarely supported
 ];
 
 export default function ConnectionBar({
@@ -66,7 +66,9 @@ export default function ConnectionBar({
   onClearSavedPorts,
   onCheckVersion,
 }: ConnectionBarProps) {
-  const gdbConnected = gdbState === ConnectionState.CONNECTED || gdbState === ConnectionState.ATTACHED;
+  const gdbConnected =
+    gdbState === ConnectionState.CONNECTED ||
+    gdbState === ConnectionState.ATTACHED;
   const isConnecting = gdbState === ConnectionState.CONNECTING;
 
   // Update version manager when version changes
@@ -83,18 +85,20 @@ export default function ConnectionBar({
     const display = versionManager.getDisplayVersion();
 
     const colorClasses = {
-      green: 'bg-green-600/20 border-green-500/50 text-green-300',
-      yellow: 'bg-yellow-600/20 border-yellow-500/50 text-yellow-300',
-      red: 'bg-red-600/20 border-red-500/50 text-red-300'
+      green: "bg-green-600/20 border-green-500/50 text-green-300",
+      yellow: "bg-yellow-600/20 border-yellow-500/50 text-yellow-300",
+      red: "bg-red-600/20 border-red-500/50 text-red-300",
     };
 
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs font-mono text-gray-400">BMP:</span>
-        <span className={`px-2 py-0.5 text-xs rounded border ${colorClasses[color]}`}>
+        <span
+          className={`px-2 py-0.5 text-xs rounded border ${colorClasses[color]}`}
+        >
           {display}
         </span>
-        {color !== 'green' && onCheckVersion && (
+        {color !== "green" && onCheckVersion && (
           <button
             onClick={onCheckVersion}
             className="text-xs text-blue-400 hover:text-blue-300 underline"
@@ -117,14 +121,14 @@ export default function ConnectionBar({
             <span
               className={`w-2 h-2 rounded-full ${
                 gdbState === ConnectionState.CONNECTED
-                  ? 'bg-green-400'
+                  ? "bg-green-400"
                   : gdbState === ConnectionState.ATTACHED
-                  ? 'bg-blue-400'
-                  : gdbState === ConnectionState.CONNECTING
-                  ? 'bg-yellow-400 animate-pulse'
-                  : gdbState === ConnectionState.ERROR
-                  ? 'bg-red-400'
-                  : 'bg-gray-600'
+                    ? "bg-blue-400"
+                    : gdbState === ConnectionState.CONNECTING
+                      ? "bg-yellow-400 animate-pulse"
+                      : gdbState === ConnectionState.ERROR
+                        ? "bg-red-400"
+                        : "bg-gray-600"
               }`}
               title={gdbState}
             />
@@ -133,14 +137,24 @@ export default function ConnectionBar({
               disabled={isConnecting}
               className={`px-3 py-1 text-xs rounded border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 gdbConnected
-                  ? 'bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30'
+                  ? "bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30"
                   : hasStoredGdbPort
-                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
-                  : 'bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30'
+                    ? "bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30"
+                    : "bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30"
               }`}
-              title={hasStoredGdbPort ? 'Quick connect to last used port (hold Shift to select new port)' : 'Select GDB port'}
+              title={
+                hasStoredGdbPort
+                  ? "Quick connect to last used port (hold Shift to select new port)"
+                  : "Select GDB port"
+              }
             >
-              {isConnecting ? 'Connecting...' : gdbConnected ? 'Disconnect' : hasStoredGdbPort ? 'Quick Connect' : 'Connect'}
+              {isConnecting
+                ? "Connecting..."
+                : gdbConnected
+                  ? "Disconnect"
+                  : hasStoredGdbPort
+                    ? "Quick Connect"
+                    : "Connect"}
             </button>
           </div>
         </div>
@@ -153,21 +167,29 @@ export default function ConnectionBar({
           <div className="flex items-center gap-1">
             <span
               className={`w-2 h-2 rounded-full ${
-                uartConnected ? 'bg-green-400' : 'bg-gray-600'
+                uartConnected ? "bg-green-400" : "bg-gray-600"
               }`}
             />
             <button
               onClick={uartConnected ? onDisconnectUart : onConnectUart}
               className={`px-3 py-1 text-xs rounded border transition-colors ${
                 uartConnected
-                  ? 'bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30'
+                  ? "bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30"
                   : hasStoredUartPort
-                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
-                  : 'bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30'
+                    ? "bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30"
+                    : "bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30"
               }`}
-              title={hasStoredUartPort ? 'Quick connect to last used port' : 'Select UART port'}
+              title={
+                hasStoredUartPort
+                  ? "Quick connect to last used port"
+                  : "Select UART port"
+              }
             >
-              {uartConnected ? 'Disconnect' : hasStoredUartPort ? 'Quick Connect' : 'Connect'}
+              {uartConnected
+                ? "Disconnect"
+                : hasStoredUartPort
+                  ? "Quick Connect"
+                  : "Connect"}
             </button>
           </div>
         </div>
@@ -182,9 +204,9 @@ export default function ConnectionBar({
             onChange={(e) => onBaudRateChange(Number(e.target.value))}
             className="px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-300 focus:outline-none focus:border-green-500"
           >
-            {BAUD_RATES.map(rate => (
+            {BAUD_RATES.map((rate) => (
               <option key={rate} value={rate}>
-                {rate.toLocaleString()} {rate === 230400 ? '(USB CDC)' : ''}
+                {rate.toLocaleString()} {rate === 230400 ? "(USB CDC)" : ""}
               </option>
             ))}
           </select>

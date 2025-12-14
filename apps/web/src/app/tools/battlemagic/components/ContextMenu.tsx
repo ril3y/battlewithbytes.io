@@ -5,10 +5,10 @@
  * Provides a clean, accessible right-click menu system.
  */
 
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Context menu item definition
@@ -74,8 +74,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   y,
   items,
   onClose,
-  className = '',
-  zIndex = 1000
+  className = "",
+  zIndex = 1000,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
@@ -115,21 +115,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     };
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
     // Delay adding listeners to prevent immediate close
     const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscape);
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
     }, 0);
 
     return () => {
       clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [onClose]);
 
@@ -138,19 +138,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const validItems = items.filter(item => !item.disabled);
+      const validItems = items.filter((item) => !item.disabled);
       const validCount = validItems.length;
 
       switch (e.key) {
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
-          setSelectedIndex(prev => (prev + 1) % validCount);
+          setSelectedIndex((prev) => (prev + 1) % validCount);
           break;
-        case 'ArrowUp':
+        case "ArrowUp":
           e.preventDefault();
-          setSelectedIndex(prev => (prev - 1 + validCount) % validCount);
+          setSelectedIndex((prev) => (prev - 1 + validCount) % validCount);
           break;
-        case 'Enter':
+        case "Enter":
           e.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < validItems.length) {
             const item = validItems[selectedIndex];
@@ -160,85 +160,89 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             }
           }
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           if (selectedIndex >= 0 && validItems[selectedIndex].submenu) {
             setActiveSubmenu(selectedIndex);
           }
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           setActiveSubmenu(null);
           break;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [items, selectedIndex, onClose]);
 
   /**
    * Handle item click
    */
-  const handleItemClick = useCallback((item: ContextMenuItem) => {
-    if (item.disabled) return;
-    if (item.submenu) {
-      // Toggle submenu
-      setActiveSubmenu(prev => prev === items.indexOf(item) ? null : items.indexOf(item));
-    } else {
-      item.onClick();
-      onClose();
-    }
-  }, [items, onClose]);
+  const handleItemClick = useCallback(
+    (item: ContextMenuItem) => {
+      if (item.disabled) return;
+      if (item.submenu) {
+        // Toggle submenu
+        setActiveSubmenu((prev) =>
+          prev === items.indexOf(item) ? null : items.indexOf(item),
+        );
+      } else {
+        item.onClick();
+        onClose();
+      }
+    },
+    [items, onClose],
+  );
 
   /**
    * Render menu item
    */
-  const renderItem = useCallback((item: ContextMenuItem, index: number) => {
-    const isSelected = index === selectedIndex;
-    const hasSubmenu = !!item.submenu;
+  const renderItem = useCallback(
+    (item: ContextMenuItem, index: number) => {
+      const isSelected = index === selectedIndex;
+      const hasSubmenu = !!item.submenu;
 
-    return (
-      <React.Fragment key={index}>
-        <div
-          className={`
+      return (
+        <React.Fragment key={index}>
+          <div
+            className={`
             flex items-center justify-between px-3 py-2 text-sm
-            ${item.disabled ? 'text-gray-500 cursor-not-allowed' : 'text-gray-200 cursor-pointer'}
-            ${isSelected && !item.disabled ? 'bg-blue-600' : ''}
-            ${!item.disabled && !isSelected ? 'hover:bg-gray-700' : ''}
+            ${item.disabled ? "text-gray-500 cursor-not-allowed" : "text-gray-200 cursor-pointer"}
+            ${isSelected && !item.disabled ? "bg-blue-600" : ""}
+            ${!item.disabled && !isSelected ? "hover:bg-gray-700" : ""}
             transition-colors
           `}
-          onClick={() => handleItemClick(item)}
-          onMouseEnter={() => !item.disabled && setSelectedIndex(index)}
-        >
-          <div className="flex items-center gap-2">
-            {item.icon && (
-              <span className="w-5 text-center">{item.icon}</span>
-            )}
-            <span>{item.label}</span>
+            onClick={() => handleItemClick(item)}
+            onMouseEnter={() => !item.disabled && setSelectedIndex(index)}
+          >
+            <div className="flex items-center gap-2">
+              {item.icon && (
+                <span className="w-5 text-center">{item.icon}</span>
+              )}
+              <span>{item.label}</span>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+              {item.shortcut && (
+                <span className="text-xs text-gray-400">{item.shortcut}</span>
+              )}
+              {hasSubmenu && <span className="text-gray-400">▶</span>}
+            </div>
           </div>
-          <div className="flex items-center gap-2 ml-4">
-            {item.shortcut && (
-              <span className="text-xs text-gray-400">{item.shortcut}</span>
-            )}
-            {hasSubmenu && (
-              <span className="text-gray-400">▶</span>
-            )}
-          </div>
-        </div>
-        {item.separator && (
-          <div className="border-t border-gray-700 my-1" />
-        )}
-        {hasSubmenu && activeSubmenu === index && item.submenu && (
-          <ContextMenu
-            x={position.x + 200}
-            y={position.y + (index * 32)}
-            items={item.submenu}
-            onClose={onClose}
-            zIndex={zIndex + 1}
-          />
-        )}
-      </React.Fragment>
-    );
-  }, [selectedIndex, activeSubmenu, position, zIndex, handleItemClick, onClose]);
+          {item.separator && <div className="border-t border-gray-700 my-1" />}
+          {hasSubmenu && activeSubmenu === index && item.submenu && (
+            <ContextMenu
+              x={position.x + 200}
+              y={position.y + index * 32}
+              items={item.submenu}
+              onClose={onClose}
+              zIndex={zIndex + 1}
+            />
+          )}
+        </React.Fragment>
+      );
+    },
+    [selectedIndex, activeSubmenu, position, zIndex, handleItemClick, onClose],
+  );
 
   // Render menu in portal
   return createPortal(
@@ -251,12 +255,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex
+        zIndex,
       }}
     >
       {items.map((item, index) => renderItem(item, index))}
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -270,17 +274,17 @@ export const useContextMenu = () => {
     items: ContextMenuItem[];
   } | null>(null);
 
-  const openMenu = useCallback((
-    e: React.MouseEvent,
-    items: ContextMenuItem[]
-  ) => {
-    e.preventDefault();
-    setMenuState({
-      x: e.clientX,
-      y: e.clientY,
-      items
-    });
-  }, []);
+  const openMenu = useCallback(
+    (e: React.MouseEvent, items: ContextMenuItem[]) => {
+      e.preventDefault();
+      setMenuState({
+        x: e.clientX,
+        y: e.clientY,
+        items,
+      });
+    },
+    [],
+  );
 
   const closeMenu = useCallback(() => {
     setMenuState(null);
@@ -289,6 +293,6 @@ export const useContextMenu = () => {
   return {
     menuState,
     openMenu,
-    closeMenu
+    closeMenu,
   };
 };

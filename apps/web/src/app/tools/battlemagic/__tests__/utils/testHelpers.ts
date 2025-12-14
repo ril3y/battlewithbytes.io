@@ -3,7 +3,7 @@
  * Utility functions for common test operations
  */
 
-import { RspProtocol } from '../../lib/gdb/RspProtocol';
+import { RspProtocol } from "../../lib/gdb/RspProtocol";
 
 /**
  * Create a mock GDB packet for testing
@@ -32,9 +32,9 @@ export function createRegisterResponse(registerData: string): string {
  */
 export function createStopReplyPacket(
   signal: number = 5,
-  info: Record<string, string> = {}
+  info: Record<string, string> = {},
 ): string {
-  const signalHex = signal.toString(16).padStart(2, '0');
+  const signalHex = signal.toString(16).padStart(2, "0");
   let packet = `T${signalHex}`;
 
   for (const [key, value] of Object.entries(info)) {
@@ -64,7 +64,7 @@ export function bytesToHex(bytes: Uint8Array): string {
 export function createMemorySegment(
   address: number,
   data: Uint8Array,
-  type: 'code' | 'data' | 'bss' = 'code'
+  type: "code" | "data" | "bss" = "code",
 ) {
   return {
     address,
@@ -90,23 +90,23 @@ export function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
 export function createIntelHexLine(
   address: number,
   type: number,
-  data: number[]
+  data: number[],
 ): string {
   const length = data.length;
   let checksum = length + (address >> 8) + (address & 0xff) + type;
 
-  let line = ':';
-  line += length.toString(16).padStart(2, '0').toUpperCase();
-  line += address.toString(16).padStart(4, '0').toUpperCase();
-  line += type.toString(16).padStart(2, '0').toUpperCase();
+  let line = ":";
+  line += length.toString(16).padStart(2, "0").toUpperCase();
+  line += address.toString(16).padStart(4, "0").toUpperCase();
+  line += type.toString(16).padStart(2, "0").toUpperCase();
 
   for (const byte of data) {
-    line += byte.toString(16).padStart(2, '0').toUpperCase();
+    line += byte.toString(16).padStart(2, "0").toUpperCase();
     checksum += byte;
   }
 
   checksum = (~checksum + 1) & 0xff;
-  line += checksum.toString(16).padStart(2, '0').toUpperCase();
+  line += checksum.toString(16).padStart(2, "0").toUpperCase();
 
   return line;
 }
@@ -117,14 +117,14 @@ export function createIntelHexLine(
 export async function waitFor(
   condition: () => boolean,
   timeout: number = 1000,
-  checkInterval: number = 10
+  checkInterval: number = 10,
 ): Promise<void> {
   const startTime = Date.now();
   while (!condition()) {
     if (Date.now() - startTime > timeout) {
-      throw new Error('Timeout waiting for condition');
+      throw new Error("Timeout waiting for condition");
     }
-    await new Promise(resolve => setTimeout(resolve, checkInterval));
+    await new Promise((resolve) => setTimeout(resolve, checkInterval));
   }
 }
 
@@ -132,7 +132,7 @@ export async function waitFor(
  * Create a promise that resolves after a delay
  */
 export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -140,15 +140,15 @@ export function delay(ms: number): Promise<void> {
  */
 export function withTimeout<T>(
   promise: Promise<T>,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
       setTimeout(
         () => reject(new Error(`Timeout after ${timeoutMs}ms`)),
-        timeoutMs
-      )
+        timeoutMs,
+      ),
     ),
   ]);
 }
@@ -157,8 +157,8 @@ export function withTimeout<T>(
  * Create a test Firmware Data object
  */
 export function createTestFirmwareData(
-  format: 'hex' | 'bin' | 'elf',
-  segments = []
+  format: "hex" | "bin" | "elf",
+  segments = [],
 ) {
   return {
     format,
@@ -166,7 +166,7 @@ export function createTestFirmwareData(
     segments,
     entryPoint: 0x08000000,
     metadata: {
-      filename: 'test.hex',
+      filename: "test.hex",
       size: 1024,
       checksum: 0xdeadbeef,
     },

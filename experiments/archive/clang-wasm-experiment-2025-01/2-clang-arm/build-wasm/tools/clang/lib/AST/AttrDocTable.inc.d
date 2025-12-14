@@ -1,1 +1,0 @@
-tools/clang/lib/AST/AttrDocTable.inc: /build/llvm-project/clang/lib/AST/../../include/clang/Basic/ASTNode.td /build/llvm-project/clang/lib/AST/../../include/clang/Basic/AttrDocs.td /build/llvm-project/clang/lib/AST/../../include/clang/Basic/DeclNodes.td /build/llvm-project/clang/lib/AST/../../include/clang/Basic/StmtNodes.td

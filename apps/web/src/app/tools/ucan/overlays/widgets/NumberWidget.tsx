@@ -4,9 +4,9 @@
  * Displays a numeric value with optional unit and precision.
  */
 
-import React from 'react';
-import type { NumberWidgetConfig } from '../types';
-import { BaseWidget } from './BaseWidget';
+import React from "react";
+import type { NumberWidgetConfig } from "../types";
+import { BaseWidget } from "./BaseWidget";
 
 export interface NumberWidgetProps {
   config: NumberWidgetConfig;
@@ -33,20 +33,22 @@ export const NumberWidget: React.FC<NumberWidgetProps> = ({
 
   // Format number with precision
   const formattedValue =
-    typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : '--';
+    typeof value === "number" && !isNaN(value)
+      ? value.toFixed(precision)
+      : "--";
 
   const numberStyle: React.CSSProperties = {
     fontSize: `${fontSize}px`,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    color: valid ? '#00ff00' : '#ff0000',
-    textAlign: 'center',
+    fontWeight: "bold",
+    fontFamily: "monospace",
+    color: valid ? "#00ff00" : "#ff0000",
+    textAlign: "center",
   };
 
   const unitStyle: React.CSSProperties = {
     fontSize: `${fontSize * 0.6}px`,
-    color: '#888888',
-    marginLeft: '4px',
+    color: "#888888",
+    marginLeft: "4px",
   };
 
   return (

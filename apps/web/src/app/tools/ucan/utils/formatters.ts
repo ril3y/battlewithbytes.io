@@ -4,18 +4,21 @@
  * Helper functions for formatting data for display
  */
 
-import { CANMessage } from '../types';
+import { CANMessage } from "../types";
 
 /**
  * Format timestamp for display
  */
-export function formatTimestamp(date: Date, includeMilliseconds: boolean = true): string {
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
+export function formatTimestamp(
+  date: Date,
+  includeMilliseconds: boolean = true,
+): string {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
 
   if (includeMilliseconds) {
-    const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+    const milliseconds = date.getMilliseconds().toString().padStart(3, "0");
     return `${hours}:${minutes}:${seconds}.${milliseconds}`;
   }
 
@@ -26,24 +29,27 @@ export function formatTimestamp(date: Date, includeMilliseconds: boolean = true)
  * Format bytes as hex string
  */
 export function formatHex(value: number, padLength: number = 2): string {
-  return value.toString(16).toUpperCase().padStart(padLength, '0');
+  return value.toString(16).toUpperCase().padStart(padLength, "0");
 }
 
 /**
  * Format byte array as hex string
  */
-export function formatBytes(data: Uint8Array, separator: string = ' '): string {
+export function formatBytes(data: Uint8Array, separator: string = " "): string {
   return Array.from(data)
-    .map(byte => formatHex(byte, 2))
+    .map((byte) => formatHex(byte, 2))
     .join(separator);
 }
 
 /**
  * Format byte array as binary string
  */
-export function formatBinary(data: Uint8Array, separator: string = ' '): string {
+export function formatBinary(
+  data: Uint8Array,
+  separator: string = " ",
+): string {
   return Array.from(data)
-    .map(byte => byte.toString(2).padStart(8, '0'))
+    .map((byte) => byte.toString(2).padStart(8, "0"))
     .join(separator);
 }
 
@@ -52,21 +58,21 @@ export function formatBinary(data: Uint8Array, separator: string = ' '): string 
  */
 export function formatASCII(data: Uint8Array): string {
   return Array.from(data)
-    .map(byte => {
+    .map((byte) => {
       // Printable ASCII range
       if (byte >= 32 && byte <= 126) {
         return String.fromCharCode(byte);
       }
-      return '.';
+      return ".";
     })
-    .join('');
+    .join("");
 }
 
 /**
  * Format file size in human-readable format
  */
 export function formatFileSize(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
 
@@ -130,14 +136,17 @@ export function formatRate(value: number, decimals: number = 1): string {
 /**
  * Format CAN message for display
  */
-export function formatCANMessage(message: CANMessage, showTimestamp: boolean = true): string {
+export function formatCANMessage(
+  message: CANMessage,
+  showTimestamp: boolean = true,
+): string {
   const parts: string[] = [];
 
   if (showTimestamp) {
     parts.push(`[${formatTimestamp(message.timestamp)}]`);
   }
 
-  const directionSymbol = message.direction === 'RX' ? '🟢' : '🔵';
+  const directionSymbol = message.direction === "RX" ? "🟢" : "🔵";
   parts.push(directionSymbol);
   parts.push(message.direction);
 
@@ -153,28 +162,28 @@ export function formatCANMessage(message: CANMessage, showTimestamp: boolean = t
     parts.push(`ERROR: ${message.error}`);
   }
 
-  return parts.join(' ');
+  return parts.join(" ");
 }
 
 /**
  * Color code for message direction
  */
-export function getDirectionColor(direction: 'RX' | 'TX'): string {
-  return direction === 'RX' ? 'text-green-400' : 'text-blue-400';
+export function getDirectionColor(direction: "RX" | "TX"): string {
+  return direction === "RX" ? "text-green-400" : "text-blue-400";
 }
 
 /**
  * Background color for message direction
  */
-export function getDirectionBgColor(direction: 'RX' | 'TX'): string {
-  return direction === 'RX' ? 'bg-green-600/20' : 'bg-blue-600/20';
+export function getDirectionBgColor(direction: "RX" | "TX"): string {
+  return direction === "RX" ? "bg-green-600/20" : "bg-blue-600/20";
 }
 
 /**
  * Border color for message direction
  */
-export function getDirectionBorderColor(direction: 'RX' | 'TX'): string {
-  return direction === 'RX' ? 'border-green-500/30' : 'border-blue-500/30';
+export function getDirectionBorderColor(direction: "RX" | "TX"): string {
+  return direction === "RX" ? "border-green-500/30" : "border-blue-500/30";
 }
 
 /**
@@ -194,7 +203,7 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) {
     return str;
   }
-  return str.substring(0, maxLength - 3) + '...';
+  return str.substring(0, maxLength - 3) + "...";
 }
 
 /**

@@ -1,23 +1,23 @@
-import type { Metadata, Viewport } from 'next';
-import './globals.css';
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'BattleTerm',
-  description: 'Professional browser-based serial terminal',
-  manifest: '/manifest.json',
+  title: "BattleTerm",
+  description: "Professional browser-based serial terminal",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'BattleTerm',
+    statusBarStyle: "black-translucent",
+    title: "BattleTerm",
   },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#10b981',
+  themeColor: "#10b981",
 };
 
 export default function RootLayout({

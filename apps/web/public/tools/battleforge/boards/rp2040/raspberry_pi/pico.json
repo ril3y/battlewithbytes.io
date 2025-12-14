@@ -1,0 +1,89 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "raspberry_pi_pico",
+  "name": "Raspberry Pi Pico",
+  "vendor": "raspberry_pi",
+  "version": "1.0.0",
+  "description": "Official Raspberry Pi RP2040 board. Dual-core Cortex-M0+, 264KB RAM, PIO state machines, excellent documentation.",
+  "image": "images/raspberry_pi/pico.png",
+
+  "chip": {
+    "platform": "rp2040",
+    "family": "rp2",
+    "device": "rp2040",
+    "architecture": "cortex-m0+"
+  },
+
+  "memory": {
+    "flash": 2097152,
+    "flashAvailable": 2031616,
+    "flashNote": "2MB external QSPI flash, ~64KB used by bootloader",
+    "ram": 270336,
+    "ramAvailable": 262144
+  },
+
+  "build": {
+    "frequency": 133000000,
+    "defines": [
+      "RP2040",
+      "PICO_BOARD=pico",
+      "PICO_BUILD",
+      "PICO_NO_HARDWARE=0"
+    ],
+    "linkerScript": "memmap_default.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "GPIO25", "arduino": 25, "activeLow": false },
+    "serial": { "rx": "GPIO1", "tx": "GPIO0" },
+    "serial2": { "rx": "GPIO5", "tx": "GPIO4" },
+    "i2c": { "sda": "GPIO4", "scl": "GPIO5" },
+    "i2c1": { "sda": "GPIO2", "scl": "GPIO3" },
+    "spi": { "mosi": "GPIO19", "miso": "GPIO16", "sck": "GPIO18", "ss": "GPIO17" },
+    "adc": ["GPIO26", "GPIO27", "GPIO28"],
+    "pwm": ["GPIO0", "GPIO1", "GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO7", "GPIO8", "GPIO9", "GPIO10", "GPIO11", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "arduino-pico",
+      "variant": "rpipico",
+      "coreUrl": "https://github.com/earlephilhower/arduino-pico",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_RASPBERRY_PI_PICO",
+        "ARDUINO_ARCH_RP2040"
+      ]
+    },
+    "platformio": {
+      "board": "pico",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "pico-sdk",
+      "sdkVersion": "1.5.1"
+    }
+  },
+
+  "upload": {
+    "methods": ["uf2", "picotool", "cmsis-dap"],
+    "default": "uf2",
+    "bootloader": {
+      "type": "uf2",
+      "familyId": "0xe48bff56",
+      "driveLabel": "RPI-RP2",
+      "vid": "0x2E8A",
+      "pid": "0x0003"
+    }
+  },
+
+  "documentation": {
+    "product": "https://www.raspberrypi.com/products/raspberry-pi-pico/",
+    "pinout": "https://datasheets.raspberrypi.com/pico/Pico-R3-A4-Pinout.pdf",
+    "datasheet": "https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf",
+    "guide": "https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf"
+  },
+
+  "features": ["pio", "dual-core", "usb", "adc", "pwm"],
+  "tags": ["pico", "rp2040", "raspberry-pi", "beginner", "pio"]
+}

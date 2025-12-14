@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Settings Modal Component
@@ -6,9 +6,9 @@
  * Consolidated settings for serial connection configuration
  */
 
-import React, { useState, useEffect } from 'react';
-import { SerialConfig } from '../types';
-import { isSerialSupported, getAuthorizedPorts } from '../core/serialBridge';
+import React, { useState, useEffect } from "react";
+import { SerialConfig } from "../types";
+import { isSerialSupported, getAuthorizedPorts } from "../core/serialBridge";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export default function SettingsModal({
   onConfigChange,
   isConnected,
   onConnect,
-  onDisconnect
+  onDisconnect,
 }: SettingsModalProps) {
   const [authorizedPorts, setAuthorizedPorts] = useState<SerialPort[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -64,7 +64,10 @@ export default function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
       <div
         className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
@@ -84,10 +87,14 @@ export default function SettingsModal({
 
         {/* Serial Configuration */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Serial Configuration</h3>
+          <h3 className="text-sm font-semibold text-gray-300 mb-2">
+            Serial Configuration
+          </h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Baud Rate</label>
+              <label className="block text-sm text-gray-400 mb-1">
+                Baud Rate
+              </label>
               <select
                 value={config.baudRate}
                 onChange={handleBaudRateChange}
@@ -115,7 +122,9 @@ export default function SettingsModal({
         {/* Port Selection */}
         {!isConnected && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-300 mb-2">Select Port</h3>
+            <h3 className="text-sm font-semibold text-gray-300 mb-2">
+              Select Port
+            </h3>
             <div className="space-y-2">
               <button
                 onClick={handleConnect}
@@ -138,7 +147,9 @@ export default function SettingsModal({
               {/* Quick connect to authorized ports */}
               {authorizedPorts.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs text-gray-500 mb-2">Previously Connected:</p>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Previously Connected:
+                  </p>
                   <div className="space-y-2">
                     {authorizedPorts.map((port, index) => {
                       const info = port.getInfo();
@@ -149,7 +160,9 @@ export default function SettingsModal({
                           disabled={isConnecting}
                           className="w-full px-3 py-2 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-gray-300 rounded border border-gray-600 transition-colors text-left font-mono"
                         >
-                          Device {index + 1}: VID 0x{info.usbVendorId?.toString(16)}, PID 0x{info.usbProductId?.toString(16)}
+                          Device {index + 1}: VID 0x
+                          {info.usbVendorId?.toString(16)}, PID 0x
+                          {info.usbProductId?.toString(16)}
                         </button>
                       );
                     })}

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Connection Panel Component
@@ -6,11 +6,16 @@
  * Serial port connection controls and status display
  */
 
-import React, { useState, useEffect } from 'react';
-import { SerialConfig, DEFAULT_SERIAL_CONFIG, DeviceInfo } from '../types';
-import { isSerialSupported, getAuthorizedPorts } from '../core/serialBridge';
-import { formatBaudRate } from '../utils/formatters';
-import { loadLastDevice, formatDeviceName, isMatchingDevice, type StoredDeviceInfo } from '../utils/deviceStorage';
+import React, { useState, useEffect } from "react";
+import { SerialConfig, DEFAULT_SERIAL_CONFIG, DeviceInfo } from "../types";
+import { isSerialSupported, getAuthorizedPorts } from "../core/serialBridge";
+import { formatBaudRate } from "../utils/formatters";
+import {
+  loadLastDevice,
+  formatDeviceName,
+  isMatchingDevice,
+  type StoredDeviceInfo,
+} from "../utils/deviceStorage";
 
 interface ConnectionPanelProps {
   isConnected: boolean;
@@ -29,7 +34,7 @@ export default function ConnectionPanel({
   onDisconnect,
   config = DEFAULT_SERIAL_CONFIG,
   onConfigChange,
-  lastHeartbeat
+  lastHeartbeat,
 }: ConnectionPanelProps) {
   const [isSupported, setIsSupported] = useState(true);
   const [authorizedPorts, setAuthorizedPorts] = useState<SerialPort[]>([]);
@@ -47,12 +52,14 @@ export default function ConnectionPanel({
 
     // Load authorized ports and find the last device
     if (isSerialSupported()) {
-      getAuthorizedPorts().then(ports => {
+      getAuthorizedPorts().then((ports) => {
         setAuthorizedPorts(ports);
 
         // Find the port that matches the last device
         if (stored) {
-          const matchingPort = ports.find(port => isMatchingDevice(port, stored));
+          const matchingPort = ports.find((port) =>
+            isMatchingDevice(port, stored),
+          );
           setLastDevicePort(matchingPort || null);
         }
       });
@@ -87,9 +94,12 @@ export default function ConnectionPanel({
         <div className="flex items-center gap-2">
           <span className="text-red-400 text-xl">⚠️</span>
           <div>
-            <h3 className="font-semibold text-red-400">Web Serial API Not Supported</h3>
+            <h3 className="font-semibold text-red-400">
+              Web Serial API Not Supported
+            </h3>
             <p className="text-sm text-gray-400 mt-1">
-              Please use Chrome, Edge, or Opera browser (version 89+) to use this tool.
+              Please use Chrome, Edge, or Opera browser (version 89+) to use
+              this tool.
             </p>
           </div>
         </div>
@@ -101,8 +111,8 @@ export default function ConnectionPanel({
     <div className="p-4 bg-gray-900/50 border border-gray-700 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <span className={isConnected ? 'text-green-400' : 'text-gray-500'}>
-            {isConnected ? '🟢' : '⚫'}
+          <span className={isConnected ? "text-green-400" : "text-gray-500"}>
+            {isConnected ? "🟢" : "⚫"}
           </span>
           Connection
         </h2>
@@ -124,7 +134,8 @@ export default function ConnectionPanel({
                 <p className="text-green-400 font-medium">Connected</p>
                 {deviceInfo && (
                   <p className="text-sm text-gray-400 mt-1">
-                    {deviceInfo.productName || `VID: 0x${deviceInfo.vendorId?.toString(16)}, PID: 0x${deviceInfo.productId?.toString(16)}`}
+                    {deviceInfo.productName ||
+                      `VID: 0x${deviceInfo.vendorId?.toString(16)}, PID: 0x${deviceInfo.productId?.toString(16)}`}
                   </p>
                 )}
               </div>
@@ -141,8 +152,9 @@ export default function ConnectionPanel({
               <div className="pt-2 border-t border-green-500/20">
                 <p className="text-xs text-gray-400 flex items-center gap-2">
                   <span className="text-red-500 animate-pulse">💓</span>
-                  Last heartbeat: {new Date().getTime() - lastHeartbeat.getTime() < 5000
-                    ? 'just now'
+                  Last heartbeat:{" "}
+                  {new Date().getTime() - lastHeartbeat.getTime() < 5000
+                    ? "just now"
                     : `${Math.floor((new Date().getTime() - lastHeartbeat.getTime()) / 1000)}s ago`}
                 </p>
               </div>
@@ -153,14 +165,18 @@ export default function ConnectionPanel({
             {/* Last Connected Device - Quick Connect */}
             {lastDevice && lastDevicePort && (
               <div className="p-3 bg-blue-600/10 border border-blue-500/30 rounded">
-                <p className="text-xs text-blue-400 mb-2">💾 Last Connected Device</p>
+                <p className="text-xs text-blue-400 mb-2">
+                  💾 Last Connected Device
+                </p>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium truncate">
                       {formatDeviceName(lastDevice)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(lastDevice.lastConnected).toLocaleDateString()} at {new Date(lastDevice.lastConnected).toLocaleTimeString()}
+                      {new Date(lastDevice.lastConnected).toLocaleDateString()}{" "}
+                      at{" "}
+                      {new Date(lastDevice.lastConnected).toLocaleTimeString()}
                     </p>
                   </div>
                   <button
@@ -168,7 +184,7 @@ export default function ConnectionPanel({
                     disabled={isConnecting}
                     className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded font-medium transition-colors text-sm whitespace-nowrap"
                   >
-                    {isConnecting ? '⏳' : '⚡ Quick Connect'}
+                    {isConnecting ? "⏳" : "⚡ Quick Connect"}
                   </button>
                 </div>
               </div>
@@ -177,9 +193,12 @@ export default function ConnectionPanel({
             {/* Last device stored but port not found */}
             {lastDevice && !lastDevicePort && (
               <div className="p-3 bg-yellow-600/10 border border-yellow-500/30 rounded">
-                <p className="text-xs text-yellow-400 mb-1">⚠️ Last Device Not Available</p>
+                <p className="text-xs text-yellow-400 mb-1">
+                  ⚠️ Last Device Not Available
+                </p>
                 <p className="text-xs text-gray-400">
-                  {formatDeviceName(lastDevice)} is not currently connected. Please reconnect the device or select a new one below.
+                  {formatDeviceName(lastDevice)} is not currently connected.
+                  Please reconnect the device or select a new one below.
                 </p>
               </div>
             )}
@@ -198,7 +217,7 @@ export default function ConnectionPanel({
               ) : (
                 <>
                   <span>🔌</span>
-                  Connect to {lastDevice ? 'Different' : 'New'} Device
+                  Connect to {lastDevice ? "Different" : "New"} Device
                 </>
               )}
             </button>
@@ -207,11 +226,14 @@ export default function ConnectionPanel({
             {authorizedPorts.length > 0 && (
               <div>
                 <p className="text-xs text-gray-500 mb-2">
-                  {lastDevice ? 'Other Devices:' : 'Previously Connected:'}
+                  {lastDevice ? "Other Devices:" : "Previously Connected:"}
                 </p>
                 <div className="space-y-1">
                   {authorizedPorts
-                    .filter(port => !lastDevice || !isMatchingDevice(port, lastDevice))
+                    .filter(
+                      (port) =>
+                        !lastDevice || !isMatchingDevice(port, lastDevice),
+                    )
                     .map((port, index) => {
                       const info = port.getInfo();
                       return (
@@ -221,7 +243,16 @@ export default function ConnectionPanel({
                           disabled={isConnecting}
                           className="w-full px-3 py-2 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-gray-300 rounded border border-gray-600 transition-colors text-left font-mono"
                         >
-                          VID: 0x{info.usbVendorId?.toString(16).toUpperCase().padStart(4, '0')}, PID: 0x{info.usbProductId?.toString(16).toUpperCase().padStart(4, '0')}
+                          VID: 0x
+                          {info.usbVendorId
+                            ?.toString(16)
+                            .toUpperCase()
+                            .padStart(4, "0")}
+                          , PID: 0x
+                          {info.usbProductId
+                            ?.toString(16)
+                            .toUpperCase()
+                            .padStart(4, "0")}
                         </button>
                       );
                     })}
@@ -235,13 +266,22 @@ export default function ConnectionPanel({
       {/* Configuration Panel */}
       {showConfig && onConfigChange && (
         <div className="mt-4 p-4 bg-gray-800/50 border border-gray-600 rounded space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300 mb-3">Serial Configuration</h3>
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">
+            Serial Configuration
+          </h3>
 
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Baud Rate</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              Baud Rate
+            </label>
             <select
               value={config.baudRate}
-              onChange={(e) => onConfigChange({ ...config, baudRate: parseInt(e.target.value) })}
+              onChange={(e) =>
+                onConfigChange({
+                  ...config,
+                  baudRate: parseInt(e.target.value),
+                })
+              }
               className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
             >
               <option value={9600}>9600</option>
@@ -257,10 +297,17 @@ export default function ConnectionPanel({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Data Bits</label>
+              <label className="block text-xs text-gray-400 mb-1">
+                Data Bits
+              </label>
               <select
                 value={config.dataBits}
-                onChange={(e) => onConfigChange({ ...config, dataBits: parseInt(e.target.value) as 7 | 8 })}
+                onChange={(e) =>
+                  onConfigChange({
+                    ...config,
+                    dataBits: parseInt(e.target.value) as 7 | 8,
+                  })
+                }
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
               >
                 <option value={7}>7</option>
@@ -269,10 +316,17 @@ export default function ConnectionPanel({
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Stop Bits</label>
+              <label className="block text-xs text-gray-400 mb-1">
+                Stop Bits
+              </label>
               <select
                 value={config.stopBits}
-                onChange={(e) => onConfigChange({ ...config, stopBits: parseInt(e.target.value) as 1 | 2 })}
+                onChange={(e) =>
+                  onConfigChange({
+                    ...config,
+                    stopBits: parseInt(e.target.value) as 1 | 2,
+                  })
+                }
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
               >
                 <option value={1}>1</option>
@@ -285,7 +339,12 @@ export default function ConnectionPanel({
             <label className="block text-xs text-gray-400 mb-1">Parity</label>
             <select
               value={config.parity}
-              onChange={(e) => onConfigChange({ ...config, parity: e.target.value as 'none' | 'even' | 'odd' })}
+              onChange={(e) =>
+                onConfigChange({
+                  ...config,
+                  parity: e.target.value as "none" | "even" | "odd",
+                })
+              }
               className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-green-500"
             >
               <option value="none">None</option>
@@ -299,7 +358,8 @@ export default function ConnectionPanel({
       {/* Connection Info */}
       <div className="mt-4 pt-3 border-t border-gray-700">
         <p className="text-xs text-gray-500">
-          Current config: {formatBaudRate(config.baudRate)} baud, {config.dataBits}N{config.stopBits}
+          Current config: {formatBaudRate(config.baudRate)} baud,{" "}
+          {config.dataBits}N{config.stopBits}
         </p>
       </div>
     </div>

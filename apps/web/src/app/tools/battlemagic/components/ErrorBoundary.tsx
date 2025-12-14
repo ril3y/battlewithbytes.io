@@ -5,7 +5,7 @@
  * gracefully without crashing the entire application.
  */
 
-import React, { Component, ReactNode, ErrorInfo } from 'react';
+import React, { Component, ReactNode, ErrorInfo } from "react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -27,7 +27,10 @@ interface ErrorBoundaryState {
 /**
  * Error boundary component for graceful error handling
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   private resetTimeoutId: NodeJS.Timeout | null = null;
   private previousResetKeys?: Array<string | number>;
 
@@ -38,7 +41,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       hasError: false,
       error: null,
       errorInfo: null,
-      errorCount: 0
+      errorCount: 0,
     };
 
     this.previousResetKeys = props.resetKeys;
@@ -47,7 +50,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
@@ -55,9 +58,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const { onError, componentName } = this.props;
 
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`Error in ${componentName || 'component'}:`, error);
-      console.error('Component stack:', errorInfo.componentStack);
+    if (process.env.NODE_ENV === "development") {
+      console.error(`Error in ${componentName || "component"}:`, error);
+      console.error("Component stack:", errorInfo.componentStack);
     }
 
     // Call error handler if provided
@@ -66,9 +69,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     // Update state with error details
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       errorInfo,
-      errorCount: prevState.errorCount + 1
+      errorCount: prevState.errorCount + 1,
     }));
 
     // Auto-reset after 3 errors to prevent infinite loops
@@ -82,15 +85,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const { hasError } = this.state;
 
     // Reset on prop changes if enabled
-    if (hasError && resetOnPropsChange && prevProps.children !== this.props.children) {
+    if (
+      hasError &&
+      resetOnPropsChange &&
+      prevProps.children !== this.props.children
+    ) {
       this.resetError();
       return;
     }
 
     // Reset if resetKeys changed
     if (hasError && resetKeys && this.previousResetKeys) {
-      const hasResetKeyChanged = resetKeys.some((key, index) =>
-        key !== this.previousResetKeys![index]
+      const hasResetKeyChanged = resetKeys.some(
+        (key, index) => key !== this.previousResetKeys![index],
       );
 
       if (hasResetKeyChanged) {
@@ -117,7 +124,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       hasError: false,
       error: null,
       errorInfo: null,
-      errorCount: 0
+      errorCount: 0,
     });
   };
 
@@ -143,7 +150,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default error UI
       return (
-        <div className={`error-boundary-fallback ${isolate ? 'isolated' : 'full'}`}>
+        <div
+          className={`error-boundary-fallback ${isolate ? "isolated" : "full"}`}
+        >
           <div className="bg-red-900 border border-red-500 rounded-lg p-4 m-4">
             <div className="flex items-start gap-3">
               <svg
@@ -161,11 +170,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </svg>
               <div className="flex-1">
                 <h3 className="text-red-400 font-bold mb-1">
-                  {componentName ? `Error in ${componentName}` : 'Component Error'}
+                  {componentName
+                    ? `Error in ${componentName}`
+                    : "Component Error"}
                 </h3>
-                <p className="text-red-300 text-sm mb-2">
-                  {error.message}
-                </p>
+                <p className="text-red-300 text-sm mb-2">{error.message}</p>
                 <details className="text-xs text-red-200 mb-3">
                   <summary className="cursor-pointer hover:text-red-100">
                     Technical Details
@@ -201,7 +210,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">,
 ): React.ComponentType<P> {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * StatusBar Component
@@ -7,8 +7,8 @@
  * IDA Pro-inspired design
  */
 
-import React from 'react';
-import { ConnectionState, BmpVersion, Target } from '../lib/gdb/types';
+import React from "react";
+import { ConnectionState, BmpVersion, Target } from "../lib/gdb/types";
 
 interface StatusBarProps {
   gdbState: ConnectionState;
@@ -16,7 +16,7 @@ interface StatusBarProps {
   bmpVersion?: BmpVersion | null;
   currentTarget?: Target | null;
   programCounter?: number;
-  executionState?: 'running' | 'stopped' | 'stepping';
+  executionState?: "running" | "stopped" | "stepping";
   lastUpdate?: Date;
 }
 
@@ -26,16 +26,18 @@ export default function StatusBar({
   bmpVersion,
   currentTarget,
   programCounter,
-  executionState = 'stopped',
+  executionState = "stopped",
   lastUpdate,
 }: StatusBarProps) {
-  const gdbConnected = gdbState === ConnectionState.CONNECTED || gdbState === ConnectionState.ATTACHED;
+  const gdbConnected =
+    gdbState === ConnectionState.CONNECTED ||
+    gdbState === ConnectionState.ATTACHED;
   const targetAttached = gdbState === ConnectionState.ATTACHED;
 
   const StatusItem = ({
     label,
     value,
-    color = 'text-gray-400',
+    color = "text-gray-400",
   }: {
     label: string;
     value: string | React.ReactNode;
@@ -57,7 +59,7 @@ export default function StatusBar({
     <div className="flex items-center gap-1.5">
       <span
         className={`w-2 h-2 rounded-full ${
-          connected ? 'bg-green-400' : 'bg-gray-600'
+          connected ? "bg-green-400" : "bg-gray-600"
         }`}
       />
       <span className="text-xs">{label}</span>
@@ -70,12 +72,19 @@ export default function StatusBar({
       <div className="flex items-center gap-3">
         <StatusItem
           label="GDB"
-          value={<ConnectionIndicator connected={gdbConnected} label={gdbState} />}
+          value={
+            <ConnectionIndicator connected={gdbConnected} label={gdbState} />
+          }
         />
 
         <StatusItem
           label="UART"
-          value={<ConnectionIndicator connected={uartConnected} label={uartConnected ? 'Connected' : 'Disconnected'} />}
+          value={
+            <ConnectionIndicator
+              connected={uartConnected}
+              label={uartConnected ? "Connected" : "Disconnected"}
+            />
+          }
         />
 
         {bmpVersion && (
@@ -102,7 +111,7 @@ export default function StatusBar({
             {programCounter !== undefined && (
               <StatusItem
                 label="PC"
-                value={`0x${programCounter.toString(16).toUpperCase().padStart(8, '0')}`}
+                value={`0x${programCounter.toString(16).toUpperCase().padStart(8, "0")}`}
                 color="text-green-400"
               />
             )}
@@ -110,14 +119,16 @@ export default function StatusBar({
             <StatusItem
               label="State"
               value={
-                <span className={`
-                  ${executionState === 'running' ? 'text-green-400' : ''}
-                  ${executionState === 'stopped' ? 'text-yellow-400' : ''}
-                  ${executionState === 'stepping' ? 'text-blue-400' : ''}
-                `}>
-                  {executionState === 'running' && '▶ Running'}
-                  {executionState === 'stopped' && '⏸ Stopped'}
-                  {executionState === 'stepping' && '⏭ Stepping'}
+                <span
+                  className={`
+                  ${executionState === "running" ? "text-green-400" : ""}
+                  ${executionState === "stopped" ? "text-yellow-400" : ""}
+                  ${executionState === "stepping" ? "text-blue-400" : ""}
+                `}
+                >
+                  {executionState === "running" && "▶ Running"}
+                  {executionState === "stopped" && "⏸ Stopped"}
+                  {executionState === "stepping" && "⏭ Stepping"}
                 </span>
               }
             />
@@ -134,8 +145,10 @@ export default function StatusBar({
 
         {/* Ready indicator */}
         <div className="px-3">
-          <span className={`text-xs ${targetAttached ? 'text-green-400' : 'text-gray-500'}`}>
-            {targetAttached ? '● Ready' : '○ Idle'}
+          <span
+            className={`text-xs ${targetAttached ? "text-green-400" : "text-gray-500"}`}
+          >
+            {targetAttached ? "● Ready" : "○ Idle"}
           </span>
         </div>
       </div>

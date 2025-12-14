@@ -197,6 +197,7 @@ export function HexViewer({
 
     // Check if it's a hex search (starts with 0x or contains only hex chars and spaces)
     const isHexSearch = query.startsWith("0x") || /^[0-9a-f\s]+$/.test(query);
+    let searchLen = 0;
 
     if (isHexSearch) {
       // Parse hex bytes
@@ -207,6 +208,7 @@ export function HexViewer({
       for (let i = 0; i < hexStr.length; i += 2) {
         searchBytes.push(parseInt(hexStr.slice(i, i + 2), 16));
       }
+      searchLen = searchBytes.length;
 
       // Search for byte sequence
       for (let i = 0; i <= data.length - searchBytes.length; i++) {
@@ -222,6 +224,7 @@ export function HexViewer({
     } else {
       // ASCII search
       const searchBytes = new TextEncoder().encode(query);
+      searchLen = searchBytes.length;
       for (let i = 0; i <= data.length - searchBytes.length; i++) {
         let match = true;
         for (let j = 0; j < searchBytes.length; j++) {
@@ -238,7 +241,6 @@ export function HexViewer({
     setCurrentSearchIndex(0);
     if (results.length > 0) {
       // Select the search result range
-      const searchLen = isHexSearch ? hexStr.length / 2 : searchBytes.length;
       setSelectionStart(results[0]);
       setSelectionEnd(results[0] + searchLen - 1);
       scrollToOffset(results[0]);

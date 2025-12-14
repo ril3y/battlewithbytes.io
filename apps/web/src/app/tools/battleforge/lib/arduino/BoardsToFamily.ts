@@ -322,9 +322,6 @@ export class BoardsToFamilyTransformer {
         size: platform.size || 0,
         checksum: platform.checksum || "sha256:pending",
         includes: ["/cores", "/variants", "/tools/sdk"],
-        source: {
-          arduino: platform.downloadUrl,
-        },
       },
       libs: {
         architecture,

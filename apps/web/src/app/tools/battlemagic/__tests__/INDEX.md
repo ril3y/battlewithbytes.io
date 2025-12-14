@@ -3,13 +3,15 @@
 ## Configuration Files
 
 ### Root Level
+
 - **jest.config.js** - Jest configuration with TypeScript support, Next.js integration, and test patterns
 - **jest.setup.js** - Global test environment setup with mocks for Web Serial API, TextEncoder/Decoder
 
 ## Test Infrastructure
 
 ### Fixtures
-- **__tests__/fixtures/testData.ts** - Test data constants and sample data
+
+- ****tests**/fixtures/testData.ts** - Test data constants and sample data
   - Memory patterns (simple, incrementing, zeros, ones, alternating)
   - Intel HEX record samples
   - Motorola S-Record samples
@@ -19,14 +21,16 @@
   - Black Magic Probe version strings
 
 ### Mocks
-- **__tests__/mocks/MockSerialTransport.ts** - Mock Web Serial API implementation
+
+- ****tests**/mocks/MockSerialTransport.ts** - Mock Web Serial API implementation
   - Simulates serial port connections
   - Queues responses for testing
   - Tracks sent data
   - Manages connection state
 
 ### Utilities
-- **__tests__/utils/testHelpers.ts** - Common testing utility functions
+
+- ****tests**/utils/testHelpers.ts** - Common testing utility functions
   - Packet creation helpers
   - Memory response generators
   - Register response generators
@@ -38,7 +42,8 @@
 ## Test Suites
 
 ### GDB Protocol Tests
-- **__tests__/lib/gdb/RspProtocol.test.ts** (57 tests)
+
+- ****tests**/lib/gdb/RspProtocol.test.ts** (57 tests)
   - Checksum calculation and verification
   - Packet encoding and decoding
   - Binary data escaping and unescaping
@@ -49,7 +54,8 @@
   - Integration tests for round-trip conversions
 
 ### GDB Client Tests
-- **__tests__/lib/gdb/GdbClient.test.ts** (50+ tests)
+
+- ****tests**/lib/gdb/GdbClient.test.ts** (50+ tests)
   - Initialization and configuration
   - Connection management
   - Connection state transitions
@@ -67,7 +73,8 @@
   - Error handling
 
 ### File Parser Tests
-- **__tests__/lib/flash/FileParser.test.ts** (45+ tests)
+
+- ****tests**/lib/flash/FileParser.test.ts** (45+ tests)
   - Intel HEX format parsing
   - Binary format parsing
   - Motorola S-Record parsing (S1/S2/S3)
@@ -82,7 +89,8 @@
   - Integration tests (round-trip conversion)
 
 ### ARM Disassembler Tests
-- **__tests__/lib/disasm/ArmDisassembler.test.ts** (35+ tests)
+
+- ****tests**/lib/disasm/ArmDisassembler.test.ts** (35+ tests)
   - Initialization with endianness options
   - Thumb-16 instruction decoding
   - Thumb-2 instruction decoding
@@ -98,7 +106,8 @@
   - Integration tests
 
 ### Component Tests
-- **__tests__/components/ConnectionBar.test.tsx** (25+ tests)
+
+- ****tests**/components/ConnectionBar.test.tsx** (25+ tests)
   - Component rendering
   - GDB connection state indicators (colors, animations)
   - GDB connection button interactions
@@ -112,7 +121,8 @@
 ## Documentation Files
 
 ### Quick Reference
-- **__tests__/README.md** - Quick start guide with:
+
+- ****tests**/README.md** - Quick start guide with:
   - Quick start commands
   - File structure overview
   - Test results summary
@@ -123,7 +133,8 @@
   - Statistics and metrics
 
 ### Comprehensive Guide
-- **__tests__/TEST_GUIDE.md** - Detailed testing guide with:
+
+- ****tests**/TEST_GUIDE.md** - Detailed testing guide with:
   - Overview of test coverage
   - Test structure explanation
   - Running tests (various modes)
@@ -137,6 +148,7 @@
   - Troubleshooting
 
 ### Executive Summary
+
 - **TEST_SUMMARY.md** - Project-level summary with:
   - Overview and status
   - Test execution instructions
@@ -188,18 +200,19 @@ X:\battlewithbytes.io\
 
 ## Test Statistics
 
-| Component | Test File | Tests | Status |
-|-----------|-----------|-------|--------|
-| RspProtocol | gdb/RspProtocol.test.ts | 57 | ✓ PASSING |
-| GdbClient | gdb/GdbClient.test.ts | 50+ | Partial |
-| FileParser | flash/FileParser.test.ts | 45+ | Partial |
-| ArmDisassembler | disasm/ArmDisassembler.test.ts | 35+ | ✓ PASSING |
-| ConnectionBar | components/ConnectionBar.test.tsx | 25+ | Partial |
-| **TOTAL** | **5 files** | **166+** | **123+ passing** |
+| Component       | Test File                         | Tests    | Status           |
+| --------------- | --------------------------------- | -------- | ---------------- |
+| RspProtocol     | gdb/RspProtocol.test.ts           | 57       | ✓ PASSING        |
+| GdbClient       | gdb/GdbClient.test.ts             | 50+      | Partial          |
+| FileParser      | flash/FileParser.test.ts          | 45+      | Partial          |
+| ArmDisassembler | disasm/ArmDisassembler.test.ts    | 35+      | ✓ PASSING        |
+| ConnectionBar   | components/ConnectionBar.test.tsx | 25+      | Partial          |
+| **TOTAL**       | **5 files**                       | **166+** | **123+ passing** |
 
 ## Key Features Tested
 
 ### Protocol & Communication
+
 - ✅ GDB Remote Serial Protocol (RSP) packet handling
 - ✅ Checksum calculation and verification
 - ✅ Binary data encoding/decoding
@@ -207,30 +220,35 @@ X:\battlewithbytes.io\
 - ✅ ACK/NAK handling
 
 ### Memory & Registers
+
 - ✅ Memory read/write operations
 - ✅ Register access and formatting
 - ✅ Address translation
 - ✅ Data alignment
 
 ### Debug Control
+
 - ✅ Breakpoint management
 - ✅ Execution control (run, step, halt)
 - ✅ Target state management
 - ✅ Timeout handling
 
 ### File Formats
+
 - ✅ Intel HEX parsing/generation
 - ✅ Binary firmware loading
 - ✅ Motorola S-Record support
 - ✅ Flash programming
 
 ### Instruction Processing
+
 - ✅ Thumb-16 decoding
 - ✅ Thumb-2 decoding
 - ✅ Branch target calculation
 - ✅ Instruction sequences
 
 ### User Interface
+
 - ✅ Connection state visualization
 - ✅ Button interactions
 - ✅ Configuration management

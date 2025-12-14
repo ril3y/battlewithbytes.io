@@ -11,7 +11,7 @@ import type {
   MessageDefinition,
   DecodedMessage,
   ByteOrder,
-} from '../types';
+} from "../types";
 
 /**
  * Extract bits from a byte array
@@ -28,7 +28,7 @@ export function extractBits(
   byteOffset: number,
   bitOffset: number,
   bitLength: number,
-  byteOrder: ByteOrder = 'little'
+  byteOrder: ByteOrder = "little",
 ): number {
   // Validate inputs
   if (byteOffset < 0 || byteOffset >= data.length) {
@@ -45,7 +45,7 @@ export function extractBits(
   let bitsExtracted = 0;
 
   // Handle little-endian (default) vs big-endian
-  if (byteOrder === 'little') {
+  if (byteOrder === "little") {
     // Little-endian: LSB first, extract left to right
     let currentByteIdx = byteOffset;
     let currentBitOffset = bitOffset;
@@ -53,7 +53,10 @@ export function extractBits(
     while (bitsExtracted < bitLength && currentByteIdx < data.length) {
       const byte = data[currentByteIdx];
       const bitsAvailableInByte = 8 - currentBitOffset;
-      const bitsToExtract = Math.min(bitLength - bitsExtracted, bitsAvailableInByte);
+      const bitsToExtract = Math.min(
+        bitLength - bitsExtracted,
+        bitsAvailableInByte,
+      );
 
       // Create mask for the bits we want
       const mask = ((1 << bitsToExtract) - 1) << currentBitOffset;
@@ -74,7 +77,10 @@ export function extractBits(
     while (bitsExtracted < bitLength && currentByteIdx < data.length) {
       const byte = data[currentByteIdx];
       const bitsAvailableInByte = 8 - currentBitOffset;
-      const bitsToExtract = Math.min(bitLength - bitsExtracted, bitsAvailableInByte);
+      const bitsToExtract = Math.min(
+        bitLength - bitsExtracted,
+        bitsAvailableInByte,
+      );
 
       // Create mask for the bits we want (from MSB side)
       const mask = ((1 << bitsToExtract) - 1) << currentBitOffset;
@@ -98,16 +104,16 @@ export function extractBits(
  */
 export function convertToType(
   rawValue: number,
-  field: FieldDefinition
+  field: FieldDefinition,
 ): number | boolean | string {
   switch (field.type) {
-    case 'boolean':
+    case "boolean":
       return rawValue !== 0;
 
-    case 'uint':
+    case "uint":
       return rawValue;
 
-    case 'int': {
+    case "int": {
       // Two's complement conversion
       const bitLength = field.bitLength;
       const signBit = 1 << (bitLength - 1);
@@ -119,10 +125,10 @@ export function convertToType(
       return rawValue;
     }
 
-    case 'float': {
+    case "float": {
       // IEEE 754 32-bit float
       if (field.bitLength !== 32) {
-        throw new Error('Float type requires 32-bit field');
+        throw new Error("Float type requires 32-bit field");
       }
       // Convert uint32 to float32
       const buffer = new ArrayBuffer(4);
@@ -131,13 +137,13 @@ export function convertToType(
       return view.getFloat32(0, true);
     }
 
-    case 'enum': {
+    case "enum": {
       // Find matching enum value
       const enumDef = field.enumValues?.find((e) => e.value === rawValue);
       return enumDef ? enumDef.label : `UNKNOWN(${rawValue})`;
     }
 
-    case 'raw':
+    case "raw":
       return rawValue;
 
     default:
@@ -150,10 +156,10 @@ export function convertToType(
  */
 export function applyTransform(
   value: number | boolean | string,
-  field: FieldDefinition
+  field: FieldDefinition,
 ): number | boolean | string {
   // Only transform numeric values
-  if (typeof value !== 'number') {
+  if (typeof value !== "number") {
     return value;
   }
 
@@ -177,10 +183,10 @@ export function applyTransform(
  */
 export function validateValue(
   value: number | boolean | string,
-  field: FieldDefinition
+  field: FieldDefinition,
 ): boolean {
   // Only validate numeric values
-  if (typeof value !== 'number') {
+  if (typeof value !== "number") {
     return true;
   }
 
@@ -200,7 +206,7 @@ export function validateValue(
  */
 export function decodeField(
   data: number[],
-  field: FieldDefinition
+  field: FieldDefinition,
 ): DecodedField {
   try {
     // Extract raw bits
@@ -209,7 +215,7 @@ export function decodeField(
       field.byteOffset,
       field.bitOffset,
       field.bitLength,
-      field.byteOrder || 'little'
+      field.byteOrder || "little",
     );
 
     // Convert to typed value
@@ -249,7 +255,7 @@ export function decodeMessage(
   canId: string,
   data: number[],
   definition: MessageDefinition,
-  timestamp: number = Date.now()
+  timestamp: number = Date.now(),
 ): DecodedMessage {
   const fields: Record<string, DecodedField> = {};
 
@@ -273,9 +279,9 @@ export function decodeMessage(
 export function formatDecodedField(field: DecodedField): string {
   let valueStr: string;
 
-  if (typeof field.value === 'boolean') {
-    valueStr = field.value ? 'true' : 'false';
-  } else if (typeof field.value === 'number') {
+  if (typeof field.value === "boolean") {
+    valueStr = field.value ? "true" : "false";
+  } else if (typeof field.value === "number") {
     // Format numbers with appropriate precision
     if (Number.isInteger(field.value)) {
       valueStr = field.value.toString();
@@ -293,7 +299,7 @@ export function formatDecodedField(field: DecodedField): string {
 
   // Add validity indicator if invalid
   if (!field.valid) {
-    valueStr += ' ⚠️';
+    valueStr += " ⚠️";
   }
 
   return valueStr;
@@ -314,7 +320,7 @@ export function formatDecodedMessage(decoded: DecodedMessage): string {
     lines.push(`  ${name}: ${formatted}`);
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -322,12 +328,14 @@ export function formatDecodedMessage(decoded: DecodedMessage): string {
  * Returns an array of annotations for each byte
  */
 export function getInlineAnnotations(
-  decoded: DecodedMessage
+  decoded: DecodedMessage,
 ): Array<{ byteIndex: number; annotation: string }> {
   const annotations: Array<{ byteIndex: number; annotation: string }> = [];
 
   for (const field of Object.values(decoded.fields)) {
-    const fieldDef = decoded.definition?.fields.find((f) => f.name === field.name);
+    const fieldDef = decoded.definition?.fields.find(
+      (f) => f.name === field.name,
+    );
     if (!fieldDef) continue;
 
     // Create annotation for this field's starting byte
@@ -348,15 +356,15 @@ export function getInlineAnnotations(
  * Always returns format: 0x### (lowercase prefix, uppercase hex digits, padded to 3 chars)
  */
 export function normalizeCANId(id: string | number): string {
-  if (typeof id === 'number') {
-    return `0x${id.toString(16).toUpperCase().padStart(3, '0')}`;
+  if (typeof id === "number") {
+    return `0x${id.toString(16).toUpperCase().padStart(3, "0")}`;
   }
 
   // Remove any 0x or 0X prefix and convert hex digits to uppercase
-  const hexPart = id.replace(/^0[xX]/, '').toUpperCase();
+  const hexPart = id.replace(/^0[xX]/, "").toUpperCase();
 
   // Pad to 3 characters minimum
-  const paddedHex = hexPart.padStart(3, '0');
+  const paddedHex = hexPart.padStart(3, "0");
 
   // Return with lowercase 0x prefix
   return `0x${paddedHex}`;
@@ -367,7 +375,7 @@ export function normalizeCANId(id: string | number): string {
  */
 export function matchesDefinition(
   canId: string,
-  definition: MessageDefinition
+  definition: MessageDefinition,
 ): boolean {
   const normalizedCanId = normalizeCANId(canId);
   const normalizedDefId = normalizeCANId(definition.id);

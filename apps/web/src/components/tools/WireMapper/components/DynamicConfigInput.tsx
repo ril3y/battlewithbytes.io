@@ -1,23 +1,28 @@
-import React from 'react';
-import { 
-  ConfigOption, 
+import React from "react";
+import {
+  ConfigOption,
   ConfigOptionText,
   ConfigOptionNumber,
   ConfigOptionBoolean,
   ConfigOptionSelect,
   ConfigOptionRadio,
-  ConnectorConfig
-} from '../types';
+  ConnectorConfig,
+} from "../types";
 
 type ConfigValue = string | number | boolean | undefined;
 
-type DisabledConditionFn<T> = ((state: Partial<ConnectorConfig>) => boolean) | ((value: T) => boolean);
+type DisabledConditionFn<T> =
+  | ((state: Partial<ConnectorConfig>) => boolean)
+  | ((value: T) => boolean);
 
-function isValueCondition<T>(fn: DisabledConditionFn<T>): fn is (value: T) => boolean {
+function isValueCondition<T>(
+  fn: DisabledConditionFn<T>,
+): fn is (value: T) => boolean {
   return fn.length === 1;
 }
 
-const commonClasses = 'w-full bg-gray-800 border border-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-400';
+const commonClasses =
+  "w-full bg-gray-800 border border-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-400";
 
 type OnChangeHandler = (key: string, value: ConfigValue) => void;
 
@@ -28,10 +33,15 @@ interface DynamicConfigInputProps {
   disabled?: boolean;
 }
 
-export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, value, onChange, disabled = false }) => {
+export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({
+  option,
+  value,
+  onChange,
+  disabled = false,
+}) => {
   const renderInput = () => {
     switch (option.type) {
-      case 'number': {
+      case "number": {
         const numOption = option as ConfigOptionNumber;
         return (
           <input
@@ -39,23 +49,26 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
             min={numOption.min}
             max={numOption.max}
             step={numOption.step ?? 1}
-            value={value as number ?? numOption.defaultValue ?? 0}
+            value={(value as number) ?? numOption.defaultValue ?? 0}
             onChange={(e) => {
               const val = e.target.value;
               // Allow empty string temporarily for editing
-              if (val === '') {
+              if (val === "") {
                 onChange(option.key, numOption.min ?? 0);
               } else {
                 const parsed = parseInt(val, 10);
-                onChange(option.key, isNaN(parsed) ? (numOption.defaultValue ?? 0) : parsed);
+                onChange(
+                  option.key,
+                  isNaN(parsed) ? (numOption.defaultValue ?? 0) : parsed,
+                );
               }
             }}
             disabled={disabled}
-            className={`${commonClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`${commonClasses} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           />
         );
       }
-      case 'boolean': {
+      case "boolean": {
         const boolOption = option as ConfigOptionBoolean;
         return (
           <div className="flex items-center">
@@ -64,46 +77,60 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
               checked={Boolean(value ?? boolOption.defaultValue ?? false)}
               onChange={(e) => onChange(option.key, e.target.checked)}
               disabled={disabled}
-              className={`rounded text-green-500 focus:ring-green-400 bg-gray-700 border-gray-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`rounded text-green-500 focus:ring-green-400 bg-gray-700 border-gray-600 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             />
-            <span className="ml-2 text-sm text-gray-300">{boolOption.label}</span>
+            <span className="ml-2 text-sm text-gray-300">
+              {boolOption.label}
+            </span>
           </div>
         );
       }
-      case 'text': {
+      case "text": {
         const textOption = option as ConfigOptionText;
-        const isDisabled = disabled || (
-          textOption.disabledCondition
-            ? isValueCondition(textOption.disabledCondition as DisabledConditionFn<ConfigValue>)
-              ? (textOption.disabledCondition as (value: ConfigValue) => boolean)(value)
-              : (textOption.disabledCondition as (state: Partial<ConnectorConfig>) => boolean)({})
-            : false
-        );
-        
+        const isDisabled =
+          disabled ||
+          (textOption.disabledCondition
+            ? isValueCondition(
+                textOption.disabledCondition as DisabledConditionFn<ConfigValue>,
+              )
+              ? (
+                  textOption.disabledCondition as (
+                    value: ConfigValue,
+                  ) => boolean
+                )(value)
+              : (
+                  textOption.disabledCondition as (
+                    state: Partial<ConnectorConfig>,
+                  ) => boolean
+                )({})
+            : false);
+
         return (
           <input
             type="text"
-            value={value as string ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(option.key, e.target.value)}
             disabled={isDisabled}
-            className={`${commonClasses} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`${commonClasses} ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
             placeholder={textOption.placeholder}
           />
         );
       }
-      case 'select': {
+      case "select": {
         const selectOption = option as ConfigOptionSelect;
         return (
           <select
-            value={value as string ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => {
-              const selected = selectOption.options.find(opt => String(opt.value) === e.target.value);
+              const selected = selectOption.options.find(
+                (opt) => String(opt.value) === e.target.value,
+              );
               if (selected) {
                 onChange(option.key, selected.value);
               }
             }}
             disabled={disabled}
-            className={`${commonClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`${commonClasses} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {selectOption.options.map((opt) => (
               <option key={String(opt.value)} value={String(opt.value)}>
@@ -113,7 +140,7 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
           </select>
         );
       }
-      case 'radio': {
+      case "radio": {
         const radioOption = option as ConfigOptionRadio;
         return (
           <div className="space-y-2">
@@ -137,18 +164,19 @@ export const DynamicConfigInput: React.FC<DynamicConfigInputProps> = ({ option, 
       default: {
         // Ensure exhaustive check (useful with TypeScript)
         const exhaustiveCheck: never = option;
-        console.warn('Unhandled config option type:', (exhaustiveCheck as ConfigOption).type);
+        console.warn(
+          "Unhandled config option type:",
+          (exhaustiveCheck as ConfigOption).type,
+        );
         return null;
       }
     }
   };
 
   const renderLabel = () => {
-    if (option.type === 'boolean') return null;
+    if (option.type === "boolean") return null;
     return (
-      <label className="block text-sm text-gray-400 mb-1">
-        {option.label}
-      </label>
+      <label className="block text-sm text-gray-400 mb-1">{option.label}</label>
     );
   };
 

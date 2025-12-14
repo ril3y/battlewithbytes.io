@@ -37,12 +37,12 @@ lib/cfg/
 ### Basic Usage
 
 ```typescript
-import { ArmDisassembler } from '../arm/ArmDisassembler';
+import { ArmDisassembler } from "../arm/ArmDisassembler";
 import {
   BasicBlockAnalyzer,
   ControlFlowAnalyzer,
-  CFGLayoutEngine
-} from './cfg';
+  CFGLayoutEngine,
+} from "./cfg";
 
 // 1. Disassemble code
 const disassembler = new ArmDisassembler();
@@ -50,34 +50,36 @@ const instructions = disassembler.disassemble(binaryData, startAddress, true);
 
 // 2. Identify basic blocks
 const blockAnalyzer = new BasicBlockAnalyzer({
-  architecture: 'ARM',
+  architecture: "ARM",
   startAddress,
   detectLoops: true,
-  detectUnreachable: true
+  detectUnreachable: true,
 });
 const blocks = blockAnalyzer.identifyBasicBlocks(instructions);
 
 // 3. Build CFG
 const cfgAnalyzer = new ControlFlowAnalyzer({
-  architecture: 'ARM',
+  architecture: "ARM",
   startAddress,
   detectLoops: true,
-  detectUnreachable: true
+  detectUnreachable: true,
 });
 const result = cfgAnalyzer.buildCFG(blocks);
 
 // 4. Compute layout
 const layoutEngine = new CFGLayoutEngine({
-  algorithm: 'hierarchical',
+  algorithm: "hierarchical",
   blockWidth: 200,
   blockHeight: 80,
   horizontalSpacing: 50,
-  verticalSpacing: 40
+  verticalSpacing: 40,
 });
 const layout = layoutEngine.computeLayout(result.cfg);
 
 console.log(`Created CFG with ${result.cfg.blocks.size} blocks`);
-console.log(`Cyclomatic Complexity: ${result.cfg.metadata.cyclomaticComplexity}`);
+console.log(
+  `Cyclomatic Complexity: ${result.cfg.metadata.cyclomaticComplexity}`,
+);
 console.log(`Max Loop Depth: ${result.cfg.metadata.maxLoopDepth}`);
 ```
 
@@ -88,6 +90,7 @@ console.log(`Max Loop Depth: ${result.cfg.metadata.maxLoopDepth}`);
 Identifies basic blocks from disassembled instructions.
 
 **Constructor Options:**
+
 ```typescript
 interface BlockAnalysisOptions {
   architecture: Architecture;
@@ -99,14 +102,16 @@ interface BlockAnalysisOptions {
 ```
 
 **Methods:**
+
 - `identifyBasicBlocks(instructions: DisassembledInstruction[]): BasicBlock[]`
 
 **Example:**
+
 ```typescript
 const analyzer = new BasicBlockAnalyzer({
-  architecture: 'ARM',
+  architecture: "ARM",
   startAddress: 0x08000000,
-  detectLoops: true
+  detectLoops: true,
 });
 const blocks = analyzer.identifyBasicBlocks(instructions);
 ```
@@ -118,10 +123,12 @@ Builds complete control flow graphs with analysis.
 **Constructor Options:** Same as BasicBlockAnalyzer
 
 **Methods:**
+
 - `buildCFG(blocks: BasicBlock[]): CFGAnalysisResult`
 - `buildDominatorTree(cfg: ControlFlowGraph): Map<string, string[]>`
 
 **Result Structure:**
+
 ```typescript
 interface CFGAnalysisResult {
   cfg: ControlFlowGraph;
@@ -136,15 +143,16 @@ interface CFGAnalysisResult {
 ```
 
 **Example:**
+
 ```typescript
 const analyzer = new ControlFlowAnalyzer({
-  architecture: 'ARM',
-  startAddress: 0x08000000
+  architecture: "ARM",
+  startAddress: 0x08000000,
 });
 const { cfg, warnings, statistics } = analyzer.buildCFG(blocks);
 
 console.log(`Analysis took ${statistics.analysisTimeMs}ms`);
-warnings.forEach(w => console.warn(w));
+warnings.forEach((w) => console.warn(w));
 ```
 
 ### CFGLayoutEngine
@@ -152,9 +160,10 @@ warnings.forEach(w => console.warn(w));
 Computes visual layout using hierarchical algorithm.
 
 **Constructor Options:**
+
 ```typescript
 interface LayoutOptions {
-  algorithm: 'hierarchical' | 'force-directed';
+  algorithm: "hierarchical" | "force-directed";
   blockWidth: number;
   blockHeight: number;
   horizontalSpacing: number;
@@ -165,17 +174,19 @@ interface LayoutOptions {
 ```
 
 **Methods:**
+
 - `computeLayout(cfg: ControlFlowGraph): CFGLayout`
 
 **Example:**
+
 ```typescript
 const engine = new CFGLayoutEngine({
-  algorithm: 'hierarchical',
+  algorithm: "hierarchical",
   blockWidth: 200,
   blockHeight: 100,
   horizontalSpacing: 60,
   verticalSpacing: 50,
-  compactLayout: false
+  compactLayout: false,
 });
 const layout = engine.computeLayout(cfg);
 ```
@@ -188,16 +199,16 @@ Represents a single basic block with no internal branches.
 
 ```typescript
 interface BasicBlock {
-  id: string;                     // Hex address
+  id: string; // Hex address
   startAddress: number;
   endAddress: number;
   instructions: DisassembledInstruction[];
-  type: BlockType;                // entry, normal, conditional, call, return, etc.
+  type: BlockType; // entry, normal, conditional, call, return, etc.
 
   // Graph connectivity
-  predecessors: string[];         // Incoming edges
-  successors: string[];           // Outgoing edges
-  edges: CFGEdge[];              // Edge metadata
+  predecessors: string[]; // Incoming edges
+  successors: string[]; // Outgoing edges
+  edges: CFGEdge[]; // Edge metadata
 }
 ```
 
@@ -233,8 +244,8 @@ Visual layout information for rendering.
 
 ```typescript
 interface CFGLayout {
-  blocks: Map<string, BlockLayout>;  // Block positions
-  edges: EdgeLayout[];               // Edge routes
+  blocks: Map<string, BlockLayout>; // Block positions
+  edges: EdgeLayout[]; // Edge routes
   bounds: {
     width: number;
     height: number;
@@ -247,14 +258,14 @@ interface BlockLayout {
   y: number;
   width: number;
   height: number;
-  level: number;  // Hierarchical layer
+  level: number; // Hierarchical layer
 }
 
 interface EdgeLayout {
   from: string;
   to: string;
   type: EdgeType;
-  points: Point[];  // Bezier control points
+  points: Point[]; // Bezier control points
   color: string;
   isBackEdge?: boolean;
 }
@@ -264,13 +275,13 @@ interface EdgeLayout {
 
 ```typescript
 enum BlockType {
-  ENTRY = 'entry',               // Function entry
-  NORMAL = 'normal',             // Sequential code
-  CONDITIONAL = 'conditional',   // Conditional branch
-  CALL = 'call',                 // Function call
-  RETURN = 'return',             // Return instruction
-  EXIT = 'exit',                 // Dead end
-  UNREACHABLE = 'unreachable'    // Unreachable code
+  ENTRY = "entry", // Function entry
+  NORMAL = "normal", // Sequential code
+  CONDITIONAL = "conditional", // Conditional branch
+  CALL = "call", // Function call
+  RETURN = "return", // Return instruction
+  EXIT = "exit", // Dead end
+  UNREACHABLE = "unreachable", // Unreachable code
 }
 ```
 
@@ -278,11 +289,11 @@ enum BlockType {
 
 ```typescript
 enum EdgeType {
-  UNCONDITIONAL = 'unconditional',
-  CONDITIONAL_TRUE = 'true',       // Branch taken
-  CONDITIONAL_FALSE = 'false',     // Fall-through
-  CALL = 'call',
-  RETURN = 'return'
+  UNCONDITIONAL = "unconditional",
+  CONDITIONAL_TRUE = "true", // Branch taken
+  CONDITIONAL_FALSE = "false", // Fall-through
+  CALL = "call",
+  RETURN = "return",
 }
 ```
 
@@ -294,15 +305,15 @@ Automatically detects loops and calculates nesting depth:
 
 ```typescript
 const analyzer = new ControlFlowAnalyzer({
-  architecture: 'ARM',
+  architecture: "ARM",
   startAddress: 0x08000000,
-  detectLoops: true
+  detectLoops: true,
 });
 const { cfg } = analyzer.buildCFG(blocks);
 
-cfg.loops?.forEach(loop => {
+cfg.loops?.forEach((loop) => {
   console.log(`Loop at ${loop.header}, depth ${loop.depth}`);
-  console.log(`Blocks: ${Array.from(loop.blocks).join(', ')}`);
+  console.log(`Blocks: ${Array.from(loop.blocks).join(", ")}`);
 });
 ```
 
@@ -312,14 +323,14 @@ Build dominator tree for advanced analysis:
 
 ```typescript
 const analyzer = new ControlFlowAnalyzer({
-  architecture: 'ARM',
-  startAddress: 0x08000000
+  architecture: "ARM",
+  startAddress: 0x08000000,
 });
 const { cfg } = analyzer.buildCFG(blocks);
 const dominatorTree = analyzer.buildDominatorTree(cfg);
 
 for (const [blockId, dominators] of dominatorTree) {
-  console.log(`${blockId} dominated by: ${dominators.join(', ')}`);
+  console.log(`${blockId} dominated by: ${dominators.join(", ")}`);
 }
 ```
 
@@ -346,18 +357,30 @@ console.log(`Complexity: ${cfg.metadata.cyclomaticComplexity}`);
 ### Unit Test Example
 
 ```typescript
-import { BasicBlockAnalyzer } from './BasicBlockAnalyzer';
+import { BasicBlockAnalyzer } from "./BasicBlockAnalyzer";
 
-describe('BasicBlockAnalyzer', () => {
-  it('should identify single basic block', () => {
+describe("BasicBlockAnalyzer", () => {
+  it("should identify single basic block", () => {
     const instructions = [
-      { address: 0x100, mnemonic: 'mov', operands: 'r0, #1', isBranch: false, size: 2 },
-      { address: 0x102, mnemonic: 'add', operands: 'r0, r0, #1', isBranch: false, size: 2 }
+      {
+        address: 0x100,
+        mnemonic: "mov",
+        operands: "r0, #1",
+        isBranch: false,
+        size: 2,
+      },
+      {
+        address: 0x102,
+        mnemonic: "add",
+        operands: "r0, r0, #1",
+        isBranch: false,
+        size: 2,
+      },
     ];
 
     const analyzer = new BasicBlockAnalyzer({
-      architecture: 'ARM',
-      startAddress: 0x100
+      architecture: "ARM",
+      startAddress: 0x100,
     });
     const blocks = analyzer.identifyBasicBlocks(instructions);
 
@@ -365,17 +388,42 @@ describe('BasicBlockAnalyzer', () => {
     expect(blocks[0].instructions).toHaveLength(2);
   });
 
-  it('should split on branch', () => {
+  it("should split on branch", () => {
     const instructions = [
-      { address: 0x100, mnemonic: 'cmp', operands: 'r0, #0', isBranch: false, size: 2 },
-      { address: 0x102, mnemonic: 'beq', operands: '0x110', isBranch: true, branchTarget: 0x110, size: 2 },
-      { address: 0x104, mnemonic: 'mov', operands: 'r1, #1', isBranch: false, size: 2 },
-      { address: 0x110, mnemonic: 'bx', operands: 'lr', isBranch: false, size: 2 }
+      {
+        address: 0x100,
+        mnemonic: "cmp",
+        operands: "r0, #0",
+        isBranch: false,
+        size: 2,
+      },
+      {
+        address: 0x102,
+        mnemonic: "beq",
+        operands: "0x110",
+        isBranch: true,
+        branchTarget: 0x110,
+        size: 2,
+      },
+      {
+        address: 0x104,
+        mnemonic: "mov",
+        operands: "r1, #1",
+        isBranch: false,
+        size: 2,
+      },
+      {
+        address: 0x110,
+        mnemonic: "bx",
+        operands: "lr",
+        isBranch: false,
+        size: 2,
+      },
     ];
 
     const analyzer = new BasicBlockAnalyzer({
-      architecture: 'ARM',
-      startAddress: 0x100
+      architecture: "ARM",
+      startAddress: 0x100,
     });
     const blocks = analyzer.identifyBasicBlocks(instructions);
 
@@ -389,6 +437,7 @@ describe('BasicBlockAnalyzer', () => {
 ### Modularity
 
 Each component has a single, well-defined responsibility:
+
 - **BasicBlockAnalyzer** - Block identification only
 - **ControlFlowAnalyzer** - Graph construction and analysis
 - **CFGLayoutEngine** - Visual layout computation
@@ -402,7 +451,7 @@ Easy to extend for new architectures:
 class RiscVBlockAnalyzer extends BasicBlockAnalyzer {
   protected classifyBlockType(inst: DisassembledInstruction): BlockType {
     // RISC-V specific classification
-    if (inst.mnemonic === 'jalr' && inst.operands.includes('ra')) {
+    if (inst.mnemonic === "jalr" && inst.operands.includes("ra")) {
       return BlockType.RETURN;
     }
     return super.classifyBlockType(inst);
@@ -442,6 +491,7 @@ class RiscVBlockAnalyzer extends BasicBlockAnalyzer {
 ### Loop Detection
 
 Uses **back-edge detection** with DFS:
+
 - Back-edge = edge where target dominates source
 - Natural loops identified from back-edges
 - Nesting depth calculated from containment

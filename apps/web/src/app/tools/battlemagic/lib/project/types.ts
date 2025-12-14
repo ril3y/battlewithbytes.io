@@ -5,8 +5,8 @@
  * Uses JSON format with versioning for future compatibility.
  */
 
-import { MemoryRegion } from '../memory/MemoryMapParser';
-import { Breakpoint } from '../../components/BreakpointsManager';
+import { MemoryRegion } from "../memory/MemoryMapParser";
+import { Breakpoint } from "../../components/BreakpointsManager";
 
 /**
  * Project file format version
@@ -143,32 +143,34 @@ export interface BattleMagicProject {
 /**
  * Helper to create a new project with defaults
  */
-export function createNewProject(name: string = 'Untitled Project'): BattleMagicProject {
+export function createNewProject(
+  name: string = "Untitled Project",
+): BattleMagicProject {
   const now = new Date().toISOString();
 
   return {
     metadata: {
       name,
-      description: '',
+      description: "",
       createdAt: now,
       lastModified: now,
-      version: PROJECT_FORMAT_VERSION
+      version: PROJECT_FORMAT_VERSION,
     },
     gdbSettings: {
       baudRate: 230400,
-      commandTimeout: 15000
+      commandTimeout: 15000,
     },
     memoryMap: {
       zoom: 1.5,
       offset: { x: 0, y: 0 },
-      selectedCpu: 'generic-cortex-m4',
-      customRegions: []
+      selectedCpu: "generic-cortex-m4",
+      customRegions: [],
     },
     breakpoints: [],
     notes: {
-      general: '',
-      entries: []
-    }
+      general: "",
+      entries: [],
+    },
   };
 }
 
@@ -176,35 +178,46 @@ export function createNewProject(name: string = 'Untitled Project'): BattleMagic
  * Validate project structure
  */
 export function isValidProject(data: unknown): data is BattleMagicProject {
-  if (!data || typeof data !== 'object') return false;
+  if (!data || typeof data !== "object") return false;
 
   const project = data as BattleMagicProject;
 
   // Check required top-level properties
-  if (!project.metadata || !project.gdbSettings || !project.memoryMap || !project.breakpoints) {
+  if (
+    !project.metadata ||
+    !project.gdbSettings ||
+    !project.memoryMap ||
+    !project.breakpoints
+  ) {
     return false;
   }
 
   // Check metadata
-  if (!project.metadata.name || !project.metadata.createdAt || !project.metadata.lastModified) {
+  if (
+    !project.metadata.name ||
+    !project.metadata.createdAt ||
+    !project.metadata.lastModified
+  ) {
     return false;
   }
 
   // Check version
-  if (typeof project.metadata.version !== 'number') {
+  if (typeof project.metadata.version !== "number") {
     return false;
   }
 
   // Check gdbSettings
-  if (typeof project.gdbSettings.baudRate !== 'number') {
+  if (typeof project.gdbSettings.baudRate !== "number") {
     return false;
   }
 
   // Check memoryMap
-  if (typeof project.memoryMap.zoom !== 'number' ||
-      !project.memoryMap.offset ||
-      !project.memoryMap.selectedCpu ||
-      !Array.isArray(project.memoryMap.customRegions)) {
+  if (
+    typeof project.memoryMap.zoom !== "number" ||
+    !project.memoryMap.offset ||
+    !project.memoryMap.selectedCpu ||
+    !Array.isArray(project.memoryMap.customRegions)
+  ) {
     return false;
   }
 
@@ -219,7 +232,9 @@ export function isValidProject(data: unknown): data is BattleMagicProject {
 /**
  * Migrate old project format to current version
  */
-export function migrateProject(project: BattleMagicProject): BattleMagicProject {
+export function migrateProject(
+  project: BattleMagicProject,
+): BattleMagicProject {
   // Future: handle migration from older versions
   // For now, just ensure all required fields exist
 
@@ -232,7 +247,7 @@ export function migrateProject(project: BattleMagicProject): BattleMagicProject 
 
   // Ensure notes structure exists
   if (!migrated.notes) {
-    migrated.notes = { general: '', entries: [] };
+    migrated.notes = { general: "", entries: [] };
   }
 
   // Ensure custom regions exist

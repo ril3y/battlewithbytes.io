@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Rule Builder Modal (Protocol v2.0)
@@ -7,9 +7,9 @@
  * Provides more space and better UX than the cramped panel
  */
 
-import React from 'react';
-import { ActionDefinition, ActionRule, CANMessage } from '../types';
-import DynamicRuleBuilder from './DynamicRuleBuilder';
+import React from "react";
+import { ActionDefinition, ActionRule, CANMessage } from "../types";
+import DynamicRuleBuilder from "./DynamicRuleBuilder";
 
 interface RuleBuilderModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export default function RuleBuilderModal({
   onAddRule,
   isConnected,
   editingRule,
-  prefilledMessage
+  prefilledMessage,
 }: RuleBuilderModalProps) {
   if (!isOpen) return null;
 
@@ -48,15 +48,14 @@ export default function RuleBuilderModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div>
             <h2 className="text-2xl font-bold text-white font-mono">
-              {editingRule ? '✏️ Edit Action Rule' : '⚡ Create Action Rule'}
+              {editingRule ? "✏️ Edit Action Rule" : "⚡ Create Action Rule"}
             </h2>
             <p className="text-sm text-gray-400 mt-1">
               {editingRule
                 ? `Editing: ${editingRule.name}`
                 : prefilledMessage
                   ? `Building rule from CAN ID 0x${prefilledMessage.canId.toString(16).toUpperCase()}`
-                  : 'Configure the board to automatically respond to triggers'
-              }
+                  : "Configure the board to automatically respond to triggers"}
             </p>
           </div>
           <button
@@ -71,10 +70,12 @@ export default function RuleBuilderModal({
         <div className="flex-1 overflow-y-auto p-6">
           {editingRule ? (
             <div className="bg-yellow-600/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
-              <p className="text-yellow-400 text-sm font-medium">⚠️ Edit Mode</p>
+              <p className="text-yellow-400 text-sm font-medium">
+                ⚠️ Edit Mode
+              </p>
               <p className="text-gray-400 text-sm mt-1">
-                Currently editing rule #{editingRule.id}. Modifying and saving will create a new rule.
-                Delete the old rule manually if needed.
+                Currently editing rule #{editingRule.id}. Modifying and saving
+                will create a new rule. Delete the old rule manually if needed.
               </p>
             </div>
           ) : null}
@@ -94,7 +95,8 @@ export default function RuleBuilderModal({
         {/* Footer */}
         <div className="border-t border-gray-700 p-4 bg-gray-950">
           <p className="text-xs text-gray-500 text-center">
-            💡 Tip: Rules execute automatically when their trigger conditions are met
+            💡 Tip: Rules execute automatically when their trigger conditions
+            are met
           </p>
         </div>
       </div>

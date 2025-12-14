@@ -18,7 +18,7 @@ export class CircularBuffer<T> {
    */
   constructor(capacity: number) {
     if (capacity <= 0) {
-      throw new Error('Capacity must be positive');
+      throw new Error("Capacity must be positive");
     }
     this.capacity = capacity;
     this.buffer = new Array(capacity);

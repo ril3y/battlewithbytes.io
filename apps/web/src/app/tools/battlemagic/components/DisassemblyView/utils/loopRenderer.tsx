@@ -5,17 +5,17 @@
  * Uses pre-computed CFG loop data from WASM analyzer database.
  */
 
-import React from 'react';
+import React from "react";
 
 /**
  * Types of characters in loop visualization
  */
 export type LoopCharType =
-  | 'empty'      // ' '
-  | 'vertical'   // '│'
-  | 'top'        // '┌'
-  | 'bottom'     // '└'
-  | 'branch';    // '├'
+  | "empty" // ' '
+  | "vertical" // '│'
+  | "top" // '┌'
+  | "bottom" // '└'
+  | "branch"; // '├'
 
 /**
  * Rendering information for a single line in the loop visualization
@@ -32,12 +32,12 @@ export interface LoopLineInfo {
  * Color palette for loop visualization (supports up to 6 nesting levels)
  */
 const LOOP_COLORS = [
-  '#00d4ff', // Cyan (level 1 - outermost)
-  '#00ff88', // Green
-  '#ffaa00', // Orange
-  '#ff00ff', // Magenta
-  '#ffff00', // Yellow
-  '#ff4444', // Red (level 6 - innermost)
+  "#00d4ff", // Cyan (level 1 - outermost)
+  "#00ff88", // Green
+  "#ffaa00", // Orange
+  "#ff00ff", // Magenta
+  "#ffff00", // Yellow
+  "#ff4444", // Red (level 6 - innermost)
 ];
 
 /**
@@ -53,12 +53,18 @@ export function getLoopColor(nestingLevel: number): string {
  */
 function getCharacterForType(type: LoopCharType): string {
   switch (type) {
-    case 'top': return '╭';        // Loop entry (top bracket)
-    case 'bottom': return '╰';     // Loop back edge (bottom bracket)
-    case 'vertical': return '│';   // Loop body (vertical line)
-    case 'branch': return '├';     // Branch out
-    case 'empty': return '';
-    default: return '';
+    case "top":
+      return "╭"; // Loop entry (top bracket)
+    case "bottom":
+      return "╰"; // Loop back edge (bottom bracket)
+    case "vertical":
+      return "│"; // Loop body (vertical line)
+    case "branch":
+      return "├"; // Branch out
+    case "empty":
+      return "";
+    default:
+      return "";
   }
 }
 
@@ -90,7 +96,7 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
 
   return (
     <div
-      className={`loop-viz ${isHovered ? 'loop-viz-hovered' : ''}`}
+      className={`loop-viz ${isHovered ? "loop-viz-hovered" : ""}`}
       onMouseEnter={() => {
         if (lineInfo.activeLoops.length > 0) {
           onLoopHover?.(lineInfo.activeLoops[0]);
@@ -98,15 +104,15 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
       }}
       onMouseLeave={() => onLoopHover?.(null)}
       style={{
-        display: 'flex',
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        gap: '2px',
-        whiteSpace: 'nowrap',
-        paddingLeft: '4px',
-        paddingRight: '4px',
-        height: '100%',
-        alignItems: 'center',
+        display: "flex",
+        fontFamily: "monospace",
+        fontSize: "13px",
+        gap: "2px",
+        whiteSpace: "nowrap",
+        paddingLeft: "4px",
+        paddingRight: "4px",
+        height: "100%",
+        alignItems: "center",
       }}
     >
       {lineInfo.columns.map((charType, columnIdx) => {
@@ -116,20 +122,27 @@ export const LoopColumn: React.FC<LoopColumnProps> = ({
         const char = getCharacterForType(charType);
 
         if (!char) {
-          return <span key={columnIdx} style={{ width: '14px', display: 'inline-block' }}>&nbsp;</span>;
+          return (
+            <span
+              key={columnIdx}
+              style={{ width: "14px", display: "inline-block" }}
+            >
+              &nbsp;
+            </span>
+          );
         }
 
         return (
           <span
             key={columnIdx}
             style={{
-              color: isActive ? color : 'transparent',
-              fontWeight: 'bold',
-              minWidth: '14px',
-              textAlign: 'center',
-              display: 'inline-block',
+              color: isActive ? color : "transparent",
+              fontWeight: "bold",
+              minWidth: "14px",
+              textAlign: "center",
+              display: "inline-block",
               opacity: isActive ? 1 : 0,
-              lineHeight: '1',
+              lineHeight: "1",
             }}
           >
             {char}
@@ -170,14 +183,14 @@ export const LOOP_VISUALIZATION_STYLES = `
  * Helper to merge loop visualization styles into component
  */
 export function injectLoopStyles(): void {
-  const styleId = 'loop-visualization-styles';
+  const styleId = "loop-visualization-styles";
 
   // Check if already injected
   if (document.getElementById(styleId)) {
     return;
   }
 
-  const styleEl = document.createElement('style');
+  const styleEl = document.createElement("style");
   styleEl.id = styleId;
   styleEl.textContent = LOOP_VISUALIZATION_STYLES;
   document.head.appendChild(styleEl);
@@ -197,7 +210,7 @@ export function generateLoopVisualization(
     back_edge_addr: number;
     body_addrs: number[];
     nesting_level: number;
-  }>
+  }>,
 ): Map<number, LoopLineInfo> {
   const lineInfo = new Map<number, LoopLineInfo>();
 
@@ -208,12 +221,15 @@ export function generateLoopVisualization(
   });
 
   // Determine maximum nesting depth
-  const maxDepth = loops.reduce((max, loop) => Math.max(max, loop.nesting_level), 0);
+  const maxDepth = loops.reduce(
+    (max, loop) => Math.max(max, loop.nesting_level),
+    0,
+  );
 
   // Initialize all lines with empty columns
   for (let i = 0; i < addresses.length; i++) {
     lineInfo.set(i, {
-      columns: Array(maxDepth).fill('empty' as LoopCharType),
+      columns: Array(maxDepth).fill("empty" as LoopCharType),
       activeLoops: [],
     });
   }
@@ -237,24 +253,24 @@ export function generateLoopVisualization(
       const info = lineInfo.get(i)!;
 
       // Determine character for this position
-      let charType: LoopCharType = 'empty';
+      let charType: LoopCharType = "empty";
 
       if (i === headerIdx) {
         // Loop header - show entry point
-        charType = 'top';
+        charType = "top";
         info.activeLoops.push(loop.nesting_level);
       } else if (i === backEdgeIdx) {
         // Back edge - show loop back
-        charType = 'bottom';
+        charType = "bottom";
         info.activeLoops.push(loop.nesting_level);
       } else if (bodySet.has(address)) {
         // Inside loop body
-        charType = 'vertical';
+        charType = "vertical";
         info.activeLoops.push(loop.nesting_level);
       }
 
       // Set character in appropriate column
-      if (charType !== 'empty') {
+      if (charType !== "empty") {
         info.columns[columnIndex] = charType;
       }
     }

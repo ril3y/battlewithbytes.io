@@ -17,16 +17,22 @@
  *   const instructions = await disasm.disassemble(data, baseAddress);
  */
 
-import type { DisassembledInstruction } from './ArmDisassembler';
-import { loadBattleMagicCore } from '../wasm-loader';
+import type { DisassembledInstruction } from "./ArmDisassembler";
+import { loadBattleMagicCore } from "../wasm-loader";
 
 /**
  * WASM Module interface for battlemagic-core
  */
 interface BattleMagicWasmModule {
   Disassembler: new (baseAddress: number) => {
-    disassemble_thumb: (data: Uint8Array, maxInstructions: number) => WasmInstruction[];
-    disassemble_arm: (data: Uint8Array, maxInstructions: number) => WasmInstruction[];
+    disassemble_thumb: (
+      data: Uint8Array,
+      maxInstructions: number,
+    ) => WasmInstruction[];
+    disassemble_arm: (
+      data: Uint8Array,
+      maxInstructions: number,
+    ) => WasmInstruction[];
   };
 }
 
@@ -36,19 +42,41 @@ interface BattleMagicWasmModule {
 interface WasmInstruction {
   address: number;
   text: string;
-  bytes: number[];
+  bytes: Uint8Array | number[];
 }
 
 /**
  * ARM branch instruction mnemonics
  */
 const ARM_BRANCH_MNEMONICS = new Set([
-  'b', 'bl', 'bx', 'blx', 'bxj',
-  'beq', 'bne', 'bcs', 'bhs', 'bcc', 'blo',
-  'bmi', 'bpl', 'bvs', 'bvc', 'bhi', 'bls',
-  'bge', 'blt', 'bgt', 'ble', 'bal',
-  'b.w', 'bl.w',
-  'cbz', 'cbnz', 'tbb', 'tbh'
+  "b",
+  "bl",
+  "bx",
+  "blx",
+  "bxj",
+  "beq",
+  "bne",
+  "bcs",
+  "bhs",
+  "bcc",
+  "blo",
+  "bmi",
+  "bpl",
+  "bvs",
+  "bvc",
+  "bhi",
+  "bls",
+  "bge",
+  "blt",
+  "bgt",
+  "ble",
+  "bal",
+  "b.w",
+  "bl.w",
+  "cbz",
+  "cbnz",
+  "tbb",
+  "tbh",
 ]);
 
 /**
@@ -59,17 +87,17 @@ const isReturnInstruction = (mnemonic: string, operands: string): boolean => {
   const opLower = operands.toLowerCase();
 
   // BX LR or BLX LR
-  if ((mnLower === 'bx' || mnLower === 'blx') && opLower.includes('lr')) {
+  if ((mnLower === "bx" || mnLower === "blx") && opLower.includes("lr")) {
     return true;
   }
 
   // POP with PC in register list
-  if (mnLower === 'pop' && opLower.includes('pc')) {
+  if (mnLower === "pop" && opLower.includes("pc")) {
     return true;
   }
 
   // MOV PC, LR
-  if (mnLower === 'mov' && opLower.includes('pc') && opLower.includes('lr')) {
+  if (mnLower === "mov" && opLower.includes("pc") && opLower.includes("lr")) {
     return true;
   }
 
@@ -135,7 +163,7 @@ export class WasmDisassembler {
         this.wasmModule = await loadBattleMagicCore();
         this.isInitialized = true;
       } catch (err) {
-        console.error('[WasmDisassembler] Failed to load WASM:', err);
+        console.error("[WasmDisassembler] Failed to load WASM:", err);
         this.initPromise = null;
         throw new Error(`Failed to initialize WASM disassembler: ${err}`);
       }
@@ -162,16 +190,18 @@ export class WasmDisassembler {
   async disassemble(
     data: Uint8Array,
     baseAddress: number,
-    thumbMode: boolean = this.thumbMode
+    thumbMode: boolean = this.thumbMode,
   ): Promise<DisassembledInstruction[]> {
     if (!this.isInitialized || !this.wasmModule) {
-      throw new Error('WASM disassembler not initialized. Call initialize() first.');
+      throw new Error(
+        "WASM disassembler not initialized. Call initialize() first.",
+      );
     }
 
     try {
       // Validate data
       if (!data || data.length === 0) {
-        throw new Error('No data provided for disassembly');
+        throw new Error("No data provided for disassembly");
       }
 
       // Create disassembler instance
@@ -186,71 +216,91 @@ export class WasmDisassembler {
           : disasm.disassemble_arm(data, maxInstructions);
 
         if (!result) {
-          throw new Error('WASM disassembler returned null/undefined');
+          throw new Error("WASM disassembler returned null/undefined");
         }
 
         rawInstructions = result;
       } catch (e) {
-        const errorMsg = e instanceof Error ? e.message : (e ? String(e) : 'Unknown WASM error (undefined exception)');
-        console.error('[WASM] Disassembly failed:', errorMsg);
-        throw new Error(`Failed to disassemble at 0x${baseAddress.toString(16)}: ${errorMsg}`);
+        const errorMsg =
+          e instanceof Error
+            ? e.message
+            : e
+              ? String(e)
+              : "Unknown WASM error (undefined exception)";
+        console.error("[WASM] Disassembly failed:", errorMsg);
+        throw new Error(
+          `Failed to disassemble at 0x${baseAddress.toString(16)}: ${errorMsg}`,
+        );
       }
 
       // Convert WASM instruction format to our interface
-      const instructions: DisassembledInstruction[] = rawInstructions.map((inst: WasmInstruction) => {
-        // Safely extract text field
-        let text = '???';
-        try {
-          text = inst.text ? String(inst.text) : '???';
-        } catch (e) {
-          console.error('[WASM] Failed to extract text from instruction:', inst, e);
-        }
-
-        const firstSpace = text.indexOf(' ');
-        const mnemonic = firstSpace >= 0 ? text.substring(0, firstSpace) : text;
-        const operands = firstSpace >= 0 ? text.substring(firstSpace + 1).trim() : '';
-
-        const bytes = Array.isArray(inst.bytes) ? new Uint8Array(inst.bytes) : new Uint8Array();
-        const address = typeof inst.address === 'number' ? inst.address : 0;
-
-        // Detect branch instructions
-        const isBranch = ARM_BRANCH_MNEMONICS.has(mnemonic.toLowerCase());
-        const isReturn = isReturnInstruction(mnemonic, operands);
-
-        // Calculate branch target for PC-relative branches
-        let branchTarget: number | undefined = undefined;
-        if (isBranch && !isReturn) {
-          // Check if operands start with $ (PC-relative offset format from yaxpeax)
-          // Example: "bl.w $-0x16c" or "b $+0x8"
-          const pcRelMatch = operands.match(/\$([+-]0x[0-9a-fA-F]+)/);
-          if (pcRelMatch) {
-            const offset = parseInt(pcRelMatch[1], 16);
-            // yaxpeax already accounts for PC offset, just add to current address
-            branchTarget = address + offset;
-          } else if (operands.startsWith('0x') || operands.startsWith('$0x')) {
-            // Absolute address in operands
-            const addrStr = operands.replace('$', '');
-            branchTarget = parseInt(addrStr, 16);
+      const instructions: DisassembledInstruction[] = rawInstructions.map(
+        (inst: WasmInstruction) => {
+          // Safely extract text field
+          let text = "???";
+          try {
+            text = inst.text ? String(inst.text) : "???";
+          } catch (e) {
+            console.error(
+              "[WASM] Failed to extract text from instruction:",
+              inst,
+              e,
+            );
           }
-          // If we still don't have a target, don't try to calculate one
-          // This prevents false positives from register-based branches
-        }
 
-        return {
-          address,
-          mnemonic,
-          operands,
-          bytes,
-          size: bytes.length,
-          isBranch,
-          isReturn,
-          branchTarget,
-        };
-      });
+          const firstSpace = text.indexOf(" ");
+          const mnemonic =
+            firstSpace >= 0 ? text.substring(0, firstSpace) : text;
+          const operands =
+            firstSpace >= 0 ? text.substring(firstSpace + 1).trim() : "";
+
+          const bytes = Array.isArray(inst.bytes)
+            ? new Uint8Array(inst.bytes)
+            : new Uint8Array();
+          const address = typeof inst.address === "number" ? inst.address : 0;
+
+          // Detect branch instructions
+          const isBranch = ARM_BRANCH_MNEMONICS.has(mnemonic.toLowerCase());
+          const isReturn = isReturnInstruction(mnemonic, operands);
+
+          // Calculate branch target for PC-relative branches
+          let branchTarget: number | undefined = undefined;
+          if (isBranch && !isReturn) {
+            // Check if operands start with $ (PC-relative offset format from yaxpeax)
+            // Example: "bl.w $-0x16c" or "b $+0x8"
+            const pcRelMatch = operands.match(/\$([+-]0x[0-9a-fA-F]+)/);
+            if (pcRelMatch) {
+              const offset = parseInt(pcRelMatch[1], 16);
+              // yaxpeax already accounts for PC offset, just add to current address
+              branchTarget = address + offset;
+            } else if (
+              operands.startsWith("0x") ||
+              operands.startsWith("$0x")
+            ) {
+              // Absolute address in operands
+              const addrStr = operands.replace("$", "");
+              branchTarget = parseInt(addrStr, 16);
+            }
+            // If we still don't have a target, don't try to calculate one
+            // This prevents false positives from register-based branches
+          }
+
+          return {
+            address,
+            mnemonic,
+            operands,
+            bytes,
+            size: bytes.length,
+            isBranch,
+            isReturn,
+            branchTarget,
+          };
+        },
+      );
 
       return instructions;
     } catch (err) {
-      console.error('[WasmDisassembler] Disassembly failed:', err);
+      console.error("[WasmDisassembler] Disassembly failed:", err);
       throw new Error(`Disassembly failed: ${err}`);
     }
   }
@@ -261,7 +311,9 @@ export class WasmDisassembler {
    * @param instructions - Array of disassembled instructions
    * @returns Map of source address to array of target addresses
    */
-  analyzeControlFlow(instructions: DisassembledInstruction[]): Map<number, number[]> {
+  analyzeControlFlow(
+    instructions: DisassembledInstruction[],
+  ): Map<number, number[]> {
     const flowMap = new Map<number, number[]>();
 
     for (const inst of instructions) {
@@ -283,28 +335,33 @@ export class WasmDisassembler {
    *
    * Heuristic: PUSH with LR or STM with LR/PC
    */
-  isFunctionEntry(instructions: DisassembledInstruction[], index: number): boolean {
+  isFunctionEntry(
+    instructions: DisassembledInstruction[],
+    index: number,
+  ): boolean {
     if (index < 0 || index >= instructions.length) return false;
 
     const inst = instructions[index];
     const mnem = inst.mnemonic.toLowerCase();
-    const ops = inst.operands?.toLowerCase() || '';
+    const ops = inst.operands?.toLowerCase() || "";
 
     // PUSH {... lr ...} or PUSH {... lr, ...}
-    if (mnem === 'push' && ops.includes('lr')) {
+    if (mnem === "push" && ops.includes("lr")) {
       return true;
     }
 
     // STM with LR
-    if (mnem.startsWith('stm') && ops.includes('lr')) {
+    if (mnem.startsWith("stm") && ops.includes("lr")) {
       return true;
     }
 
     // Check if previous instruction was a branch/return (gap in code)
     if (index > 0) {
       const prevInst = instructions[index - 1];
-      const isReturn = prevInst.mnemonic.toLowerCase().startsWith('bx') ||
-                       prevInst.mnemonic.toLowerCase() === 'pop' && prevInst.operands.includes('pc');
+      const isReturn =
+        prevInst.mnemonic.toLowerCase().startsWith("bx") ||
+        (prevInst.mnemonic.toLowerCase() === "pop" &&
+          prevInst.operands.includes("pc"));
       if (isReturn || prevInst.isBranch) {
         return true;
       }

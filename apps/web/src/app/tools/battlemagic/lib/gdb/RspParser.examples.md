@@ -25,7 +25,12 @@ The parser is located at `X:\battlewithbytes.io\src\app\tools\battlemagic\lib\gd
 Import what you need:
 
 ```typescript
-import { RspParser, RegisterParser, MemoryParser, StopReplyParser } from './RspParser';
+import {
+  RspParser,
+  RegisterParser,
+  MemoryParser,
+  StopReplyParser,
+} from "./RspParser";
 ```
 
 ### Basic Usage Pattern
@@ -41,7 +46,7 @@ if (result.success) {
 } else {
   // Handle error
   console.error(result.error);
-  console.log('Raw response:', result.raw);
+  console.log("Raw response:", result.raw);
 }
 ```
 
@@ -321,11 +326,13 @@ async writeMemory(address: number, data: Uint8Array): Promise<void> {
 **Before:**
 
 ```typescript
-if (decoded.data.startsWith('T')) {
+if (decoded.data.startsWith("T")) {
   const stopInfo = RspProtocol.parseStopReply(decoded.data);
   const stopReply: StopReply = {
     signal: stopInfo.signal,
-    thread: stopInfo.info.thread ? parseInt(stopInfo.info.thread, 16) : undefined
+    thread: stopInfo.info.thread
+      ? parseInt(stopInfo.info.thread, 16)
+      : undefined,
   };
 
   this.notifyStopped(stopReply);
@@ -335,7 +342,7 @@ if (decoded.data.startsWith('T')) {
 **After:**
 
 ```typescript
-if (decoded.data.startsWith('T') || decoded.data.startsWith('S')) {
+if (decoded.data.startsWith("T") || decoded.data.startsWith("S")) {
   const result = StopReplyParser.parse(decoded.data);
 
   if (result.success) {
@@ -345,7 +352,7 @@ if (decoded.data.startsWith('T') || decoded.data.startsWith('S')) {
     console.log(`Signal: ${StopReplyParser.getSignalName(stopReply.signal)}`);
 
     // Check if it's a detailed stop reply
-    if ('rawInfo' in stopReply) {
+    if ("rawInfo" in stopReply) {
       // Detailed stop reply
       if (stopReply.thread) {
         console.log(`Thread: ${stopReply.thread}`);
@@ -466,7 +473,7 @@ async removeBreakpoint(address: number, hardware = false): Promise<void> {
 **Before:**
 
 ```typescript
-if (decoded.data.startsWith('O')) {
+if (decoded.data.startsWith("O")) {
   const hexOutput = decoded.data.substring(1);
   const output = BlackMagicCommands.decodeMonitorResponse(hexOutput);
   this.notifyTargetOutput(output);
@@ -476,7 +483,7 @@ if (decoded.data.startsWith('O')) {
 **After:**
 
 ```typescript
-if (decoded.data.startsWith('O')) {
+if (decoded.data.startsWith("O")) {
   const result = MonitorParser.parse(decoded.data);
 
   if (result.success) {
@@ -491,7 +498,7 @@ if (decoded.data.startsWith('O')) {
 
 ```typescript
 class MonitorOutputAccumulator {
-  private buffer = '';
+  private buffer = "";
 
   addPacket(packet: string): void {
     const result = MonitorParser.parse(packet);
@@ -506,7 +513,7 @@ class MonitorOutputAccumulator {
   }
 
   clear(): void {
-    this.buffer = '';
+    this.buffer = "";
   }
 }
 
@@ -514,8 +521,8 @@ class MonitorOutputAccumulator {
 const accumulator = new MonitorOutputAccumulator();
 
 // As packets arrive
-accumulator.addPacket('O48656c6c6f'); // "Hello"
-accumulator.addPacket('O20576f726c64'); // " World"
+accumulator.addPacket("O48656c6c6f"); // "Hello"
+accumulator.addPacket("O20576f726c64"); // " World"
 
 console.log(accumulator.getOutput()); // "Hello World"
 ```
@@ -592,6 +599,7 @@ async safeMemoryRead(address: number, length: number): Promise<Uint8Array | null
 ### Step 1: Identify Manual Parsing Code
 
 Look for patterns like:
+
 - `response.substr(offset, 8)`
 - `parseInt(hexValue, 16)`
 - `bytes.reverse().join('')`
@@ -601,7 +609,7 @@ Look for patterns like:
 ### Step 2: Import Parser
 
 ```typescript
-import { RegisterParser, MemoryParser, StopReplyParser } from './RspParser';
+import { RegisterParser, MemoryParser, StopReplyParser } from "./RspParser";
 ```
 
 ### Step 3: Replace Manual Parsing
@@ -613,7 +621,7 @@ import { RegisterParser, MemoryParser, StopReplyParser } from './RspParser';
 const hexValue = response.substr(offset, 8);
 const bytes = hexValue.match(/.{2}/g);
 if (bytes) {
-  const value = parseInt(bytes.reverse().join(''), 16);
+  const value = parseInt(bytes.reverse().join(""), 16);
   registers.set(name, value);
 }
 
@@ -647,8 +655,8 @@ Take advantage of TypeScript:
 const regs: ArmCortexMRegisters = result.data;
 
 // Now you get autocomplete and type checking!
-const pc = regs.pc;  // ✓ Type-safe
-const invalid = regs.invalidField;  // ✗ Compile error
+const pc = regs.pc; // ✓ Type-safe
+const invalid = regs.invalidField; // ✗ Compile error
 ```
 
 ---
@@ -809,11 +817,11 @@ async handleWatchpoint(stopPacket: string): Promise<{
 Create tests for your parsing code:
 
 ```typescript
-import { RegisterParser } from './RspParser';
+import { RegisterParser } from "./RspParser";
 
-describe('My GDB operations', () => {
-  it('should parse registers correctly', () => {
-    const mockResponse = '00000000'.repeat(16); // All zeros
+describe("My GDB operations", () => {
+  it("should parse registers correctly", () => {
+    const mockResponse = "00000000".repeat(16); // All zeros
     const result = RegisterParser.parseArmCortexM(mockResponse);
 
     expect(result.success).toBe(true);
@@ -830,9 +838,9 @@ describe('My GDB operations', () => {
 Test with real hardware responses:
 
 ```typescript
-it('should handle real BMP response', async () => {
+it("should handle real BMP response", async () => {
   // Capture a real response from your hardware
-  const realResponse = '00000000...'; // Copy from debug log
+  const realResponse = "00000000..."; // Copy from debug log
 
   const result = RegisterParser.parseArmCortexM(realResponse);
 
@@ -853,6 +861,7 @@ The parsers are designed for efficiency:
 - **Minimal allocations**: Reuses buffers where possible
 
 Benchmarks (approximate):
+
 - Register parse: ~0.1ms for 23 registers
 - Memory parse: ~0.5ms per 1KB
 - Stop reply parse: ~0.05ms
@@ -902,6 +911,7 @@ const pc = result.data.pc; // Safe
 **Need Help?**
 
 If you encounter issues during migration:
+
 1. Check the test suite for examples: `RspParser.test.ts`
 2. Review the type definitions in `RspParser.ts`
 3. Look at real-world usage in `GdbClient.ts` (after migration)

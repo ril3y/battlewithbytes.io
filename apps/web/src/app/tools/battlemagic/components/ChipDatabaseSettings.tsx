@@ -1,7 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { getChipDatabase, type ChipDefinition } from '../lib/chips/ChipDatabase';
+import React, { useState, useEffect } from "react";
+import {
+  getChipDatabase,
+  type ChipDefinition,
+} from "../lib/chips/ChipDatabase";
 
 interface ChipDatabaseSettingsProps {
   onClose?: () => void;
@@ -10,15 +13,21 @@ interface ChipDatabaseSettingsProps {
 export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
   const [chips, setChips] = useState<ChipDefinition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState("");
   const [showCustomOnly, setShowCustomOnly] = useState(false);
   const [editingChip, setEditingChip] = useState<ChipDefinition | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [importExportMode, setImportExportMode] = useState<'none' | 'import' | 'export'>('none');
-  const [importJson, setImportJson] = useState('');
-  const [exportJson, setExportJson] = useState('');
+  const [importExportMode, setImportExportMode] = useState<
+    "none" | "import" | "export"
+  >("none");
+  const [importJson, setImportJson] = useState("");
+  const [exportJson, setExportJson] = useState("");
   const [selectedChip, setSelectedChip] = useState<ChipDefinition | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; chip: ChipDefinition } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    chip: ChipDefinition;
+  } | null>(null);
 
   useEffect(() => {
     loadChips();
@@ -32,7 +41,7 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
       const allChips = chipDb.getAllChips();
       setChips(allChips);
     } catch (error) {
-      console.error('[ChipDatabaseSettings] Failed to load chips:', error);
+      console.error("[ChipDatabaseSettings] Failed to load chips:", error);
     } finally {
       setLoading(false);
     }
@@ -46,7 +55,9 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
       await chipDb.deleteCustomChip(family);
       await loadChips();
     } catch (error) {
-      alert(`Failed to delete chip: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to delete chip: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -55,9 +66,11 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
       const chipDb = getChipDatabase();
       const json = await chipDb.exportCustomChips();
       setExportJson(json);
-      setImportExportMode('export');
+      setImportExportMode("export");
     } catch (error) {
-      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Export failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -66,16 +79,20 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
       const chipDb = getChipDatabase();
       const count = await chipDb.importCustomChips(importJson);
       alert(`Successfully imported ${count} chip(s)`);
-      setImportJson('');
-      setImportExportMode('none');
+      setImportJson("");
+      setImportExportMode("none");
       await loadChips();
     } catch (error) {
-      alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
   const handleClone = async (chip: ChipDefinition) => {
-    const newFamily = prompt(`Enter name for cloned chip (original: ${chip.family}):`);
+    const newFamily = prompt(
+      `Enter name for cloned chip (original: ${chip.family}):`,
+    );
     if (!newFamily?.trim()) return;
 
     const clonedChip: ChipDefinition = {
@@ -92,12 +109,12 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     if (contextMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [contextMenu]);
 
-  const filteredChips = chips.filter(chip => {
+  const filteredChips = chips.filter((chip) => {
     if (showCustomOnly && !chip.isCustom) return false;
     if (!filter) return true;
     const searchTerm = filter.toLowerCase();
@@ -109,7 +126,7 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
     );
   });
 
-  const customCount = chips.filter(c => c.isCustom).length;
+  const customCount = chips.filter((c) => c.isCustom).length;
   const builtInCount = chips.length - customCount;
 
   return (
@@ -130,7 +147,7 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
             Add Custom Chip
           </button>
           <button
-            onClick={() => setImportExportMode('import')}
+            onClick={() => setImportExportMode("import")}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors"
           >
             Import
@@ -183,8 +200,12 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
             <thead className="sticky top-0 bg-gray-800 border-b border-gray-700">
               <tr>
                 <th className="px-4 py-2 text-left font-medium">Family</th>
-                <th className="px-4 py-2 text-left font-medium">Manufacturer</th>
-                <th className="px-4 py-2 text-left font-medium">Architecture</th>
+                <th className="px-4 py-2 text-left font-medium">
+                  Manufacturer
+                </th>
+                <th className="px-4 py-2 text-left font-medium">
+                  Architecture
+                </th>
                 <th className="px-4 py-2 text-left font-medium">Flash Base</th>
                 <th className="px-4 py-2 text-left font-medium">RAM Base</th>
                 <th className="px-4 py-2 text-left font-medium">Type</th>
@@ -201,14 +222,20 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
                     setContextMenu({ x: e.clientX, y: e.clientY, chip });
                   }}
                   className={`border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors ${
-                    selectedChip?.family === chip.family ? 'bg-blue-600/10 border-blue-600/30' : ''
+                    selectedChip?.family === chip.family
+                      ? "bg-blue-600/10 border-blue-600/30"
+                      : ""
                   }`}
                 >
                   <td className="px-4 py-2 font-mono">{chip.family}</td>
                   <td className="px-4 py-2">{chip.manufacturer}</td>
                   <td className="px-4 py-2">{chip.architecture}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{chip.flashBase}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{chip.ramBase}</td>
+                  <td className="px-4 py-2 font-mono text-xs">
+                    {chip.flashBase}
+                  </td>
+                  <td className="px-4 py-2 font-mono text-xs">
+                    {chip.ramBase}
+                  </td>
                   <td className="px-4 py-2">
                     {chip.isCustom ? (
                       <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">
@@ -270,21 +297,27 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
       )}
 
       {/* Import/Export Modal */}
-      {importExportMode !== 'none' && (
+      {importExportMode !== "none" && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
             <h3 className="text-lg font-bold mb-4">
-              {importExportMode === 'import' ? 'Import Custom Chips' : 'Export Custom Chips'}
+              {importExportMode === "import"
+                ? "Import Custom Chips"
+                : "Export Custom Chips"}
             </h3>
             <textarea
-              value={importExportMode === 'import' ? importJson : exportJson}
-              onChange={(e) => importExportMode === 'import' && setImportJson(e.target.value)}
-              readOnly={importExportMode === 'export'}
-              placeholder={importExportMode === 'import' ? 'Paste JSON here...' : ''}
+              value={importExportMode === "import" ? importJson : exportJson}
+              onChange={(e) =>
+                importExportMode === "import" && setImportJson(e.target.value)
+              }
+              readOnly={importExportMode === "export"}
+              placeholder={
+                importExportMode === "import" ? "Paste JSON here..." : ""
+              }
               className="w-full h-64 px-3 py-2 bg-gray-900 border border-gray-600 rounded font-mono text-xs resize-none focus:outline-none focus:border-blue-500"
             />
             <div className="flex gap-2 mt-4">
-              {importExportMode === 'import' ? (
+              {importExportMode === "import" ? (
                 <button
                   onClick={handleImport}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors"
@@ -295,7 +328,7 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(exportJson);
-                    alert('Copied to clipboard!');
+                    alert("Copied to clipboard!");
                   }}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
                 >
@@ -304,9 +337,9 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
               )}
               <button
                 onClick={() => {
-                  setImportExportMode('none');
-                  setImportJson('');
-                  setExportJson('');
+                  setImportExportMode("none");
+                  setImportJson("");
+                  setExportJson("");
                 }}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium transition-colors"
               >
@@ -372,7 +405,9 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold">{selectedChip.family}</h3>
-                <p className="text-sm text-gray-400 mt-1">{selectedChip.description}</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {selectedChip.description}
+                </p>
               </div>
               <button
                 onClick={() => setSelectedChip(null)}
@@ -385,28 +420,44 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
             <div className="grid grid-cols-2 gap-6">
               {/* Basic Info */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">Basic Information</h4>
+                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">
+                  Basic Information
+                </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Manufacturer:</span>
-                    <span className="font-medium">{selectedChip.manufacturer}</span>
+                    <span className="font-medium">
+                      {selectedChip.manufacturer}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Architecture:</span>
-                    <span className="font-medium">{selectedChip.architecture}</span>
+                    <span className="font-medium">
+                      {selectedChip.architecture}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Decoder Support:</span>
-                    <span className={selectedChip.supported ? 'text-green-400' : 'text-yellow-400'}>
-                      {selectedChip.supported ? 'Yes' : 'No'}
+                    <span
+                      className={
+                        selectedChip.supported
+                          ? "text-green-400"
+                          : "text-yellow-400"
+                      }
+                    >
+                      {selectedChip.supported ? "Yes" : "No"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Type:</span>
                     {selectedChip.isCustom ? (
-                      <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-xs">Custom</span>
+                      <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-xs">
+                        Custom
+                      </span>
                     ) : (
-                      <span className="px-2 py-0.5 bg-gray-700 text-gray-400 rounded text-xs">Built-in</span>
+                      <span className="px-2 py-0.5 bg-gray-700 text-gray-400 rounded text-xs">
+                        Built-in
+                      </span>
                     )}
                   </div>
                 </div>
@@ -414,26 +465,39 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
 
               {/* Memory Layout */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">Memory Layout</h4>
+                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">
+                  Memory Layout
+                </h4>
                 <div className="space-y-2 text-sm">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-gray-400">Flash Base:</span>
-                      <span className="font-mono">{selectedChip.flashBase}</span>
+                      <span className="font-mono">
+                        {selectedChip.flashBase}
+                      </span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Decimal:</span>
-                      <span>{parseInt(selectedChip.flashBase, 16).toLocaleString()}</span>
+                      <span>
+                        {parseInt(selectedChip.flashBase, 16).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-gray-400">Flash Size:</span>
-                      <span className="font-mono">{selectedChip.flashSize}</span>
+                      <span className="font-mono">
+                        {selectedChip.flashSize}
+                      </span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Decimal:</span>
-                      <span>{(parseInt(selectedChip.flashSize, 16) / 1024).toFixed(0)} KB</span>
+                      <span>
+                        {(parseInt(selectedChip.flashSize, 16) / 1024).toFixed(
+                          0,
+                        )}{" "}
+                        KB
+                      </span>
                     </div>
                   </div>
                   <div>
@@ -443,7 +507,9 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Decimal:</span>
-                      <span>{parseInt(selectedChip.ramBase, 16).toLocaleString()}</span>
+                      <span>
+                        {parseInt(selectedChip.ramBase, 16).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                   <div>
@@ -453,19 +519,29 @@ export function ChipDatabaseSettings({ onClose }: ChipDatabaseSettingsProps) {
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Decimal:</span>
-                      <span>{(parseInt(selectedChip.ramSize, 16) / 1024).toFixed(0)} KB</span>
+                      <span>
+                        {(parseInt(selectedChip.ramSize, 16) / 1024).toFixed(0)}{" "}
+                        KB
+                      </span>
                     </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Vector Table Offset:</span>
-                    <span className="font-mono">0x{selectedChip.vectorTableOffset.toString(16).padStart(4, '0')}</span>
+                    <span className="font-mono">
+                      0x
+                      {selectedChip.vectorTableOffset
+                        .toString(16)
+                        .padStart(4, "0")}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Detection Patterns */}
               <div className="col-span-2 space-y-3">
-                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">Detection Patterns</h4>
+                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">
+                  Detection Patterns
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedChip.patterns.map((pattern, idx) => (
                     <span
@@ -518,21 +594,23 @@ interface ChipEditorModalProps {
 }
 
 function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
-  const [formData, setFormData] = useState<Omit<ChipDefinition, 'isCustom'>>({
-    family: chip?.family || '',
-    manufacturer: chip?.manufacturer || '',
-    architecture: chip?.architecture || 'ArmCortexM4',
+  const [formData, setFormData] = useState<Omit<ChipDefinition, "isCustom">>({
+    family: chip?.family || "",
+    manufacturer: chip?.manufacturer || "",
+    architecture: chip?.architecture || "ArmCortexM4",
     supported: chip?.supported ?? true,
     patterns: chip?.patterns || [],
-    description: chip?.description || '',
-    flashBase: chip?.flashBase || '0x00000000',
-    flashSize: chip?.flashSize || '0x40000',
-    ramBase: chip?.ramBase || '0x20000000',
-    ramSize: chip?.ramSize || '0x10000',
+    description: chip?.description || "",
+    flashBase: chip?.flashBase || "0x00000000",
+    flashSize: chip?.flashSize || "0x40000",
+    ramBase: chip?.ramBase || "0x20000000",
+    ramSize: chip?.ramSize || "0x10000",
     vectorTableOffset: chip?.vectorTableOffset || 0,
   });
 
-  const [patternsText, setPatternsText] = useState(chip?.patterns.join(', ') || '');
+  const [patternsText, setPatternsText] = useState(
+    chip?.patterns.join(", ") || "",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -541,7 +619,10 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
       const chipDb = getChipDatabase();
       const chipData = {
         ...formData,
-        patterns: patternsText.split(',').map(p => p.trim()).filter(Boolean),
+        patterns: patternsText
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean),
       };
 
       if (chip) {
@@ -552,7 +633,9 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
 
       onSave();
     } catch (error) {
-      alert(`Failed to save chip: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to save chip: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -560,39 +643,51 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold mb-4">
-          {chip ? 'Edit Custom Chip' : 'Add Custom Chip'}
+          {chip ? "Edit Custom Chip" : "Add Custom Chip"}
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Family Name</label>
+              <label className="block text-sm font-medium mb-1">
+                Family Name
+              </label>
               <input
                 type="text"
                 required
                 value={formData.family}
-                onChange={(e) => setFormData({ ...formData, family: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, family: e.target.value })
+                }
                 disabled={!!chip}
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Manufacturer</label>
+              <label className="block text-sm font-medium mb-1">
+                Manufacturer
+              </label>
               <input
                 type="text"
                 required
                 value={formData.manufacturer}
-                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, manufacturer: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Architecture</label>
+              <label className="block text-sm font-medium mb-1">
+                Architecture
+              </label>
               <select
                 value={formData.architecture}
-                onChange={(e) => setFormData({ ...formData, architecture: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, architecture: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
               >
                 <option value="ArmCortexM0">ARM Cortex-M0</option>
@@ -608,48 +703,64 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Flash Base (hex)</label>
+              <label className="block text-sm font-medium mb-1">
+                Flash Base (hex)
+              </label>
               <input
                 type="text"
                 required
                 value={formData.flashBase}
-                onChange={(e) => setFormData({ ...formData, flashBase: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, flashBase: e.target.value })
+                }
                 placeholder="0x00000000"
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm font-mono focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Flash Size (hex)</label>
+              <label className="block text-sm font-medium mb-1">
+                Flash Size (hex)
+              </label>
               <input
                 type="text"
                 required
                 value={formData.flashSize}
-                onChange={(e) => setFormData({ ...formData, flashSize: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, flashSize: e.target.value })
+                }
                 placeholder="0x40000"
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm font-mono focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">RAM Base (hex)</label>
+              <label className="block text-sm font-medium mb-1">
+                RAM Base (hex)
+              </label>
               <input
                 type="text"
                 required
                 value={formData.ramBase}
-                onChange={(e) => setFormData({ ...formData, ramBase: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, ramBase: e.target.value })
+                }
                 placeholder="0x20000000"
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm font-mono focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">RAM Size (hex)</label>
+              <label className="block text-sm font-medium mb-1">
+                RAM Size (hex)
+              </label>
               <input
                 type="text"
                 required
                 value={formData.ramSize}
-                onChange={(e) => setFormData({ ...formData, ramSize: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, ramSize: e.target.value })
+                }
                 placeholder="0x10000"
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm font-mono focus:outline-none focus:border-blue-500"
               />
@@ -657,7 +768,9 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Detection Patterns (comma-separated)</label>
+            <label className="block text-sm font-medium mb-1">
+              Detection Patterns (comma-separated)
+            </label>
             <input
               type="text"
               required
@@ -669,10 +782,14 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               rows={2}
               className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm resize-none focus:outline-none focus:border-blue-500"
             />
@@ -682,10 +799,14 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
             <input
               type="checkbox"
               checked={formData.supported}
-              onChange={(e) => setFormData({ ...formData, supported: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, supported: e.target.checked })
+              }
               className="w-4 h-4"
             />
-            <label className="text-sm">Decoder supported (ARM Cortex-M only)</label>
+            <label className="text-sm">
+              Decoder supported (ARM Cortex-M only)
+            </label>
           </div>
 
           <div className="flex gap-2 pt-4">
@@ -693,7 +814,7 @@ function ChipEditorModal({ chip, onClose, onSave }: ChipEditorModalProps) {
               type="submit"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
             >
-              {chip ? 'Update' : 'Add'} Chip
+              {chip ? "Update" : "Add"} Chip
             </button>
             <button
               type="button"

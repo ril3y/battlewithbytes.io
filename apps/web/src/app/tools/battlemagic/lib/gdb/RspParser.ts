@@ -59,18 +59,18 @@ export interface ArmCortexMRegisters {
   r12: number;
 
   // Special registers (R13-R15)
-  sp: number;  // R13 - Stack pointer
-  lr: number;  // R14 - Link register
-  pc: number;  // R15 - Program counter
+  sp: number; // R13 - Stack pointer
+  lr: number; // R14 - Link register
+  pc: number; // R15 - Program counter
 
   // Additional special registers
-  xpsr?: number;      // Combined PSR
-  msp?: number;       // Main stack pointer
-  psp?: number;       // Process stack pointer
-  primask?: number;   // Priority mask
-  basepri?: number;   // Base priority
+  xpsr?: number; // Combined PSR
+  msp?: number; // Main stack pointer
+  psp?: number; // Process stack pointer
+  primask?: number; // Priority mask
+  basepri?: number; // Base priority
   faultmask?: number; // Fault mask
-  control?: number;   // Control register
+  control?: number; // Control register
 }
 
 /**
@@ -115,13 +115,13 @@ export interface MemoryWriteResult {
  * Stop reply types
  */
 export enum StopReason {
-  BREAKPOINT = 'breakpoint',
-  WATCHPOINT = 'watchpoint',
-  SINGLE_STEP = 'single-step',
-  SIGNAL = 'signal',
-  EXITED = 'exited',
-  TERMINATED = 'terminated',
-  UNKNOWN = 'unknown'
+  BREAKPOINT = "breakpoint",
+  WATCHPOINT = "watchpoint",
+  SINGLE_STEP = "single-step",
+  SIGNAL = "signal",
+  EXITED = "exited",
+  TERMINATED = "terminated",
+  UNKNOWN = "unknown",
 }
 
 /**
@@ -250,19 +250,33 @@ export class RegisterParser {
    *   console.log(`PC: 0x${result.data.pc.toString(16)}`);
    * }
    */
-  static parseArmCortexM(hexResponse: string): ParseResult<ArmCortexMRegisters> {
+  static parseArmCortexM(
+    hexResponse: string,
+  ): ParseResult<ArmCortexMRegisters> {
     try {
       // Step 1: Validate input
       if (!hexResponse || hexResponse.length === 0) {
-        return { success: false, error: 'Empty register response', raw: hexResponse };
+        return {
+          success: false,
+          error: "Empty register response",
+          raw: hexResponse,
+        };
       }
 
       if (!/^[0-9a-fA-F]+$/.test(hexResponse)) {
-        return { success: false, error: 'Invalid hex characters in response', raw: hexResponse };
+        return {
+          success: false,
+          error: "Invalid hex characters in response",
+          raw: hexResponse,
+        };
       }
 
       if (hexResponse.length % 8 !== 0) {
-        return { success: false, error: 'Register data length not multiple of 8', raw: hexResponse };
+        return {
+          success: false,
+          error: "Register data length not multiple of 8",
+          raw: hexResponse,
+        };
       }
 
       // Step 2: Parse registers
@@ -272,7 +286,7 @@ export class RegisterParser {
       // Helper to parse one little-endian 32-bit register
       const parseRegister = (): number => {
         if (offset + 8 > hexResponse.length) {
-          throw new Error('Unexpected end of register data');
+          throw new Error("Unexpected end of register data");
         }
         const hexValue = hexResponse.substring(offset, offset + 8);
         offset += 8;
@@ -283,7 +297,7 @@ export class RegisterParser {
         if (!bytes || bytes.length !== 4) {
           throw new Error(`Invalid register hex: ${hexValue}`);
         }
-        const leValue = bytes.reverse().join('');
+        const leValue = bytes.reverse().join("");
         return parseInt(leValue, 16);
       };
 
@@ -301,9 +315,9 @@ export class RegisterParser {
       registers.r10 = parseRegister();
       registers.r11 = parseRegister();
       registers.r12 = parseRegister();
-      registers.sp = parseRegister();   // R13
-      registers.lr = parseRegister();   // R14
-      registers.pc = parseRegister();   // R15
+      registers.sp = parseRegister(); // R13
+      registers.lr = parseRegister(); // R14
+      registers.pc = parseRegister(); // R15
 
       // Step 4: Parse additional special registers (if present)
       // Note: Not all targets include these, so we check length
@@ -334,7 +348,7 @@ export class RegisterParser {
       return {
         success: false,
         error: `Register parse error: ${(error as Error).message}`,
-        raw: hexResponse
+        raw: hexResponse,
       };
     }
   }
@@ -358,29 +372,44 @@ export class RegisterParser {
    *   console.log(`PC (r15): 0x${result.data.value.toString(16)}`);
    * }
    */
-  static parseSingleRegister(hexResponse: string, regNum: number): ParseResult<RegisterValue> {
+  static parseSingleRegister(
+    hexResponse: string,
+    regNum: number,
+  ): ParseResult<RegisterValue> {
     try {
       // Step 1: Validate
       if (!hexResponse || hexResponse.length === 0) {
-        return { success: false, error: 'Empty register response' };
+        return { success: false, error: "Empty register response" };
       }
 
       if (!/^[0-9a-fA-F]+$/.test(hexResponse)) {
-        return { success: false, error: 'Invalid hex characters', raw: hexResponse };
+        return {
+          success: false,
+          error: "Invalid hex characters",
+          raw: hexResponse,
+        };
       }
 
       // Most registers are 32-bit (8 hex chars), but allow flexibility
       if (hexResponse.length % 2 !== 0) {
-        return { success: false, error: 'Odd number of hex digits', raw: hexResponse };
+        return {
+          success: false,
+          error: "Odd number of hex digits",
+          raw: hexResponse,
+        };
       }
 
       // Step 2: Convert little-endian to number
       const bytes = hexResponse.match(/.{2}/g);
       if (!bytes) {
-        return { success: false, error: 'Failed to parse hex bytes', raw: hexResponse };
+        return {
+          success: false,
+          error: "Failed to parse hex bytes",
+          raw: hexResponse,
+        };
       }
 
-      const leValue = bytes.reverse().join('');
+      const leValue = bytes.reverse().join("");
       const value = parseInt(leValue, 16);
 
       // Step 3: Return result
@@ -389,14 +418,14 @@ export class RegisterParser {
         data: {
           regNum,
           value,
-          hex: hexResponse
-        }
+          hex: hexResponse,
+        },
       };
     } catch (error) {
       return {
         success: false,
         error: `Register parse error: ${(error as Error).message}`,
-        raw: hexResponse
+        raw: hexResponse,
       };
     }
   }
@@ -409,12 +438,29 @@ export class RegisterParser {
    */
   static getRegisterName(regNum: number): string | null {
     const names: Record<number, string> = {
-      0: 'r0', 1: 'r1', 2: 'r2', 3: 'r3',
-      4: 'r4', 5: 'r5', 6: 'r6', 7: 'r7',
-      8: 'r8', 9: 'r9', 10: 'r10', 11: 'r11',
-      12: 'r12', 13: 'sp', 14: 'lr', 15: 'pc',
-      16: 'xpsr', 17: 'msp', 18: 'psp',
-      19: 'primask', 20: 'basepri', 21: 'faultmask', 22: 'control'
+      0: "r0",
+      1: "r1",
+      2: "r2",
+      3: "r3",
+      4: "r4",
+      5: "r5",
+      6: "r6",
+      7: "r7",
+      8: "r8",
+      9: "r9",
+      10: "r10",
+      11: "r11",
+      12: "r12",
+      13: "sp",
+      14: "lr",
+      15: "pc",
+      16: "xpsr",
+      17: "msp",
+      18: "psp",
+      19: "primask",
+      20: "basepri",
+      21: "faultmask",
+      22: "control",
     };
     return names[regNum] || null;
   }
@@ -427,15 +473,15 @@ export class RegisterParser {
    */
   static toHex(value: number): string {
     // Convert to big-endian hex (8 chars)
-    const hex = (value >>> 0).toString(16).padStart(8, '0');
+    const hex = (value >>> 0).toString(16).padStart(8, "0");
 
     // Convert to little-endian
     const bytes = hex.match(/.{2}/g);
     if (!bytes || bytes.length !== 4) {
-      throw new Error('Invalid register value');
+      throw new Error("Invalid register value");
     }
 
-    return bytes.reverse().join('');
+    return bytes.reverse().join("");
   }
 }
 
@@ -473,26 +519,36 @@ export class MemoryParser {
   static parseMemoryRead(
     hexResponse: string,
     address: number,
-    length: number
+    length: number,
   ): ParseResult<MemoryReadResult> {
     try {
       // Step 1: Validate
       if (!hexResponse || hexResponse.length === 0) {
-        return { success: false, error: 'Empty memory response' };
+        return { success: false, error: "Empty memory response" };
       }
 
       if (!/^[0-9a-fA-F]+$/.test(hexResponse)) {
-        return { success: false, error: 'Invalid hex characters', raw: hexResponse };
+        return {
+          success: false,
+          error: "Invalid hex characters",
+          raw: hexResponse,
+        };
       }
 
       if (hexResponse.length % 2 !== 0) {
-        return { success: false, error: 'Odd number of hex digits', raw: hexResponse };
+        return {
+          success: false,
+          error: "Odd number of hex digits",
+          raw: hexResponse,
+        };
       }
 
       const actualLength = hexResponse.length / 2;
       if (actualLength !== length) {
         // Warning but not error - some targets may return less
-        console.warn(`Memory read length mismatch: requested ${length}, got ${actualLength}`);
+        console.warn(
+          `Memory read length mismatch: requested ${length}, got ${actualLength}`,
+        );
       }
 
       // Step 2: Convert hex to bytes
@@ -509,14 +565,14 @@ export class MemoryParser {
           address,
           length: actualLength,
           data,
-          hex: hexResponse
-        }
+          hex: hexResponse,
+        },
       };
     } catch (error) {
       return {
         success: false,
         error: `Memory parse error: ${(error as Error).message}`,
-        raw: hexResponse
+        raw: hexResponse,
       };
     }
   }
@@ -534,17 +590,17 @@ export class MemoryParser {
   static parseMemoryWrite(
     response: string,
     address: number,
-    length: number
+    length: number,
   ): ParseResult<MemoryWriteResult> {
-    const success = response === 'OK';
+    const success = response === "OK";
 
     return {
       success: true,
       data: {
         address,
         length,
-        success
-      }
+        success,
+      },
     };
   }
 
@@ -556,8 +612,8 @@ export class MemoryParser {
    */
   static toHex(data: Uint8Array): string {
     return Array.from(data)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   /**
@@ -569,15 +625,16 @@ export class MemoryParser {
    */
   static readWord(data: Uint8Array, offset: number): number {
     if (offset + 4 > data.length) {
-      throw new Error('Read past end of memory data');
+      throw new Error("Read past end of memory data");
     }
 
     return (
-      data[offset] |
-      (data[offset + 1] << 8) |
-      (data[offset + 2] << 16) |
-      (data[offset + 3] << 24)
-    ) >>> 0; // Unsigned
+      (data[offset] |
+        (data[offset + 1] << 8) |
+        (data[offset + 2] << 16) |
+        (data[offset + 3] << 24)) >>>
+      0
+    ); // Unsigned
   }
 
   /**
@@ -589,10 +646,10 @@ export class MemoryParser {
    */
   static readHalfword(data: Uint8Array, offset: number): number {
     if (offset + 2 > data.length) {
-      throw new Error('Read past end of memory data');
+      throw new Error("Read past end of memory data");
     }
 
-    return (data[offset] | (data[offset + 1] << 8)) & 0xFFFF;
+    return (data[offset] | (data[offset + 1] << 8)) & 0xffff;
   }
 }
 
@@ -608,9 +665,9 @@ export class StopReplyParser {
    * Signal number to stop reason mapping
    */
   private static readonly SIGNAL_TO_REASON: Record<number, StopReason> = {
-    2: StopReason.SIGNAL,        // SIGINT - Ctrl+C
-    5: StopReason.BREAKPOINT,    // SIGTRAP - Breakpoint/watchpoint
-    11: StopReason.SIGNAL,       // SIGSEGV - Memory fault
+    2: StopReason.SIGNAL, // SIGINT - Ctrl+C
+    5: StopReason.BREAKPOINT, // SIGTRAP - Breakpoint/watchpoint
+    11: StopReason.SIGNAL, // SIGSEGV - Memory fault
   };
 
   /**
@@ -648,18 +705,18 @@ export class StopReplyParser {
   static parseDetailed(packet: string): ParseResult<StopReplyDetailed> {
     try {
       // Step 1: Validate packet format
-      if (!packet.startsWith('T')) {
-        return { success: false, error: 'Not a T packet', raw: packet };
+      if (!packet.startsWith("T")) {
+        return { success: false, error: "Not a T packet", raw: packet };
       }
 
       if (packet.length < 3) {
-        return { success: false, error: 'T packet too short', raw: packet };
+        return { success: false, error: "T packet too short", raw: packet };
       }
 
       // Step 2: Extract signal number
       const signalHex = packet.substring(1, 3);
       if (!/^[0-9a-fA-F]{2}$/.test(signalHex)) {
-        return { success: false, error: 'Invalid signal hex', raw: packet };
+        return { success: false, error: "Invalid signal hex", raw: packet };
       }
 
       const signal = parseInt(signalHex, 16);
@@ -669,13 +726,13 @@ export class StopReplyParser {
       const remainder = packet.substring(3);
 
       if (remainder.length > 0) {
-        const pairs = remainder.split(';').filter(p => p.length > 0);
+        const pairs = remainder.split(";").filter((p) => p.length > 0);
 
         for (const pair of pairs) {
-          const colonIndex = pair.indexOf(':');
+          const colonIndex = pair.indexOf(":");
           if (colonIndex === -1) {
             // Key without value (e.g., "swbreak")
-            rawInfo.set(pair, '');
+            rawInfo.set(pair, "");
           } else {
             const key = pair.substring(0, colonIndex);
             const value = pair.substring(colonIndex + 1);
@@ -687,9 +744,13 @@ export class StopReplyParser {
       // Step 4: Determine stop reason
       let reason = this.SIGNAL_TO_REASON[signal] || StopReason.UNKNOWN;
 
-      if (rawInfo.has('swbreak') || rawInfo.has('hwbreak')) {
+      if (rawInfo.has("swbreak") || rawInfo.has("hwbreak")) {
         reason = StopReason.BREAKPOINT;
-      } else if (rawInfo.has('watch') || rawInfo.has('rwatch') || rawInfo.has('awatch')) {
+      } else if (
+        rawInfo.has("watch") ||
+        rawInfo.has("rwatch") ||
+        rawInfo.has("awatch")
+      ) {
         reason = StopReason.WATCHPOINT;
       }
 
@@ -697,27 +758,27 @@ export class StopReplyParser {
       const result: StopReplyDetailed = {
         signal,
         reason,
-        rawInfo
+        rawInfo,
       };
 
       // Thread ID
-      if (rawInfo.has('thread')) {
-        const threadValue = rawInfo.get('thread')!;
+      if (rawInfo.has("thread")) {
+        const threadValue = rawInfo.get("thread")!;
         if (threadValue.length > 0) {
           result.thread = parseInt(threadValue, 16);
         }
       }
 
       // Core ID
-      if (rawInfo.has('core')) {
-        const coreValue = rawInfo.get('core')!;
+      if (rawInfo.has("core")) {
+        const coreValue = rawInfo.get("core")!;
         if (coreValue.length > 0) {
           result.core = parseInt(coreValue, 16);
         }
       }
 
       // Watchpoint address
-      for (const key of ['watch', 'rwatch', 'awatch']) {
+      for (const key of ["watch", "rwatch", "awatch"]) {
         if (rawInfo.has(key)) {
           const addrValue = rawInfo.get(key)!;
           if (addrValue.length > 0) {
@@ -738,7 +799,7 @@ export class StopReplyParser {
           // Parse register value (little-endian)
           const bytes = value.match(/.{2}/g);
           if (bytes) {
-            const leValue = bytes.reverse().join('');
+            const leValue = bytes.reverse().join("");
             const regValue = parseInt(leValue, 16);
             registers.set(regNum, regValue);
           }
@@ -754,7 +815,7 @@ export class StopReplyParser {
       return {
         success: false,
         error: `Stop reply parse error: ${(error as Error).message}`,
-        raw: packet
+        raw: packet,
       };
     }
   }
@@ -777,17 +838,21 @@ export class StopReplyParser {
    */
   static parseSimple(packet: string): ParseResult<StopReplySimple> {
     try {
-      if (!packet.startsWith('S')) {
-        return { success: false, error: 'Not an S packet', raw: packet };
+      if (!packet.startsWith("S")) {
+        return { success: false, error: "Not an S packet", raw: packet };
       }
 
       if (packet.length !== 3) {
-        return { success: false, error: 'S packet must be exactly 3 characters', raw: packet };
+        return {
+          success: false,
+          error: "S packet must be exactly 3 characters",
+          raw: packet,
+        };
       }
 
       const signalHex = packet.substring(1, 3);
       if (!/^[0-9a-fA-F]{2}$/.test(signalHex)) {
-        return { success: false, error: 'Invalid signal hex', raw: packet };
+        return { success: false, error: "Invalid signal hex", raw: packet };
       }
 
       const signal = parseInt(signalHex, 16);
@@ -795,13 +860,13 @@ export class StopReplyParser {
 
       return {
         success: true,
-        data: { signal, reason }
+        data: { signal, reason },
       };
     } catch (error) {
       return {
         success: false,
         error: `Stop reply parse error: ${(error as Error).message}`,
-        raw: packet
+        raw: packet,
       };
     }
   }
@@ -813,12 +878,16 @@ export class StopReplyParser {
    * @returns Parsed stop reply or error
    */
   static parse(packet: string): ParseResult<StopReply> {
-    if (packet.startsWith('T')) {
+    if (packet.startsWith("T")) {
       return this.parseDetailed(packet);
-    } else if (packet.startsWith('S')) {
+    } else if (packet.startsWith("S")) {
       return this.parseSimple(packet);
     } else {
-      return { success: false, error: 'Not a stop reply packet (must start with T or S)', raw: packet };
+      return {
+        success: false,
+        error: "Not a stop reply packet (must start with T or S)",
+        raw: packet,
+      };
     }
   }
 
@@ -830,11 +899,11 @@ export class StopReplyParser {
    */
   static getSignalName(signal: number): string {
     const names: Record<number, string> = {
-      0: 'SIG0',
-      2: 'SIGINT',
-      5: 'SIGTRAP',
-      11: 'SIGSEGV',
-      15: 'SIGTERM',
+      0: "SIG0",
+      2: "SIGINT",
+      5: "SIGTRAP",
+      11: "SIGSEGV",
+      15: "SIGTERM",
     };
     return names[signal] || `SIG${signal}`;
   }
@@ -863,29 +932,33 @@ export class BreakpointParser {
    * const result = BreakpointParser.parseInsert('OK', 0x08000000, 0);
    * console.log(`Breakpoint set: ${result.success}`);
    */
-  static parseInsert(response: string, address: number, type: number): BreakpointResult {
-    if (response === 'OK') {
+  static parseInsert(
+    response: string,
+    address: number,
+    type: number,
+  ): BreakpointResult {
+    if (response === "OK") {
       return {
         success: true,
         address,
-        type
+        type,
       };
     }
 
     // Parse error
-    let error = 'Unknown error';
-    if (response.startsWith('E')) {
+    let error = "Unknown error";
+    if (response.startsWith("E")) {
       const code = response.substring(1);
       error = `Error code ${code}`;
-    } else if (response === '') {
-      error = 'Empty response (unsupported)';
+    } else if (response === "") {
+      error = "Empty response (unsupported)";
     }
 
     return {
       success: false,
       address,
       type,
-      error
+      error,
     };
   }
 
@@ -900,7 +973,11 @@ export class BreakpointParser {
    * @param type - Breakpoint type (0-4)
    * @returns Breakpoint result
    */
-  static parseRemove(response: string, address: number, type: number): BreakpointResult {
+  static parseRemove(
+    response: string,
+    address: number,
+    type: number,
+  ): BreakpointResult {
     // Same logic as insert
     return this.parseInsert(response, address, type);
   }
@@ -913,11 +990,11 @@ export class BreakpointParser {
    */
   static getTypeName(type: number): string {
     const names: Record<number, string> = {
-      0: 'Software Breakpoint',
-      1: 'Hardware Breakpoint',
-      2: 'Write Watchpoint',
-      3: 'Read Watchpoint',
-      4: 'Access Watchpoint'
+      0: "Software Breakpoint",
+      1: "Hardware Breakpoint",
+      2: "Write Watchpoint",
+      3: "Read Watchpoint",
+      4: "Access Watchpoint",
     };
     return names[type] || `Unknown (${type})`;
   }
@@ -957,8 +1034,12 @@ export class MonitorParser {
   static parse(packet: string): ParseResult<MonitorResponse> {
     try {
       // Step 1: Validate prefix
-      if (!packet.startsWith('O')) {
-        return { success: false, error: 'Not a monitor output packet (must start with O)', raw: packet };
+      if (!packet.startsWith("O")) {
+        return {
+          success: false,
+          error: "Not a monitor output packet (must start with O)",
+          raw: packet,
+        };
       }
 
       // Step 2: Extract hex data
@@ -967,20 +1048,28 @@ export class MonitorParser {
       if (hexData.length === 0) {
         return {
           success: true,
-          data: { output: '', hex: '' }
+          data: { output: "", hex: "" },
         };
       }
 
       if (!/^[0-9a-fA-F]+$/.test(hexData)) {
-        return { success: false, error: 'Invalid hex characters in monitor output', raw: packet };
+        return {
+          success: false,
+          error: "Invalid hex characters in monitor output",
+          raw: packet,
+        };
       }
 
       if (hexData.length % 2 !== 0) {
-        return { success: false, error: 'Odd number of hex digits in monitor output', raw: packet };
+        return {
+          success: false,
+          error: "Odd number of hex digits in monitor output",
+          raw: packet,
+        };
       }
 
       // Step 3: Decode hex to ASCII
-      let output = '';
+      let output = "";
       for (let i = 0; i < hexData.length; i += 2) {
         const byte = parseInt(hexData.substring(i, i + 2), 16);
         output += String.fromCharCode(byte);
@@ -988,13 +1077,13 @@ export class MonitorParser {
 
       return {
         success: true,
-        data: { output, hex: hexData }
+        data: { output, hex: hexData },
       };
     } catch (error) {
       return {
         success: false,
         error: `Monitor output parse error: ${(error as Error).message}`,
-        raw: packet
+        raw: packet,
       };
     }
   }
@@ -1007,8 +1096,8 @@ export class MonitorParser {
    */
   static encodeCommand(command: string): string {
     return Array.from(command)
-      .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
-      .join('');
+      .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
+      .join("");
   }
 }
 
@@ -1024,18 +1113,18 @@ export class ErrorParser {
    * Standard GDB error codes
    */
   private static readonly ERROR_MESSAGES: Record<number, string> = {
-    0x00: 'No error',
-    0x01: 'Generic error',
-    0x02: 'Invalid memory address',
-    0x03: 'Invalid register number',
-    0x04: 'Not stopped',
-    0x05: 'Not running',
-    0x06: 'Invalid parameter',
-    0x07: 'Permission denied',
-    0x08: 'Not supported',
-    0x09: 'Resource not available',
-    0x0A: 'Invalid thread',
-    0x0B: 'Invalid target',
+    0x00: "No error",
+    0x01: "Generic error",
+    0x02: "Invalid memory address",
+    0x03: "Invalid register number",
+    0x04: "Not stopped",
+    0x05: "Not running",
+    0x06: "Invalid parameter",
+    0x07: "Permission denied",
+    0x08: "Not supported",
+    0x09: "Resource not available",
+    0x0a: "Invalid thread",
+    0x0b: "Invalid target",
   };
 
   /**
@@ -1055,36 +1144,41 @@ export class ErrorParser {
    */
   static parse(packet: string): ParseResult<ErrorResponse> {
     try {
-      if (!packet.startsWith('E')) {
-        return { success: false, error: 'Not an error packet', raw: packet };
+      if (!packet.startsWith("E")) {
+        return { success: false, error: "Not an error packet", raw: packet };
       }
 
       if (packet.length < 2) {
-        return { success: false, error: 'Error packet too short', raw: packet };
+        return { success: false, error: "Error packet too short", raw: packet };
       }
 
       const code = packet.substring(1);
 
       if (!/^[0-9a-fA-F]+$/.test(code)) {
-        return { success: false, error: 'Invalid hex in error code', raw: packet };
+        return {
+          success: false,
+          error: "Invalid hex in error code",
+          raw: packet,
+        };
       }
 
       const codeNum = parseInt(code, 16);
-      const message = this.ERROR_MESSAGES[codeNum] || `Unknown error (code ${code})`;
+      const message =
+        this.ERROR_MESSAGES[codeNum] || `Unknown error (code ${code})`;
 
       return {
         success: true,
         data: {
           code,
           codeNum,
-          message
-        }
+          message,
+        },
       };
     } catch (error) {
       return {
         success: false,
         error: `Error parse error: ${(error as Error).message}`,
-        raw: packet
+        raw: packet,
       };
     }
   }
@@ -1107,52 +1201,52 @@ export class RspParser {
    * @returns Parsed response with type information
    */
   static parse(response: string): {
-    type: 'ok' | 'error' | 'data' | 'stop' | 'monitor' | 'empty';
+    type: "ok" | "error" | "data" | "stop" | "monitor" | "empty";
     data?: unknown;
     error?: string;
   } {
     // Empty response
-    if (response === '') {
-      return { type: 'empty' };
+    if (response === "") {
+      return { type: "empty" };
     }
 
     // OK response
-    if (response === 'OK') {
-      return { type: 'ok' };
+    if (response === "OK") {
+      return { type: "ok" };
     }
 
     // Error response
-    if (response.startsWith('E')) {
+    if (response.startsWith("E")) {
       const result = ErrorParser.parse(response);
       if (result.success) {
-        return { type: 'error', data: result.data };
+        return { type: "error", data: result.data };
       } else {
-        return { type: 'error', error: result.error };
+        return { type: "error", error: result.error };
       }
     }
 
     // Stop reply
-    if (response.startsWith('S') || response.startsWith('T')) {
+    if (response.startsWith("S") || response.startsWith("T")) {
       const result = StopReplyParser.parse(response);
       if (result.success) {
-        return { type: 'stop', data: result.data };
+        return { type: "stop", data: result.data };
       } else {
-        return { type: 'stop', error: result.error };
+        return { type: "stop", error: result.error };
       }
     }
 
     // Monitor output
-    if (response.startsWith('O')) {
+    if (response.startsWith("O")) {
       const result = MonitorParser.parse(response);
       if (result.success) {
-        return { type: 'monitor', data: result.data };
+        return { type: "monitor", data: result.data };
       } else {
-        return { type: 'monitor', error: result.error };
+        return { type: "monitor", error: result.error };
       }
     }
 
     // Data response (default)
-    return { type: 'data', data: response };
+    return { type: "data", data: response };
   }
 
   /**
@@ -1162,11 +1256,11 @@ export class RspParser {
    * @returns True if success (OK or valid data)
    */
   static isSuccess(response: string): boolean {
-    if (response === 'OK') {
+    if (response === "OK") {
       return true;
     }
 
-    if (response.startsWith('E') || response === '') {
+    if (response.startsWith("E") || response === "") {
       return false;
     }
 
@@ -1180,7 +1274,7 @@ export class RspParser {
    * @returns True if error
    */
   static isError(response: string): boolean {
-    return response.startsWith('E') || response === '';
+    return response.startsWith("E") || response === "";
   }
 
   // Re-export sub-parsers for convenience

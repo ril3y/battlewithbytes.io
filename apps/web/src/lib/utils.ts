@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
  * Utility function to merge Tailwind CSS classes with clsx
@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
  * Format a number with appropriate units (K, M, G, etc.)
  */
 export function formatNumber(value: number, decimals: number = 2): string {
-  const units = ['', 'K', 'M', 'G', 'T'];
+  const units = ["", "K", "M", "G", "T"];
   let unitIndex = 0;
   let formattedValue = value;
 
@@ -29,7 +29,7 @@ export function formatNumber(value: number, decimals: number = 2): string {
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
@@ -41,7 +41,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 /**
  * Generate a random ID
  */
-export function generateId(prefix: string = 'id'): string {
+export function generateId(prefix: string = "id"): string {
   return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
 }
 

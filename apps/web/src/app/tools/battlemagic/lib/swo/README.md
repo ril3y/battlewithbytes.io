@@ -155,14 +155,14 @@ attach 1
 
 The ITM provides 32 independent stimulus ports (0-31) for different data streams:
 
-| Port | Common Usage |
-|------|-------------|
-| 0 | Printf output (default) |
-| 1-7 | Application logging levels |
-| 8-15 | Module-specific debug |
-| 16-23 | Performance metrics |
-| 24-30 | User-defined |
-| 31 | Reserved/Special |
+| Port  | Common Usage               |
+| ----- | -------------------------- |
+| 0     | Printf output (default)    |
+| 1-7   | Application logging levels |
+| 8-15  | Module-specific debug      |
+| 16-23 | Performance metrics        |
+| 24-30 | User-defined               |
+| 31    | Reserved/Special           |
 
 ### Example: Multi-Port Logging
 
@@ -250,11 +250,13 @@ The Black Magic Probe has limited SWO support:
 ### Target Configuration
 
 1. **SWO Frequency**: Match target CPU frequency
+
    ```
    SWO_freq = CPU_freq / (PRESCALER + 1)
    ```
 
 2. **Port Filtering**: Disable unused ports to reduce bandwidth
+
    ```c
    ITM->TER = 0x0000000F;  // Enable only ports 0-3
    ```
@@ -299,12 +301,12 @@ The Black Magic Probe has limited SWO support:
 
 ```typescript
 class SwoDecoder extends BaseDecoder {
-  constructor(options: DecoderOptions)
-  decode(data: Uint8Array): void
-  addObserver(observer: IPacketObserver): void
-  removeObserver(observer: IPacketObserver): void
-  getStatistics(): SwoStatistics
-  reset(): void
+  constructor(options: DecoderOptions);
+  decode(data: Uint8Array): void;
+  addObserver(observer: IPacketObserver): void;
+  removeObserver(observer: IPacketObserver): void;
+  getStatistics(): SwoStatistics;
+  reset(): void;
 }
 ```
 
@@ -312,11 +314,11 @@ class SwoDecoder extends BaseDecoder {
 
 ```typescript
 interface DecoderOptions {
-  encoding: SwoEncoding          // UART_NRZ or MANCHESTER
-  autoSync?: boolean             // Auto-detect sync (default: true)
-  portFilter?: PortFilter        // Port filtering configuration
-  maxBufferSize?: number         // Buffer limit (default: 4096)
-  collectStats?: boolean         // Enable statistics (default: true)
+  encoding: SwoEncoding; // UART_NRZ or MANCHESTER
+  autoSync?: boolean; // Auto-detect sync (default: true)
+  portFilter?: PortFilter; // Port filtering configuration
+  maxBufferSize?: number; // Buffer limit (default: 4096)
+  collectStats?: boolean; // Enable statistics (default: true)
 }
 ```
 
@@ -324,8 +326,8 @@ interface DecoderOptions {
 
 ```typescript
 interface IPacketObserver {
-  onPacket(event: PacketEvent): void
-  onError?(error: DecoderError): void
+  onPacket(event: PacketEvent): void;
+  onError?(error: DecoderError): void;
 }
 ```
 
@@ -337,8 +339,8 @@ The modular architecture enables comprehensive unit testing:
 
 ```typescript
 // Test packet decoding
-describe('SwoDecoder', () => {
-  it('should decode instrumentation packets', () => {
+describe("SwoDecoder", () => {
+  it("should decode instrumentation packets", () => {
     const decoder = new SwoDecoder({ encoding: SwoEncoding.UART_NRZ });
     const observer = createMockObserver();
     decoder.addObserver(observer);
@@ -351,9 +353,9 @@ describe('SwoDecoder', () => {
         packet: expect.objectContaining({
           type: PacketType.INSTRUMENTATION,
           port: 0,
-          text: 'H'
-        })
-      })
+          text: "H",
+        }),
+      }),
     );
   });
 });
@@ -364,9 +366,19 @@ describe('SwoDecoder', () => {
 ```typescript
 // Test with simulated SWO stream
 const testStream = new Uint8Array([
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x80,  // Sync
-  0x01, 0x48, 0x65, 0x6C, 0x6C, 0x6F,  // "Hello" on port 0
-  0x70                                   // Overflow
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x80, // Sync
+  0x01,
+  0x48,
+  0x65,
+  0x6c,
+  0x6c,
+  0x6f, // "Hello" on port 0
+  0x70, // Overflow
 ]);
 ```
 

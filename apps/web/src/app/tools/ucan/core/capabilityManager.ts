@@ -6,7 +6,7 @@
  * that must be queried dynamically
  */
 
-import { BoardCapabilities, ActionRule } from '../types';
+import { BoardCapabilities, ActionRule } from "../types";
 
 /**
  * Capability Manager
@@ -23,7 +23,7 @@ export class CapabilityManager {
   setCapabilities(capabilities: BoardCapabilities): void {
     this.capabilities = capabilities;
     console.log(`Board detected: ${capabilities.board} (${capabilities.chip})`);
-    console.log(`Features: ${capabilities.features?.join(', ')}`);
+    console.log(`Features: ${capabilities.features?.join(", ")}`);
     console.log(`Max rules: ${capabilities.max_rules}`);
   }
 
@@ -39,7 +39,7 @@ export class CapabilityManager {
    */
   setSupportedActions(actions: string[]): void {
     this.supportedActions = actions;
-    console.log(`Supported actions: ${actions.join(', ')}`);
+    console.log(`Supported actions: ${actions.join(", ")}`);
   }
 
   /**
@@ -132,7 +132,7 @@ export class CapabilityManager {
    */
   isValidPWMPin(pin: number): boolean {
     const pwmCount = this.capabilities?.gpio?.pwm ?? 0;
-    return pwmCount > 0 && pin < pwmCount && this.hasFeature('PWM');
+    return pwmCount > 0 && pin < pwmCount && this.hasFeature("PWM");
   }
 
   /**
@@ -140,7 +140,7 @@ export class CapabilityManager {
    */
   isValidADCPin(pin: number): boolean {
     const adcCount = this.capabilities?.gpio?.adc ?? 0;
-    return adcCount > 0 && pin < adcCount && this.hasFeature('ADC');
+    return adcCount > 0 && pin < adcCount && this.hasFeature("ADC");
   }
 
   /**
@@ -148,7 +148,7 @@ export class CapabilityManager {
    */
   getBoardSummary(): string {
     if (!this.capabilities) {
-      return 'No board connected';
+      return "No board connected";
     }
 
     return `${this.capabilities.board} - ${this.capabilities.chip}`;
@@ -159,10 +159,10 @@ export class CapabilityManager {
    */
   getCANControllerType(): string {
     if (!this.capabilities?.can) {
-      return 'Unknown';
+      return "Unknown";
     }
 
-    return this.capabilities.can.controllers ? 'Hardware CAN' : 'Software CAN';
+    return this.capabilities.can.controllers ? "Hardware CAN" : "Software CAN";
   }
 
   /**
@@ -190,14 +190,26 @@ export class CapabilityManager {
     }
 
     return [
-      { name: 'GPIO', available: true, count: this.capabilities.gpio?.total },
-      { name: 'PWM', available: this.hasFeature('PWM'), count: this.capabilities.gpio?.pwm },
-      { name: 'ADC', available: this.hasFeature('ADC'), count: this.capabilities.gpio?.adc },
-      { name: 'DAC', available: this.hasFeature('DAC'), count: this.capabilities.gpio?.dac },
-      { name: 'NeoPixel', available: this.hasFeature('NEOPIXEL') },
-      { name: 'Flash Storage', available: this.hasFeature('FLASH') },
-      { name: 'RTC', available: this.hasFeature('RTC') },
-      { name: 'Crypto', available: this.hasFeature('CRYPTO') },
+      { name: "GPIO", available: true, count: this.capabilities.gpio?.total },
+      {
+        name: "PWM",
+        available: this.hasFeature("PWM"),
+        count: this.capabilities.gpio?.pwm,
+      },
+      {
+        name: "ADC",
+        available: this.hasFeature("ADC"),
+        count: this.capabilities.gpio?.adc,
+      },
+      {
+        name: "DAC",
+        available: this.hasFeature("DAC"),
+        count: this.capabilities.gpio?.dac,
+      },
+      { name: "NeoPixel", available: this.hasFeature("NEOPIXEL") },
+      { name: "Flash Storage", available: this.hasFeature("FLASH") },
+      { name: "RTC", available: this.hasFeature("RTC") },
+      { name: "Crypto", available: this.hasFeature("CRYPTO") },
     ];
   }
 }

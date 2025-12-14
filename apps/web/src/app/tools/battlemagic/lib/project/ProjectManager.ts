@@ -9,11 +9,11 @@ import {
   createNewProject,
   isValidProject,
   migrateProject,
-  PROJECT_FORMAT_VERSION
-} from './types';
+  PROJECT_FORMAT_VERSION,
+} from "./types";
 
-const LOCALSTORAGE_KEY = 'battlemagic_current_project';
-const AUTOSAVE_LOCALSTORAGE_KEY = 'battlemagic_autosave_enabled';
+const LOCALSTORAGE_KEY = "battlemagic_current_project";
+const AUTOSAVE_LOCALSTORAGE_KEY = "battlemagic_autosave_enabled";
 
 export interface ProjectManagerCallbacks {
   onProjectLoaded?: (project: BattleMagicProject) => void;
@@ -34,9 +34,9 @@ export class ProjectManager {
     this.currentProject = createNewProject();
 
     // Load autosave preference
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const saved = localStorage.getItem(AUTOSAVE_LOCALSTORAGE_KEY);
-      this.autoSaveEnabled = saved === null ? true : saved === 'true';
+      this.autoSaveEnabled = saved === null ? true : saved === "true";
     }
   }
 
@@ -57,8 +57,8 @@ export class ProjectManager {
       metadata: {
         ...this.currentProject.metadata,
         ...updates.metadata,
-        lastModified: new Date().toISOString()
-      }
+        lastModified: new Date().toISOString(),
+      },
     };
     this.hasUnsavedChanges = true;
   }
@@ -71,7 +71,7 @@ export class ProjectManager {
       ...this.currentProject.metadata,
       name: name ?? this.currentProject.metadata.name,
       description: description ?? this.currentProject.metadata.description,
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
     };
     this.hasUnsavedChanges = true;
   }
@@ -79,7 +79,7 @@ export class ProjectManager {
   /**
    * Update cached firmware
    */
-  updateFirmware(firmware: import('./types').CachedFirmware | undefined): void {
+  updateFirmware(firmware: import("./types").CachedFirmware | undefined): void {
     this.currentProject.firmware = firmware;
     this.currentProject.metadata.lastModified = new Date().toISOString();
     this.hasUnsavedChanges = true;
@@ -88,14 +88,16 @@ export class ProjectManager {
   /**
    * Get cached firmware
    */
-  getCachedFirmware(): import('./types').CachedFirmware | undefined {
+  getCachedFirmware(): import("./types").CachedFirmware | undefined {
     return this.currentProject.firmware;
   }
 
   /**
    * Update analysis metadata
    */
-  updateAnalysis(analysis: import('./types').AnalysisMetadata | undefined): void {
+  updateAnalysis(
+    analysis: import("./types").AnalysisMetadata | undefined,
+  ): void {
     this.currentProject.analysis = analysis;
     this.currentProject.metadata.lastModified = new Date().toISOString();
     this.hasUnsavedChanges = true;
@@ -104,7 +106,7 @@ export class ProjectManager {
   /**
    * Get analysis metadata
    */
-  getAnalysisMetadata(): import('./types').AnalysisMetadata | undefined {
+  getAnalysisMetadata(): import("./types").AnalysisMetadata | undefined {
     return this.currentProject.analysis;
   }
 
@@ -125,12 +127,12 @@ export class ProjectManager {
   /**
    * Create a new project
    */
-  newProject(name: string = 'Untitled Project'): BattleMagicProject {
+  newProject(name: string = "Untitled Project"): BattleMagicProject {
     this.currentProject = createNewProject(name);
     this.hasUnsavedChanges = false;
 
     // Clear localStorage
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(LOCALSTORAGE_KEY);
     }
 
@@ -153,7 +155,7 @@ export class ProjectManager {
       this.hasUnsavedChanges = false;
       this.callbacks.onProjectSaved?.(this.currentProject);
 
-      console.log('[ProjectManager] Project saved successfully');
+      console.log("[ProjectManager] Project saved successfully");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.callbacks.onError?.(`Failed to save project: ${message}`);
@@ -168,10 +170,10 @@ export class ProjectManager {
   exportProject(): void {
     try {
       const json = JSON.stringify(this.currentProject, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
+      const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
 
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `${this.sanitizeFilename(this.currentProject.metadata.name)}.bmproj`;
       document.body.appendChild(a);
@@ -179,7 +181,7 @@ export class ProjectManager {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      console.log('[ProjectManager] Project exported successfully');
+      console.log("[ProjectManager] Project exported successfully");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.callbacks.onError?.(`Failed to export project: ${message}`);
@@ -202,7 +204,7 @@ export class ProjectManager {
       const data = JSON.parse(text);
 
       if (!isValidProject(data)) {
-        throw new Error('Invalid project file format');
+        throw new Error("Invalid project file format");
       }
 
       // Migrate if needed
@@ -225,7 +227,7 @@ export class ProjectManager {
    * Save project to localStorage
    */
   saveToLocalStorage(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
       const json = JSON.stringify(this.currentProject);
@@ -251,7 +253,7 @@ export class ProjectManager {
    * Load project from localStorage
    */
   loadFromLocalStorage(): boolean {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === "undefined") return false;
 
     try {
       const json = localStorage.getItem(LOCALSTORAGE_KEY);
@@ -259,7 +261,7 @@ export class ProjectManager {
 
       const data = JSON.parse(json);
       if (!isValidProject(data)) {
-        console.warn('Invalid project in localStorage, clearing...');
+        console.warn("Invalid project in localStorage, clearing...");
         localStorage.removeItem(LOCALSTORAGE_KEY);
         return false;
       }
@@ -275,7 +277,7 @@ export class ProjectManager {
       this.callbacks.onProjectLoaded?.(this.currentProject);
       return true;
     } catch (error) {
-      console.error('Failed to load from localStorage:', error);
+      console.error("Failed to load from localStorage:", error);
       localStorage.removeItem(LOCALSTORAGE_KEY);
       return false;
     }
@@ -288,7 +290,7 @@ export class ProjectManager {
     this.autoSaveEnabled = enabled;
 
     // Save preference
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(AUTOSAVE_LOCALSTORAGE_KEY, String(enabled));
     }
 
@@ -349,7 +351,7 @@ export class ProjectManager {
       const data = JSON.parse(json);
 
       if (!isValidProject(data)) {
-        throw new Error('Invalid project format');
+        throw new Error("Invalid project format");
       }
 
       // Migrate if needed
@@ -372,10 +374,12 @@ export class ProjectManager {
    * Sanitize filename for safe file download
    */
   private sanitizeFilename(name: string): string {
-    return name
-      .replace(/[^a-z0-9_\-]/gi, '_')
-      .replace(/_+/g, '_')
-      .substring(0, 50) || 'project';
+    return (
+      name
+        .replace(/[^a-z0-9_\-]/gi, "_")
+        .replace(/_+/g, "_")
+        .substring(0, 50) || "project"
+    );
   }
 
   /**

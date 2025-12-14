@@ -11,15 +11,15 @@ Both disassemblers focus on the Thumb and Thumb-2 instruction sets commonly used
 
 ## Quick Comparison
 
-| Feature | ArmDisassembler | CapstoneDisassembler |
-|---------|----------------|---------------------|
+| Feature                  | ArmDisassembler         | CapstoneDisassembler       |
+| ------------------------ | ----------------------- | -------------------------- |
 | **Instruction Coverage** | ~30 common instructions | Complete ARM Thumb/Thumb-2 |
-| **Accuracy** | Good for common code | Industry-standard |
-| **Performance** | Very fast (pure JS) | Fast (WebAssembly) |
-| **Bundle Size** | ~20KB | ~500KB (dynamic import) |
-| **Initialization** | Instant | ~100-200ms first time |
-| **API** | Synchronous | Asynchronous |
-| **Best For** | Quick prototyping | Production analysis |
+| **Accuracy**             | Good for common code    | Industry-standard          |
+| **Performance**          | Very fast (pure JS)     | Fast (WebAssembly)         |
+| **Bundle Size**          | ~20KB                   | ~500KB (dynamic import)    |
+| **Initialization**       | Instant                 | ~100-200ms first time      |
+| **API**                  | Synchronous             | Asynchronous               |
+| **Best For**             | Quick prototyping       | Production analysis        |
 
 **Recommendation**: Use **CapstoneDisassembler** for production code and detailed analysis. Use **ArmDisassembler** for rapid prototyping or educational purposes.
 
@@ -45,6 +45,7 @@ Both disassemblers follow a clean, testable architecture:
 ## Supported Instructions
 
 ### Data Processing
+
 - Move operations (MOV, MVN)
 - Arithmetic (ADD, SUB, MUL, ADC, SBC)
 - Logic operations (AND, ORR, EOR, BIC)
@@ -52,6 +53,7 @@ Both disassemblers follow a clean, testable architecture:
 - Compare and test (CMP, CMN, TST, TEQ)
 
 ### Load/Store
+
 - Register operations (LDR, STR, LDRB, STRB, LDRH, STRH)
 - Immediate offsets
 - Register offsets
@@ -60,6 +62,7 @@ Both disassemblers follow a clean, testable architecture:
 - Load/store multiple (LDM, STM, PUSH, POP)
 
 ### Branch Instructions
+
 - Conditional branches (BEQ, BNE, BCS, BCC, etc.)
 - Unconditional branch (B)
 - Branch with link (BL)
@@ -67,6 +70,7 @@ Both disassemblers follow a clean, testable architecture:
 - Compare and branch (CBZ, CBNZ)
 
 ### System Instructions
+
 - Software interrupt (SVC)
 - Breakpoint (BKPT)
 - No operation (NOP)
@@ -77,17 +81,23 @@ Both disassemblers follow a clean, testable architecture:
 ### ArmDisassembler (Simple)
 
 ```typescript
-import { ArmDisassembler } from './ArmDisassembler';
+import { ArmDisassembler } from "./ArmDisassembler";
 
 // Create disassembler instance (instant)
 const disassembler = new ArmDisassembler();
 
 // Example ARM Thumb code
 const code = new Uint8Array([
-  0x80, 0xB5,  // PUSH {r7, lr}
-  0x00, 0xAF,  // ADD r7, sp, #0
-  0x00, 0xF0, 0x04, 0xF8,  // BL <function>
-  0x80, 0xBD,  // POP {r7, pc}
+  0x80,
+  0xb5, // PUSH {r7, lr}
+  0x00,
+  0xaf, // ADD r7, sp, #0
+  0x00,
+  0xf0,
+  0x04,
+  0xf8, // BL <function>
+  0x80,
+  0xbd, // POP {r7, pc}
 ]);
 
 // Disassemble (synchronous)
@@ -126,7 +136,7 @@ disassembler.dispose();
 ### Quick Start with Factory
 
 ```typescript
-import { createCapstoneDisassembler } from './CapstoneDisassembler';
+import { createCapstoneDisassembler } from "./CapstoneDisassembler";
 
 // One-line initialization
 const disasm = await createCapstoneDisassembler();
@@ -166,6 +176,7 @@ The disassembler is designed for efficiency:
 ## Choosing the Right Disassembler
 
 ### Use ArmDisassembler When:
+
 - Building quick prototypes or demos
 - Teaching ARM assembly basics
 - Working with simple, common instructions
@@ -174,6 +185,7 @@ The disassembler is designed for efficiency:
 - Bundle size is critical
 
 ### Use CapstoneDisassembler When:
+
 - Analyzing production firmware
 - Need complete instruction coverage
 - Working with advanced Thumb-2 code
@@ -213,7 +225,9 @@ const flowMap = disasm.analyzeControlFlow(instructions);
 
 // flowMap: Map<sourceAddress, Set<targetAddress>>
 for (const [source, targets] of flowMap) {
-  console.log(`0x${source.toString(16)} -> ${[...targets].map(t => '0x' + t.toString(16)).join(', ')}`);
+  console.log(
+    `0x${source.toString(16)} -> ${[...targets].map((t) => "0x" + t.toString(16)).join(", ")}`,
+  );
 }
 ```
 
@@ -239,12 +253,12 @@ Quick migration:
 
 ```typescript
 // Before
-import { ArmDisassembler } from './ArmDisassembler';
+import { ArmDisassembler } from "./ArmDisassembler";
 const disasm = new ArmDisassembler();
 const instructions = disasm.disassemble(data, addr);
 
 // After
-import { CapstoneDisassembler } from './CapstoneDisassembler';
+import { CapstoneDisassembler } from "./CapstoneDisassembler";
 const disasm = new CapstoneDisassembler();
 await disasm.initialize();
 const instructions = await disasm.disassemble(data, addr);
@@ -255,11 +269,11 @@ const instructions = await disasm.disassemble(data, addr);
 
 Disassembling 512 bytes of mixed Thumb/Thumb-2 code:
 
-| Metric | ArmDisassembler | CapstoneDisassembler |
-|--------|----------------|---------------------|
-| First call | <1ms | ~150ms (WASM init) |
-| Subsequent calls | ~0.5ms | ~1-2ms |
-| Memory usage | ~50KB | ~2-3MB |
+| Metric           | ArmDisassembler | CapstoneDisassembler |
+| ---------------- | --------------- | -------------------- |
+| First call       | <1ms            | ~150ms (WASM init)   |
+| Subsequent calls | ~0.5ms          | ~1-2ms               |
+| Memory usage     | ~50KB           | ~2-3MB               |
 
 **Note**: CapstoneDisassembler's initialization cost is amortized over many calls.
 

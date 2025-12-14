@@ -1,8 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MemoryMapParser, MemoryRegion, MemoryType, MemoryStatistics } from '../lib/memory/MemoryMapParser';
-import { GdbClient } from '../lib/gdb/GdbClient';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  MemoryMapParser,
+  MemoryRegion,
+  MemoryType,
+  MemoryStatistics,
+} from "../lib/memory/MemoryMapParser";
+import { GdbClient } from "../lib/gdb/GdbClient";
 
 interface MemoryMapViewProps {
   gdbClient: GdbClient | null;
@@ -17,18 +22,21 @@ interface ViewState {
 }
 
 const MEMORY_TYPE_COLORS: Record<MemoryType, string> = {
-  [MemoryType.FLASH]: '#3b82f6',      // Blue
-  [MemoryType.RAM]: '#10b981',        // Green
-  [MemoryType.SRAM]: '#22c55e',       // Light green
-  [MemoryType.PERIPHERAL]: '#f59e0b', // Orange
-  [MemoryType.EXTERNAL_RAM]: '#8b5cf6', // Purple
-  [MemoryType.EXTERNAL_DEVICE]: '#ec4899', // Pink
-  [MemoryType.SYSTEM]: '#ef4444',     // Red
-  [MemoryType.RESERVED]: '#6b7280',   // Gray
-  [MemoryType.UNKNOWN]: '#374151'     // Dark gray
+  [MemoryType.FLASH]: "#3b82f6", // Blue
+  [MemoryType.RAM]: "#10b981", // Green
+  [MemoryType.SRAM]: "#22c55e", // Light green
+  [MemoryType.PERIPHERAL]: "#f59e0b", // Orange
+  [MemoryType.EXTERNAL_RAM]: "#8b5cf6", // Purple
+  [MemoryType.EXTERNAL_DEVICE]: "#ec4899", // Pink
+  [MemoryType.SYSTEM]: "#ef4444", // Red
+  [MemoryType.RESERVED]: "#6b7280", // Gray
+  [MemoryType.UNKNOWN]: "#374151", // Dark gray
 };
 
-export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegionSelect }) => {
+export const MemoryMapView: React.FC<MemoryMapViewProps> = ({
+  gdbClient,
+  onRegionSelect,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [parser] = useState(() => new MemoryMapParser());
@@ -38,7 +46,7 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     zoom: 1,
     offset: { x: 0, y: 0 },
     selectedRegion: null,
-    hoveredRegion: null
+    hoveredRegion: null,
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -62,8 +70,8 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
 
     try {
       // Try to get memory info from target
-      const memInfo = await gdbClient.sendCommand('info mem');
-      if (memInfo.type === 'data' && memInfo.data) {
+      const memInfo = await gdbClient.sendCommand("info mem");
+      if (memInfo.type === "data" && memInfo.data) {
         const parsedRegions = parser.parseGdbMemoryInfo(memInfo.data);
         if (parsedRegions.length > 0) {
           setRegions(parsedRegions);
@@ -83,7 +91,7 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
         setStatistics(parser.getStatistics());
       }
     } catch (error) {
-      console.error('Failed to load memory regions:', error);
+      console.error("Failed to load memory regions:", error);
       // Use default regions on error
       const defaultRegions = parser.detectMemoryRegions();
       setRegions(defaultRegions);
@@ -96,7 +104,7 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     drawMemoryMap(ctx);
@@ -109,14 +117,14 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     const height = canvas.height;
 
     // Clear canvas
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = "#0f172a";
     ctx.fillRect(0, 0, width, height);
 
     if (regions.length === 0) {
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '14px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('No memory regions loaded', width / 2, height / 2);
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "14px Inter, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("No memory regions loaded", width / 2, height / 2);
       return;
     }
 
@@ -131,8 +139,8 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     ctx.scale(viewState.zoom, viewState.zoom);
 
     // Find min and max addresses for scaling
-    const minAddr = Math.min(...regions.map(r => r.start));
-    const maxAddr = Math.max(...regions.map(r => r.end));
+    const minAddr = Math.min(...regions.map((r) => r.start));
+    const maxAddr = Math.max(...regions.map((r) => r.end));
     const addrRange = maxAddr - minAddr;
 
     // Draw each memory region
@@ -142,19 +150,22 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       const availableWidth = (width - 2 * padding) / viewState.zoom;
 
       // Calculate region width based on size relative to address space
-      const regionWidth = Math.max(100, (region.size / addrRange) * availableWidth * 4);
+      const regionWidth = Math.max(
+        100,
+        (region.size / addrRange) * availableWidth * 4,
+      );
 
       // Draw region background
-      ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + '40'; // 25% opacity
+      ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + "40"; // 25% opacity
       ctx.strokeStyle = MEMORY_TYPE_COLORS[region.type];
       ctx.lineWidth = 2;
 
       if (region === viewState.hoveredRegion) {
-        ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + '60'; // Highlight on hover
+        ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + "60"; // Highlight on hover
       }
       if (region === viewState.selectedRegion) {
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#fbbf24'; // Yellow border for selection
+        ctx.strokeStyle = "#fbbf24"; // Yellow border for selection
       }
 
       ctx.fillRect(x, y, regionWidth, regionHeight);
@@ -163,22 +174,22 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       // Draw usage bar if available
       if (region.used && region.size > 0) {
         const usageWidth = (region.used / region.size) * regionWidth;
-        ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + '80';
+        ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + "80";
         ctx.fillRect(x, y, usageWidth, regionHeight);
       }
 
       // Draw text
-      ctx.fillStyle = '#f3f4f6';
-      ctx.font = 'bold 12px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = "#f3f4f6";
+      ctx.font = "bold 12px Inter, system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
 
       // Region name
       ctx.fillText(region.name, x + 10, y + 20);
 
       // Address range
-      ctx.font = '10px monospace';
-      ctx.fillStyle = '#9ca3af';
+      ctx.font = "10px monospace";
+      ctx.fillStyle = "#9ca3af";
       const startAddr = MemoryMapParser.formatAddress(region.start);
       const endAddr = MemoryMapParser.formatAddress(region.end);
       ctx.fillText(`${startAddr} - ${endAddr}`, x + 10, y + 35);
@@ -189,17 +200,17 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       // Permissions
       if (region.permissions) {
         const perms = [
-          region.permissions.read ? 'R' : '-',
-          region.permissions.write ? 'W' : '-',
-          region.permissions.execute ? 'X' : '-'
-        ].join('');
+          region.permissions.read ? "R" : "-",
+          region.permissions.write ? "W" : "-",
+          region.permissions.execute ? "X" : "-",
+        ].join("");
         ctx.fillText(perms, x + regionWidth - 30, y + 20);
       }
 
       // Usage percentage
       if (region.used && region.size > 0) {
         const percentage = ((region.used / region.size) * 100).toFixed(1);
-        ctx.fillStyle = '#10b981';
+        ctx.fillStyle = "#10b981";
         ctx.fillText(`${percentage}%`, x + regionWidth - 50, y + 48);
       }
     });
@@ -220,9 +231,9 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     const y = 10;
 
     // Background
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = "#1e293b";
     ctx.fillRect(x, y, minimapWidth, minimapHeight);
-    ctx.strokeStyle = '#475569';
+    ctx.strokeStyle = "#475569";
     ctx.strokeRect(x, y, minimapWidth, minimapHeight);
 
     // Draw tiny regions
@@ -230,12 +241,12 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
     regions.forEach((region, index) => {
       const regionY = y + index * 70 * scale;
       const regionHeight = 60 * scale;
-      ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + '60';
+      ctx.fillStyle = MEMORY_TYPE_COLORS[region.type] + "60";
       ctx.fillRect(x + 5, regionY, minimapWidth - 10, regionHeight);
     });
 
     // Viewport indicator
-    ctx.strokeStyle = '#fbbf24';
+    ctx.strokeStyle = "#fbbf24";
     ctx.lineWidth = 2;
     const viewportHeight = (canvas.height / viewState.zoom) * scale;
     const viewportY = y - (viewState.offset.y / viewState.zoom) * scale;
@@ -243,54 +254,70 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
   };
 
   // Mouse event handlers
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - viewState.offset.x) / viewState.zoom;
-    const y = (e.clientY - rect.top - viewState.offset.y) / viewState.zoom;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left - viewState.offset.x) / viewState.zoom;
+      const y = (e.clientY - rect.top - viewState.offset.y) / viewState.zoom;
 
-    if (isDragging) {
-      setViewState(prev => ({
-        ...prev,
-        offset: {
-          x: e.clientX - dragStart.x,
-          y: e.clientY - dragStart.y
+      if (isDragging) {
+        setViewState((prev) => ({
+          ...prev,
+          offset: {
+            x: e.clientX - dragStart.x,
+            y: e.clientY - dragStart.y,
+          },
+        }));
+      } else {
+        // Check if hovering over a region
+        const padding = 40;
+        const regionHeight = 60;
+        const regionSpacing = 10;
+
+        let hoveredRegion: MemoryRegion | null = null;
+        regions.forEach((region, index) => {
+          const regionY = padding + index * (regionHeight + regionSpacing);
+          const regionX = padding;
+          const availableWidth = (canvas.width - 2 * padding) / viewState.zoom;
+          const addrRange =
+            Math.max(...regions.map((r) => r.end)) -
+            Math.min(...regions.map((r) => r.start));
+          const regionWidth = Math.max(
+            100,
+            (region.size / addrRange) * availableWidth * 4,
+          );
+
+          if (
+            x >= regionX &&
+            x <= regionX + regionWidth &&
+            y >= regionY &&
+            y <= regionY + regionHeight
+          ) {
+            hoveredRegion = region;
+          }
+        });
+
+        if (hoveredRegion !== viewState.hoveredRegion) {
+          setViewState((prev) => ({ ...prev, hoveredRegion }));
         }
-      }));
-    } else {
-      // Check if hovering over a region
-      const padding = 40;
-      const regionHeight = 60;
-      const regionSpacing = 10;
-
-      let hoveredRegion: MemoryRegion | null = null;
-      regions.forEach((region, index) => {
-        const regionY = padding + index * (regionHeight + regionSpacing);
-        const regionX = padding;
-        const availableWidth = (canvas.width - 2 * padding) / viewState.zoom;
-        const addrRange = Math.max(...regions.map(r => r.end)) - Math.min(...regions.map(r => r.start));
-        const regionWidth = Math.max(100, (region.size / addrRange) * availableWidth * 4);
-
-        if (x >= regionX && x <= regionX + regionWidth && y >= regionY && y <= regionY + regionHeight) {
-          hoveredRegion = region;
-        }
-      });
-
-      if (hoveredRegion !== viewState.hoveredRegion) {
-        setViewState(prev => ({ ...prev, hoveredRegion }));
       }
-    }
-  }, [isDragging, dragStart, regions, viewState.zoom, viewState.offset]);
+    },
+    [isDragging, dragStart, regions, viewState.zoom, viewState.offset],
+  );
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - viewState.offset.x,
-      y: e.clientY - viewState.offset.y
-    });
-  }, [viewState.offset]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - viewState.offset.x,
+        y: e.clientY - viewState.offset.y,
+      });
+    },
+    [viewState.offset],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -298,7 +325,10 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
 
   const handleClick = useCallback(() => {
     if (viewState.hoveredRegion) {
-      setViewState(prev => ({ ...prev, selectedRegion: viewState.hoveredRegion }));
+      setViewState((prev) => ({
+        ...prev,
+        selectedRegion: viewState.hoveredRegion,
+      }));
       onRegionSelect?.(viewState.hoveredRegion);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -307,9 +337,9 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
   const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setViewState(prev => ({
+    setViewState((prev) => ({
       ...prev,
-      zoom: Math.min(Math.max(prev.zoom * delta, 0.5), 3)
+      zoom: Math.min(Math.max(prev.zoom * delta, 0.5), 3),
     }));
   }, []);
 
@@ -319,24 +349,24 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
       zoom: 1,
       offset: { x: 0, y: 0 },
       selectedRegion: null,
-      hoveredRegion: null
+      hoveredRegion: null,
     });
   };
 
   const zoomIn = () => {
-    setViewState(prev => ({ ...prev, zoom: Math.min(prev.zoom * 1.2, 3) }));
+    setViewState((prev) => ({ ...prev, zoom: Math.min(prev.zoom * 1.2, 3) }));
   };
 
   const zoomOut = () => {
-    setViewState(prev => ({ ...prev, zoom: Math.max(prev.zoom * 0.8, 0.5) }));
+    setViewState((prev) => ({ ...prev, zoom: Math.max(prev.zoom * 0.8, 0.5) }));
   };
 
   const exportAsImage = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const link = document.createElement('a');
-    link.download = 'memory-map.png';
+    const link = document.createElement("a");
+    link.download = "memory-map.png";
     link.href = canvas.toDataURL();
     link.click();
   };
@@ -423,23 +453,45 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
             onMouseLeave={handleMouseUp}
             onClick={handleClick}
             onWheel={handleWheel}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: "100%", height: "100%" }}
           />
 
           {/* Tooltip */}
           {viewState.hoveredRegion && (
             <div className="absolute top-4 left-4 bg-slate-800 border border-slate-600 rounded-lg p-3 pointer-events-none shadow-xl">
-              <div className="font-semibold text-sm mb-2">{viewState.hoveredRegion.name}</div>
+              <div className="font-semibold text-sm mb-2">
+                {viewState.hoveredRegion.name}
+              </div>
               <div className="text-xs space-y-1 text-gray-400">
                 <div>Type: {viewState.hoveredRegion.type}</div>
-                <div>Start: {MemoryMapParser.formatAddress(viewState.hoveredRegion.start)}</div>
-                <div>End: {MemoryMapParser.formatAddress(viewState.hoveredRegion.end)}</div>
-                <div>Size: {MemoryMapParser.formatSize(viewState.hoveredRegion.size)}</div>
+                <div>
+                  Start:{" "}
+                  {MemoryMapParser.formatAddress(viewState.hoveredRegion.start)}
+                </div>
+                <div>
+                  End:{" "}
+                  {MemoryMapParser.formatAddress(viewState.hoveredRegion.end)}
+                </div>
+                <div>
+                  Size:{" "}
+                  {MemoryMapParser.formatSize(viewState.hoveredRegion.size)}
+                </div>
                 {viewState.hoveredRegion.used && (
-                  <div>Used: {MemoryMapParser.formatSize(viewState.hoveredRegion.used)} ({((viewState.hoveredRegion.used / viewState.hoveredRegion.size) * 100).toFixed(1)}%)</div>
+                  <div>
+                    Used:{" "}
+                    {MemoryMapParser.formatSize(viewState.hoveredRegion.used)} (
+                    {(
+                      (viewState.hoveredRegion.used /
+                        viewState.hoveredRegion.size) *
+                      100
+                    ).toFixed(1)}
+                    %)
+                  </div>
                 )}
                 {viewState.hoveredRegion.description && (
-                  <div className="mt-2 text-gray-300">{viewState.hoveredRegion.description}</div>
+                  <div className="mt-2 text-gray-300">
+                    {viewState.hoveredRegion.description}
+                  </div>
                 )}
               </div>
             </div>
@@ -458,18 +510,24 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
                 <div className="bg-slate-900 rounded p-2">
                   <div className="flex justify-between text-sm">
                     <span>Total:</span>
-                    <span>{MemoryMapParser.formatSize(statistics.totalFlash)}</span>
+                    <span>
+                      {MemoryMapParser.formatSize(statistics.totalFlash)}
+                    </span>
                   </div>
                   {statistics.usedFlash > 0 && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span>Used:</span>
-                        <span>{MemoryMapParser.formatSize(statistics.usedFlash)}</span>
+                        <span>
+                          {MemoryMapParser.formatSize(statistics.usedFlash)}
+                        </span>
                       </div>
                       <div className="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
-                          style={{ width: `${(statistics.usedFlash / statistics.totalFlash) * 100}%` }}
+                          style={{
+                            width: `${(statistics.usedFlash / statistics.totalFlash) * 100}%`,
+                          }}
                         />
                       </div>
                     </>
@@ -483,18 +541,24 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
                 <div className="bg-slate-900 rounded p-2">
                   <div className="flex justify-between text-sm">
                     <span>Total:</span>
-                    <span>{MemoryMapParser.formatSize(statistics.totalRam)}</span>
+                    <span>
+                      {MemoryMapParser.formatSize(statistics.totalRam)}
+                    </span>
                   </div>
                   {statistics.usedRam > 0 && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span>Used:</span>
-                        <span>{MemoryMapParser.formatSize(statistics.usedRam)}</span>
+                        <span>
+                          {MemoryMapParser.formatSize(statistics.usedRam)}
+                        </span>
                       </div>
                       <div className="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-green-500"
-                          style={{ width: `${(statistics.usedRam / statistics.totalRam) * 100}%` }}
+                          style={{
+                            width: `${(statistics.usedRam / statistics.totalRam) * 100}%`,
+                          }}
                         />
                       </div>
                     </>
@@ -503,32 +567,46 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
               </div>
 
               {/* Runtime info */}
-              {(statistics.stackPointer || statistics.heapStart || statistics.vectorTableAddress) && (
+              {(statistics.stackPointer ||
+                statistics.heapStart ||
+                statistics.vectorTableAddress) && (
                 <div>
                   <div className="text-sm text-gray-400 mb-1">Runtime Info</div>
                   <div className="bg-slate-900 rounded p-2 space-y-1">
                     {statistics.stackPointer && (
                       <div className="flex justify-between text-sm">
                         <span>Stack Pointer:</span>
-                        <span className="font-mono text-xs">{MemoryMapParser.formatAddress(statistics.stackPointer)}</span>
+                        <span className="font-mono text-xs">
+                          {MemoryMapParser.formatAddress(
+                            statistics.stackPointer,
+                          )}
+                        </span>
                       </div>
                     )}
                     {statistics.heapStart && (
                       <div className="flex justify-between text-sm">
                         <span>Heap Start:</span>
-                        <span className="font-mono text-xs">{MemoryMapParser.formatAddress(statistics.heapStart)}</span>
+                        <span className="font-mono text-xs">
+                          {MemoryMapParser.formatAddress(statistics.heapStart)}
+                        </span>
                       </div>
                     )}
                     {statistics.heapEnd && (
                       <div className="flex justify-between text-sm">
                         <span>Heap End:</span>
-                        <span className="font-mono text-xs">{MemoryMapParser.formatAddress(statistics.heapEnd)}</span>
+                        <span className="font-mono text-xs">
+                          {MemoryMapParser.formatAddress(statistics.heapEnd)}
+                        </span>
                       </div>
                     )}
                     {statistics.vectorTableAddress && (
                       <div className="flex justify-between text-sm">
                         <span>Vector Table:</span>
-                        <span className="font-mono text-xs">{MemoryMapParser.formatAddress(statistics.vectorTableAddress)}</span>
+                        <span className="font-mono text-xs">
+                          {MemoryMapParser.formatAddress(
+                            statistics.vectorTableAddress,
+                          )}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -545,7 +623,9 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({ gdbClient, onRegio
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-xs capitalize">{type.replace('_', ' ')}</span>
+                      <span className="text-xs capitalize">
+                        {type.replace("_", " ")}
+                      </span>
                     </div>
                   ))}
                 </div>

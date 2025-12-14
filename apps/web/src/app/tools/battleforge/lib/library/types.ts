@@ -75,7 +75,7 @@ export interface LibraryBuild {
 
 /**
  * BattleForge library manifest format
- * Stored in /public/libraries/{id}/library.json
+ * Stored in src/app/tools/battleforge/data/libraries/{id}/library.json
  */
 export interface BattleForgeLibraryManifest {
   /** Library name */
@@ -124,7 +124,7 @@ export interface LibraryRegistryEntry {
 
 /**
  * Library registry index format
- * Stored in /public/libraries/registry.json
+ * Stored in src/app/tools/battleforge/data/libraries/registry.json
  */
 export interface LibraryRegistry {
   /** Registry format version */

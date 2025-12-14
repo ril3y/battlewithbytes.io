@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Load the WASM analyzer module using script tag approach
@@ -24,48 +24,48 @@ declare global {
 }
 
 export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
-  console.log('[loadWasmAnalyzer] Starting load process...');
+  console.log("[loadWasmAnalyzer] Starting load process...");
 
   // Return cached module if already loaded
   if (window.__wasmAnalyzer) {
-    console.log('[loadWasmAnalyzer] Returning cached module');
+    console.log("[loadWasmAnalyzer] Returning cached module");
     return window.__wasmAnalyzer;
   }
 
   // If already loading, wait for it
   if (window.__wasmAnalyzerLoaded === false) {
-    console.log('[loadWasmAnalyzer] Already loading, waiting...');
+    console.log("[loadWasmAnalyzer] Already loading, waiting...");
     // Wait up to 5 seconds for load to complete
     for (let i = 0; i < 50; i++) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       if (window.__wasmAnalyzer) {
-        console.log('[loadWasmAnalyzer] Load completed while waiting');
+        console.log("[loadWasmAnalyzer] Load completed while waiting");
         return window.__wasmAnalyzer;
       }
     }
-    throw new Error('WASM module load timeout while waiting');
+    throw new Error("WASM module load timeout while waiting");
   }
 
-  console.log('[loadWasmAnalyzer] Initiating new load...');
+  console.log("[loadWasmAnalyzer] Initiating new load...");
   // Mark as loading
   window.__wasmAnalyzerLoaded = false;
 
   // Create and inject script tag
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.id = 'wasm-analyzer-loader';
+  const script = document.createElement("script");
+  script.type = "module";
+  script.id = "wasm-analyzer-loader";
 
   // Remove any existing loader script
-  const existing = document.getElementById('wasm-analyzer-loader');
+  const existing = document.getElementById("wasm-analyzer-loader");
   if (existing) {
     existing.remove();
   }
 
   script.textContent = `
-    import init, { ArmAnalyzer } from '/wasm/battlemagic_analyzer.js';
+    import init, { ArmAnalyzer } from '/tools/battleforge/wasm/battlemagic_analyzer.js';
 
     try {
-      await init('/wasm/battlemagic_analyzer_bg.wasm');
+      await init('/tools/battleforge/wasm/battlemagic_analyzer_bg.wasm');
       window.__wasmAnalyzer = { ArmAnalyzer };
       window.__wasmAnalyzerLoaded = true;
       console.log('[WASM] Analyzer loaded successfully');
@@ -77,21 +77,24 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
   `;
 
   document.head.appendChild(script);
-  console.log('[loadWasmAnalyzer] Script tag injected, waiting for load...');
+  console.log("[loadWasmAnalyzer] Script tag injected, waiting for load...");
 
   // Wait for module to load (max 5 seconds)
   for (let i = 0; i < 50; i++) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     if (window.__wasmAnalyzer) {
-      console.log('[loadWasmAnalyzer] Module loaded successfully!', window.__wasmAnalyzer);
+      console.log(
+        "[loadWasmAnalyzer] Module loaded successfully!",
+        window.__wasmAnalyzer,
+      );
       return window.__wasmAnalyzer;
     }
 
     // Check if loading failed
     if (window.__wasmAnalyzerLoaded === undefined) {
-      console.error('[loadWasmAnalyzer] Loading failed');
-      throw new Error('WASM module failed to load');
+      console.error("[loadWasmAnalyzer] Loading failed");
+      throw new Error("WASM module failed to load");
     }
 
     if (i % 10 === 0) {
@@ -99,8 +102,8 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
     }
   }
 
-  console.error('[loadWasmAnalyzer] Timeout after 5 seconds');
-  throw new Error('WASM module load timeout');
+  console.error("[loadWasmAnalyzer] Timeout after 5 seconds");
+  throw new Error("WASM module load timeout");
 }
 
 /**
@@ -117,7 +120,7 @@ export function clearWasmAnalyzer(): void {
   delete window.__wasmAnalyzer;
   delete window.__wasmAnalyzerLoaded;
 
-  const script = document.getElementById('wasm-analyzer-loader');
+  const script = document.getElementById("wasm-analyzer-loader");
   if (script) {
     script.remove();
   }

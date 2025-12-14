@@ -9,16 +9,14 @@
  * - Unreachable code detection
  */
 
-import {
-  BlockType
-} from './types';
+import { BlockType } from "./types";
 import type {
   BasicBlock,
   ControlFlowGraph,
   CFGAnalysisResult,
   BlockAnalysisOptions,
-  Loop
-} from './types';
+  Loop,
+} from "./types";
 
 export class ControlFlowAnalyzer {
   private options: BlockAnalysisOptions;
@@ -36,7 +34,7 @@ export class ControlFlowAnalyzer {
     const errors: string[] = [];
 
     if (blocks.length === 0) {
-      errors.push('No basic blocks provided');
+      errors.push("No basic blocks provided");
       return {
         cfg: this.createEmptyCFG(),
         warnings,
@@ -44,8 +42,8 @@ export class ControlFlowAnalyzer {
         statistics: {
           analysisTimeMs: Date.now() - startTime,
           blocksCreated: 0,
-          edgesCreated: 0
-        }
+          edgesCreated: 0,
+        },
       };
     }
 
@@ -57,7 +55,7 @@ export class ControlFlowAnalyzer {
       const unreachable = this.detectUnreachableBlocks(cfg);
       if (unreachable.length > 0) {
         warnings.push(`Found ${unreachable.length} unreachable blocks`);
-        unreachable.forEach(id => {
+        unreachable.forEach((id) => {
           const block = cfg.blocks.get(id);
           if (block) {
             block.type = BlockType.UNREACHABLE;
@@ -70,7 +68,7 @@ export class ControlFlowAnalyzer {
     if (this.options.detectLoops) {
       cfg.loops = this.detectLoops(cfg);
       if (cfg.loops.length > 0) {
-        cfg.metadata.maxLoopDepth = Math.max(...cfg.loops.map(l => l.depth));
+        cfg.metadata.maxLoopDepth = Math.max(...cfg.loops.map((l) => l.depth));
       }
     }
 
@@ -87,8 +85,8 @@ export class ControlFlowAnalyzer {
       statistics: {
         analysisTimeMs,
         blocksCreated: blocks.length,
-        edgesCreated: this.countEdges(cfg)
-      }
+        edgesCreated: this.countEdges(cfg),
+      },
     };
   }
 
@@ -120,11 +118,14 @@ export class ControlFlowAnalyzer {
       functionEnd: lastBlock.endAddress,
       metadata: {
         architecture: this.options.architecture,
-        totalInstructions: blocks.reduce((sum, b) => sum + b.instructions.length, 0),
+        totalInstructions: blocks.reduce(
+          (sum, b) => sum + b.instructions.length,
+          0,
+        ),
         totalBlocks: blocks.length,
-        cyclomaticComplexity: 1,  // Will be calculated
-        maxLoopDepth: 0            // Will be calculated if loops detected
-      }
+        cyclomaticComplexity: 1, // Will be calculated
+        maxLoopDepth: 0, // Will be calculated if loops detected
+      },
     };
   }
 
@@ -134,7 +135,7 @@ export class ControlFlowAnalyzer {
   private createEmptyCFG(): ControlFlowGraph {
     return {
       blocks: new Map(),
-      entryBlock: '',
+      entryBlock: "",
       exitBlocks: [],
       functionStart: 0,
       functionEnd: 0,
@@ -143,8 +144,8 @@ export class ControlFlowAnalyzer {
         totalInstructions: 0,
         totalBlocks: 0,
         cyclomaticComplexity: 0,
-        maxLoopDepth: 0
-      }
+        maxLoopDepth: 0,
+      },
     };
   }
 
@@ -198,7 +199,12 @@ export class ControlFlowAnalyzer {
       if (visited.has(blockId)) {
         // Found a back edge if block is in current path
         if (inStack.has(blockId)) {
-          const loop = this.extractLoop(blockId, path[path.length - 1], path, cfg);
+          const loop = this.extractLoop(
+            blockId,
+            path[path.length - 1],
+            path,
+            cfg,
+          );
           if (loop) {
             loops.push(loop);
           }
@@ -235,7 +241,7 @@ export class ControlFlowAnalyzer {
     header: string,
     backedge: string,
     path: string[],
-    cfg: ControlFlowGraph
+    cfg: ControlFlowGraph,
   ): Loop | null {
     // Find all blocks in loop body
     const headerIndex = path.indexOf(header);
@@ -247,7 +253,7 @@ export class ControlFlowAnalyzer {
       header,
       backedge,
       blocks: loopBlocks,
-      depth: 1  // Will be calculated later
+      depth: 1, // Will be calculated later
     };
   }
 
@@ -286,7 +292,7 @@ export class ControlFlowAnalyzer {
   private calculateCyclomaticComplexity(cfg: ControlFlowGraph): number {
     const E = this.countEdges(cfg);
     const N = cfg.blocks.size;
-    const P = 1;  // Assuming single connected component
+    const P = 1; // Assuming single connected component
 
     return E - N + 2 * P;
   }
@@ -357,8 +363,10 @@ export class ControlFlowAnalyzer {
 
         // Check if changed
         const oldDominators = dominators.get(blockId)!;
-        if (newDominators.size !== oldDominators.size ||
-            ![...newDominators].every(d => oldDominators.has(d))) {
+        if (
+          newDominators.size !== oldDominators.size ||
+          ![...newDominators].every((d) => oldDominators.has(d))
+        ) {
           dominators.set(blockId, newDominators);
           changed = true;
         }

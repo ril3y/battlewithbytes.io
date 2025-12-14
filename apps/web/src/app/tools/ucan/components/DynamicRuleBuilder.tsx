@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Dynamic Rule Builder Component (Protocol v2.0)
@@ -11,8 +11,13 @@
  * - Different trigger types (can_msg, periodic, gpio, manual)
  */
 
-import React, { useState, useEffect } from 'react';
-import { ActionDefinition, ActionParameter, ActionRule, CANMessage } from '../types';
+import React, { useState, useEffect } from "react";
+import {
+  ActionDefinition,
+  ActionParameter,
+  ActionRule,
+  CANMessage,
+} from "../types";
 
 interface DynamicRuleBuilderProps {
   actionDefinitions: ActionDefinition[];
@@ -27,49 +32,68 @@ export default function DynamicRuleBuilder({
   onAddRule,
   isConnected,
   editingRule,
-  prefilledMessage
+  prefilledMessage,
 }: DynamicRuleBuilderProps) {
-  const [selectedAction, setSelectedAction] = useState<ActionDefinition | null>(null);
-  const [canId, setCanId] = useState('0x100');
-  const [canMask, setCanMask] = useState('0xFFFFFFFF');
-  const [paramSource, setParamSource] = useState<'fixed' | 'candata'>('candata');
+  const [selectedAction, setSelectedAction] = useState<ActionDefinition | null>(
+    null,
+  );
+  const [canId, setCanId] = useState("0x100");
+  const [canMask, setCanMask] = useState("0xFFFFFFFF");
+  const [paramSource, setParamSource] = useState<"fixed" | "candata">(
+    "candata",
+  );
   const [fixedParams, setFixedParams] = useState<Record<string, string>>({});
 
   // Data filtering (Protocol v2.0 - advanced feature)
-  const [dataPattern, setDataPattern] = useState('');
-  const [dataMask, setDataMask] = useState('');
-  const [dataLength, setDataLength] = useState('0');
+  const [dataPattern, setDataPattern] = useState("");
+  const [dataMask, setDataMask] = useState("");
+  const [dataLength, setDataLength] = useState("0");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Pre-populate form when editing a rule
   useEffect(() => {
     if (editingRule && actionDefinitions.length > 0) {
-      console.log('🔍 [DynamicRuleBuilder] Attempting to pre-populate rule:', editingRule);
-      console.log('🔍 [DynamicRuleBuilder] Looking for action type:', editingRule.actionType);
-      console.log('🔍 [DynamicRuleBuilder] Available actions:', actionDefinitions.map(a => a.n));
+      console.log(
+        "🔍 [DynamicRuleBuilder] Attempting to pre-populate rule:",
+        editingRule,
+      );
+      console.log(
+        "🔍 [DynamicRuleBuilder] Looking for action type:",
+        editingRule.actionType,
+      );
+      console.log(
+        "🔍 [DynamicRuleBuilder] Available actions:",
+        actionDefinitions.map((a) => a.n),
+      );
 
       // Find the action definition that matches the rule's action type
-      const action = actionDefinitions.find(a => a.n === editingRule.actionType);
+      const action = actionDefinitions.find(
+        (a) => a.n === editingRule.actionType,
+      );
 
       if (action) {
-        console.log('✅ [DynamicRuleBuilder] Found matching action:', action);
+        console.log("✅ [DynamicRuleBuilder] Found matching action:", action);
         setSelectedAction(action);
         setCanId(`0x${editingRule.canId.toString(16).toUpperCase()}`);
         setCanMask(`0x${editingRule.canMask.toString(16).toUpperCase()}`);
         setParamSource(editingRule.paramSource);
 
         // Pre-populate data filtering fields (Protocol v2.0)
-        setDataPattern(editingRule.dataPattern || '');
-        setDataMask(editingRule.dataMask || '');
-        setDataLength(editingRule.dataLength?.toString() || '0');
+        setDataPattern(editingRule.dataPattern || "");
+        setDataMask(editingRule.dataMask || "");
+        setDataLength(editingRule.dataLength?.toString() || "0");
 
         // Show advanced section if data filtering is used
-        if (editingRule.dataPattern || editingRule.dataMask || (editingRule.dataLength && editingRule.dataLength > 0)) {
+        if (
+          editingRule.dataPattern ||
+          editingRule.dataMask ||
+          (editingRule.dataLength && editingRule.dataLength > 0)
+        ) {
           setShowAdvanced(true);
         }
 
         // Pre-populate fixed params if available
-        if (editingRule.paramSource === 'fixed' && editingRule.params) {
+        if (editingRule.paramSource === "fixed" && editingRule.params) {
           const paramsMap: Record<string, string> = {};
           action.p.forEach((paramDef, idx) => {
             if (editingRule.params && editingRule.params[idx] !== undefined) {
@@ -79,7 +103,10 @@ export default function DynamicRuleBuilder({
           setFixedParams(paramsMap);
         }
       } else {
-        console.error('❌ [DynamicRuleBuilder] Could not find action for type:', editingRule.actionType);
+        console.error(
+          "❌ [DynamicRuleBuilder] Could not find action for type:",
+          editingRule.actionType,
+        );
       }
     }
   }, [editingRule, actionDefinitions]);
@@ -87,14 +114,17 @@ export default function DynamicRuleBuilder({
   // Pre-populate form when building rule from a packet
   useEffect(() => {
     if (prefilledMessage && !editingRule) {
-      console.log('📦 [DynamicRuleBuilder] Prefilling from CAN message:', prefilledMessage);
+      console.log(
+        "📦 [DynamicRuleBuilder] Prefilling from CAN message:",
+        prefilledMessage,
+      );
       setCanId(`0x${prefilledMessage.canId.toString(16).toUpperCase()}`);
-      setCanMask('0xFFFFFFFF'); // Default to exact match
+      setCanMask("0xFFFFFFFF"); // Default to exact match
     }
   }, [prefilledMessage, editingRule]);
 
   const handleActionSelect = (actionId: number) => {
-    const action = actionDefinitions.find(a => a.i === actionId);
+    const action = actionDefinitions.find((a) => a.i === actionId);
     setSelectedAction(action || null);
     setFixedParams({});
   };
@@ -113,19 +143,21 @@ export default function DynamicRuleBuilder({
     let command = `action:add:${ruleId}:${canId}:${canMask}:${dataPattern}:${dataMask}:${dataLength}:${selectedAction.n}:${paramSource}`;
 
     // Add fixed parameters if in fixed mode
-    if (paramSource === 'fixed') {
-      const paramValues = selectedAction.p.map(param => fixedParams[param.n] || '0');
-      command += ':' + paramValues.join(':');
+    if (paramSource === "fixed") {
+      const paramValues = selectedAction.p.map(
+        (param) => fixedParams[param.n] || "0",
+      );
+      command += ":" + paramValues.join(":");
     }
 
     await onAddRule(command);
 
     // Reset form
-    setCanId('0x100');
+    setCanId("0x100");
     setFixedParams({});
-    setDataPattern('');
-    setDataMask('');
-    setDataLength('0');
+    setDataPattern("");
+    setDataMask("");
+    setDataLength("0");
     setShowAdvanced(false);
   };
 
@@ -133,47 +165,57 @@ export default function DynamicRuleBuilder({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">No action definitions available</p>
-        <p className="text-sm text-gray-600 mt-2">Connect to a uCAN device to load actions</p>
+        <p className="text-sm text-gray-600 mt-2">
+          Connect to a uCAN device to load actions
+        </p>
       </div>
     );
   }
 
   // Group actions by category
-  const actionsByCategory = actionDefinitions.reduce((acc, action) => {
-    const category = action.c || 'Other';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(action);
-    return acc;
-  }, {} as Record<string, ActionDefinition[]>);
+  const actionsByCategory = actionDefinitions.reduce(
+    (acc, action) => {
+      const category = action.c || "Other";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(action);
+      return acc;
+    },
+    {} as Record<string, ActionDefinition[]>,
+  );
 
   // Separate parameters by role
-  const triggerParams = selectedAction?.p.filter(p => p.role === 'trigger_param') || [];
-  const actionParams = selectedAction?.p.filter(p => p.role === 'action_param') || [];
-  const outputParams = selectedAction?.p.filter(p => p.role === 'output_param') || [];
+  const triggerParams =
+    selectedAction?.p.filter((p) => p.role === "trigger_param") || [];
+  const actionParams =
+    selectedAction?.p.filter((p) => p.role === "action_param") || [];
+  const outputParams =
+    selectedAction?.p.filter((p) => p.role === "output_param") || [];
 
   // Get CAN ID label based on trigger type
   const getCanIdLabel = () => {
     const trigType = selectedAction?.trig;
-    if (trigType === 'periodic' || trigType === 'manual') {
-      return 'CAN ID to Send';
+    if (trigType === "periodic" || trigType === "manual") {
+      return "CAN ID to Send";
     }
-    return 'CAN ID to Match';
+    return "CAN ID to Match";
   };
 
   return (
     <div className="space-y-4">
       {/* Action Selection */}
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Select Action</label>
+        <label className="block text-sm text-gray-400 mb-2">
+          Select Action
+        </label>
         <select
-          value={selectedAction?.i || ''}
+          value={selectedAction?.i || ""}
           onChange={(e) => handleActionSelect(parseInt(e.target.value))}
           className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-purple-500"
         >
           <option value="">Choose an action...</option>
           {Object.entries(actionsByCategory).map(([category, actions]) => (
             <optgroup key={category} label={category}>
-              {actions.map(action => (
+              {actions.map((action) => (
                 <option key={action.i} value={action.i}>
                   {action.n} - {action.d}
                 </option>
@@ -212,9 +254,11 @@ export default function DynamicRuleBuilder({
               </div>
 
               {/* CAN ID Mask (only for can_msg trigger) */}
-              {selectedAction.trig === 'can_msg' && (
+              {selectedAction.trig === "can_msg" && (
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">CAN ID Mask</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    CAN ID Mask
+                  </label>
                   <input
                     type="text"
                     value={canMask}
@@ -222,15 +266,24 @@ export default function DynamicRuleBuilder({
                     placeholder="0xFFFFFFFF"
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
                   />
-                  <p className="text-xs text-gray-600 mt-1">Use 0xFFFFFFFF for exact match</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Use 0xFFFFFFFF for exact match
+                  </p>
                 </div>
               )}
 
               {/* Trigger-specific parameters */}
               {triggerParams.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-700">
-                  <p className="text-xs text-gray-500 mb-2">Trigger Parameters:</p>
-                  {renderParameterInputs(triggerParams, paramSource, fixedParams, setFixedParams)}
+                  <p className="text-xs text-gray-500 mb-2">
+                    Trigger Parameters:
+                  </p>
+                  {renderParameterInputs(
+                    triggerParams,
+                    paramSource,
+                    fixedParams,
+                    setFixedParams,
+                  )}
                 </div>
               )}
             </div>
@@ -239,20 +292,27 @@ export default function DynamicRuleBuilder({
           {/* Parameter Source Selection (only if action has parameters) */}
           {(actionParams.length > 0 || outputParams.length > 0) && (
             <div className="bg-gray-950 border border-gray-800 rounded p-3">
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">📊 Parameter Source</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">
+                📊 Parameter Source
+              </h4>
               <div className="space-y-2">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="radio"
                     value="candata"
-                    checked={paramSource === 'candata'}
-                    onChange={(e) => setParamSource(e.target.value as 'candata')}
+                    checked={paramSource === "candata"}
+                    onChange={(e) =>
+                      setParamSource(e.target.value as "candata")
+                    }
                     className="w-4 h-4 mt-0.5"
                   />
                   <div>
-                    <div className="text-sm text-white">Extract from CAN Data</div>
+                    <div className="text-sm text-white">
+                      Extract from CAN Data
+                    </div>
                     <div className="text-xs text-gray-500">
-                      Parameters come from CAN message bytes (one rule, infinite values)
+                      Parameters come from CAN message bytes (one rule, infinite
+                      values)
                     </div>
                   </div>
                 </label>
@@ -260,8 +320,8 @@ export default function DynamicRuleBuilder({
                   <input
                     type="radio"
                     value="fixed"
-                    checked={paramSource === 'fixed'}
-                    onChange={(e) => setParamSource(e.target.value as 'fixed')}
+                    checked={paramSource === "fixed"}
+                    onChange={(e) => setParamSource(e.target.value as "fixed")}
                     className="w-4 h-4 mt-0.5"
                   />
                   <div>
@@ -278,9 +338,11 @@ export default function DynamicRuleBuilder({
           {/* Action Parameters */}
           {actionParams.length > 0 && (
             <div className="bg-gray-950 border border-gray-800 rounded p-3">
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">🔧 Action Parameters</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">
+                🔧 Action Parameters
+              </h4>
 
-              {paramSource === 'candata' ? (
+              {paramSource === "candata" ? (
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400 mb-3">
                     Parameters will be extracted from CAN message data bytes:
@@ -289,7 +351,12 @@ export default function DynamicRuleBuilder({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {renderParameterInputs(actionParams, paramSource, fixedParams, setFixedParams)}
+                  {renderParameterInputs(
+                    actionParams,
+                    paramSource,
+                    fixedParams,
+                    setFixedParams,
+                  )}
                 </div>
               )}
             </div>
@@ -298,18 +365,26 @@ export default function DynamicRuleBuilder({
           {/* Output Configuration */}
           {outputParams.length > 0 && (
             <div className="bg-gray-950 border border-gray-800 rounded p-3">
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">📤 Output Configuration</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">
+                📤 Output Configuration
+              </h4>
 
-              {paramSource === 'candata' ? (
+              {paramSource === "candata" ? (
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400 mb-3">
-                    Output parameters will be extracted from CAN message data bytes:
+                    Output parameters will be extracted from CAN message data
+                    bytes:
                   </p>
                   {renderParameterMapping(outputParams)}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {renderParameterInputs(outputParams, paramSource, fixedParams, setFixedParams)}
+                  {renderParameterInputs(
+                    outputParams,
+                    paramSource,
+                    fixedParams,
+                    setFixedParams,
+                  )}
                 </div>
               )}
             </div>
@@ -322,7 +397,9 @@ export default function DynamicRuleBuilder({
               className="w-full flex items-center justify-between text-sm font-semibold text-gray-300 hover:text-white transition-colors"
             >
               <span>🔬 Advanced: Data Filtering</span>
-              <span className="text-xs text-gray-500">{showAdvanced ? '▼' : '▶'}</span>
+              <span className="text-xs text-gray-500">
+                {showAdvanced ? "▼" : "▶"}
+              </span>
             </button>
 
             {showAdvanced && (
@@ -343,7 +420,8 @@ export default function DynamicRuleBuilder({
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    Hex bytes to match (comma-separated, e.g., &quot;FF,00&quot;)
+                    Hex bytes to match (comma-separated, e.g.,
+                    &quot;FF,00&quot;)
                   </p>
                 </div>
 
@@ -359,7 +437,8 @@ export default function DynamicRuleBuilder({
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    FF = must match, 00 = don&apos;t care (e.g., &quot;FF,FF&quot;)
+                    FF = must match, 00 = don&apos;t care (e.g.,
+                    &quot;FF,FF&quot;)
                   </p>
                 </div>
 
@@ -382,7 +461,9 @@ export default function DynamicRuleBuilder({
 
                 <div className="bg-blue-600/10 border border-blue-500/30 rounded p-2">
                   <p className="text-xs text-blue-400">
-                    <strong>Example:</strong> Pattern &quot;FF&quot;, Mask &quot;FF&quot;, Length &quot;4&quot; → Only trigger when byte 0 is 0xFF and message is exactly 4 bytes long
+                    <strong>Example:</strong> Pattern &quot;FF&quot;, Mask
+                    &quot;FF&quot;, Length &quot;4&quot; → Only trigger when
+                    byte 0 is 0xFF and message is exactly 4 bytes long
                   </p>
                 </div>
               </div>
@@ -408,9 +489,9 @@ export default function DynamicRuleBuilder({
  */
 function renderParameterInputs(
   params: ActionParameter[],
-  paramSource: 'fixed' | 'candata',
+  paramSource: "fixed" | "candata",
   fixedParams: Record<string, string>,
-  setFixedParams: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setFixedParams: React.Dispatch<React.SetStateAction<Record<string, string>>>,
 ) {
   return params.map((param) => (
     <div key={param.n}>
@@ -421,11 +502,13 @@ function renderParameterInputs(
       </label>
       <input
         type="text"
-        value={fixedParams[param.n] || ''}
-        onChange={(e) => setFixedParams({
-          ...fixedParams,
-          [param.n]: e.target.value
-        })}
+        value={fixedParams[param.n] || ""}
+        onChange={(e) =>
+          setFixedParams({
+            ...fixedParams,
+            [param.n]: e.target.value,
+          })
+        }
         placeholder={getParameterPlaceholder(param)}
         className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
       />
@@ -471,7 +554,7 @@ function getParameterPlaceholder(param: ActionParameter): string {
 
   // Parse range if available
   if (param.r) {
-    const rangeParts = param.r.split('-');
+    const rangeParts = param.r.split("-");
     if (rangeParts.length === 2) {
       const min = parseInt(rangeParts[0]);
       const max = parseInt(rangeParts[1]);
@@ -480,8 +563,17 @@ function getParameterPlaceholder(param: ActionParameter): string {
   }
 
   // Type-based defaults
-  const typeNames = ['uint8', 'uint16', 'uint32', 'int8', 'int16', 'int32', 'float', 'bool'];
-  const typeName = typeNames[param.t] || 'value';
+  const typeNames = [
+    "uint8",
+    "uint16",
+    "uint32",
+    "int8",
+    "int16",
+    "int32",
+    "float",
+    "bool",
+  ];
+  const typeName = typeNames[param.t] || "value";
 
   return `Enter ${typeName} value`;
 }

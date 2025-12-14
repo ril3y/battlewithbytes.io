@@ -4,13 +4,13 @@
  * Analyzes binary file information to auto-detect CPU/MCU
  */
 
-import { BinaryInfo, Architecture } from '../binary/types';
-import { CpuDefinition } from './CpuDefinition';
-import { getCpuDefinitionManager } from './CpuDefinitionManager';
+import { BinaryInfo, Architecture } from "../binary/types";
+import { CpuDefinition } from "./CpuDefinition";
+import { getCpuDefinitionManager } from "./CpuDefinitionManager";
 
 export interface CpuDetectionResult {
   cpuId: string | null;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   matchedBy: string;
   suggestions?: string[];
 }
@@ -18,18 +18,28 @@ export interface CpuDetectionResult {
 /**
  * Detect CPU from binary file information
  */
-export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult {
+export function detectCpuFromBinary(
+  binaryInfo: BinaryInfo,
+): CpuDetectionResult {
   const manager = getCpuDefinitionManager();
   const allDefinitions = manager.getAllDefinitions();
 
   // Extract key info from binary
   const arch = binaryInfo.architecture;
   const entryPoint = binaryInfo.entryPoint;
-  const flashStart = binaryInfo.sections?.find(s => s.name.toLowerCase().includes('text'))?.address;
-  const ramStart = binaryInfo.sections?.find(s => s.name.toLowerCase().includes('data'))?.address;
+  const flashStart = binaryInfo.sections?.find((s) =>
+    s.name.toLowerCase().includes("text"),
+  )?.address;
+  const ramStart = binaryInfo.sections?.find((s) =>
+    s.name.toLowerCase().includes("data"),
+  )?.address;
 
   // Score each CPU definition
-  const scores: Array<{ cpu: CpuDefinition; score: number; reasons: string[] }> = [];
+  const scores: Array<{
+    cpu: CpuDefinition;
+    score: number;
+    reasons: string[];
+  }> = [];
 
   for (const cpu of allDefinitions) {
     let score = 0;
@@ -44,7 +54,11 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
     // Entry point in flash region
     if (entryPoint && cpu.memoryRegions) {
       for (const region of cpu.memoryRegions) {
-        if (region.type === 'flash' && entryPoint >= region.start && entryPoint <= region.end) {
+        if (
+          region.type === "flash" &&
+          entryPoint >= region.start &&
+          entryPoint <= region.end
+        ) {
           score += 20;
           reasons.push(`Entry point in flash region`);
           break;
@@ -55,7 +69,7 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
     // Flash start address match
     if (flashStart && cpu.memoryRegions) {
       for (const region of cpu.memoryRegions) {
-        if (region.type === 'flash' && flashStart === region.start) {
+        if (region.type === "flash" && flashStart === region.start) {
           score += 15;
           reasons.push(`Flash address matches`);
           break;
@@ -66,7 +80,10 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
     // RAM start address match
     if (ramStart && cpu.memoryRegions) {
       for (const region of cpu.memoryRegions) {
-        if ((region.type === 'ram' || region.type === 'sram') && ramStart === region.start) {
+        if (
+          (region.type === "ram" || region.type === "sram") &&
+          ramStart === region.start
+        ) {
           score += 10;
           reasons.push(`RAM address matches`);
           break;
@@ -96,38 +113,41 @@ export function detectCpuFromBinary(binaryInfo: BinaryInfo): CpuDetectionResult 
     const genericId = getGenericCpuForArchitecture(arch);
     return {
       cpuId: genericId,
-      confidence: 'low',
-      matchedBy: 'Generic fallback',
-      suggestions: []
+      confidence: "low",
+      matchedBy: "Generic fallback",
+      suggestions: [],
     };
   }
 
   const best = scores[0];
-  const suggestions = scores.slice(1, 4).map(s => s.cpu.id);
+  const suggestions = scores.slice(1, 4).map((s) => s.cpu.id);
 
   // Determine confidence based on score
-  let confidence: 'high' | 'medium' | 'low';
+  let confidence: "high" | "medium" | "low";
   if (best.score >= 70) {
-    confidence = 'high';
+    confidence = "high";
   } else if (best.score >= 40) {
-    confidence = 'medium';
+    confidence = "medium";
   } else {
-    confidence = 'low';
+    confidence = "low";
   }
 
   return {
     cpuId: best.cpu.id,
     confidence,
-    matchedBy: best.reasons.join(', '),
-    suggestions
+    matchedBy: best.reasons.join(", "),
+    suggestions,
   };
 }
 
 /**
  * Check if architecture strings match
  */
-function matchesArchitecture(binaryArch: Architecture, cpuArch: string): boolean {
-  const normalize = (arch: string) => arch.toLowerCase().replace(/[-_\s]/g, '');
+function matchesArchitecture(
+  binaryArch: Architecture,
+  cpuArch: string,
+): boolean {
+  const normalize = (arch: string) => arch.toLowerCase().replace(/[-_\s]/g, "");
 
   const binArch = normalize(binaryArch);
   const defArch = normalize(cpuArch);
@@ -136,12 +156,12 @@ function matchesArchitecture(binaryArch: Architecture, cpuArch: string): boolean
   if (binArch === defArch) return true;
 
   // ARM Cortex-M variants
-  if (binArch.includes('armv7m') && defArch.includes('cortexm4')) return true;
-  if (binArch.includes('armv7em') && defArch.includes('cortexm4')) return true;
-  if (binArch.includes('cortexm4') && defArch.includes('armv7')) return true;
+  if (binArch.includes("armv7m") && defArch.includes("cortexm4")) return true;
+  if (binArch.includes("armv7em") && defArch.includes("cortexm4")) return true;
+  if (binArch.includes("cortexm4") && defArch.includes("armv7")) return true;
 
   // Broader ARM match
-  if (binArch.includes('arm') && defArch.includes('arm')) return true;
+  if (binArch.includes("arm") && defArch.includes("arm")) return true;
 
   return false;
 }
@@ -152,12 +172,12 @@ function matchesArchitecture(binaryArch: Architecture, cpuArch: string): boolean
 function getGenericCpuForArchitecture(arch: Architecture): string {
   const archLower = arch.toLowerCase();
 
-  if (archLower.includes('cortexm4') || archLower.includes('armv7')) {
-    return 'generic-cortex-m4';
+  if (archLower.includes("cortexm4") || archLower.includes("armv7")) {
+    return "generic-cortex-m4";
   }
 
   // Default to generic Cortex-M4
-  return 'generic-cortex-m4';
+  return "generic-cortex-m4";
 }
 
 /**
@@ -170,26 +190,30 @@ export function detectCpuFromTargetName(targetName: string): string | null {
   const nameLower = targetName.toLowerCase();
 
   // nRF52 family detection
-  if (nameLower.includes('nrf52')) {
+  if (nameLower.includes("nrf52")) {
     // Could be nRF52832, nRF52840, etc.
     // For now, default to nRF52832 (most common)
     // TODO: Detect specific variant
-    return 'nrf52832';
+    return "nrf52832";
   }
 
   // STM32 family detection
-  if (nameLower.includes('stm32f407') || nameLower.includes('stm32f4')) {
-    return 'stm32f407';
+  if (nameLower.includes("stm32f407") || nameLower.includes("stm32f4")) {
+    return "stm32f407";
   }
 
   // MT7697 detection
-  if (nameLower.includes('mt7697')) {
-    return 'mt7697';
+  if (nameLower.includes("mt7697")) {
+    return "mt7697";
   }
 
   // Generic Cortex-M4 fallback
-  if (nameLower.includes('cortex-m4') || nameLower.includes('cortexm4') || nameLower.includes('m4')) {
-    return 'generic-cortex-m4';
+  if (
+    nameLower.includes("cortex-m4") ||
+    nameLower.includes("cortexm4") ||
+    nameLower.includes("m4")
+  ) {
+    return "generic-cortex-m4";
   }
 
   return null;
@@ -198,8 +222,11 @@ export function detectCpuFromTargetName(targetName: string): string | null {
 /**
  * Create custom CPU definition from binary sections
  */
-export function createCpuFromBinary(binaryInfo: BinaryInfo, cpuName: string): Omit<CpuDefinition, 'id'> {
-  const memoryRegions: CpuDefinition['memoryRegions'] = [];
+export function createCpuFromBinary(
+  binaryInfo: BinaryInfo,
+  cpuName: string,
+): Omit<CpuDefinition, "id"> {
+  const memoryRegions: CpuDefinition["memoryRegions"] = [];
 
   // Extract memory regions from sections
   if (binaryInfo.sections) {
@@ -209,21 +236,33 @@ export function createCpuFromBinary(binaryInfo: BinaryInfo, cpuName: string): Om
       const size = section.size;
       const end = start + size - 1;
 
-      let type: 'flash' | 'sram' | 'ram' | 'peripheral' | 'system' | 'external_ram' | 'external_device' | 'reserved';
+      let type:
+        | "flash"
+        | "sram"
+        | "ram"
+        | "peripheral"
+        | "system"
+        | "external_ram"
+        | "external_device"
+        | "reserved";
       let permissions = { read: true, write: false, execute: false };
 
       // Determine type and permissions from section name
-      if (name.includes('.text') || name.includes('CODE')) {
-        type = 'flash';
+      if (name.includes(".text") || name.includes("CODE")) {
+        type = "flash";
         permissions = { read: true, write: false, execute: true };
-      } else if (name.includes('.data') || name.includes('.bss') || name.includes('RAM')) {
-        type = 'sram';
+      } else if (
+        name.includes(".data") ||
+        name.includes(".bss") ||
+        name.includes("RAM")
+      ) {
+        type = "sram";
         permissions = { read: true, write: true, execute: false };
-      } else if (name.includes('.rodata') || name.includes('FLASH')) {
-        type = 'flash';
+      } else if (name.includes(".rodata") || name.includes("FLASH")) {
+        type = "flash";
         permissions = { read: true, write: false, execute: false };
       } else {
-        type = 'reserved';
+        type = "reserved";
         permissions = { read: true, write: false, execute: false };
       }
 
@@ -234,7 +273,7 @@ export function createCpuFromBinary(binaryInfo: BinaryInfo, cpuName: string): Om
         end,
         size,
         permissions,
-        description: `Binary section: ${name}`
+        description: `Binary section: ${name}`,
       });
     }
   }
@@ -242,10 +281,10 @@ export function createCpuFromBinary(binaryInfo: BinaryInfo, cpuName: string): Om
   return {
     name: cpuName,
     family: binaryInfo.architecture,
-    vendor: 'Custom',
+    vendor: "Custom",
     architecture: binaryInfo.architecture,
     flashSize: binaryInfo.metadata.fileSize || 0,
     ramSize: 0, // RAM size not available in BinaryInfo
-    memoryRegions
+    memoryRegions,
   };
 }

@@ -5,7 +5,12 @@
  * This class wraps the browser's native SerialPort for testability.
  */
 
-import { ISerialPort, ISerialPortProvider, SerialPortInfo, SerialConfig } from './ISerialPort';
+import {
+  ISerialPort,
+  ISerialPortProvider,
+  SerialPortInfo,
+  SerialConfig,
+} from "./ISerialPort";
 
 /**
  * Wrapper for browser's SerialPort
@@ -29,7 +34,7 @@ export class WebSerialPort implements ISerialPort {
 
   async connect(config: SerialConfig): Promise<void> {
     if (this.connected) {
-      throw new Error('Port is already connected');
+      throw new Error("Port is already connected");
     }
 
     try {
@@ -37,12 +42,12 @@ export class WebSerialPort implements ISerialPort {
         baudRate: config.baudRate,
         dataBits: config.dataBits || 8,
         stopBits: config.stopBits || 1,
-        parity: config.parity || 'none',
-        flowControl: config.flowControl || 'none'
+        parity: config.parity || "none",
+        flowControl: config.flowControl || "none",
       });
 
       if (!this.port.readable || !this.port.writable) {
-        throw new Error('Port is not readable/writable');
+        throw new Error("Port is not readable/writable");
       }
 
       this.reader = this.port.readable.getReader();
@@ -92,7 +97,7 @@ export class WebSerialPort implements ISerialPort {
 
   async write(data: Uint8Array): Promise<void> {
     if (!this.connected || !this.writer) {
-      throw new Error('Port is not connected');
+      throw new Error("Port is not connected");
     }
 
     try {
@@ -105,7 +110,7 @@ export class WebSerialPort implements ISerialPort {
 
   async read(): Promise<Uint8Array | null> {
     if (!this.connected || !this.reader) {
-      throw new Error('Port is not connected');
+      throw new Error("Port is not connected");
     }
 
     try {
@@ -122,7 +127,7 @@ export class WebSerialPort implements ISerialPort {
     const info = this.port.getInfo();
     return {
       vendorId: info.usbVendorId,
-      productId: info.usbProductId
+      productId: info.usbProductId,
     };
   }
 
@@ -162,7 +167,7 @@ export class WebSerialPort implements ISerialPort {
       try {
         handler(data);
       } catch (error) {
-        console.error('Data handler error:', error);
+        console.error("Data handler error:", error);
       }
     }
   }
@@ -172,7 +177,7 @@ export class WebSerialPort implements ISerialPort {
       try {
         handler(error);
       } catch (err) {
-        console.error('Error handler error:', err);
+        console.error("Error handler error:", err);
       }
     }
   }
@@ -183,19 +188,23 @@ export class WebSerialPort implements ISerialPort {
  */
 export class WebSerialProvider implements ISerialPortProvider {
   isSupported(): boolean {
-    return 'serial' in navigator;
+    return "serial" in navigator;
   }
 
-  async requestPort(filters?: Array<{ usbVendorId?: number; usbProductId?: number }>): Promise<ISerialPort | null> {
+  async requestPort(
+    filters?: Array<{ usbVendorId?: number; usbProductId?: number }>,
+  ): Promise<ISerialPort | null> {
     if (!this.isSupported()) {
-      throw new Error('Web Serial API is not supported in this browser');
+      throw new Error("Web Serial API is not supported in this browser");
     }
 
     try {
-      const port = await navigator.serial.requestPort({ filters: filters || [] });
+      const port = await navigator.serial.requestPort({
+        filters: filters || [],
+      });
       return new WebSerialPort(port);
     } catch (error) {
-      if ((error as Error).name === 'NotFoundError') {
+      if ((error as Error).name === "NotFoundError") {
         // User cancelled
         return null;
       }
@@ -209,7 +218,7 @@ export class WebSerialProvider implements ISerialPortProvider {
     }
 
     const ports = await navigator.serial.getPorts();
-    return ports.map(port => new WebSerialPort(port));
+    return ports.map((port) => new WebSerialPort(port));
   }
 
   async findPort(info: SerialPortInfo): Promise<ISerialPort | null> {
@@ -217,8 +226,10 @@ export class WebSerialProvider implements ISerialPortProvider {
 
     for (const port of ports) {
       const portInfo = port.getInfo();
-      if (portInfo.vendorId === info.vendorId &&
-          portInfo.productId === info.productId) {
+      if (
+        portInfo.vendorId === info.vendorId &&
+        portInfo.productId === info.productId
+      ) {
         return port;
       }
     }

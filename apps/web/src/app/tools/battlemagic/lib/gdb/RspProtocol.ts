@@ -18,43 +18,43 @@
  * - } = escape character (XOR next char with 0x20)
  */
 
-import type { GdbPacket, GdbResponse } from './types';
+import type { GdbPacket, GdbResponse } from "./types";
 
 export class RspProtocol {
   /**
    * ACK character sent by GDB to acknowledge packet receipt
    */
-  static readonly ACK = '+';
+  static readonly ACK = "+";
 
   /**
    * NAK character sent by GDB to request retransmission
    */
-  static readonly NAK = '-';
+  static readonly NAK = "-";
 
   /**
    * Ctrl+C interrupt character
    */
-  static readonly INTERRUPT = '\x03';
+  static readonly INTERRUPT = "\x03";
 
   /**
    * Packet start delimiter
    */
-  static readonly START = '$';
+  static readonly START = "$";
 
   /**
    * Checksum delimiter
    */
-  static readonly CHECKSUM_DELIM = '#';
+  static readonly CHECKSUM_DELIM = "#";
 
   /**
    * Escape character for binary data
    */
-  static readonly ESCAPE = '}';
+  static readonly ESCAPE = "}";
 
   /**
    * Run-length encoding marker
    */
-  static readonly RLE_MARKER = '*';
+  static readonly RLE_MARKER = "*";
 
   /**
    * XOR value for escaped characters
@@ -75,7 +75,7 @@ export class RspProtocol {
     for (let i = 0; i < data.length; i++) {
       sum += data.charCodeAt(i);
     }
-    const checksum = (sum % 256).toString(16).padStart(2, '0');
+    const checksum = (sum % 256).toString(16).padStart(2, "0");
     return checksum;
   }
 
@@ -115,7 +115,7 @@ export class RspProtocol {
   static decodePacket(packet: string): GdbPacket | null {
     // Handle ACK/NAK
     if (packet === this.ACK || packet === this.NAK) {
-      return { data: packet, checksum: '' };
+      return { data: packet, checksum: "" };
     }
 
     // Must start with $
@@ -150,41 +150,44 @@ export class RspProtocol {
   static parseResponse(packet: string): GdbResponse {
     // ACK/NAK
     if (packet === this.ACK) {
-      return { type: 'ack' };
+      return { type: "ack" };
     }
     if (packet === this.NAK) {
-      return { type: 'nak' };
+      return { type: "nak" };
     }
 
     // Empty packet
-    if (packet === '') {
-      return { type: 'empty' };
+    if (packet === "") {
+      return { type: "empty" };
     }
 
     // OK response
-    if (packet === 'OK') {
-      return { type: 'ok' };
+    if (packet === "OK") {
+      return { type: "ok" };
     }
 
     // Error response: Enn (where nn is exactly 2 hex digits)
     // Important: Memory data can start with 'E' (e.g., E8120020...), so check exact format
-    if (packet.startsWith('E') && packet.length >= 3) {
+    if (packet.startsWith("E") && packet.length >= 3) {
       const errorCode = packet.substring(1, 3);
       // Check if it's a valid 2-digit hex error code followed by nothing or non-hex
-      if (/^[0-9A-Fa-f]{2}$/.test(errorCode) && (packet.length === 3 || !/^[0-9A-Fa-f]/.test(packet[3]))) {
-        return { type: 'error', code: errorCode };
+      if (
+        /^[0-9A-Fa-f]{2}$/.test(errorCode) &&
+        (packet.length === 3 || !/^[0-9A-Fa-f]/.test(packet[3]))
+      ) {
+        return { type: "error", code: errorCode };
       }
     }
 
     // Signal/stop reply: Snn or Tnn...
-    if (packet.startsWith('S') || packet.startsWith('T')) {
+    if (packet.startsWith("S") || packet.startsWith("T")) {
       const signalHex = packet.substring(1, 3);
       const signal = parseInt(signalHex, 16);
-      return { type: 'signal', signal };
+      return { type: "signal", signal };
     }
 
     // Data response
-    return { type: 'data', data: packet };
+    return { type: "data", data: packet };
   }
 
   /**
@@ -197,8 +200,8 @@ export class RspProtocol {
    * @returns Escaped data string
    */
   static escapeBinaryData(data: string): string {
-    let escaped = '';
-    const specialChars = new Set(['$', '#', '}', '*']);
+    let escaped = "";
+    const specialChars = new Set(["$", "#", "}", "*"]);
 
     for (let i = 0; i < data.length; i++) {
       const char = data[i];
@@ -221,7 +224,7 @@ export class RspProtocol {
    * @returns Unescaped data
    */
   static unescapeBinaryData(data: string): string {
-    let unescaped = '';
+    let unescaped = "";
     let i = 0;
 
     while (i < data.length) {
@@ -263,8 +266,8 @@ export class RspProtocol {
    */
   static bytesToHex(bytes: Uint8Array): string {
     return Array.from(bytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   /**
@@ -314,7 +317,10 @@ export class RspProtocol {
    * @param buffer - Data buffer
    * @returns Array of complete packets and remaining buffer
    */
-  static extractPackets(buffer: string): { packets: string[]; remaining: string } {
+  static extractPackets(buffer: string): {
+    packets: string[];
+    remaining: string;
+  } {
     const packets: string[] = [];
     let remaining = buffer;
     let i = 0;
@@ -384,16 +390,19 @@ export class RspProtocol {
    * @param data - Packet data starting with T
    * @returns Parsed stop information
    */
-  static parseStopReply(data: string): { signal: number; info: Record<string, string> } {
+  static parseStopReply(data: string): {
+    signal: number;
+    info: Record<string, string>;
+  } {
     const signal = parseInt(data.substring(1, 3), 16);
     const info: Record<string, string> = {};
 
     // Parse key:value pairs
     const remainder = data.substring(3);
-    const pairs = remainder.split(';').filter(p => p.length > 0);
+    const pairs = remainder.split(";").filter((p) => p.length > 0);
 
     for (const pair of pairs) {
-      const [key, value] = pair.split(':');
+      const [key, value] = pair.split(":");
       if (key && value) {
         info[key] = value;
       }

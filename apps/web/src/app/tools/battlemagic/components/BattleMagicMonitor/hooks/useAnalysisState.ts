@@ -4,8 +4,8 @@
  * Manages firmware analysis prompts, progress, and auto-start state
  */
 
-import { useState, useRef } from 'react';
-import { ArchitectureInfo } from '../../../lib/wasmAnalyzer';
+import { useState, useRef } from "react";
+import { ArchitectureInfo } from "../../../lib/wasmAnalyzer";
 
 export interface AnalysisProgress {
   stage: string;
@@ -34,11 +34,16 @@ export interface AnalysisState {
 
 export function useAnalysisState(): AnalysisState {
   const [showAnalysisPrompt, setShowAnalysisPrompt] = useState(false);
-  const [detectedArchInfo, setDetectedArchInfo] = useState<ArchitectureInfo | null>(null);
+  const [detectedArchInfo, setDetectedArchInfo] =
+    useState<ArchitectureInfo | null>(null);
   const [shouldAutoStartAnalysis, setShouldAutoStartAnalysis] = useState(false);
-  const [existingAnalysisDetected, setExistingAnalysisDetected] = useState(false);
+  const [existingAnalysisDetected, setExistingAnalysisDetected] =
+    useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState<AnalysisProgress>({ stage: '', progress: 0 });
+  const [loadingProgress, setLoadingProgress] = useState<AnalysisProgress>({
+    stage: "",
+    progress: 0,
+  });
 
   const hasAutoLoadedRef = useRef(false);
 

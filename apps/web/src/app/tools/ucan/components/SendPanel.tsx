@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Send Panel Component
@@ -6,8 +6,13 @@
  * UI for transmitting CAN messages to the bus
  */
 
-import React, { useState } from 'react';
-import { parseHexString, isValidCANId, isValidDataLength, formatSendCommand } from '../core/canProtocol';
+import React, { useState } from "react";
+import {
+  parseHexString,
+  isValidCANId,
+  isValidDataLength,
+  formatSendCommand,
+} from "../core/canProtocol";
 
 interface SendPanelProps {
   isConnected: boolean;
@@ -15,19 +20,19 @@ interface SendPanelProps {
 }
 
 export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
-  const [canId, setCanId] = useState('');
-  const [dataInput, setDataInput] = useState('');
+  const [canId, setCanId] = useState("");
+  const [dataInput, setDataInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [lastSent, setLastSent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Quick data presets
   const presets = [
-    { label: 'Empty', data: '' },
-    { label: 'All Zeros', data: '00 00 00 00 00 00 00 00' },
-    { label: 'All FFs', data: 'FF FF FF FF FF FF FF FF' },
-    { label: 'Counter', data: '00 01 02 03 04 05 06 07' },
-    { label: 'Deadbeef', data: 'DE AD BE EF' }
+    { label: "Empty", data: "" },
+    { label: "All Zeros", data: "00 00 00 00 00 00 00 00" },
+    { label: "All FFs", data: "FF FF FF FF FF FF FF FF" },
+    { label: "Counter", data: "00 01 02 03 04 05 06 07" },
+    { label: "Deadbeef", data: "DE AD BE EF" },
   ];
 
   const handleSend = async () => {
@@ -35,28 +40,28 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
 
     // Validate CAN ID
     if (!canId.trim()) {
-      setError('CAN ID is required');
+      setError("CAN ID is required");
       return;
     }
 
     let parsedId: number;
     try {
       const idStr = canId.trim();
-      parsedId = idStr.startsWith('0x')
+      parsedId = idStr.startsWith("0x")
         ? parseInt(idStr.substring(2), 16)
         : parseInt(idStr, 16);
 
       if (isNaN(parsedId)) {
-        setError('Invalid CAN ID format');
+        setError("Invalid CAN ID format");
         return;
       }
 
       if (!isValidCANId(parsedId)) {
-        setError('CAN ID out of range (max 0x1FFFFFFF)');
+        setError("CAN ID out of range (max 0x1FFFFFFF)");
         return;
       }
     } catch {
-      setError('Invalid CAN ID');
+      setError("Invalid CAN ID");
       return;
     }
 
@@ -65,18 +70,18 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
     try {
       const parsed = parseHexString(dataInput.trim());
       if (parsed === null) {
-        setError('Invalid data format (use hex: 01 02 03 or 010203)');
+        setError("Invalid data format (use hex: 01 02 03 or 010203)");
         return;
       }
       data = parsed;
     } catch {
-      setError('Invalid data bytes');
+      setError("Invalid data bytes");
       return;
     }
 
     // Validate data length
     if (!isValidDataLength(data.length)) {
-      setError('Data length must be 0-8 bytes');
+      setError("Data length must be 0-8 bytes");
       return;
     }
 
@@ -88,7 +93,7 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
       setLastSent(command);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Send failed');
+      setError(err instanceof Error ? err.message : "Send failed");
     } finally {
       setIsSending(false);
     }
@@ -99,8 +104,8 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
   };
 
   const handleClear = () => {
-    setCanId('');
-    setDataInput('');
+    setCanId("");
+    setDataInput("");
     setError(null);
   };
 
@@ -151,7 +156,9 @@ export default function SendPanel({ isConnected, onSend }: SendPanelProps) {
 
       {/* Quick Presets */}
       <div>
-        <label className="block text-xs text-gray-400 mb-2">Quick Presets</label>
+        <label className="block text-xs text-gray-400 mb-2">
+          Quick Presets
+        </label>
         <div className="flex flex-wrap gap-1">
           {presets.map((preset) => (
             <button

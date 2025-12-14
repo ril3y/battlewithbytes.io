@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -9,32 +9,36 @@ import ReactFlow, {
   Controls,
   BackgroundVariant,
   ConnectionMode,
-} from 'reactflow';
+} from "reactflow";
 // Import ReactFlow styles first, then our custom styles will override them
-import 'reactflow/dist/style.css';
+import "reactflow/dist/style.css";
 
-import { useWireMapperStore } from '../store/useWireMapperStore';
-import { ContextMenu } from './ContextMenu';
-import '../wiremapper.css';
-import { Connector as ConnectorType, ContextMenuOption, Mapping } from '../types';
-import ConnectorNode from './ConnectorNode';
+import { useWireMapperStore } from "../store/useWireMapperStore";
+import { ContextMenu } from "./ContextMenu";
+import "../wiremapper.css";
+import {
+  Connector as ConnectorType,
+  ContextMenuOption,
+  Mapping,
+} from "../types";
+import ConnectorNode from "./ConnectorNode";
 
 // Define the node types for React Flow
 const nodeTypes = { connectorNode: ConnectorNode };
 
 const ConnectorCanvas: React.FC = () => {
-  const { 
-    connectors, 
-    mappings, 
-    settings, 
+  const {
+    connectors,
+    mappings,
+    settings,
     focusedWireId,
     // connectingNodeId, // Removed: Not from store
     // connectionPreview, // Removed: Not from store
     removeConnector, // For context menu
     duplicateConnector, // For context menu
-    addMapping, 
-    updateConnectorPosition, 
-    setSelectedConnectorId, 
+    addMapping,
+    updateConnectorPosition,
+    setSelectedConnectorId,
     setSelectedPin,
     setFocusedWireId,
   } = useWireMapperStore();
@@ -47,16 +51,23 @@ const ConnectorCanvas: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   // State for context menu
-  const [contextMenuState, setContextMenuState] = useState<{ x: number; y: number; options: ContextMenuOption[]; nodeId: string } | null>(null);
+  const [contextMenuState, setContextMenuState] = useState<{
+    x: number;
+    y: number;
+    options: ContextMenuOption[];
+    nodeId: string;
+  } | null>(null);
 
   // Effect to transform store connectors into React Flow nodes
   useEffect(() => {
-    const rfNodes: ReactFlowNode<ConnectorType>[] = connectors.map((connector) => ({
-      id: connector.id,
-      type: 'connectorNode',
-      position: { x: connector.x || 0, y: connector.y || 0 },
-      data: connector,
-    }));
+    const rfNodes: ReactFlowNode<ConnectorType>[] = connectors.map(
+      (connector) => ({
+        id: connector.id,
+        type: "connectorNode",
+        position: { x: connector.x || 0, y: connector.y || 0 },
+        data: connector,
+      }),
+    );
     setNodes(rfNodes);
   }, [connectors, setNodes]);
 
@@ -70,25 +81,36 @@ const ConnectorCanvas: React.FC = () => {
       targetHandle: `${mapping.target.pinPos}-handle`,
       animated: settings.simplifyConnections ? false : true,
       style: mapping.color ? { stroke: mapping.color } : undefined,
-      className: settings.simplifyConnections ? '' : 'animated',
+      className: settings.simplifyConnections ? "" : "animated",
       zIndex: 10,
     }));
-    console.log('[Canvas] Mappings changed, attempting to set edges:', rfEdges);
+    console.log("[Canvas] Mappings changed, attempting to set edges:", rfEdges);
     setEdges(rfEdges);
   }, [mappings, settings.simplifyConnections, setEdges]);
 
   // Callback to check if a connection is valid
   const isValidConnectionCheck = useCallback((connection: Connection) => {
-    if (!connection.source || !connection.sourceHandle || !connection.target || !connection.targetHandle) {
-      console.warn('[Canvas] isValidConnection: Incomplete connection data.', connection);
+    if (
+      !connection.source ||
+      !connection.sourceHandle ||
+      !connection.target ||
+      !connection.targetHandle
+    ) {
+      console.warn(
+        "[Canvas] isValidConnection: Incomplete connection data.",
+        connection,
+      );
       return false;
     }
 
-    const sourcePin = parseInt(connection.sourceHandle.split('-')[0], 10);
-    const targetPin = parseInt(connection.targetHandle.split('-')[0], 10);
+    const sourcePin = parseInt(connection.sourceHandle.split("-")[0], 10);
+    const targetPin = parseInt(connection.targetHandle.split("-")[0], 10);
 
     if (connection.source === connection.target && sourcePin === targetPin) {
-      console.log('[Canvas] isValidConnection: Self-connection attempt blocked for', connection);
+      console.log(
+        "[Canvas] isValidConnection: Self-connection attempt blocked for",
+        connection,
+      );
       return false;
     }
 
@@ -98,12 +120,21 @@ const ConnectorCanvas: React.FC = () => {
   // Callback when a new connection is made in React Flow
   const onConnect = useCallback(
     (connection: Connection) => {
-      console.log('[Canvas] onConnect triggered:', connection);
-      const sourcePin = connection.sourceHandle ? parseInt(connection.sourceHandle.split('-')[0], 10) : null;
-      const targetPin = connection.targetHandle ? parseInt(connection.targetHandle.split('-')[0], 10) : null;
+      console.log("[Canvas] onConnect triggered:", connection);
+      const sourcePin = connection.sourceHandle
+        ? parseInt(connection.sourceHandle.split("-")[0], 10)
+        : null;
+      const targetPin = connection.targetHandle
+        ? parseInt(connection.targetHandle.split("-")[0], 10)
+        : null;
 
-      if (connection.source && connection.target && sourcePin !== null && targetPin !== null) {
-        const newMapping: Omit<Mapping, 'id' | 'wireId'> = {
+      if (
+        connection.source &&
+        connection.target &&
+        sourcePin !== null &&
+        targetPin !== null
+      ) {
+        const newMapping: Omit<Mapping, "id" | "wireId"> = {
           source: {
             connectorId: connection.source,
             pinPos: sourcePin,
@@ -113,13 +144,19 @@ const ConnectorCanvas: React.FC = () => {
             pinPos: targetPin,
           },
         };
-        console.log('[Canvas] Calling addMapping with structured object:', newMapping);
+        console.log(
+          "[Canvas] Calling addMapping with structured object:",
+          newMapping,
+        );
         addMapping(newMapping);
       } else {
-        console.error('[Canvas] onConnect failed: Invalid connection data received after isValidConnection check.', connection);
+        console.error(
+          "[Canvas] onConnect failed: Invalid connection data received after isValidConnection check.",
+          connection,
+        );
       }
     },
-    [addMapping]
+    [addMapping],
   );
 
   // Callback when a node stops dragging
@@ -127,45 +164,50 @@ const ConnectorCanvas: React.FC = () => {
     (_event: React.MouseEvent, node: ReactFlowNode<ConnectorType>) => {
       updateConnectorPosition(node.id, node.position.x, node.position.y);
     },
-    [updateConnectorPosition]
+    [updateConnectorPosition],
   );
 
   // Callback when a node is clicked
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode<ConnectorType>) => {
-      console.log('!!!!!! [Canvas] Node clicked EVENT FIRED:', node.id);
+      console.log("!!!!!! [Canvas] Node clicked EVENT FIRED:", node.id);
       setSelectedConnectorId(node.id);
       setSelectedPin(null, null);
     },
-    [setSelectedConnectorId, setSelectedPin]
+    [setSelectedConnectorId, setSelectedPin],
   );
 
-  const handlePaneClick = useCallback((event: React.MouseEvent) => {
-    console.log('!!!!!! [Canvas] PANE CLICKED EVENT FIRED', event);
-    // Clear selections when clicking on the background
-    setSelectedConnectorId(null);
-    setSelectedPin(null, null);
-    setFocusedWireId(null); // Clear focused wire to show all wires
-    
-    // Also clear copied net when clicking on empty area to exit paste mode
-    const state = useWireMapperStore.getState();
-    if (state.copiedNet) {
-      state.setCopiedNet(null);
-    }
-    
-    closeContextMenu(); // Close context menu if open
-  }, [setSelectedConnectorId, setSelectedPin, setFocusedWireId]);
+  const handlePaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      console.log("!!!!!! [Canvas] PANE CLICKED EVENT FIRED", event);
+      // Clear selections when clicking on the background
+      setSelectedConnectorId(null);
+      setSelectedPin(null, null);
+      setFocusedWireId(null); // Clear focused wire to show all wires
+
+      // Also clear copied net when clicking on empty area to exit paste mode
+      const state = useWireMapperStore.getState();
+      if (state.copiedNet) {
+        state.setCopiedNet(null);
+      }
+
+      closeContextMenu(); // Close context menu if open
+    },
+    [setSelectedConnectorId, setSelectedPin, setFocusedWireId],
+  );
 
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: ReactFlowNode<ConnectorType>) => {
       event.preventDefault();
       event.stopPropagation();
-      
+
       // Since we're using createPortal to render to document.body, use client coordinates
       const menuX = event.clientX;
       const menuY = event.clientY;
 
-      console.log(`[Canvas] Node context menu for: ${node.id} at (${menuX}, ${menuY})`);
+      console.log(
+        `[Canvas] Node context menu for: ${node.id} at (${menuX}, ${menuY})`,
+      );
 
       const options: ContextMenuOption[] = [
         {
@@ -193,7 +235,7 @@ const ConnectorCanvas: React.FC = () => {
         options,
       });
     },
-    [duplicateConnector, removeConnector]
+    [duplicateConnector, removeConnector],
   );
 
   const closeContextMenu = () => {
@@ -203,22 +245,25 @@ const ConnectorCanvas: React.FC = () => {
   // Filter edges based on focused wire ID
   const visibleEdges = React.useMemo(() => {
     if (!settings.showWires) return []; // Don't show any wires if showWires is false
-    
+
     if (focusedWireId) {
       // If a wire is focused, only show edges with that wireId
-      const filtered = edges.filter(edge => edge.data?.wireId === focusedWireId);
-      
+      const filtered = edges.filter(
+        (edge) => edge.data?.wireId === focusedWireId,
+      );
+
       // If no edges match the wireId, try using the mapping ID as a fallback
       if (filtered.length === 0) {
-        return edges.filter(edge => 
-          edge.id.includes(focusedWireId) || 
-          (edge.data && edge.data.id === focusedWireId)
+        return edges.filter(
+          (edge) =>
+            edge.id.includes(focusedWireId) ||
+            (edge.data && edge.data.id === focusedWireId),
         );
       }
-      
+
       return filtered;
     }
-    
+
     // Otherwise show all edges
     return edges;
   }, [edges, focusedWireId, settings.showWires]);
@@ -226,7 +271,7 @@ const ConnectorCanvas: React.FC = () => {
   // Add CSS to make edges non-interactive and handle global right-click events
   useEffect(() => {
     // Add a style element to the document head
-    const styleEl = document.createElement('style');
+    const styleEl = document.createElement("style");
     styleEl.textContent = `
       .react-flow__edge {
         pointer-events: none !important;
@@ -239,10 +284,10 @@ const ConnectorCanvas: React.FC = () => {
       }
     `;
     document.head.appendChild(styleEl);
-    
+
     // We've removed the global right-click handler since it was causing duplicate context menus
     // The original context menu in ConnectorNode.tsx will handle pin right-clicks
-    
+
     // Cleanup function to remove the style element when component unmounts
     return () => {
       document.head.removeChild(styleEl);
@@ -250,7 +295,7 @@ const ConnectorCanvas: React.FC = () => {
   }, []);
 
   return (
-    <div 
+    <div
       ref={flowContainerRef} // Attach ref here
       className="relative w-full h-full bg-gray-800 overflow-hidden cursor-default rounded-md wire-mapper-flow-container"
       onContextMenuCapture={(event) => event.preventDefault()} // Use capturing phase on the container
@@ -270,7 +315,7 @@ const ConnectorCanvas: React.FC = () => {
         elementsSelectable={true} // Explicitly set
         connectionMode={ConnectionMode.Loose}
         connectionLineStyle={{
-          stroke: 'var(--accent-primary)',
+          stroke: "var(--accent-primary)",
           strokeWidth: 2,
           opacity: 0.7,
         }}
@@ -282,17 +327,13 @@ const ConnectorCanvas: React.FC = () => {
         proOptions={{ hideAttribution: true }}
         className="bg-gray-800 wire-mapper-flow"
       >
-        <Controls
-          position="bottom-left"
-          showZoom={true}
-          showFitView={true}
-        />
-        
+        <Controls position="bottom-left" showZoom={true} showFitView={true} />
+
         {/* Focused Wire Indicator */}
         {focusedWireId && (
           <div className="absolute top-2 right-2 bg-gray-900 text-white px-3 py-1 rounded-md flex items-center gap-2 text-sm">
             <span>Showing only selected connection</span>
-            <button 
+            <button
               onClick={() => setFocusedWireId(null)}
               className="text-green-400 hover:text-green-300 text-xs bg-gray-800 px-2 py-1 rounded"
             >
@@ -300,11 +341,8 @@ const ConnectorCanvas: React.FC = () => {
             </button>
           </div>
         )}
-        
-        <Controls
-          showInteractive={false}
-          className="minimal-controls"
-        />
+
+        <Controls showInteractive={false} className="minimal-controls" />
         {settings.showGrid && (
           <Background
             variant={BackgroundVariant.Dots}

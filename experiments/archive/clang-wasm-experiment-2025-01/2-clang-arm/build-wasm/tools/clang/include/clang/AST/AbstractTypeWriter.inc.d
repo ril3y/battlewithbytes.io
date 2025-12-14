@@ -1,1 +1,0 @@
-tools/clang/include/clang/AST/AbstractTypeWriter.inc: /build/llvm-project/clang/include/clang/AST/PropertiesBase.td /build/llvm-project/clang/include/clang/Basic/ASTNode.td /build/llvm-project/clang/include/clang/Basic/TypeNodes.td

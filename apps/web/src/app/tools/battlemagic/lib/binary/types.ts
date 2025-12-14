@@ -8,35 +8,50 @@
 /**
  * Supported processor architectures
  */
-export type Architecture = 'ARM' | 'MIPS' | 'RISCV' | 'X86' | 'AVR' | 'PIC' | 'UNKNOWN';
+export type Architecture =
+  | "ARM"
+  | "MIPS"
+  | "RISCV"
+  | "X86"
+  | "AVR"
+  | "PIC"
+  | "UNKNOWN";
 
 /**
  * Binary file formats
  */
-export type BinaryFormat = 'RAW' | 'ELF' | 'AXF' | 'COFF' | 'PE' | 'MACHO' | 'SREC' | 'HEX';
+export type BinaryFormat =
+  | "RAW"
+  | "ELF"
+  | "AXF"
+  | "COFF"
+  | "PE"
+  | "MACHO"
+  | "SREC"
+  | "HEX";
 
 /**
  * Endianness configuration
  */
-export type Endianness = 'little' | 'big';
+export type Endianness = "little" | "big";
 
 /**
  * Vector/interrupt types for embedded systems
  */
 export type VectorType =
-  | 'reset'           // Reset vector
-  | 'nmi'             // Non-maskable interrupt
-  | 'hardfault'       // ARM HardFault
-  | 'memfault'        // ARM Memory Management Fault
-  | 'busfault'        // ARM Bus Fault
-  | 'usagefault'      // ARM Usage Fault
-  | 'svc'             // Supervisor Call
-  | 'pendsv'          // ARM PendSV
-  | 'systick'         // System Tick Timer
-  | 'irq'             // External Interrupt
-  | 'exception'       // Generic exception
-  | 'trap'            // RISC-V trap
-  | 'syscall';        // System call
+  | "reset" // Reset vector
+  | "nmi" // Non-maskable interrupt
+  | "hardfault" // ARM HardFault
+  | "memfault" // ARM Memory Management Fault
+  | "busfault" // ARM Bus Fault
+  | "usagefault" // ARM Usage Fault
+  | "svc" // Supervisor Call
+  | "pendsv" // ARM PendSV
+  | "systick" // System Tick Timer
+  | "irq" // External Interrupt
+  | "exception" // Generic exception
+  | "trap" // RISC-V trap
+  | "syscall"; // System call
 
 /**
  * Information about a vector/interrupt handler
@@ -81,7 +96,7 @@ export interface SectionInfo {
   size: number;
 
   /** Section type */
-  type: 'code' | 'data' | 'bss' | 'rodata' | 'stack' | 'heap' | 'unknown';
+  type: "code" | "data" | "bss" | "rodata" | "stack" | "heap" | "unknown";
 
   /** Section flags/attributes */
   flags: SectionFlag[];
@@ -103,13 +118,13 @@ export interface SectionInfo {
  * Section flags/attributes
  */
 export type SectionFlag =
-  | 'readable'
-  | 'writable'
-  | 'executable'
-  | 'allocated'
-  | 'initialized'
-  | 'debug'
-  | 'compressed';
+  | "readable"
+  | "writable"
+  | "executable"
+  | "allocated"
+  | "initialized"
+  | "debug"
+  | "compressed";
 
 /**
  * Symbol information
@@ -125,10 +140,10 @@ export interface SymbolInfo {
   size?: number;
 
   /** Symbol type */
-  type: 'function' | 'variable' | 'object' | 'label' | 'unknown';
+  type: "function" | "variable" | "object" | "label" | "unknown";
 
   /** Symbol visibility */
-  visibility?: 'local' | 'global' | 'weak' | 'hidden';
+  visibility?: "local" | "global" | "weak" | "hidden";
 
   /** Section the symbol belongs to */
   section?: string;
@@ -151,7 +166,7 @@ export interface ArmMetadata {
   thumbMode: boolean;
 
   /** Floating point support */
-  fpuSupport?: 'none' | 'single' | 'double';
+  fpuSupport?: "none" | "single" | "double";
 
   /** Vector table offset register value */
   vtorOffset?: number;
@@ -177,7 +192,7 @@ export interface MipsMetadata {
   instructionSet?: string;
 
   /** ABI type */
-  abi?: 'o32' | 'n32' | 'n64' | 'eabi';
+  abi?: "o32" | "n32" | "n64" | "eabi";
 
   /** Coprocessor availability */
   coprocessors?: number[];
@@ -194,13 +209,13 @@ export interface RiscVMetadata {
   archString: string;
 
   /** Base ISA (RV32I, RV64I, etc.) */
-  baseIsa: 'RV32I' | 'RV32E' | 'RV64I' | 'RV128I';
+  baseIsa: "RV32I" | "RV32E" | "RV64I" | "RV128I";
 
   /** Extensions present */
   extensions: string[];
 
   /** ABI type */
-  abi?: 'ilp32' | 'ilp32f' | 'ilp32d' | 'lp64' | 'lp64f' | 'lp64d';
+  abi?: "ilp32" | "ilp32f" | "ilp32d" | "lp64" | "lp64f" | "lp64d";
 
   /** Machine mode trap vector */
   mtvec?: number;
@@ -213,10 +228,10 @@ export interface RiscVMetadata {
  * Architecture-specific metadata union
  */
 export type ArchitectureMetadata =
-  | { arch: 'ARM'; specific: ArmMetadata }
-  | { arch: 'MIPS'; specific: MipsMetadata }
-  | { arch: 'RISCV'; specific: RiscVMetadata }
-  | { arch: 'UNKNOWN'; specific?: Record<string, unknown> };
+  | { arch: "ARM"; specific: ArmMetadata }
+  | { arch: "MIPS"; specific: MipsMetadata }
+  | { arch: "RISCV"; specific: RiscVMetadata }
+  | { arch: "UNKNOWN"; specific?: Record<string, unknown> };
 
 /**
  * Complete binary file metadata
@@ -251,7 +266,7 @@ export interface BinaryMetadata {
 
   /** File checksum/hash */
   checksum?: {
-    type: 'crc32' | 'md5' | 'sha1' | 'sha256';
+    type: "crc32" | "md5" | "sha1" | "sha256";
     value: string;
   };
 
@@ -320,10 +335,10 @@ export interface MemoryRegion {
   size: number;
 
   /** Region type */
-  type: 'flash' | 'ram' | 'eeprom' | 'peripheral' | 'reserved';
+  type: "flash" | "ram" | "eeprom" | "peripheral" | "reserved";
 
   /** Access permissions */
-  permissions: ('read' | 'write' | 'execute')[];
+  permissions: ("read" | "write" | "execute")[];
 
   /** Whether region is cacheable */
   cacheable?: boolean;
@@ -448,22 +463,22 @@ export enum CortexMException {
  * Common ARM Cortex-M vector names
  */
 export const CORTEX_M_VECTORS: readonly string[] = [
-  'Initial_SP',           // 0
-  'Reset_Handler',        // 1
-  'NMI_Handler',          // 2
-  'HardFault_Handler',    // 3
-  'MemManage_Handler',    // 4
-  'BusFault_Handler',     // 5
-  'UsageFault_Handler',   // 6
-  'Reserved_7',           // 7
-  'Reserved_8',           // 8
-  'Reserved_9',           // 9
-  'Reserved_10',          // 10
-  'SVC_Handler',          // 11
-  'DebugMon_Handler',     // 12
-  'Reserved_13',          // 13
-  'PendSV_Handler',       // 14
-  'SysTick_Handler',      // 15
+  "Initial_SP", // 0
+  "Reset_Handler", // 1
+  "NMI_Handler", // 2
+  "HardFault_Handler", // 3
+  "MemManage_Handler", // 4
+  "BusFault_Handler", // 5
+  "UsageFault_Handler", // 6
+  "Reserved_7", // 7
+  "Reserved_8", // 8
+  "Reserved_9", // 9
+  "Reserved_10", // 10
+  "SVC_Handler", // 11
+  "DebugMon_Handler", // 12
+  "Reserved_13", // 13
+  "PendSV_Handler", // 14
+  "SysTick_Handler", // 15
 ] as const;
 
 /**
@@ -490,11 +505,11 @@ export const MemoryAlignment = {
   },
 
   isAligned: (address: number, alignment: number): boolean => {
-    return (address % alignment) === 0;
+    return address % alignment === 0;
   },
 
   getPadding: (address: number, alignment: number): number => {
     const aligned = MemoryAlignment.align(address, alignment);
     return aligned - address;
-  }
+  },
 } as const;

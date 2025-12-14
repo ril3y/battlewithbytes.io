@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Collapsible Panel Component
@@ -6,7 +6,7 @@
  * Reusable panel with expand/collapse functionality
  */
 
-import React, { useState, ReactNode } from 'react';
+import React, { useState, ReactNode } from "react";
 
 interface CollapsiblePanelProps {
   title: string;
@@ -21,7 +21,7 @@ export default function CollapsiblePanel({
   icon,
   children,
   defaultCollapsed = false,
-  headerActions
+  headerActions,
 }: CollapsiblePanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -38,22 +38,16 @@ export default function CollapsiblePanel({
 
         <div className="flex items-center gap-3">
           {!isCollapsed && headerActions && (
-            <div onClick={(e) => e.stopPropagation()}>
-              {headerActions}
-            </div>
+            <div onClick={(e) => e.stopPropagation()}>{headerActions}</div>
           )}
           <div
-            className={`w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-green-400 group-hover:border-l-green-300 transition-all ${isCollapsed ? '-rotate-90' : 'rotate-90'}`}
-            style={{ transformOrigin: 'center' }}
+            className={`w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-green-400 group-hover:border-l-green-300 transition-all ${isCollapsed ? "-rotate-90" : "rotate-90"}`}
+            style={{ transformOrigin: "center" }}
           />
         </div>
       </div>
 
-      {!isCollapsed && (
-        <div className="px-4 pb-4">
-          {children}
-        </div>
-      )}
+      {!isCollapsed && <div className="px-4 pb-4">{children}</div>}
     </div>
   );
 }

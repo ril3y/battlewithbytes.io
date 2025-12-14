@@ -6,7 +6,7 @@
  * Keeps ~2KB in memory (current chunk + 1 above + 1 below).
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export interface MemoryChunk {
   startAddress: number;
@@ -37,36 +37,46 @@ export function useMemoryChunks(maxChunks: number = 5): UseMemoryChunksReturn {
   /**
    * Check if a specific address is already loaded
    */
-  const isAddressLoaded = useCallback((address: number): boolean => {
-    return chunks.some(
-      chunk => address >= chunk.startAddress && address < chunk.endAddress
-    );
-  }, [chunks]);
+  const isAddressLoaded = useCallback(
+    (address: number): boolean => {
+      return chunks.some(
+        (chunk) => address >= chunk.startAddress && address < chunk.endAddress,
+      );
+    },
+    [chunks],
+  );
 
   /**
    * Check if an entire range is already loaded
    */
-  const isRangeLoaded = useCallback((startAddress: number, endAddress: number): boolean => {
-    return chunks.some(
-      chunk => startAddress >= chunk.startAddress && endAddress <= chunk.endAddress
-    );
-  }, [chunks]);
+  const isRangeLoaded = useCallback(
+    (startAddress: number, endAddress: number): boolean => {
+      return chunks.some(
+        (chunk) =>
+          startAddress >= chunk.startAddress && endAddress <= chunk.endAddress,
+      );
+    },
+    [chunks],
+  );
 
   /**
    * Add a new chunk to the loaded set
    * Merges overlapping chunks automatically
    */
   const addChunk = useCallback((startAddress: number, endAddress: number) => {
-    setChunks(prevChunks => {
+    setChunks((prevChunks) => {
       const newChunk: MemoryChunk = {
         startAddress,
         endAddress,
-        loadedAt: Date.now()
+        loadedAt: Date.now(),
       };
 
       // Check for overlaps and merge if necessary
-      const overlappingChunks = prevChunks.filter(chunk =>
-        !(endAddress <= chunk.startAddress || startAddress >= chunk.endAddress)
+      const overlappingChunks = prevChunks.filter(
+        (chunk) =>
+          !(
+            endAddress <= chunk.startAddress || startAddress >= chunk.endAddress
+          ),
       );
 
       if (overlappingChunks.length === 0) {
@@ -75,17 +85,23 @@ export function useMemoryChunks(maxChunks: number = 5): UseMemoryChunksReturn {
       }
 
       // Merge overlapping chunks
-      const mergedStart = Math.min(startAddress, ...overlappingChunks.map(c => c.startAddress));
-      const mergedEnd = Math.max(endAddress, ...overlappingChunks.map(c => c.endAddress));
+      const mergedStart = Math.min(
+        startAddress,
+        ...overlappingChunks.map((c) => c.startAddress),
+      );
+      const mergedEnd = Math.max(
+        endAddress,
+        ...overlappingChunks.map((c) => c.endAddress),
+      );
       const mergedChunk: MemoryChunk = {
         startAddress: mergedStart,
         endAddress: mergedEnd,
-        loadedAt: Date.now()
+        loadedAt: Date.now(),
       };
 
       // Remove overlapping chunks and add merged chunk
-      const nonOverlappingChunks = prevChunks.filter(chunk =>
-        !overlappingChunks.includes(chunk)
+      const nonOverlappingChunks = prevChunks.filter(
+        (chunk) => !overlappingChunks.includes(chunk),
       );
 
       return [...nonOverlappingChunks, mergedChunk];
@@ -96,7 +112,9 @@ export function useMemoryChunks(maxChunks: number = 5): UseMemoryChunksReturn {
    * Remove a specific chunk
    */
   const removeChunk = useCallback((startAddress: number) => {
-    setChunks(prevChunks => prevChunks.filter(chunk => chunk.startAddress !== startAddress));
+    setChunks((prevChunks) =>
+      prevChunks.filter((chunk) => chunk.startAddress !== startAddress),
+    );
   }, []);
 
   /**
@@ -110,34 +128,40 @@ export function useMemoryChunks(maxChunks: number = 5): UseMemoryChunksReturn {
    * Remove chunks that are far from the center address
    * Keeps memory usage under control
    */
-  const pruneDistantChunks = useCallback((centerAddress: number, maxDistance: number) => {
-    setChunks(prevChunks => {
-      // Keep chunks that are within maxDistance of centerAddress
-      const nearbyChunks = prevChunks.filter(chunk => {
-        const chunkCenter = (chunk.startAddress + chunk.endAddress) / 2;
-        const distance = Math.abs(chunkCenter - centerAddress);
-        return distance <= maxDistance;
+  const pruneDistantChunks = useCallback(
+    (centerAddress: number, maxDistance: number) => {
+      setChunks((prevChunks) => {
+        // Keep chunks that are within maxDistance of centerAddress
+        const nearbyChunks = prevChunks.filter((chunk) => {
+          const chunkCenter = (chunk.startAddress + chunk.endAddress) / 2;
+          const distance = Math.abs(chunkCenter - centerAddress);
+          return distance <= maxDistance;
+        });
+
+        // If we have too many chunks, remove oldest ones
+        if (nearbyChunks.length > maxChunks) {
+          return nearbyChunks
+            .sort((a, b) => b.loadedAt - a.loadedAt)
+            .slice(0, maxChunks);
+        }
+
+        return nearbyChunks;
       });
-
-      // If we have too many chunks, remove oldest ones
-      if (nearbyChunks.length > maxChunks) {
-        return nearbyChunks
-          .sort((a, b) => b.loadedAt - a.loadedAt)
-          .slice(0, maxChunks);
-      }
-
-      return nearbyChunks;
-    });
-  }, [maxChunks]);
+    },
+    [maxChunks],
+  );
 
   /**
    * Get the min and max addresses of all loaded chunks
    */
-  const getLoadedRange = useCallback((): { min: number; max: number } | null => {
+  const getLoadedRange = useCallback((): {
+    min: number;
+    max: number;
+  } | null => {
     if (chunks.length === 0) return null;
 
-    const min = Math.min(...chunks.map(c => c.startAddress));
-    const max = Math.max(...chunks.map(c => c.endAddress));
+    const min = Math.min(...chunks.map((c) => c.startAddress));
+    const max = Math.max(...chunks.map((c) => c.endAddress));
 
     return { min, max };
   }, [chunks]);
@@ -150,6 +174,6 @@ export function useMemoryChunks(maxChunks: number = 5): UseMemoryChunksReturn {
     removeChunk,
     clearChunks,
     pruneDistantChunks,
-    getLoadedRange
+    getLoadedRange,
   };
 }

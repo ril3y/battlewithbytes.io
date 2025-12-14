@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useProject, ProjectProvider } from "../lib/project/ProjectContext";
 import type { Project } from "../lib/project/types";
 import { WelcomePage } from "./WelcomePage";
-import { ProjectCreationWizard } from "./ProjectCreationWizard";
+import { BoardSelectionWizard } from "./wizard";
 import { BattleForgeIDE } from "./BattleForgeIDE";
 
 /**
@@ -90,7 +90,7 @@ function BattleForgeAppContent() {
           recentProjects={projects}
         />
         {showWizard && (
-          <ProjectCreationWizard
+          <BoardSelectionWizard
             isOpen={showWizard}
             onClose={() => setShowWizard(false)}
             onProjectCreated={async (project: Project) => {

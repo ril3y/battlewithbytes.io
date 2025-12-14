@@ -5,15 +5,15 @@
  * Handles trap vectors, privilege levels, and RISC-V specific binary formats.
  */
 
-import { BinaryParser } from '../BinaryParser';
+import { BinaryParser } from "../BinaryParser";
 import {
   Architecture,
   ParserCapabilities,
   VectorInfo,
   RiscVMetadata,
   BinaryInfo,
-  ElfMachine
-} from '../types';
+  ElfMachine,
+} from "../types";
 
 /**
  * RISC-V trap causes
@@ -91,23 +91,23 @@ import {
  */
 export class RiscVBinaryParser extends BinaryParser {
   private riscvMetadata: RiscVMetadata = {
-    archString: 'rv32i',
-    baseIsa: 'RV32I',
-    extensions: []
+    archString: "rv32i",
+    baseIsa: "RV32I",
+    extensions: [],
   };
 
   getArchitecture(): Architecture {
-    return 'RISCV';
+    return "RISCV";
   }
 
   getCapabilities(): ParserCapabilities {
     return {
-      formats: ['RAW', 'ELF'],
+      formats: ["RAW", "ELF"],
       canParseSymbols: true,
       canParseDebugInfo: false,
       canDetectEntryPoint: true,
       canParseVectorTable: true,
-      supportsStreaming: false
+      supportsStreaming: false,
     };
   }
 
@@ -133,51 +133,51 @@ export class RiscVBinaryParser extends BinaryParser {
       if (mtvecMode === 0) {
         // Direct mode - all traps jump to BASE
         vectors.push({
-          name: 'Machine_Trap_Vector',
+          name: "Machine_Trap_Vector",
           address: mtvecBase,
           handlerAddress: mtvecBase,
-          type: 'trap',
+          type: "trap",
           index: 0,
           enabled: true,
           metadata: {
-            mode: 'direct',
-            privilegeLevel: 'machine'
-          }
+            mode: "direct",
+            privilegeLevel: "machine",
+          },
         });
       } else if (mtvecMode === 1) {
         // Vectored mode - exceptions go to BASE, interrupts to BASE+4*cause
         vectors.push({
-          name: 'Machine_Exception_Vector',
+          name: "Machine_Exception_Vector",
           address: mtvecBase,
           handlerAddress: mtvecBase,
-          type: 'exception',
+          type: "exception",
           index: 0,
           enabled: true,
           metadata: {
-            mode: 'vectored',
-            privilegeLevel: 'machine'
-          }
+            mode: "vectored",
+            privilegeLevel: "machine",
+          },
         });
 
         // Add interrupt vectors
         const interruptCauses = [
-          { cause: 3, name: 'Machine_Software_Interrupt' },
-          { cause: 7, name: 'Machine_Timer_Interrupt' },
-          { cause: 11, name: 'Machine_External_Interrupt' },
+          { cause: 3, name: "Machine_Software_Interrupt" },
+          { cause: 7, name: "Machine_Timer_Interrupt" },
+          { cause: 11, name: "Machine_External_Interrupt" },
         ];
 
         for (const int of interruptCauses) {
           vectors.push({
             name: int.name,
-            address: mtvecBase + (int.cause * 4),
-            handlerAddress: mtvecBase + (int.cause * 4),
-            type: 'irq',
+            address: mtvecBase + int.cause * 4,
+            handlerAddress: mtvecBase + int.cause * 4,
+            type: "irq",
             index: int.cause,
             enabled: true,
             metadata: {
               cause: int.cause,
-              privilegeLevel: 'machine'
-            }
+              privilegeLevel: "machine",
+            },
           });
         }
       }
@@ -192,51 +192,51 @@ export class RiscVBinaryParser extends BinaryParser {
       if (stvecMode === 0) {
         // Direct mode
         vectors.push({
-          name: 'Supervisor_Trap_Vector',
+          name: "Supervisor_Trap_Vector",
           address: stvecBase,
           handlerAddress: stvecBase,
-          type: 'trap',
+          type: "trap",
           index: 100, // Offset to distinguish from machine mode
           enabled: true,
           metadata: {
-            mode: 'direct',
-            privilegeLevel: 'supervisor'
-          }
+            mode: "direct",
+            privilegeLevel: "supervisor",
+          },
         });
       } else if (stvecMode === 1) {
         // Vectored mode
         vectors.push({
-          name: 'Supervisor_Exception_Vector',
+          name: "Supervisor_Exception_Vector",
           address: stvecBase,
           handlerAddress: stvecBase,
-          type: 'exception',
+          type: "exception",
           index: 100,
           enabled: true,
           metadata: {
-            mode: 'vectored',
-            privilegeLevel: 'supervisor'
-          }
+            mode: "vectored",
+            privilegeLevel: "supervisor",
+          },
         });
 
         // Add supervisor interrupt vectors
         const supervisorInts = [
-          { cause: 1, name: 'Supervisor_Software_Interrupt' },
-          { cause: 5, name: 'Supervisor_Timer_Interrupt' },
-          { cause: 9, name: 'Supervisor_External_Interrupt' },
+          { cause: 1, name: "Supervisor_Software_Interrupt" },
+          { cause: 5, name: "Supervisor_Timer_Interrupt" },
+          { cause: 9, name: "Supervisor_External_Interrupt" },
         ];
 
         for (const int of supervisorInts) {
           vectors.push({
             name: int.name,
-            address: stvecBase + (int.cause * 4),
-            handlerAddress: stvecBase + (int.cause * 4),
-            type: 'irq',
+            address: stvecBase + int.cause * 4,
+            handlerAddress: stvecBase + int.cause * 4,
+            type: "irq",
             index: 100 + int.cause,
             enabled: true,
             metadata: {
               cause: int.cause,
-              privilegeLevel: 'supervisor'
-            }
+              privilegeLevel: "supervisor",
+            },
           });
         }
       }
@@ -247,12 +247,12 @@ export class RiscVBinaryParser extends BinaryParser {
       const resetVector = await this.findResetVector(baseAddress);
       if (resetVector) {
         vectors.push({
-          name: 'Reset_Vector',
+          name: "Reset_Vector",
           address: baseAddress,
           handlerAddress: resetVector,
-          type: 'reset',
+          type: "reset",
           index: 0,
-          enabled: true
+          enabled: true,
         });
       }
     }
@@ -283,7 +283,10 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Extract RISC-V-specific metadata
    */
-  protected async extractArchitectureMetadata(): Promise<{ arch: 'RISCV'; specific: RiscVMetadata }> {
+  protected async extractArchitectureMetadata(): Promise<{
+    arch: "RISCV";
+    specific: RiscVMetadata;
+  }> {
     // Detect base ISA
     this.riscvMetadata.baseIsa = await this.detectBaseIsa();
 
@@ -297,8 +300,8 @@ export class RiscVBinaryParser extends BinaryParser {
     this.riscvMetadata.abi = await this.detectAbi();
 
     return {
-      arch: 'RISCV',
-      specific: this.riscvMetadata
+      arch: "RISCV",
+      specific: this.riscvMetadata,
     };
   }
 
@@ -311,9 +314,9 @@ export class RiscVBinaryParser extends BinaryParser {
       const inst = this.readU32(i);
 
       // Check for CSRW mtvec (0x30529073 with register variations)
-      if ((inst & 0xFFF00FFF) === 0x30500073) {
+      if ((inst & 0xfff00fff) === 0x30500073) {
         // This is a CSRW to mtvec, try to find the value being written
-        const rs1 = (inst >> 15) & 0x1F;
+        const rs1 = (inst >> 15) & 0x1f;
         const value = await this.trackRegisterValue(i, rs1);
         if (value !== undefined) {
           return value;
@@ -340,9 +343,9 @@ export class RiscVBinaryParser extends BinaryParser {
       const inst = this.readU32(i);
 
       // Check for CSRW stvec (0x10529073 with register variations)
-      if ((inst & 0xFFF00FFF) === 0x10500073) {
+      if ((inst & 0xfff00fff) === 0x10500073) {
         // This is a CSRW to stvec
-        const rs1 = (inst >> 15) & 0x1F;
+        const rs1 = (inst >> 15) & 0x1f;
         const value = await this.trackRegisterValue(i, rs1);
         if (value !== undefined) {
           return value;
@@ -356,7 +359,9 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Find reset vector location
    */
-  private async findResetVector(baseAddress: number): Promise<number | undefined> {
+  private async findResetVector(
+    baseAddress: number,
+  ): Promise<number | undefined> {
     // Check first instruction for jump
     if (this.data.length >= 4) {
       const inst = this.readU32(0);
@@ -368,31 +373,34 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Track register value backwards from an instruction
    */
-  private async trackRegisterValue(offset: number, reg: number): Promise<number | undefined> {
+  private async trackRegisterValue(
+    offset: number,
+    reg: number,
+  ): Promise<number | undefined> {
     // Simplified register tracking - would need full dataflow analysis for accuracy
     // Look backwards for LUI/ADDI or LA pseudo-instruction loading this register
 
     for (let i = offset - 4; i >= 0 && i > offset - 100; i -= 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
-      const rd = (inst >> 7) & 0x1F;
+      const opcode = inst & 0x7f;
+      const rd = (inst >> 7) & 0x1f;
 
       if (rd !== reg) continue;
 
       // LUI instruction
       if (opcode === 0x37) {
-        const imm = inst & 0xFFFFF000;
+        const imm = inst & 0xfffff000;
         // Check if next instruction is ADDI to complete LA
         if (i + 4 < this.data.length) {
           const nextInst = this.readU32(i + 4);
-          const nextOpcode = nextInst & 0x7F;
-          const nextRd = (nextInst >> 7) & 0x1F;
-          const nextRs1 = (nextInst >> 15) & 0x1F;
+          const nextOpcode = nextInst & 0x7f;
+          const nextRd = (nextInst >> 7) & 0x1f;
+          const nextRs1 = (nextInst >> 15) & 0x1f;
 
           if (nextOpcode === 0x13 && nextRd === reg && nextRs1 === reg) {
             // ADDI to same register
-            const addImm = (nextInst >> 20) & 0xFFF;
-            const signExtAddImm = (addImm & 0x800) ? (addImm | 0xFFFFF000) : addImm;
+            const addImm = (nextInst >> 20) & 0xfff;
+            const signExtAddImm = addImm & 0x800 ? addImm | 0xfffff000 : addImm;
             return imm + signExtAddImm;
           }
         }
@@ -401,10 +409,10 @@ export class RiscVBinaryParser extends BinaryParser {
 
       // LI pseudo-instruction (ADDI with x0)
       if (opcode === 0x13) {
-        const rs1 = (inst >> 15) & 0x1F;
+        const rs1 = (inst >> 15) & 0x1f;
         if (rs1 === 0) {
-          const imm = (inst >> 20) & 0xFFF;
-          const signExtImm = (imm & 0x800) ? (imm | 0xFFFFF000) : imm;
+          const imm = (inst >> 20) & 0xfff;
+          const signExtImm = imm & 0x800 ? imm | 0xfffff000 : imm;
           return signExtImm;
         }
       }
@@ -416,36 +424,41 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Decode jump target from RISC-V instruction
    */
-  private decodeJumpTarget(instruction: number, pc: number): number | undefined {
-    const opcode = instruction & 0x7F;
+  private decodeJumpTarget(
+    instruction: number,
+    pc: number,
+  ): number | undefined {
+    const opcode = instruction & 0x7f;
 
     // JAL instruction
-    if (opcode === 0x6F) {
+    if (opcode === 0x6f) {
       // Extract immediate: imm[20|10:1|11|19:12]
       const imm20 = (instruction >> 31) & 0x1;
-      const imm10_1 = (instruction >> 21) & 0x3FF;
+      const imm10_1 = (instruction >> 21) & 0x3ff;
       const imm11 = (instruction >> 20) & 0x1;
-      const imm19_12 = (instruction >> 12) & 0xFF;
+      const imm19_12 = (instruction >> 12) & 0xff;
 
-      let imm = (imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1);
+      let imm =
+        (imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1);
       // Sign extend
       if (imm20) {
-        imm |= 0xFFE00000;
+        imm |= 0xffe00000;
       }
       return pc + imm;
     }
 
     // J pseudo-instruction (JAL x0, offset)
-    if (opcode === 0x6F && ((instruction >> 7) & 0x1F) === 0) {
+    if (opcode === 0x6f && ((instruction >> 7) & 0x1f) === 0) {
       // Same as JAL but confirm rd=x0
       const imm20 = (instruction >> 31) & 0x1;
-      const imm10_1 = (instruction >> 21) & 0x3FF;
+      const imm10_1 = (instruction >> 21) & 0x3ff;
       const imm11 = (instruction >> 20) & 0x1;
-      const imm19_12 = (instruction >> 12) & 0xFF;
+      const imm19_12 = (instruction >> 12) & 0xff;
 
-      let imm = (imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1);
+      let imm =
+        (imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1);
       if (imm20) {
-        imm |= 0xFFE00000;
+        imm |= 0xffe00000;
       }
       return pc + imm;
     }
@@ -459,21 +472,23 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Detect base ISA (RV32I, RV64I, etc.)
    */
-  private async detectBaseIsa(): Promise<'RV32I' | 'RV32E' | 'RV64I' | 'RV128I'> {
+  private async detectBaseIsa(): Promise<
+    "RV32I" | "RV32E" | "RV64I" | "RV128I"
+  > {
     // Check for 64-bit instructions
     if (await this.has64BitInstructions()) {
-      return 'RV64I';
+      return "RV64I";
     }
 
     // Check for embedded profile (RV32E - 16 registers)
     if (this.options.architectureOptions?.riscv?.assumeEmbedded) {
       if (await this.isEmbeddedProfile()) {
-        return 'RV32E';
+        return "RV32E";
       }
     }
 
     // Default to RV32I
-    return 'RV32I';
+    return "RV32I";
   }
 
   /**
@@ -484,37 +499,37 @@ export class RiscVBinaryParser extends BinaryParser {
 
     // M - Integer multiply/divide
     if (await this.hasMExtension()) {
-      extensions.push('M');
+      extensions.push("M");
     }
 
     // A - Atomic operations
     if (await this.hasAExtension()) {
-      extensions.push('A');
+      extensions.push("A");
     }
 
     // F - Single-precision floating-point
     if (await this.hasFExtension()) {
-      extensions.push('F');
+      extensions.push("F");
     }
 
     // D - Double-precision floating-point
     if (await this.hasDExtension()) {
-      extensions.push('D');
+      extensions.push("D");
     }
 
     // C - Compressed instructions
     if (this.hasCompressedInstructions()) {
-      extensions.push('C');
+      extensions.push("C");
     }
 
     // B - Bit manipulation
     if (await this.hasBExtension()) {
-      extensions.push('B');
+      extensions.push("B");
     }
 
     // V - Vector operations
     if (await this.hasVExtension()) {
-      extensions.push('V');
+      extensions.push("V");
     }
 
     return extensions;
@@ -525,26 +540,30 @@ export class RiscVBinaryParser extends BinaryParser {
    */
   private buildArchString(): string {
     const base = this.riscvMetadata.baseIsa.toLowerCase();
-    const extensions = this.riscvMetadata.extensions.map(e => e.toLowerCase()).join('');
-    return base.replace('i', 'i' + extensions);
+    const extensions = this.riscvMetadata.extensions
+      .map((e) => e.toLowerCase())
+      .join("");
+    return base.replace("i", "i" + extensions);
   }
 
   /**
    * Detect ABI based on ISA
    */
-  private async detectAbi(): Promise<'ilp32' | 'ilp32f' | 'ilp32d' | 'lp64' | 'lp64f' | 'lp64d' | undefined> {
+  private async detectAbi(): Promise<
+    "ilp32" | "ilp32f" | "ilp32d" | "lp64" | "lp64f" | "lp64d" | undefined
+  > {
     const baseIsa = this.riscvMetadata.baseIsa;
-    const hasF = this.riscvMetadata.extensions.includes('F');
-    const hasD = this.riscvMetadata.extensions.includes('D');
+    const hasF = this.riscvMetadata.extensions.includes("F");
+    const hasD = this.riscvMetadata.extensions.includes("D");
 
-    if (baseIsa === 'RV32I' || baseIsa === 'RV32E') {
-      if (hasD) return 'ilp32d';
-      if (hasF) return 'ilp32f';
-      return 'ilp32';
-    } else if (baseIsa === 'RV64I') {
-      if (hasD) return 'lp64d';
-      if (hasF) return 'lp64f';
-      return 'lp64';
+    if (baseIsa === "RV32I" || baseIsa === "RV32E") {
+      if (hasD) return "ilp32d";
+      if (hasF) return "ilp32f";
+      return "ilp32";
+    } else if (baseIsa === "RV64I") {
+      if (hasD) return "lp64d";
+      if (hasF) return "lp64f";
+      return "lp64";
     }
 
     return undefined;
@@ -557,7 +576,7 @@ export class RiscVBinaryParser extends BinaryParser {
     // Look for 64-bit specific instructions (LD, SD, etc.)
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
+      const opcode = inst & 0x7f;
       const funct3 = (inst >> 12) & 0x7;
 
       // Check for 64-bit load/store
@@ -565,8 +584,8 @@ export class RiscVBinaryParser extends BinaryParser {
       if (opcode === 0x23 && funct3 === 0x3) return true; // SD
 
       // Check for 64-bit arithmetic
-      if (opcode === 0x1B) return true; // ADDIW, SLLIW, etc.
-      if (opcode === 0x3B) return true; // ADDW, SUBW, etc.
+      if (opcode === 0x1b) return true; // ADDIW, SLLIW, etc.
+      if (opcode === 0x3b) return true; // ADDW, SUBW, etc.
     }
 
     return false;
@@ -580,9 +599,9 @@ export class RiscVBinaryParser extends BinaryParser {
     // Check if any instructions use x16-x31
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const rd = (inst >> 7) & 0x1F;
-      const rs1 = (inst >> 15) & 0x1F;
-      const rs2 = (inst >> 20) & 0x1F;
+      const rd = (inst >> 7) & 0x1f;
+      const rs1 = (inst >> 15) & 0x1f;
+      const rs2 = (inst >> 20) & 0x1f;
 
       if (rd >= 16 || rs1 >= 16 || rs2 >= 16) {
         return false;
@@ -614,8 +633,8 @@ export class RiscVBinaryParser extends BinaryParser {
   private async hasMExtension(): Promise<boolean> {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
-      const funct7 = (inst >> 25) & 0x7F;
+      const opcode = inst & 0x7f;
+      const funct7 = (inst >> 25) & 0x7f;
 
       // MUL, DIV, REM instructions
       if (opcode === 0x33 && funct7 === 0x01) {
@@ -631,10 +650,10 @@ export class RiscVBinaryParser extends BinaryParser {
   private async hasAExtension(): Promise<boolean> {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
+      const opcode = inst & 0x7f;
 
       // AMO instructions
-      if (opcode === 0x2F) {
+      if (opcode === 0x2f) {
         return true;
       }
     }
@@ -647,11 +666,16 @@ export class RiscVBinaryParser extends BinaryParser {
   private async hasFExtension(): Promise<boolean> {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
+      const opcode = inst & 0x7f;
 
       // F instructions
-      if (opcode === 0x07 || opcode === 0x27 || opcode === 0x53 || opcode === 0x43) {
-        const funct7 = (inst >> 25) & 0x7F;
+      if (
+        opcode === 0x07 ||
+        opcode === 0x27 ||
+        opcode === 0x53 ||
+        opcode === 0x43
+      ) {
+        const funct7 = (inst >> 25) & 0x7f;
         // Check for single-precision encoding
         if ((funct7 & 0x3) === 0x0) {
           return true;
@@ -667,11 +691,16 @@ export class RiscVBinaryParser extends BinaryParser {
   private async hasDExtension(): Promise<boolean> {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
+      const opcode = inst & 0x7f;
 
       // D instructions
-      if (opcode === 0x07 || opcode === 0x27 || opcode === 0x53 || opcode === 0x43) {
-        const funct7 = (inst >> 25) & 0x7F;
+      if (
+        opcode === 0x07 ||
+        opcode === 0x27 ||
+        opcode === 0x53 ||
+        opcode === 0x43
+      ) {
+        const funct7 = (inst >> 25) & 0x7f;
         // Check for double-precision encoding
         if ((funct7 & 0x3) === 0x1) {
           return true;
@@ -697,7 +726,7 @@ export class RiscVBinaryParser extends BinaryParser {
   private async hasVExtension(): Promise<boolean> {
     for (let i = 0; i < Math.min(this.data.length - 4, 10000); i += 4) {
       const inst = this.readU32(i);
-      const opcode = inst & 0x7F;
+      const opcode = inst & 0x7f;
 
       // Vector instructions
       if (opcode === 0x57) {
@@ -728,7 +757,9 @@ export class RiscVBinaryParser extends BinaryParser {
   /**
    * Parse RISC-V-specific ELF attributes
    */
-  private async parseRiscVElfAttributes(elfHeader: { flags: number }): Promise<void> {
+  private async parseRiscVElfAttributes(elfHeader: {
+    flags: number;
+  }): Promise<void> {
     // RISC-V ELF files may contain .riscv.attributes section
     // This would parse those attributes to determine exact ISA string
     // Simplified implementation
@@ -739,13 +770,13 @@ export class RiscVBinaryParser extends BinaryParser {
 
     if (floatAbi === 0x2) {
       // Single-precision float ABI
-      if (!this.riscvMetadata.extensions.includes('F')) {
-        this.riscvMetadata.extensions.push('F');
+      if (!this.riscvMetadata.extensions.includes("F")) {
+        this.riscvMetadata.extensions.push("F");
       }
     } else if (floatAbi === 0x4) {
       // Double-precision float ABI
-      if (!this.riscvMetadata.extensions.includes('D')) {
-        this.riscvMetadata.extensions.push('D');
+      if (!this.riscvMetadata.extensions.includes("D")) {
+        this.riscvMetadata.extensions.push("D");
       }
     }
   }

@@ -5,7 +5,7 @@
  * Supports the format output by the uCAN monitor.
  */
 
-import type { CANMessage, MessageDirection, MessageType } from '../types';
+import type { CANMessage, MessageDirection, MessageType } from "../types";
 
 /**
  * CSV row structure
@@ -27,7 +27,7 @@ interface CSVRow {
  */
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
-  let current = '';
+  let current = "";
   let inQuotes = false;
 
   for (let i = 0; i < line.length; i++) {
@@ -35,9 +35,9 @@ function parseCSVLine(line: string): string[] {
 
     if (char === '"') {
       inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === "," && !inQuotes) {
       result.push(current.trim());
-      current = '';
+      current = "";
     } else {
       current += char;
     }
@@ -51,7 +51,7 @@ function parseCSVLine(line: string): string[] {
  * Parse hex data string "00 01 02 03" to Uint8Array
  */
 function parseHexData(hexStr: string): Uint8Array {
-  const hexBytes = hexStr.split(/\s+/).filter(s => s.length > 0);
+  const hexBytes = hexStr.split(/\s+/).filter((s) => s.length > 0);
   const data = new Uint8Array(hexBytes.length);
 
   for (let i = 0; i < hexBytes.length; i++) {
@@ -65,7 +65,7 @@ function parseHexData(hexStr: string): Uint8Array {
  * Parse CAN ID from hex string (e.g., "0x500" -> 0x500)
  */
 function parseCANId(canIdStr: string): number {
-  if (canIdStr.startsWith('0x') || canIdStr.startsWith('0X')) {
+  if (canIdStr.startsWith("0x") || canIdStr.startsWith("0X")) {
     return parseInt(canIdStr.substring(2), 16);
   }
   return parseInt(canIdStr, 16);
@@ -91,9 +91,9 @@ function csvRowToCANMessage(row: CSVRow, index: number): CANMessage | null {
       return null;
     }
 
-    const direction: MessageDirection = row.direction === 'RX' ? 'RX' : 'TX';
-    const isExtended = row.extended.toLowerCase() === 'yes';
-    const messageType: MessageType = direction === 'RX' ? 'CAN_RX' : 'CAN_TX';
+    const direction: MessageDirection = row.direction === "RX" ? "RX" : "TX";
+    const isExtended = row.extended.toLowerCase() === "yes";
+    const messageType: MessageType = direction === "RX" ? "CAN_RX" : "CAN_TX";
 
     return {
       id: `${Date.now()}-${index}`,
@@ -104,8 +104,8 @@ function csvRowToCANMessage(row: CSVRow, index: number): CANMessage | null {
       data,
       length: data.length,
       isExtended: isExtended,
-      success: row.success.toLowerCase() === 'yes',
-      error: row.error && row.error.trim() !== '' ? row.error : undefined
+      success: row.success.toLowerCase() === "yes",
+      error: row.error && row.error.trim() !== "" ? row.error : undefined,
     };
   } catch (error) {
     console.error(`Error parsing row ${index + 2}:`, error);
@@ -123,40 +123,50 @@ function csvRowToCANMessage(row: CSVRow, index: number): CANMessage | null {
  * @returns Array of parsed CAN messages
  */
 export function parseCANLogCSV(csvContent: string): CANMessage[] {
-  const lines = csvContent.split('\n').map(line => line.trim());
+  const lines = csvContent.split("\n").map((line) => line.trim());
 
   if (lines.length === 0) {
-    throw new Error('CSV file is empty');
+    throw new Error("CSV file is empty");
   }
 
   // Parse header
   const header = parseCSVLine(lines[0]);
   const expectedHeaders = [
-    'Timestamp',
-    'Direction',
-    'CAN ID',
-    'Length',
-    'Data (Hex)',
-    'Data (Decimal)',
-    'Extended',
-    'Success',
-    'Error'
+    "Timestamp",
+    "Direction",
+    "CAN ID",
+    "Length",
+    "Data (Hex)",
+    "Data (Decimal)",
+    "Extended",
+    "Success",
+    "Error",
   ];
 
   // Validate header (case-insensitive)
-  const normalizedHeader = header.map(h => h.toLowerCase().trim());
-  const normalizedExpected = expectedHeaders.map(h => h.toLowerCase());
+  const normalizedHeader = header.map((h) => h.toLowerCase().trim());
+  const normalizedExpected = expectedHeaders.map((h) => h.toLowerCase());
 
   let headerValid = true;
-  for (let i = 0; i < Math.min(normalizedExpected.length, normalizedHeader.length); i++) {
-    if (!normalizedHeader[i].includes(normalizedExpected[i].toLowerCase().replace(/[()]/g, ''))) {
+  for (
+    let i = 0;
+    i < Math.min(normalizedExpected.length, normalizedHeader.length);
+    i++
+  ) {
+    if (
+      !normalizedHeader[i].includes(
+        normalizedExpected[i].toLowerCase().replace(/[()]/g, ""),
+      )
+    ) {
       headerValid = false;
       break;
     }
   }
 
   if (!headerValid) {
-    console.warn('CSV header does not match expected format, attempting to parse anyway...');
+    console.warn(
+      "CSV header does not match expected format, attempting to parse anyway...",
+    );
   }
 
   // Parse data rows
@@ -167,7 +177,9 @@ export function parseCANLogCSV(csvContent: string): CANMessage[] {
 
     const fields = parseCSVLine(line);
     if (fields.length < 9) {
-      console.warn(`Row ${i + 1} has insufficient columns (${fields.length}), skipping`);
+      console.warn(
+        `Row ${i + 1} has insufficient columns (${fields.length}), skipping`,
+      );
       continue;
     }
 
@@ -180,7 +192,7 @@ export function parseCANLogCSV(csvContent: string): CANMessage[] {
       dataDecimal: fields[5],
       extended: fields[6],
       success: fields[7],
-      error: fields[8] || ''
+      error: fields[8] || "",
     };
 
     const message = csvRowToCANMessage(row, i - 1);
@@ -189,7 +201,9 @@ export function parseCANLogCSV(csvContent: string): CANMessage[] {
     }
   }
 
-  console.log(`Parsed ${messages.length} messages from CSV (${lines.length - 1} rows)`);
+  console.log(
+    `Parsed ${messages.length} messages from CSV (${lines.length - 1} rows)`,
+  );
   return messages;
 }
 
@@ -211,7 +225,7 @@ export async function importCSVFile(file: File): Promise<CANMessage[]> {
     };
 
     reader.onerror = () => {
-      reject(new Error('Failed to read file'));
+      reject(new Error("Failed to read file"));
     };
 
     reader.readAsText(file);

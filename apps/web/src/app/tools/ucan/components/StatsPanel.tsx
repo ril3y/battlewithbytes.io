@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Statistics Panel Component
@@ -6,9 +6,14 @@
  * Display bus statistics and per-ID message counts
  */
 
-import React from 'react';
-import { BusStatistics } from '../types';
-import { formatNumber, formatDuration, formatPercentage, formatRate } from '../utils/formatters';
+import React from "react";
+import { BusStatistics } from "../types";
+import {
+  formatNumber,
+  formatDuration,
+  formatPercentage,
+  formatRate,
+} from "../utils/formatters";
 
 interface StatsPanelProps {
   stats: BusStatistics;
@@ -73,7 +78,13 @@ export default function StatsPanel({ stats, onExport }: StatsPanelProps) {
         <MetricRow
           label="Bus Load"
           value={formatPercentage(stats.busLoad)}
-          color={stats.busLoad > 80 ? 'text-red-400' : stats.busLoad > 50 ? 'text-yellow-400' : 'text-green-400'}
+          color={
+            stats.busLoad > 80
+              ? "text-red-400"
+              : stats.busLoad > 50
+                ? "text-yellow-400"
+                : "text-green-400"
+          }
         />
         <MetricRow
           label="Uptime"
@@ -90,7 +101,9 @@ export default function StatsPanel({ stats, onExport }: StatsPanelProps) {
       {/* Top CAN IDs */}
       {topIds.length > 0 && (
         <div className="border-t border-gray-700 pt-3">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Top CAN IDs</h3>
+          <h3 className="text-sm font-semibold text-gray-300 mb-2">
+            Top CAN IDs
+          </h3>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {topIds.map((idStat) => {
               const percentage = (idStat.count / totalMessages) * 100;
@@ -101,12 +114,15 @@ export default function StatsPanel({ stats, onExport }: StatsPanelProps) {
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-green-400 font-semibold">
-                      0x{idStat.canId.toString(16).toUpperCase().padStart(3, '0')}
+                      0x
+                      {idStat.canId.toString(16).toUpperCase().padStart(3, "0")}
                     </span>
                     <span className="text-gray-500">({idStat.canId})</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-300">{formatNumber(idStat.count)}</span>
+                    <span className="text-gray-300">
+                      {formatNumber(idStat.count)}
+                    </span>
                     <span className="text-gray-500 w-12 text-right">
                       {percentage.toFixed(1)}%
                     </span>
@@ -131,7 +147,9 @@ export default function StatsPanel({ stats, onExport }: StatsPanelProps) {
       {totalMessages === 0 && (
         <div className="text-center py-8 text-gray-500">
           <p>No messages captured yet</p>
-          <p className="text-sm mt-1">Statistics will appear once messages are received</p>
+          <p className="text-sm mt-1">
+            Statistics will appear once messages are received
+          </p>
         </div>
       )}
     </div>

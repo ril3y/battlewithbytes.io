@@ -17,7 +17,7 @@ export interface StoredBMPInfo {
   uartPort?: StoredPortInfo;
 }
 
-const STORAGE_KEY = 'battlemagic_last_device';
+const STORAGE_KEY = "battlemagic_last_device";
 
 /**
  * Save GDB port info to localStorage
@@ -31,11 +31,11 @@ export function saveGdbPort(deviceInfo: {
     const stored = loadBMPInfo() || {};
     stored.gdbPort = {
       ...deviceInfo,
-      lastConnected: Date.now()
+      lastConnected: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch (error) {
-    console.warn('Failed to save GDB port:', error);
+    console.warn("Failed to save GDB port:", error);
   }
 }
 
@@ -51,11 +51,11 @@ export function saveUartPort(deviceInfo: {
     const stored = loadBMPInfo() || {};
     stored.uartPort = {
       ...deviceInfo,
-      lastConnected: Date.now()
+      lastConnected: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch (error) {
-    console.warn('Failed to save UART port:', error);
+    console.warn("Failed to save UART port:", error);
   }
 }
 
@@ -68,7 +68,7 @@ export function loadBMPInfo(): StoredBMPInfo | null {
     if (!stored) return null;
     return JSON.parse(stored) as StoredBMPInfo;
   } catch (error) {
-    console.warn('Failed to load BMP info:', error);
+    console.warn("Failed to load BMP info:", error);
     return null;
   }
 }
@@ -80,7 +80,7 @@ export function clearBMPInfo(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.warn('Failed to clear BMP info:', error);
+    console.warn("Failed to clear BMP info:", error);
   }
 }
 
@@ -99,7 +99,7 @@ export function clearGdbPort(): void {
       }
     }
   } catch (error) {
-    console.warn('Failed to clear GDB port:', error);
+    console.warn("Failed to clear GDB port:", error);
   }
 }
 
@@ -118,40 +118,49 @@ export function clearUartPort(): void {
       }
     }
   } catch (error) {
-    console.warn('Failed to clear UART port:', error);
+    console.warn("Failed to clear UART port:", error);
   }
 }
 
 /**
  * Format device name for display
  */
-export function formatDeviceName(deviceInfo: StoredPortInfo | null | undefined): string {
-  if (!deviceInfo) return 'Not connected';
+export function formatDeviceName(
+  deviceInfo: StoredPortInfo | null | undefined,
+): string {
+  if (!deviceInfo) return "Not connected";
 
   if (deviceInfo.productName) {
     return deviceInfo.productName;
   }
 
   if (deviceInfo.vendorId !== undefined && deviceInfo.productId !== undefined) {
-    return `VID: 0x${deviceInfo.vendorId.toString(16).toUpperCase().padStart(4, '0')}, PID: 0x${deviceInfo.productId.toString(16).toUpperCase().padStart(4, '0')}`;
+    return `VID: 0x${deviceInfo.vendorId.toString(16).toUpperCase().padStart(4, "0")}, PID: 0x${deviceInfo.productId.toString(16).toUpperCase().padStart(4, "0")}`;
   }
 
-  return 'Unknown Device';
+  return "Unknown Device";
 }
 
 /**
  * Check if a port matches the stored device
  */
-export function isMatchingDevice(port: SerialPort, storedDevice: StoredPortInfo): boolean {
+export function isMatchingDevice(
+  port: SerialPort,
+  storedDevice: StoredPortInfo,
+): boolean {
   const info = port.getInfo();
-  return info.usbVendorId === storedDevice.vendorId &&
-         info.usbProductId === storedDevice.productId;
+  return (
+    info.usbVendorId === storedDevice.vendorId &&
+    info.usbProductId === storedDevice.productId
+  );
 }
 
 /**
  * Find matching port from available ports
  */
-export async function findMatchingPort(storedDevice: StoredPortInfo): Promise<SerialPort | null> {
+export async function findMatchingPort(
+  storedDevice: StoredPortInfo,
+): Promise<SerialPort | null> {
   try {
     const ports = await navigator.serial.getPorts();
     for (const port of ports) {
@@ -159,20 +168,27 @@ export async function findMatchingPort(storedDevice: StoredPortInfo): Promise<Se
         // Check if port is already open/locked
         // A port with readable or writable streams is already open
         if (port.readable || port.writable) {
-          console.warn('[findMatchingPort] Port is already open, attempting to close...');
+          console.warn(
+            "[findMatchingPort] Port is already open, attempting to close...",
+          );
           try {
             await port.close();
             // Give it time to fully close
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise((resolve) => setTimeout(resolve, 300));
           } catch (closeError) {
-            console.warn('[findMatchingPort] Failed to close port:', closeError);
+            console.warn(
+              "[findMatchingPort] Failed to close port:",
+              closeError,
+            );
             // Port is stuck, return null to force manual selection
             return null;
           }
 
           // Verify it actually closed
           if (port.readable || port.writable) {
-            console.warn('[findMatchingPort] Port still locked after close attempt');
+            console.warn(
+              "[findMatchingPort] Port still locked after close attempt",
+            );
             return null;
           }
         }
@@ -181,7 +197,7 @@ export async function findMatchingPort(storedDevice: StoredPortInfo): Promise<Se
       }
     }
   } catch (error) {
-    console.warn('Failed to find matching port:', error);
+    console.warn("Failed to find matching port:", error);
   }
   return null;
 }

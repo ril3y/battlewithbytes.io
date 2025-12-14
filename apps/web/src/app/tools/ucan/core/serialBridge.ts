@@ -5,14 +5,20 @@
  * Adapted from BattleTerm serialUtils.ts
  */
 
-import { SerialConfig, DEFAULT_SERIAL_CONFIG, ConnectionCallback, DeviceInfo, ProtocolMessage } from '../types';
-import { parseProtocolLine } from './canProtocol';
+import {
+  SerialConfig,
+  DEFAULT_SERIAL_CONFIG,
+  ConnectionCallback,
+  DeviceInfo,
+  ProtocolMessage,
+} from "../types";
+import { parseProtocolLine } from "./canProtocol";
 
 /**
  * Check if Web Serial API is supported
  */
 export function isSerialSupported(): boolean {
-  return 'serial' in navigator;
+  return "serial" in navigator;
 }
 
 /**
@@ -20,14 +26,14 @@ export function isSerialSupported(): boolean {
  */
 export async function requestSerialPort(): Promise<SerialPort | null> {
   if (!isSerialSupported()) {
-    throw new Error('Web Serial API not supported in this browser');
+    throw new Error("Web Serial API not supported in this browser");
   }
 
   try {
     const port = await navigator.serial.requestPort();
     return port;
   } catch (error) {
-    if (error instanceof Error && error.name === 'NotFoundError') {
+    if (error instanceof Error && error.name === "NotFoundError") {
       // User cancelled the selection
       return null;
     }
@@ -46,7 +52,7 @@ export async function getAuthorizedPorts(): Promise<SerialPort[]> {
   try {
     return await navigator.serial.getPorts();
   } catch (error) {
-    console.error('Error getting authorized ports:', error);
+    console.error("Error getting authorized ports:", error);
     return [];
   }
 }
@@ -56,7 +62,7 @@ export async function getAuthorizedPorts(): Promise<SerialPort[]> {
  */
 export async function openSerialPort(
   port: SerialPort,
-  config: SerialConfig = DEFAULT_SERIAL_CONFIG
+  config: SerialConfig = DEFAULT_SERIAL_CONFIG,
 ): Promise<void> {
   try {
     await port.open({
@@ -64,20 +70,20 @@ export async function openSerialPort(
       dataBits: config.dataBits,
       stopBits: config.stopBits,
       parity: config.parity,
-      flowControl: config.flowControl
+      flowControl: config.flowControl,
     });
 
     // CRITICAL: Set DTR/RTS to false to prevent board reset and slow transmission
     // Many Arduino-compatible boards (like Feather M4 CAN) reset when DTR goes HIGH
-    console.log('🔧 Setting DTR/RTS signals to false...');
+    console.log("🔧 Setting DTR/RTS signals to false...");
     try {
       await port.setSignals({
         dataTerminalReady: false,
-        requestToSend: false
+        requestToSend: false,
       });
-      console.log('✅ DTR/RTS signals set successfully');
+      console.log("✅ DTR/RTS signals set successfully");
     } catch (signalError) {
-      console.warn('⚠️ Could not set DTR/RTS signals:', signalError);
+      console.warn("⚠️ Could not set DTR/RTS signals:", signalError);
       // Don't throw - some platforms may not support this
     }
   } catch (error) {
@@ -97,7 +103,7 @@ export async function closeSerialPort(port: SerialPort): Promise<void> {
   try {
     await port.close();
   } catch (error) {
-    console.error('Error closing serial port:', error);
+    console.error("Error closing serial port:", error);
     // Don't throw - port may already be closed
   }
 }
@@ -110,7 +116,7 @@ export function getDeviceInfo(port: SerialPort): DeviceInfo {
 
   return {
     vendorId: info.usbVendorId,
-    productId: info.usbProductId
+    productId: info.usbProductId,
   };
 }
 
@@ -119,11 +125,11 @@ export function getDeviceInfo(port: SerialPort): DeviceInfo {
  */
 export async function writeToPort(
   writer: WritableStreamDefaultWriter<Uint8Array>,
-  data: string
+  data: string,
 ): Promise<void> {
-  console.log('📤', data);
+  console.log("📤", data);
   const encoder = new TextEncoder();
-  const bytes = encoder.encode(data + '\n'); // Add newline for protocol
+  const bytes = encoder.encode(data + "\n"); // Add newline for protocol
   await writer.write(bytes);
 }
 
@@ -131,7 +137,7 @@ export async function writeToPort(
  * Read from serial port with line buffering
  */
 export class SerialReader {
-  private lineBuffer: string = '';
+  private lineBuffer: string = "";
   private decoder: TextDecoder = new TextDecoder();
   private onLine: ((line: string) => void) | null = null;
   private onMessage: ((message: ProtocolMessage) => void) | null = null;
@@ -140,7 +146,7 @@ export class SerialReader {
 
   constructor(
     onLine?: (line: string) => void,
-    onMessage?: (message: ProtocolMessage) => void
+    onMessage?: (message: ProtocolMessage) => void,
   ) {
     this.onLine = onLine || null;
     this.onMessage = onMessage || null;
@@ -152,9 +158,9 @@ export class SerialReader {
   async start(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
     this.reader = reader;
     this.isReading = true;
-    this.lineBuffer = '';
+    this.lineBuffer = "";
 
-    console.log('🚀 SerialReader: Starting read loop...');
+    console.log("🚀 SerialReader: Starting read loop...");
 
     try {
       while (this.isReading && this.reader) {
@@ -169,14 +175,17 @@ export class SerialReader {
         }
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'NetworkError') {
+      if (error instanceof Error && error.name === "NetworkError") {
         // Port disconnected
-        console.log('🔌 Serial port disconnected');
+        console.log("🔌 Serial port disconnected");
       } else {
-        console.error('❌ Error reading from serial port:', error);
+        console.error("❌ Error reading from serial port:", error);
       }
     } finally {
-      console.log('🛑 SerialReader: Read loop exiting, isReading:', this.isReading);
+      console.log(
+        "🛑 SerialReader: Read loop exiting, isReading:",
+        this.isReading,
+      );
       this.isReading = false;
     }
   }
@@ -193,7 +202,10 @@ export class SerialReader {
         await this.reader.cancel();
       } catch (error) {
         // Ignore cancel errors (might already be cancelled)
-        console.log('Reader cancel (expected):', error instanceof Error ? error.message : error);
+        console.log(
+          "Reader cancel (expected):",
+          error instanceof Error ? error.message : error,
+        );
       }
     }
   }
@@ -206,18 +218,18 @@ export class SerialReader {
     this.lineBuffer += text;
 
     // Split into lines
-    const lines = this.lineBuffer.split('\n');
+    const lines = this.lineBuffer.split("\n");
 
     // Keep last incomplete line in buffer
-    this.lineBuffer = lines.pop() || '';
+    this.lineBuffer = lines.pop() || "";
 
     // Process complete lines
     for (const line of lines) {
       const trimmed = line.trim();
       if (trimmed) {
         // Only log STATUS and error messages
-        if (trimmed.startsWith('STATUS') || trimmed.startsWith('CAN_ERR')) {
-          console.log('📥', trimmed);
+        if (trimmed.startsWith("STATUS") || trimmed.startsWith("CAN_ERR")) {
+          console.log("📥", trimmed);
         }
         this.handleLine(trimmed);
       }
@@ -238,7 +250,7 @@ export class SerialReader {
     if (message && this.onMessage) {
       this.onMessage(message);
     } else {
-      console.warn('⚠️ Failed to parse line:', line);
+      console.warn("⚠️ Failed to parse line:", line);
     }
   }
 }
@@ -290,30 +302,30 @@ export class SerialBridge {
    */
   async connect(
     port?: SerialPort,
-    config: SerialConfig = DEFAULT_SERIAL_CONFIG
+    config: SerialConfig = DEFAULT_SERIAL_CONFIG,
   ): Promise<boolean> {
-    console.log('🔌 SerialBridge: Starting connection...');
+    console.log("🔌 SerialBridge: Starting connection...");
 
     try {
       // Request port if not provided
       if (!port) {
-        console.log('📍 SerialBridge: Requesting port from user...');
+        console.log("📍 SerialBridge: Requesting port from user...");
         const requestedPort = await requestSerialPort();
         if (!requestedPort) {
-          console.log('❌ SerialBridge: User cancelled port selection');
+          console.log("❌ SerialBridge: User cancelled port selection");
           return false;
         }
         port = requestedPort;
       }
 
       // Open port
-      console.log('🔓 SerialBridge: Opening port with config:', config);
+      console.log("🔓 SerialBridge: Opening port with config:", config);
       await openSerialPort(port, config);
-      console.log('✅ SerialBridge: Port opened successfully');
+      console.log("✅ SerialBridge: Port opened successfully");
 
       // Set up reader
       if (port.readable) {
-        console.log('📖 SerialBridge: Setting up reader...');
+        console.log("📖 SerialBridge: Setting up reader...");
         this.readerStream = port.readable.getReader();
         this.reader = new SerialReader(undefined, (message) => {
           if (this.onMessage) {
@@ -321,18 +333,18 @@ export class SerialBridge {
           }
         });
         this.reader.start(this.readerStream);
-        console.log('✅ SerialBridge: Reader started');
+        console.log("✅ SerialBridge: Reader started");
       } else {
-        console.warn('⚠️ SerialBridge: Port not readable!');
+        console.warn("⚠️ SerialBridge: Port not readable!");
       }
 
       // Set up writer
       if (port.writable) {
-        console.log('✍️ SerialBridge: Setting up writer...');
+        console.log("✍️ SerialBridge: Setting up writer...");
         this.writer = port.writable.getWriter();
-        console.log('✅ SerialBridge: Writer ready');
+        console.log("✅ SerialBridge: Writer ready");
       } else {
-        console.warn('⚠️ SerialBridge: Port not writable!');
+        console.warn("⚠️ SerialBridge: Port not writable!");
       }
 
       this.port = port;
@@ -341,17 +353,19 @@ export class SerialBridge {
         this.onConnectionChange(true);
       }
 
-      console.log('🎉 SerialBridge: Connection complete!');
+      console.log("🎉 SerialBridge: Connection complete!");
       return true;
     } catch (error) {
-      let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      let errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       // Check if port is already open (common after hot reload)
-      if (errorMessage.includes('Failed to open serial port')) {
-        errorMessage = 'Port already open. Please refresh the page or unplug/replug the device.';
+      if (errorMessage.includes("Failed to open serial port")) {
+        errorMessage =
+          "Port already open. Please refresh the page or unplug/replug the device.";
       }
 
-      console.error('❌ SerialBridge: Connection error:', errorMessage);
+      console.error("❌ SerialBridge: Connection error:", errorMessage);
 
       if (this.onConnectionChange) {
         this.onConnectionChange(false, errorMessage);
@@ -367,31 +381,31 @@ export class SerialBridge {
    */
   async disconnect(): Promise<void> {
     if (!this.port) {
-      console.log('Already disconnected');
+      console.log("Already disconnected");
       return;
     }
 
-    console.log('Disconnecting...');
+    console.log("Disconnecting...");
 
     // Store port reference before clearing state
     const portToClose = this.port;
 
     // Stop reader loop first - this calls reader.cancel() internally
     if (this.reader) {
-      console.log('Stopping reader...');
+      console.log("Stopping reader...");
       await this.reader.stop();
-      console.log('Reader stopped, waiting for exit...');
+      console.log("Reader stopped, waiting for exit...");
       // Give additional time for the read loop to fully exit
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // Release reader lock - safe now because cancel() has completed
     if (this.readerStream) {
       try {
         this.readerStream.releaseLock();
-        console.log('✅ Reader lock released');
+        console.log("✅ Reader lock released");
       } catch (error) {
-        console.warn('Error releasing reader lock:', error);
+        console.warn("Error releasing reader lock:", error);
       }
       this.readerStream = null;
     }
@@ -399,11 +413,11 @@ export class SerialBridge {
     // Close writer gracefully
     if (this.writer) {
       try {
-        console.log('Closing writer...');
+        console.log("Closing writer...");
         await this.writer.close();
-        console.log('✅ Writer closed');
+        console.log("✅ Writer closed");
       } catch (error) {
-        console.warn('Error closing writer:', error);
+        console.warn("Error closing writer:", error);
       }
       this.writer = null;
     }
@@ -414,11 +428,11 @@ export class SerialBridge {
 
     // Close the port
     try {
-      console.log('Closing port...');
+      console.log("Closing port...");
       await closeSerialPort(portToClose);
-      console.log('✅ Disconnected successfully');
+      console.log("✅ Disconnected successfully");
     } catch (error) {
-      console.error('Error during port close:', error);
+      console.error("Error during port close:", error);
     }
 
     // Always notify disconnection, even if close failed
@@ -431,10 +445,10 @@ export class SerialBridge {
    * Send command to device
    */
   async sendCommand(command: string): Promise<void> {
-    console.log('💬 SerialBridge.sendCommand:', command);
+    console.log("💬 SerialBridge.sendCommand:", command);
     if (!this.writer) {
-      console.error('❌ SerialBridge.sendCommand: Not connected!');
-      throw new Error('Not connected');
+      console.error("❌ SerialBridge.sendCommand: Not connected!");
+      throw new Error("Not connected");
     }
 
     await writeToPort(this.writer, command);
@@ -445,7 +459,7 @@ export class SerialBridge {
    */
   async sendBytes(data: Uint8Array): Promise<void> {
     if (!this.writer) {
-      throw new Error('Not connected');
+      throw new Error("Not connected");
     }
 
     await this.writer.write(data);

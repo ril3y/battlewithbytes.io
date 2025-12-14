@@ -27,7 +27,7 @@ Capstone.js is already installed in the project:
 ### Simple Disassembly
 
 ```typescript
-import { CapstoneDisassembler } from './lib/disasm/CapstoneDisassembler';
+import { CapstoneDisassembler } from "./lib/disasm/CapstoneDisassembler";
 
 // Create and initialize
 const disasm = new CapstoneDisassembler();
@@ -39,7 +39,7 @@ const instructions = await disasm.disassemble(code, 0x08000000);
 
 for (const inst of instructions) {
   console.log(
-    `0x${inst.address.toString(16)}: ${inst.mnemonic} ${inst.operands}`
+    `0x${inst.address.toString(16)}: ${inst.mnemonic} ${inst.operands}`,
   );
 }
 
@@ -69,12 +69,12 @@ The `CapstoneDisassembler` maintains the same interface as `ArmDisassembler`, ma
 
 ```typescript
 // Before:
-import { ArmDisassembler } from './lib/disasm/ArmDisassembler';
+import { ArmDisassembler } from "./lib/disasm/ArmDisassembler";
 const disasm = new ArmDisassembler();
 const instructions = disasm.disassemble(data, baseAddr);
 
 // After:
-import { CapstoneDisassembler } from './lib/disasm/CapstoneDisassembler';
+import { CapstoneDisassembler } from "./lib/disasm/CapstoneDisassembler";
 const disasm = new CapstoneDisassembler();
 await disasm.initialize();
 const instructions = await disasm.disassemble(data, baseAddr);
@@ -86,7 +86,7 @@ const instructions = await disasm.disassemble(data, baseAddr);
 
 ```typescript
 // In DisassemblyView.tsx
-import { CapstoneDisassembler } from '../lib/disasm/CapstoneDisassembler';
+import { CapstoneDisassembler } from "../lib/disasm/CapstoneDisassembler";
 
 // Initialize in useEffect
 useEffect(() => {
@@ -108,7 +108,7 @@ const loadDisassembly = async (address: number, length: number) => {
   const instructions = await disassemblerRef.current.disassemble(
     data,
     address,
-    true // Thumb mode
+    true, // Thumb mode
   );
   // ... rest of processing
 };
@@ -189,9 +189,9 @@ The disassembler is configured for ARM Cortex-M processors:
 
 ```typescript
 // Internal configuration
-cs.ARCH_ARM            // ARM architecture
-cs.MODE_THUMB          // Thumb instruction set
-cs.MODE_MCLASS         // Cortex-M specific instructions
+cs.ARCH_ARM; // ARM architecture
+cs.MODE_THUMB; // Thumb instruction set
+cs.MODE_MCLASS; // Cortex-M specific instructions
 ```
 
 ### Supported Instruction Sets
@@ -257,27 +257,27 @@ try {
 
   // Check for error instructions
   for (const inst of instructions) {
-    if (inst.mnemonic === '.invalid' || inst.mnemonic === '.error') {
+    if (inst.mnemonic === ".invalid" || inst.mnemonic === ".error") {
       console.warn(`Invalid instruction at 0x${inst.address.toString(16)}`);
     }
   }
 } catch (err) {
-  console.error('Disassembly failed:', err);
+  console.error("Disassembly failed:", err);
 }
 ```
 
 ## Comparison with ArmDisassembler
 
-| Feature | ArmDisassembler | CapstoneDisassembler |
-|---------|----------------|---------------------|
-| **Instruction Coverage** | ~30 common instructions | Complete ARM Thumb/Thumb-2 |
-| **Branch Detection** | Basic (B, BL, BX, conditional) | All branch types |
-| **Accuracy** | Good for common code | Industry-standard accuracy |
-| **Performance** | Very fast (pure JS) | Fast (WebAssembly) |
-| **Bundle Size** | ~20KB | ~500KB (dynamic import) |
-| **Initialization** | Instant | ~100-200ms first time |
-| **API** | Synchronous | Asynchronous |
-| **Use Case** | Quick prototyping | Production-quality analysis |
+| Feature                  | ArmDisassembler                | CapstoneDisassembler        |
+| ------------------------ | ------------------------------ | --------------------------- |
+| **Instruction Coverage** | ~30 common instructions        | Complete ARM Thumb/Thumb-2  |
+| **Branch Detection**     | Basic (B, BL, BX, conditional) | All branch types            |
+| **Accuracy**             | Good for common code           | Industry-standard accuracy  |
+| **Performance**          | Very fast (pure JS)            | Fast (WebAssembly)          |
+| **Bundle Size**          | ~20KB                          | ~500KB (dynamic import)     |
+| **Initialization**       | Instant                        | ~100-200ms first time       |
+| **API**                  | Synchronous                    | Asynchronous                |
+| **Use Case**             | Quick prototyping              | Production-quality analysis |
 
 ## Migration Guide
 
@@ -285,11 +285,17 @@ try {
 
 ```typescript
 // Old
-import { ArmDisassembler, DisassembledInstruction } from './lib/disasm/ArmDisassembler';
+import {
+  ArmDisassembler,
+  DisassembledInstruction,
+} from "./lib/disasm/ArmDisassembler";
 
 // New
-import { CapstoneDisassembler, createCapstoneDisassembler } from './lib/disasm/CapstoneDisassembler';
-import type { DisassembledInstruction } from './lib/disasm/ArmDisassembler'; // Interface remains same
+import {
+  CapstoneDisassembler,
+  createCapstoneDisassembler,
+} from "./lib/disasm/CapstoneDisassembler";
+import type { DisassembledInstruction } from "./lib/disasm/ArmDisassembler"; // Interface remains same
 ```
 
 ### Step 2: Update Initialization
@@ -335,6 +341,7 @@ useEffect(() => {
 **Cause**: WebAssembly failed to load or compile
 
 **Solution**:
+
 - Check browser supports WebAssembly
 - Check network connectivity (for WASM file)
 - Check CSP headers allow WASM execution
@@ -344,6 +351,7 @@ useEffect(() => {
 **Cause**: `disassemble()` called before initialization
 
 **Solution**:
+
 ```typescript
 // Always await initialization
 await disasm.initialize();
@@ -358,6 +366,7 @@ if (!disasm.isReady()) {
 **Cause**: WebAssembly compilation is JIT'ed on first use
 
 **Solution**:
+
 ```typescript
 // Pre-initialize during app startup
 const disasm = createCapstoneDisassembler(); // Start loading early

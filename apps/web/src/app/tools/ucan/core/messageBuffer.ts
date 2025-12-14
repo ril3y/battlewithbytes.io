@@ -9,8 +9,8 @@ import {
   MessageFilter,
   BusStatistics,
   MessageStats,
-  MessageDirection
-} from '../types';
+  MessageDirection,
+} from "../types";
 
 /**
  * Message Buffer
@@ -35,9 +35,9 @@ export class MessageBuffer {
    */
   private createDefaultFilter(): MessageFilter {
     return {
-      directions: new Set<MessageDirection>(['RX', 'TX']),
+      directions: new Set<MessageDirection>(["RX", "TX"]),
       canIds: new Set<number>(),
-      errorsOnly: false
+      errorsOnly: false,
     };
   }
 
@@ -123,7 +123,7 @@ export class MessageBuffer {
    * Get filtered messages
    */
   getFilteredMessages(): CANMessage[] {
-    return this.messages.filter(msg => this.matchesFilter(msg));
+    return this.messages.filter((msg) => this.matchesFilter(msg));
   }
 
   /**
@@ -150,10 +150,10 @@ export class MessageBuffer {
 
     // Filter by data pattern
     if (this.filter.dataPattern) {
-      const pattern = this.filter.dataPattern.replace(/\s/g, '').toUpperCase();
+      const pattern = this.filter.dataPattern.replace(/\s/g, "").toUpperCase();
       const dataHex = Array.from(message.data)
-        .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-        .join('');
+        .map((b) => b.toString(16).toUpperCase().padStart(2, "0"))
+        .join("");
 
       if (!dataHex.includes(pattern)) {
         return false;
@@ -185,14 +185,16 @@ export class MessageBuffer {
     const parts: string[] = [
       message.direction,
       message.canId.toString(16),
-      Array.from(message.data).map(b => b.toString(16)).join('')
+      Array.from(message.data)
+        .map((b) => b.toString(16))
+        .join(""),
     ];
 
     if (message.error) {
       parts.push(message.error);
     }
 
-    return parts.join(' ').toLowerCase();
+    return parts.join(" ").toLowerCase();
   }
 
   /**
@@ -251,7 +253,7 @@ export class MessageBuffer {
    * Get message by ID
    */
   getMessageById(id: string): CANMessage | undefined {
-    return this.messages.find(msg => msg.id === id);
+    return this.messages.find((msg) => msg.id === id);
   }
 
   /**
@@ -259,7 +261,7 @@ export class MessageBuffer {
    */
   getMessagesInTimeRange(startTime: Date, endTime: Date): CANMessage[] {
     return this.messages.filter(
-      msg => msg.timestamp >= startTime && msg.timestamp <= endTime
+      (msg) => msg.timestamp >= startTime && msg.timestamp <= endTime,
     );
   }
 
@@ -267,7 +269,7 @@ export class MessageBuffer {
    * Get messages by CAN ID
    */
   getMessagesByCANId(canId: number): CANMessage[] {
-    return this.messages.filter(msg => msg.canId === canId);
+    return this.messages.filter((msg) => msg.canId === canId);
   }
 }
 
@@ -306,9 +308,9 @@ export class StatisticsEngine {
    */
   updateMessage(message: CANMessage): void {
     // Update direction counts
-    if (message.direction === 'RX') {
+    if (message.direction === "RX") {
       this.rxCount++;
-    } else if (message.direction === 'TX') {
+    } else if (message.direction === "TX") {
       this.txCount++;
     }
 
@@ -332,7 +334,8 @@ export class StatisticsEngine {
 
     if (existing) {
       // Calculate new frequency
-      const timeSinceLastSeen = message.timestamp.getTime() - existing.lastSeen.getTime();
+      const timeSinceLastSeen =
+        message.timestamp.getTime() - existing.lastSeen.getTime();
       const newInterval =
         (existing.averageInterval * existing.count + timeSinceLastSeen) /
         (existing.count + 1);
@@ -342,7 +345,7 @@ export class StatisticsEngine {
         count: existing.count + 1,
         lastSeen: message.timestamp,
         frequency: 1000 / newInterval, // messages per second
-        averageInterval: newInterval
+        averageInterval: newInterval,
       };
 
       this.perIdStats.set(canId, updated);
@@ -353,7 +356,7 @@ export class StatisticsEngine {
         count: 1,
         lastSeen: message.timestamp,
         frequency: 0,
-        averageInterval: 0
+        averageInterval: 0,
       });
     }
   }
@@ -378,7 +381,7 @@ export class StatisticsEngine {
       messagesPerSecond: Math.round(messagesPerSecond * 10) / 10,
       busLoad: Math.round(busLoad * 10) / 10,
       uptime,
-      perIdStats: new Map(this.perIdStats)
+      perIdStats: new Map(this.perIdStats),
     };
   }
 

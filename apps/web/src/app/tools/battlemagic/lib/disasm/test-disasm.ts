@@ -5,7 +5,7 @@
  * with common ARM Thumb instructions.
  */
 
-import { ArmDisassembler } from './ArmDisassembler';
+import { ArmDisassembler } from "./ArmDisassembler";
 
 // Test function to verify disassembler
 function testDisassembler() {
@@ -17,15 +17,24 @@ function testDisassembler() {
   // movs r0, #0
   // pop {r7, pc}
   const testCode = new Uint8Array([
-    0x80, 0xB5,  // push {r7, lr}
-    0x00, 0xAF,  // add r7, sp, #0
-    0x00, 0x20,  // movs r0, #0
-    0x80, 0xBD,  // pop {r7, pc}
+    0x80,
+    0xb5, // push {r7, lr}
+    0x00,
+    0xaf, // add r7, sp, #0
+    0x00,
+    0x20, // movs r0, #0
+    0x80,
+    0xbd, // pop {r7, pc}
   ]);
 
-  console.log('Testing ARM Disassembler:');
-  console.log('Input bytes:', Array.from(testCode).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-  console.log('\nDisassembled instructions:');
+  console.log("Testing ARM Disassembler:");
+  console.log(
+    "Input bytes:",
+    Array.from(testCode)
+      .map((b) => "0x" + b.toString(16).padStart(2, "0"))
+      .join(" "),
+  );
+  console.log("\nDisassembled instructions:");
 
   const instructions = disasm.disassemble(testCode, 0x08000000, true);
 
@@ -36,10 +45,11 @@ function testDisassembler() {
 
   // Test branch instruction
   const branchCode = new Uint8Array([
-    0xFE, 0xE7,  // b.n #-4 (infinite loop)
+    0xfe,
+    0xe7, // b.n #-4 (infinite loop)
   ]);
 
-  console.log('\nBranch instruction test:');
+  console.log("\nBranch instruction test:");
   const branchInst = disasm.disassemble(branchCode, 0x08000100, true);
   for (const inst of branchInst) {
     const formatted = disasm.formatInstruction(inst, true);
@@ -51,10 +61,13 @@ function testDisassembler() {
 
   // Test Thumb-2 32-bit instruction
   const thumb2Code = new Uint8Array([
-    0x4F, 0xF0, 0x00, 0x00,  // mov.w r0, #0
+    0x4f,
+    0xf0,
+    0x00,
+    0x00, // mov.w r0, #0
   ]);
 
-  console.log('\nThumb-2 instruction test:');
+  console.log("\nThumb-2 instruction test:");
   const thumb2Inst = disasm.disassemble(thumb2Code, 0x08000200, true);
   for (const inst of thumb2Inst) {
     const formatted = disasm.formatInstruction(inst, true);

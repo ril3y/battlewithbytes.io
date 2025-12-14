@@ -14,8 +14,8 @@ export interface SerialConfig {
   baudRate: number;
   dataBits?: 7 | 8;
   stopBits?: 1 | 2;
-  parity?: 'none' | 'even' | 'odd';
-  flowControl?: 'none' | 'hardware';
+  parity?: "none" | "even" | "odd";
+  flowControl?: "none" | "hardware";
 }
 
 /**
@@ -81,7 +81,9 @@ export interface ISerialPortProvider {
   /**
    * Request user to select a port
    */
-  requestPort(filters?: Array<{ usbVendorId?: number; usbProductId?: number }>): Promise<ISerialPort | null>;
+  requestPort(
+    filters?: Array<{ usbVendorId?: number; usbProductId?: number }>,
+  ): Promise<ISerialPort | null>;
 
   /**
    * Get all previously granted ports

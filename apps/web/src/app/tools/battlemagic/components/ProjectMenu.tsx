@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Project Menu Component
@@ -6,7 +6,7 @@
  * Provides UI for project management: New, Save, Load, Auto-save toggle
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 interface ProjectMenuProps {
   projectName: string;
@@ -27,7 +27,7 @@ export default function ProjectMenu({
   onSave,
   onLoad,
   onAutoSaveToggle,
-  onEditMetadata
+  onEditMetadata,
 }: ProjectMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -45,11 +45,11 @@ export default function ProjectMenu({
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
@@ -61,7 +61,7 @@ export default function ProjectMenu({
 
       // Clear the input so the same file can be loaded again
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -85,7 +85,10 @@ export default function ProjectMenu({
 
   const handleSave = () => {
     // If project is still "Untitled Project", show Save As dialog
-    if (projectName === 'Untitled Project' || projectName.startsWith('Untitled')) {
+    if (
+      projectName === "Untitled Project" ||
+      projectName.startsWith("Untitled")
+    ) {
       setShowEditDialog(true);
       setIsOpen(false);
     } else {
@@ -107,15 +110,23 @@ export default function ProjectMenu({
             <span className="font-medium text-green-400">Project:</span>
             <span className="text-gray-200">{projectName}</span>
             {hasUnsavedChanges && (
-              <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full" title="Unsaved changes" />
+              <span
+                className="inline-block w-2 h-2 bg-yellow-400 rounded-full"
+                title="Unsaved changes"
+              />
             )}
             <svg
-              className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
@@ -137,8 +148,18 @@ export default function ProjectMenu({
                 onClick={handleNew}
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 rounded text-sm text-left transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
                 <span>New Project</span>
               </button>
@@ -148,10 +169,25 @@ export default function ProjectMenu({
                 onClick={handleSave}
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 rounded text-sm text-left transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                  />
                 </svg>
-                <span>{projectName === 'Untitled Project' || projectName.startsWith('Untitled') ? 'Save As...' : 'Save Project'}</span>
+                <span>
+                  {projectName === "Untitled Project" ||
+                  projectName.startsWith("Untitled")
+                    ? "Save As..."
+                    : "Save Project"}
+                </span>
                 {hasUnsavedChanges && (
                   <span className="ml-auto text-xs text-yellow-400">*</span>
                 )}
@@ -159,8 +195,18 @@ export default function ProjectMenu({
 
               {/* Load Project */}
               <label className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 rounded text-sm cursor-pointer transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
                 </svg>
                 <span>Load Project</span>
                 <input
@@ -182,8 +228,18 @@ export default function ProjectMenu({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 rounded text-sm text-left transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
                 <span>Edit Project Info</span>
               </button>
@@ -197,7 +253,11 @@ export default function ProjectMenu({
               >
                 <div className="w-4 h-4 flex items-center justify-center">
                   {autoSaveEnabled ? (
-                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 text-green-400"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                     </svg>
                   ) : (
@@ -215,12 +275,20 @@ export default function ProjectMenu({
       {showEditDialog && (
         <EditProjectDialog
           currentName={projectName}
-          title={projectName === 'Untitled Project' || projectName.startsWith('Untitled') ? 'Save Project As' : 'Edit Project Info'}
+          title={
+            projectName === "Untitled Project" ||
+            projectName.startsWith("Untitled")
+              ? "Save Project As"
+              : "Edit Project Info"
+          }
           onSave={(name, description) => {
             // Update metadata first
             onEditMetadata(name, description);
             // If this was a Save As, also trigger save (synchronously)
-            if (projectName === 'Untitled Project' || projectName.startsWith('Untitled')) {
+            if (
+              projectName === "Untitled Project" ||
+              projectName.startsWith("Untitled")
+            ) {
               onSave();
             }
             setShowEditDialog(false);
@@ -270,9 +338,14 @@ interface EditProjectDialogProps {
   onCancel: () => void;
 }
 
-function EditProjectDialog({ currentName, title = 'Edit Project Info', onSave, onCancel }: EditProjectDialogProps) {
+function EditProjectDialog({
+  currentName,
+  title = "Edit Project Info",
+  onSave,
+  onCancel,
+}: EditProjectDialogProps) {
   const [name, setName] = useState(currentName);
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
 
   const handleSave = () => {
     if (name.trim()) {
@@ -281,7 +354,7 @@ function EditProjectDialog({ currentName, title = 'Edit Project Info', onSave, o
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && name.trim()) {
+    if (e.key === "Enter" && !e.shiftKey && name.trim()) {
       e.preventDefault();
       handleSave();
     }
@@ -294,7 +367,9 @@ function EditProjectDialog({ currentName, title = 'Edit Project Info', onSave, o
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Project Name</label>
+            <label className="block text-sm text-gray-300 mb-1">
+              Project Name
+            </label>
             <input
               type="text"
               value={name}
@@ -307,7 +382,9 @@ function EditProjectDialog({ currentName, title = 'Edit Project Info', onSave, o
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Description (optional)</label>
+            <label className="block text-sm text-gray-300 mb-1">
+              Description (optional)
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -349,7 +426,13 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }: ConfirmDialogProps) {
+function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[70]">
       <div className="bg-gray-900 border border-yellow-400 rounded-lg p-6 w-[400px] max-w-[90vw]">

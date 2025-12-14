@@ -24,16 +24,44 @@ export interface DisassembledInstruction {
  * ARM Register names for Cortex-M
  */
 const REGISTER_NAMES = [
-  'r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
-  'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc'
+  "r0",
+  "r1",
+  "r2",
+  "r3",
+  "r4",
+  "r5",
+  "r6",
+  "r7",
+  "r8",
+  "r9",
+  "r10",
+  "r11",
+  "r12",
+  "sp",
+  "lr",
+  "pc",
 ];
 
 /**
  * Condition codes for ARM instructions
  */
 const CONDITIONS = [
-  'eq', 'ne', 'cs', 'cc', 'mi', 'pl', 'vs', 'vc',
-  'hi', 'ls', 'ge', 'lt', 'gt', 'le', '', 'nv'
+  "eq",
+  "ne",
+  "cs",
+  "cc",
+  "mi",
+  "pl",
+  "vs",
+  "vc",
+  "hi",
+  "ls",
+  "ge",
+  "lt",
+  "gt",
+  "le",
+  "",
+  "nv",
 ];
 
 /**
@@ -60,7 +88,7 @@ export class ArmDisassembler {
   disassemble(
     data: Uint8Array,
     baseAddress: number,
-    isThumb: boolean = true
+    isThumb: boolean = true,
   ): DisassembledInstruction[] {
     const instructions: DisassembledInstruction[] = [];
     let offset = 0;
@@ -101,42 +129,62 @@ export class ArmDisassembler {
     if (offset + 3 >= data.length) return 0;
 
     if (this.littleEndian) {
-      return data[offset] |
-             (data[offset + 1] << 8) |
-             (data[offset + 2] << 16) |
-             (data[offset + 3] << 24);
+      return (
+        data[offset] |
+        (data[offset + 1] << 8) |
+        (data[offset + 2] << 16) |
+        (data[offset + 3] << 24)
+      );
     } else {
-      return (data[offset] << 24) |
-             (data[offset + 1] << 16) |
-             (data[offset + 2] << 8) |
-             data[offset + 3];
+      return (
+        (data[offset] << 24) |
+        (data[offset + 1] << 16) |
+        (data[offset + 2] << 8) |
+        data[offset + 3]
+      );
     }
   }
 
   /**
    * Disassemble a single Thumb/Thumb-2 instruction
    */
-  private disassembleThumb(data: Uint8Array, offset: number, address: number): DisassembledInstruction {
+  private disassembleThumb(
+    data: Uint8Array,
+    offset: number,
+    address: number,
+  ): DisassembledInstruction {
     const firstHalf = this.read16(data, offset);
 
     // Check if this is a 32-bit Thumb-2 instruction
-    const isThumb2 = ((firstHalf & 0xF800) >= 0xE800);
+    const isThumb2 = (firstHalf & 0xf800) >= 0xe800;
 
     if (isThumb2 && offset + 3 < data.length) {
       const secondHalf = this.read16(data, offset + 2);
       const inst32 = (firstHalf << 16) | secondHalf;
-      return this.decodeThumb32(inst32, address, data.slice(offset, offset + 4));
+      return this.decodeThumb32(
+        inst32,
+        address,
+        data.slice(offset, offset + 4),
+      );
     } else {
-      return this.decodeThumb16(firstHalf, address, data.slice(offset, offset + 2));
+      return this.decodeThumb16(
+        firstHalf,
+        address,
+        data.slice(offset, offset + 2),
+      );
     }
   }
 
   /**
    * Decode a 16-bit Thumb instruction
    */
-  private decodeThumb16(inst: number, address: number, bytes: Uint8Array): DisassembledInstruction {
-    let mnemonic = '';
-    let operands = '';
+  private decodeThumb16(
+    inst: number,
+    address: number,
+    bytes: Uint8Array,
+  ): DisassembledInstruction {
+    let mnemonic = "";
+    let operands = "";
     let isBranch = false;
     let branchTarget: number | undefined;
 
@@ -145,167 +193,167 @@ export class ArmDisassembler {
     const rn = (inst >> 3) & 0x7;
     const rm = (inst >> 6) & 0x7;
     const imm3 = (inst >> 6) & 0x7;
-    const imm5 = (inst >> 6) & 0x1F;
-    const imm8 = inst & 0xFF;
+    const imm5 = (inst >> 6) & 0x1f;
+    const imm8 = inst & 0xff;
 
     // Decode based on instruction pattern
-    if ((inst & 0xF800) === 0x0000) {
+    if ((inst & 0xf800) === 0x0000) {
       // LSL immediate
       if (imm5 === 0) {
-        mnemonic = 'movs';
+        mnemonic = "movs";
         operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}`;
       } else {
-        mnemonic = 'lsls';
+        mnemonic = "lsls";
         operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm5}`;
       }
-    } else if ((inst & 0xF800) === 0x0800) {
+    } else if ((inst & 0xf800) === 0x0800) {
       // LSR immediate
-      mnemonic = 'lsrs';
+      mnemonic = "lsrs";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm5 || 32}`;
-    } else if ((inst & 0xF800) === 0x1000) {
+    } else if ((inst & 0xf800) === 0x1000) {
       // ASR immediate
-      mnemonic = 'asrs';
+      mnemonic = "asrs";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm5 || 32}`;
-    } else if ((inst & 0xFE00) === 0x1800) {
+    } else if ((inst & 0xfe00) === 0x1800) {
       // ADD register
-      mnemonic = 'adds';
+      mnemonic = "adds";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, ${REGISTER_NAMES[rm]}`;
-    } else if ((inst & 0xFE00) === 0x1A00) {
+    } else if ((inst & 0xfe00) === 0x1a00) {
       // SUB register
-      mnemonic = 'subs';
+      mnemonic = "subs";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, ${REGISTER_NAMES[rm]}`;
-    } else if ((inst & 0xFE00) === 0x1C00) {
+    } else if ((inst & 0xfe00) === 0x1c00) {
       // ADD immediate 3-bit
-      mnemonic = 'adds';
+      mnemonic = "adds";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm3}`;
-    } else if ((inst & 0xFE00) === 0x1E00) {
+    } else if ((inst & 0xfe00) === 0x1e00) {
       // SUB immediate 3-bit
-      mnemonic = 'subs';
+      mnemonic = "subs";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm3}`;
-    } else if ((inst & 0xF800) === 0x2000) {
+    } else if ((inst & 0xf800) === 0x2000) {
       // MOV immediate
       const rd8 = (inst >> 8) & 0x7;
-      mnemonic = 'movs';
+      mnemonic = "movs";
       operands = `${REGISTER_NAMES[rd8]}, #${imm8}`;
-    } else if ((inst & 0xF800) === 0x2800) {
+    } else if ((inst & 0xf800) === 0x2800) {
       // CMP immediate
       const rn8 = (inst >> 8) & 0x7;
-      mnemonic = 'cmp';
+      mnemonic = "cmp";
       operands = `${REGISTER_NAMES[rn8]}, #${imm8}`;
-    } else if ((inst & 0xF800) === 0x3000) {
+    } else if ((inst & 0xf800) === 0x3000) {
       // ADD immediate 8-bit
       const rd8 = (inst >> 8) & 0x7;
-      mnemonic = 'adds';
+      mnemonic = "adds";
       operands = `${REGISTER_NAMES[rd8]}, #${imm8}`;
-    } else if ((inst & 0xF800) === 0x3800) {
+    } else if ((inst & 0xf800) === 0x3800) {
       // SUB immediate 8-bit
       const rd8 = (inst >> 8) & 0x7;
-      mnemonic = 'subs';
+      mnemonic = "subs";
       operands = `${REGISTER_NAMES[rd8]}, #${imm8}`;
-    } else if ((inst & 0xFFC0) === 0x4140) {
+    } else if ((inst & 0xffc0) === 0x4140) {
       // ADC register
-      mnemonic = 'adcs';
+      mnemonic = "adcs";
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rm]}`;
-    } else if ((inst & 0xFF00) === 0x4600) {
+    } else if ((inst & 0xff00) === 0x4600) {
       // MOV high register
       const rdHi = ((inst >> 4) & 0x8) | (inst & 0x7);
-      const rmHi = (inst >> 3) & 0xF;
-      mnemonic = 'mov';
+      const rmHi = (inst >> 3) & 0xf;
+      mnemonic = "mov";
       operands = `${REGISTER_NAMES[rdHi]}, ${REGISTER_NAMES[rmHi]}`;
-    } else if ((inst & 0xFF00) === 0x4700) {
+    } else if ((inst & 0xff00) === 0x4700) {
       // BX
-      const rm = (inst >> 3) & 0xF;
-      mnemonic = 'bx';
+      const rm = (inst >> 3) & 0xf;
+      mnemonic = "bx";
       operands = REGISTER_NAMES[rm];
       isBranch = true;
-    } else if ((inst & 0xF800) === 0x4800) {
+    } else if ((inst & 0xf800) === 0x4800) {
       // LDR literal
       const rt = (inst >> 8) & 0x7;
-      const imm = (imm8 << 2);
+      const imm = imm8 << 2;
       const target = (address & ~3) + 4 + imm;
-      mnemonic = 'ldr';
+      mnemonic = "ldr";
       operands = `${REGISTER_NAMES[rt]}, [pc, #${imm}]`;
       branchTarget = target;
-    } else if ((inst & 0xF800) === 0x6000) {
+    } else if ((inst & 0xf800) === 0x6000) {
       // STR immediate
       const imm = imm5 << 2;
-      mnemonic = 'str';
+      mnemonic = "str";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm}]`;
-    } else if ((inst & 0xF800) === 0x6800) {
+    } else if ((inst & 0xf800) === 0x6800) {
       // LDR immediate
       const imm = imm5 << 2;
-      mnemonic = 'ldr';
+      mnemonic = "ldr";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm}]`;
-    } else if ((inst & 0xF800) === 0x7000) {
+    } else if ((inst & 0xf800) === 0x7000) {
       // STRB immediate
-      mnemonic = 'strb';
+      mnemonic = "strb";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm5}]`;
-    } else if ((inst & 0xF800) === 0x7800) {
+    } else if ((inst & 0xf800) === 0x7800) {
       // LDRB immediate
-      mnemonic = 'ldrb';
+      mnemonic = "ldrb";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm5}]`;
-    } else if ((inst & 0xF800) === 0x8000) {
+    } else if ((inst & 0xf800) === 0x8000) {
       // STRH immediate
       const imm = imm5 << 1;
-      mnemonic = 'strh';
+      mnemonic = "strh";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm}]`;
-    } else if ((inst & 0xF800) === 0x8800) {
+    } else if ((inst & 0xf800) === 0x8800) {
       // LDRH immediate
       const imm = imm5 << 1;
-      mnemonic = 'ldrh';
+      mnemonic = "ldrh";
       operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${imm}]`;
-    } else if ((inst & 0xF800) === 0x9000) {
+    } else if ((inst & 0xf800) === 0x9000) {
       // STR SP-relative
       const rt = (inst >> 8) & 0x7;
       const imm = imm8 << 2;
-      mnemonic = 'str';
+      mnemonic = "str";
       operands = `${REGISTER_NAMES[rt]}, [sp, #${imm}]`;
-    } else if ((inst & 0xF800) === 0x9800) {
+    } else if ((inst & 0xf800) === 0x9800) {
       // LDR SP-relative
       const rt = (inst >> 8) & 0x7;
       const imm = imm8 << 2;
-      mnemonic = 'ldr';
+      mnemonic = "ldr";
       operands = `${REGISTER_NAMES[rt]}, [sp, #${imm}]`;
-    } else if ((inst & 0xF800) === 0xA000) {
+    } else if ((inst & 0xf800) === 0xa000) {
       // ADD PC-relative
       const rd8 = (inst >> 8) & 0x7;
       const imm = imm8 << 2;
-      mnemonic = 'add';
+      mnemonic = "add";
       operands = `${REGISTER_NAMES[rd8]}, pc, #${imm}`;
-    } else if ((inst & 0xF800) === 0xA800) {
+    } else if ((inst & 0xf800) === 0xa800) {
       // ADD SP-relative
       const rd8 = (inst >> 8) & 0x7;
       const imm = imm8 << 2;
-      mnemonic = 'add';
+      mnemonic = "add";
       operands = `${REGISTER_NAMES[rd8]}, sp, #${imm}`;
-    } else if ((inst & 0xFF00) === 0xB000) {
+    } else if ((inst & 0xff00) === 0xb000) {
       // ADD/SUB SP immediate
-      const imm = (imm8 & 0x7F) << 2;
+      const imm = (imm8 & 0x7f) << 2;
       if (inst & 0x80) {
-        mnemonic = 'sub';
+        mnemonic = "sub";
       } else {
-        mnemonic = 'add';
+        mnemonic = "add";
       }
       operands = `sp, sp, #${imm}`;
-    } else if ((inst & 0xFF00) === 0xB200) {
+    } else if ((inst & 0xff00) === 0xb200) {
       // SXTH, SXTB, UXTH, UXTB
       const op = (inst >> 6) & 0x3;
-      const mnemonics = ['sxth', 'sxtb', 'uxth', 'uxtb'];
+      const mnemonics = ["sxth", "sxtb", "uxth", "uxtb"];
       mnemonic = mnemonics[op];
       operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rm]}`;
-    } else if ((inst & 0xF800) === 0xB800) {
+    } else if ((inst & 0xf800) === 0xb800) {
       // POP
-      mnemonic = 'pop';
-      const regs = this.getRegisterList(imm8 | ((inst & 0x100) ? 0x8000 : 0));
+      mnemonic = "pop";
+      const regs = this.getRegisterList(imm8 | (inst & 0x100 ? 0x8000 : 0));
       operands = `{${regs}}`;
-    } else if ((inst & 0xF800) === 0xB000 && (inst & 0x0600) === 0x400) {
+    } else if ((inst & 0xf800) === 0xb000 && (inst & 0x0600) === 0x400) {
       // PUSH
-      mnemonic = 'push';
-      const regs = this.getRegisterList(imm8 | ((inst & 0x100) ? 0x4000 : 0));
+      mnemonic = "push";
+      const regs = this.getRegisterList(imm8 | (inst & 0x100 ? 0x4000 : 0));
       operands = `{${regs}}`;
-    } else if ((inst & 0xF000) === 0xD000) {
+    } else if ((inst & 0xf000) === 0xd000) {
       // Conditional branch
-      const cond = (inst >> 8) & 0xF;
+      const cond = (inst >> 8) & 0xf;
       if (cond < 14) {
         const offset = this.signExtend8(imm8) << 1;
         mnemonic = `b${CONDITIONS[cond]}`;
@@ -314,24 +362,24 @@ export class ArmDisassembler {
         isBranch = true;
       } else if (cond === 14) {
         // UDF (Undefined)
-        mnemonic = 'udf';
+        mnemonic = "udf";
         operands = `#${imm8}`;
       } else {
         // SVC
-        mnemonic = 'svc';
+        mnemonic = "svc";
         operands = `#${imm8}`;
       }
-    } else if ((inst & 0xF800) === 0xE000) {
+    } else if ((inst & 0xf800) === 0xe000) {
       // Unconditional branch
-      const offset = this.signExtend11(inst & 0x7FF) << 1;
-      mnemonic = 'b';
+      const offset = this.signExtend11(inst & 0x7ff) << 1;
+      mnemonic = "b";
       branchTarget = address + 4 + offset;
       operands = `#0x${branchTarget.toString(16)}`;
       isBranch = true;
     } else {
       // Unknown instruction
-      mnemonic = '.word';
-      operands = `0x${inst.toString(16).padStart(4, '0')}`;
+      mnemonic = ".word";
+      operands = `0x${inst.toString(16).padStart(4, "0")}`;
     }
 
     return {
@@ -348,22 +396,26 @@ export class ArmDisassembler {
   /**
    * Decode a 32-bit Thumb-2 instruction
    */
-  private decodeThumb32(inst: number, address: number, bytes: Uint8Array): DisassembledInstruction {
-    let mnemonic = '';
-    let operands = '';
+  private decodeThumb32(
+    inst: number,
+    address: number,
+    bytes: Uint8Array,
+  ): DisassembledInstruction {
+    let mnemonic = "";
+    let operands = "";
     let isBranch = false;
     let branchTarget: number | undefined;
 
     const op1 = (inst >> 27) & 0x3;
-    const op2 = (inst >> 20) & 0x7F;
+    const op2 = (inst >> 20) & 0x7f;
     // const op = (inst >> 15) & 0x1;  // Currently unused
 
     // Common field extractions
-    const rn = (inst >> 16) & 0xF;
-    const rd = (inst >> 8) & 0xF;
+    const rn = (inst >> 16) & 0xf;
+    const rd = (inst >> 8) & 0xf;
     // const rm = inst & 0xF;  // Currently unused
-    const imm12 = inst & 0xFFF;
-    const imm8 = inst & 0xFF;
+    const imm12 = inst & 0xfff;
+    const imm8 = inst & 0xff;
 
     if (op1 === 2) {
       if ((op2 & 0x64) === 0x20) {
@@ -371,37 +423,40 @@ export class ArmDisassembler {
         const s = (inst >> 26) & 1;
         const j1 = (inst >> 13) & 1;
         const j2 = (inst >> 11) & 1;
-        const i1 = (j1 ^ s) ^ 1;
-        const i2 = (j2 ^ s) ^ 1;
-        const imm10 = (inst >> 16) & 0x3FF;
-        const imm11 = inst & 0x7FF;
+        const i1 = j1 ^ s ^ 1;
+        const i2 = j2 ^ s ^ 1;
+        const imm10 = (inst >> 16) & 0x3ff;
+        const imm11 = inst & 0x7ff;
 
-        let offset = (s ? -1 << 24 : 0) |
-                     (i1 << 23) | (i2 << 22) |
-                     (imm10 << 12) | (imm11 << 1);
+        let offset =
+          (s ? -1 << 24 : 0) |
+          (i1 << 23) |
+          (i2 << 22) |
+          (imm10 << 12) |
+          (imm11 << 1);
 
         // Sign extend if necessary
         if (s) {
-          offset |= 0xFF000000;
+          offset |= 0xff000000;
         }
 
-        mnemonic = 'bl';
+        mnemonic = "bl";
         branchTarget = address + 4 + offset;
         operands = `#0x${branchTarget.toString(16)}`;
         isBranch = true;
-      } else if ((inst & 0xFFD02000) === 0xE8900000) {
+      } else if ((inst & 0xffd02000) === 0xe8900000) {
         // LDMIA/LDMDB
         const w = (inst >> 21) & 1;
-        const reglist = inst & 0xFFFF;
-        mnemonic = w ? 'ldmia!' : 'ldmia';
+        const reglist = inst & 0xffff;
+        mnemonic = w ? "ldmia!" : "ldmia";
         operands = `${REGISTER_NAMES[rn]}, {${this.getRegisterList(reglist)}}`;
-      } else if ((inst & 0xFFD02000) === 0xE8800000) {
+      } else if ((inst & 0xffd02000) === 0xe8800000) {
         // STMIA/STMDB
         const w = (inst >> 21) & 1;
-        const reglist = inst & 0xFFFF;
-        mnemonic = w ? 'stmia!' : 'stmia';
+        const reglist = inst & 0xffff;
+        mnemonic = w ? "stmia!" : "stmia";
         operands = `${REGISTER_NAMES[rn]}, {${this.getRegisterList(reglist)}}`;
-      } else if ((inst & 0xFFF00000) === 0xF8500000) {
+      } else if ((inst & 0xfff00000) === 0xf8500000) {
         // LDR immediate
         const imm = imm12;
         const u = (inst >> 23) & 1;
@@ -410,17 +465,17 @@ export class ArmDisassembler {
 
         if (index) {
           if (wback) {
-            mnemonic = 'ldr';
-            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? '' : '-'}${imm}]!`;
+            mnemonic = "ldr";
+            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? "" : "-"}${imm}]!`;
           } else {
-            mnemonic = 'ldr';
-            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? '' : '-'}${imm}]`;
+            mnemonic = "ldr";
+            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? "" : "-"}${imm}]`;
           }
         } else {
-          mnemonic = 'ldr';
-          operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}], #${u ? '' : '-'}${imm}`;
+          mnemonic = "ldr";
+          operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}], #${u ? "" : "-"}${imm}`;
         }
-      } else if ((inst & 0xFFF00000) === 0xF8400000) {
+      } else if ((inst & 0xfff00000) === 0xf8400000) {
         // STR immediate
         const imm = imm12;
         const u = (inst >> 23) & 1;
@@ -429,38 +484,70 @@ export class ArmDisassembler {
 
         if (index) {
           if (wback) {
-            mnemonic = 'str';
-            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? '' : '-'}${imm}]!`;
+            mnemonic = "str";
+            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? "" : "-"}${imm}]!`;
           } else {
-            mnemonic = 'str';
-            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? '' : '-'}${imm}]`;
+            mnemonic = "str";
+            operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}, #${u ? "" : "-"}${imm}]`;
           }
         } else {
-          mnemonic = 'str';
-          operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}], #${u ? '' : '-'}${imm}`;
+          mnemonic = "str";
+          operands = `${REGISTER_NAMES[rd]}, [${REGISTER_NAMES[rn]}], #${u ? "" : "-"}${imm}`;
         }
       }
     } else if (op1 === 3) {
       if ((op2 & 0x71) === 0x00) {
         // Data processing (modified immediate)
-        const op = (inst >> 21) & 0xF;
+        const op = (inst >> 21) & 0xf;
         const s = (inst >> 20) & 1;
         const i = (inst >> 26) & 1;
         const imm3 = (inst >> 12) & 0x7;
         const imm = this.expandImmediate((i << 11) | (imm3 << 8) | imm8);
 
-        const ops = ['and', 'bic', 'orr', 'orn', 'eor', '', '', '',
-                     'add', '', 'adc', 'sbc', '', '', 'sub', 'rsb'];
-        const opNames = ['tst', '', '', '', 'teq', '', '', '',
-                        'cmn', '', '', '', '', '', 'cmp', ''];
+        const ops = [
+          "and",
+          "bic",
+          "orr",
+          "orn",
+          "eor",
+          "",
+          "",
+          "",
+          "add",
+          "",
+          "adc",
+          "sbc",
+          "",
+          "",
+          "sub",
+          "rsb",
+        ];
+        const opNames = [
+          "tst",
+          "",
+          "",
+          "",
+          "teq",
+          "",
+          "",
+          "",
+          "cmn",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "cmp",
+          "",
+        ];
 
         if (rd === 15 && s) {
           // Test instructions
           mnemonic = opNames[op];
           operands = `${REGISTER_NAMES[rn]}, #${imm}`;
         } else {
-          mnemonic = ops[op] + (s ? 's' : '');
-          if (op === 0x0D || op === 0x0F) {
+          mnemonic = ops[op] + (s ? "s" : "");
+          if (op === 0x0d || op === 0x0f) {
             // CMP/CMN
             operands = `${REGISTER_NAMES[rd]}, ${REGISTER_NAMES[rn]}, #${imm}`;
           } else if (op === 0x04 || op === 0x08) {
@@ -473,16 +560,16 @@ export class ArmDisassembler {
       } else if ((op2 & 0x78) === 0x30) {
         // MOV immediate
         const i = (inst >> 26) & 1;
-        const imm4 = (inst >> 16) & 0xF;
+        const imm4 = (inst >> 16) & 0xf;
         const imm3 = (inst >> 12) & 0x7;
         const imm = (imm4 << 12) | (i << 11) | (imm3 << 8) | imm8;
 
-        if ((inst & 0xFBF08000) === 0xF2400000) {
-          mnemonic = 'movw';
-        } else if ((inst & 0xFBF08000) === 0xF2C00000) {
-          mnemonic = 'movt';
+        if ((inst & 0xfbf08000) === 0xf2400000) {
+          mnemonic = "movw";
+        } else if ((inst & 0xfbf08000) === 0xf2c00000) {
+          mnemonic = "movt";
         } else {
-          mnemonic = 'mov';
+          mnemonic = "mov";
         }
         operands = `${REGISTER_NAMES[rd]}, #${imm}`;
       }
@@ -490,8 +577,8 @@ export class ArmDisassembler {
 
     // If we couldn't decode it, mark as data
     if (!mnemonic) {
-      mnemonic = '.dword';
-      operands = `0x${inst.toString(16).padStart(8, '0')}`;
+      mnemonic = ".dword";
+      operands = `0x${inst.toString(16).padStart(8, "0")}`;
     }
 
     return {
@@ -508,15 +595,19 @@ export class ArmDisassembler {
   /**
    * Disassemble ARM instruction (32-bit, not typically used in Cortex-M)
    */
-  private disassembleArm(data: Uint8Array, offset: number, address: number): DisassembledInstruction {
+  private disassembleArm(
+    data: Uint8Array,
+    offset: number,
+    address: number,
+  ): DisassembledInstruction {
     const inst = this.read32(data, offset);
 
     // For now, just return as data word
     return {
       address,
       bytes: data.slice(offset, offset + 4),
-      mnemonic: '.word',
-      operands: `0x${inst.toString(16).padStart(8, '0')}`,
+      mnemonic: ".word",
+      operands: `0x${inst.toString(16).padStart(8, "0")}`,
       size: 4,
       isBranch: false,
     };
@@ -527,7 +618,7 @@ export class ArmDisassembler {
    */
   private signExtend8(value: number): number {
     if (value & 0x80) {
-      return value | 0xFFFFFF00;
+      return value | 0xffffff00;
     }
     return value;
   }
@@ -537,7 +628,7 @@ export class ArmDisassembler {
    */
   private signExtend11(value: number): number {
     if (value & 0x400) {
-      return value | 0xFFFFF800;
+      return value | 0xfffff800;
     }
     return value;
   }
@@ -546,8 +637,8 @@ export class ArmDisassembler {
    * Expand a Thumb-2 modified immediate
    */
   private expandImmediate(imm12: number): number {
-    const rot = (imm12 >> 7) & 0x1F;
-    const imm = imm12 & 0x7F;
+    const rot = (imm12 >> 7) & 0x1f;
+    const imm = imm12 & 0x7f;
 
     if (rot === 0) {
       return imm;
@@ -595,22 +686,25 @@ export class ArmDisassembler {
       }
     }
 
-    return regs.join(', ');
+    return regs.join(", ");
   }
 
   /**
    * Format an instruction for display
    */
-  formatInstruction(inst: DisassembledInstruction, showBytes: boolean = true): string {
-    const addr = `0x${inst.address.toString(16).padStart(8, '0')}`;
+  formatInstruction(
+    inst: DisassembledInstruction,
+    showBytes: boolean = true,
+  ): string {
+    const addr = `0x${inst.address.toString(16).padStart(8, "0")}`;
     const bytes = showBytes
       ? Array.from(inst.bytes)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join(' ')
-          .padEnd(12, ' ')
-      : '';
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join(" ")
+          .padEnd(12, " ")
+      : "";
 
-    const mnem = inst.mnemonic.padEnd(8, ' ');
+    const mnem = inst.mnemonic.padEnd(8, " ");
     let line = showBytes
       ? `${addr}: ${bytes} ${mnem} ${inst.operands}`
       : `${addr}: ${mnem} ${inst.operands}`;
@@ -626,32 +720,39 @@ export class ArmDisassembler {
    * Check if an address is likely a function entry point
    * (heuristic based on common patterns)
    */
-  isFunctionEntry(instructions: DisassembledInstruction[], index: number): boolean {
+  isFunctionEntry(
+    instructions: DisassembledInstruction[],
+    index: number,
+  ): boolean {
     if (index >= instructions.length) return false;
 
     const inst = instructions[index];
 
     // Check if this instruction is targeted by branches
-    for (let i = Math.max(0, index - 20); i < Math.min(instructions.length, index + 20); i++) {
+    for (
+      let i = Math.max(0, index - 20);
+      i < Math.min(instructions.length, index + 20);
+      i++
+    ) {
       if (i === index) continue;
       const other = instructions[i];
       if (other.isBranch && other.branchTarget === inst.address) {
         // Check if it's a BL (function call)
-        if (other.mnemonic === 'bl' || other.mnemonic === 'blx') {
+        if (other.mnemonic === "bl" || other.mnemonic === "blx") {
           return true;
         }
       }
     }
 
     // Check for common function prologue patterns
-    if (inst.mnemonic === 'push' && inst.operands.includes('lr')) {
+    if (inst.mnemonic === "push" && inst.operands.includes("lr")) {
       return true;
     }
 
     // Check if preceded by alignment padding or data
     if (index > 0) {
       const prev = instructions[index - 1];
-      if (prev.mnemonic === '.word' || prev.mnemonic === '.dword') {
+      if (prev.mnemonic === ".word" || prev.mnemonic === ".dword") {
         return true;
       }
     }
@@ -662,7 +763,9 @@ export class ArmDisassembler {
   /**
    * Analyze control flow and find branch targets
    */
-  analyzeControlFlow(instructions: DisassembledInstruction[]): Map<number, Set<number>> {
+  analyzeControlFlow(
+    instructions: DisassembledInstruction[],
+  ): Map<number, Set<number>> {
     const flowMap = new Map<number, Set<number>>();
 
     for (const inst of instructions) {

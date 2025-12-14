@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import type { DisassemblyLine, ViewMode } from '../types';
-import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
+import { useState } from "react";
+import type { DisassemblyLine, ViewMode } from "../types";
+import type { DisassembledInstruction } from "../../../lib/arch/arm/disasm";
 
 /**
  * Hook for managing all disassembly state
@@ -13,27 +13,31 @@ import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
 export function useDisassemblyState() {
   // Display state
   const [lines, setLines] = useState<DisassemblyLine[]>([]);
-  const [rawInstructions, setRawInstructions] = useState<DisassembledInstruction[]>([]);
+  const [rawInstructions, setRawInstructions] = useState<
+    DisassembledInstruction[]
+  >([]);
 
   // Address and navigation state
   const [baseAddress, setBaseAddress] = useState<number>(0x08000000); // Default flash base
-  const [addressInput, setAddressInput] = useState<string>('0x08000000');
+  const [addressInput, setAddressInput] = useState<string>("0x08000000");
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
   const [jumpedToAddress, setJumpedToAddress] = useState<number | null>(null);
 
   // View configuration state
   const [bytesToRead, setBytesToRead] = useState<number>(512); // 512 bytes - max reliable for BMP serial
   const [showBytes, setShowBytes] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('linear');
+  const [viewMode, setViewMode] = useState<ViewMode>("linear");
 
   // Modal state
   const [showGoToModal, setShowGoToModal] = useState(false);
-  const [goToAddress, setGoToAddress] = useState('');
+  const [goToAddress, setGoToAddress] = useState("");
   const [goToError, setGoToError] = useState<string | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [showRenameModal, setShowRenameModal] = useState(false);
-  const [selectedFunctionAddress, setSelectedFunctionAddress] = useState<number | null>(null);
+  const [selectedFunctionAddress, setSelectedFunctionAddress] = useState<
+    number | null
+  >(null);
 
   // UI interaction state
   const [isMouseOverPanel, setIsMouseOverPanel] = useState(false);
@@ -87,6 +91,6 @@ export function useDisassemblyState() {
     setIsMouseOverPanel,
 
     // Symbol state
-    symbols
+    symbols,
   };
 }

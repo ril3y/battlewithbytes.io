@@ -8,16 +8,9 @@
  * - No branches in the middle
  */
 
-import type { DisassembledInstruction } from '../disasm/ArmDisassembler';
-import {
-  BlockType,
-  EdgeType
-} from './types';
-import type {
-  BasicBlock,
-  BlockAnalysisOptions,
-  CFGEdge
-} from './types';
+import type { DisassembledInstruction } from "../disasm/ArmDisassembler";
+import { BlockType, EdgeType } from "./types";
+import type { BasicBlock, BlockAnalysisOptions, CFGEdge } from "./types";
 
 export class BasicBlockAnalyzer {
   private options: BlockAnalysisOptions;
@@ -61,7 +54,9 @@ export class BasicBlockAnalyzer {
   /**
    * Find all addresses that start a basic block
    */
-  private findBlockStarts(instructions: DisassembledInstruction[]): Set<number> {
+  private findBlockStarts(
+    instructions: DisassembledInstruction[],
+  ): Set<number> {
     const starts = new Set<number>();
 
     // First instruction always starts a block
@@ -94,7 +89,7 @@ export class BasicBlockAnalyzer {
    */
   private buildBlocks(
     instructions: DisassembledInstruction[],
-    blockStarts: Set<number>
+    blockStarts: Set<number>,
   ): BasicBlock[] {
     const blocks: BasicBlock[] = [];
     let currentBlock: DisassembledInstruction[] = [];
@@ -130,19 +125,19 @@ export class BasicBlockAnalyzer {
    */
   private createBlock(
     instructions: DisassembledInstruction[],
-    startAddr: number
+    startAddr: number,
   ): BasicBlock {
     const lastInst = instructions[instructions.length - 1];
 
     return {
-      id: `0x${startAddr.toString(16).toUpperCase().padStart(8, '0')}`,
+      id: `0x${startAddr.toString(16).toUpperCase().padStart(8, "0")}`,
       startAddress: startAddr,
       endAddress: lastInst.address,
       instructions,
-      type: BlockType.NORMAL,  // Will be classified later
+      type: BlockType.NORMAL, // Will be classified later
       predecessors: [],
       successors: [],
-      edges: []
+      edges: [],
     };
   }
 
@@ -151,7 +146,7 @@ export class BasicBlockAnalyzer {
    */
   private classifyBlocks(
     blocks: BasicBlock[],
-    allInstructions: DisassembledInstruction[]
+    allInstructions: DisassembledInstruction[],
   ): void {
     // Mark entry block
     if (blocks.length > 0) {
@@ -181,25 +176,25 @@ export class BasicBlockAnalyzer {
     const mnemonic = inst.mnemonic.toLowerCase();
 
     // Return instructions
-    if (mnemonic === 'bx' && inst.operands.toLowerCase().includes('lr')) {
+    if (mnemonic === "bx" && inst.operands.toLowerCase().includes("lr")) {
       return BlockType.RETURN;
     }
-    if (mnemonic === 'pop' && inst.operands.toLowerCase().includes('pc')) {
+    if (mnemonic === "pop" && inst.operands.toLowerCase().includes("pc")) {
       return BlockType.RETURN;
     }
 
     // Call instructions
-    if (mnemonic === 'bl' || mnemonic === 'blx') {
+    if (mnemonic === "bl" || mnemonic === "blx") {
       return BlockType.CALL;
     }
 
     // Conditional branches
-    if (inst.isBranch && mnemonic !== 'b' && mnemonic.startsWith('b')) {
+    if (inst.isBranch && mnemonic !== "b" && mnemonic.startsWith("b")) {
       return BlockType.CONDITIONAL;
     }
 
     // Unconditional branch with no target = dead end
-    if (mnemonic === 'b' && inst.branchTarget === undefined) {
+    if (mnemonic === "b" && inst.branchTarget === undefined) {
       return BlockType.EXIT;
     }
 
@@ -247,18 +242,20 @@ export class BasicBlockAnalyzer {
    */
   private determineEdgeType(
     inst: DisassembledInstruction,
-    isBranchTarget: boolean
+    isBranchTarget: boolean,
   ): EdgeType {
     const mnemonic = inst.mnemonic.toLowerCase();
 
     // Call edge
-    if (mnemonic === 'bl' || mnemonic === 'blx') {
+    if (mnemonic === "bl" || mnemonic === "blx") {
       return EdgeType.CALL;
     }
 
     // Conditional branch
-    if (inst.isBranch && mnemonic.startsWith('b') && mnemonic !== 'b') {
-      return isBranchTarget ? EdgeType.CONDITIONAL_TRUE : EdgeType.CONDITIONAL_FALSE;
+    if (inst.isBranch && mnemonic.startsWith("b") && mnemonic !== "b") {
+      return isBranchTarget
+        ? EdgeType.CONDITIONAL_TRUE
+        : EdgeType.CONDITIONAL_FALSE;
     }
 
     // Unconditional
@@ -272,7 +269,7 @@ export class BasicBlockAnalyzer {
     from: BasicBlock,
     to: BasicBlock,
     type: EdgeType,
-    inst: DisassembledInstruction
+    inst: DisassembledInstruction,
   ): void {
     // Don't add duplicate edges
     if (from.successors.includes(to.id)) {
@@ -282,7 +279,7 @@ export class BasicBlockAnalyzer {
     const edge: CFGEdge = {
       target: to.id,
       type,
-      condition: this.extractCondition(inst, type)
+      condition: this.extractCondition(inst, type),
     };
 
     from.edges.push(edge);
@@ -295,10 +292,12 @@ export class BasicBlockAnalyzer {
    */
   private extractCondition(
     inst: DisassembledInstruction,
-    edgeType: EdgeType
+    edgeType: EdgeType,
   ): string | undefined {
-    if (edgeType !== EdgeType.CONDITIONAL_TRUE &&
-        edgeType !== EdgeType.CONDITIONAL_FALSE) {
+    if (
+      edgeType !== EdgeType.CONDITIONAL_TRUE &&
+      edgeType !== EdgeType.CONDITIONAL_FALSE
+    ) {
       return undefined;
     }
 
@@ -306,20 +305,20 @@ export class BasicBlockAnalyzer {
 
     // ARM condition codes
     const conditionMap: Record<string, string> = {
-      'beq': 'Z==1',
-      'bne': 'Z==0',
-      'bcs': 'C==1',
-      'bcc': 'C==0',
-      'bmi': 'N==1',
-      'bpl': 'N==0',
-      'bvs': 'V==1',
-      'bvc': 'V==0',
-      'bhi': 'C==1 && Z==0',
-      'bls': 'C==0 || Z==1',
-      'bge': 'N==V',
-      'blt': 'N!=V',
-      'bgt': 'Z==0 && N==V',
-      'ble': 'Z==1 || N!=V'
+      beq: "Z==1",
+      bne: "Z==0",
+      bcs: "C==1",
+      bcc: "C==0",
+      bmi: "N==1",
+      bpl: "N==0",
+      bvs: "V==1",
+      bvc: "V==0",
+      bhi: "C==1 && Z==0",
+      bls: "C==0 || Z==1",
+      bge: "N==V",
+      blt: "N!=V",
+      bgt: "Z==0 && N==V",
+      ble: "Z==1 || N!=V",
     };
 
     const condition = conditionMap[mnemonic];
@@ -336,7 +335,7 @@ export class BasicBlockAnalyzer {
    */
   private isCallInstruction(inst: DisassembledInstruction): boolean {
     const mnemonic = inst.mnemonic.toLowerCase();
-    return mnemonic === 'bl' || mnemonic === 'blx';
+    return mnemonic === "bl" || mnemonic === "blx";
   }
 
   /**
@@ -346,15 +345,15 @@ export class BasicBlockAnalyzer {
     const mnemonic = inst.mnemonic.toLowerCase();
 
     // Unconditional branch
-    if (mnemonic === 'b' && inst.branchTarget !== undefined) {
+    if (mnemonic === "b" && inst.branchTarget !== undefined) {
       return true;
     }
 
     // Return instructions
-    if (mnemonic === 'bx' && inst.operands.toLowerCase().includes('lr')) {
+    if (mnemonic === "bx" && inst.operands.toLowerCase().includes("lr")) {
       return true;
     }
-    if (mnemonic === 'pop' && inst.operands.toLowerCase().includes('pc')) {
+    if (mnemonic === "pop" && inst.operands.toLowerCase().includes("pc")) {
       return true;
     }
 

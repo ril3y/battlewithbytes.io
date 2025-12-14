@@ -4,8 +4,8 @@
  * Export CAN messages and statistics to various formats
  */
 
-import { CANMessage, BusStatistics, ExportConfig } from '../types';
-import { formatCANId, formatDataBytes } from '../core/canProtocol';
+import { CANMessage, BusStatistics, ExportConfig } from "../types";
+import { formatCANId, formatDataBytes } from "../core/canProtocol";
 
 /**
  * Export messages to CSV format
@@ -13,24 +13,24 @@ import { formatCANId, formatDataBytes } from '../core/canProtocol';
 export function exportToCSV(
   messages: CANMessage[],
   includeTimestamps: boolean = true,
-  includeRawData: boolean = true
+  includeRawData: boolean = true,
 ): string {
   const rows: string[] = [];
 
   // Header row
-  const headers: string[] = ['Direction', 'CAN ID'];
+  const headers: string[] = ["Direction", "CAN ID"];
 
   if (includeTimestamps) {
-    headers.unshift('Timestamp');
+    headers.unshift("Timestamp");
   }
 
   if (includeRawData) {
-    headers.push('Length', 'Data (Hex)', 'Data (Decimal)');
+    headers.push("Length", "Data (Hex)", "Data (Decimal)");
   }
 
-  headers.push('Extended', 'Success', 'Error');
+  headers.push("Extended", "Success", "Error");
 
-  rows.push(headers.join(','));
+  rows.push(headers.join(","));
 
   // Data rows
   for (const message of messages) {
@@ -45,18 +45,20 @@ export function exportToCSV(
 
     if (includeRawData) {
       row.push(message.length.toString());
-      row.push(`"${formatDataBytes(message.data, ' ')}"`);
-      row.push(`"${Array.from(message.data).join(' ')}"`);
+      row.push(`"${formatDataBytes(message.data, " ")}"`);
+      row.push(`"${Array.from(message.data).join(" ")}"`);
     }
 
-    row.push(message.isExtended ? 'Yes' : 'No');
-    row.push(message.success !== undefined ? (message.success ? 'Yes' : 'No') : 'N/A');
-    row.push(message.error ? `"${message.error.replace(/"/g, '""')}"` : '');
+    row.push(message.isExtended ? "Yes" : "No");
+    row.push(
+      message.success !== undefined ? (message.success ? "Yes" : "No") : "N/A",
+    );
+    row.push(message.error ? `"${message.error.replace(/"/g, '""')}"` : "");
 
-    rows.push(row.join(','));
+    rows.push(row.join(","));
   }
 
-  return rows.join('\n');
+  return rows.join("\n");
 }
 
 /**
@@ -66,24 +68,24 @@ export function exportToJSON(
   messages: CANMessage[],
   includeTimestamps: boolean = true,
   includeStats: boolean = false,
-  stats?: BusStatistics
+  stats?: BusStatistics,
 ): string {
   const data: Record<string, unknown> = {
     exportDate: new Date().toISOString(),
     messageCount: messages.length,
-    messages: messages.map(msg => ({
+    messages: messages.map((msg) => ({
       ...(includeTimestamps && { timestamp: msg.timestamp.toISOString() }),
       direction: msg.direction,
       type: msg.type,
       canId: formatCANId(msg.canId, msg.isExtended),
       canIdDecimal: msg.canId,
       data: Array.from(msg.data),
-      dataHex: formatDataBytes(msg.data, ' '),
+      dataHex: formatDataBytes(msg.data, " "),
       length: msg.length,
       isExtended: msg.isExtended,
       ...(msg.success !== undefined && { success: msg.success }),
-      ...(msg.error && { error: msg.error })
-    }))
+      ...(msg.error && { error: msg.error }),
+    })),
   };
 
   if (includeStats && stats) {
@@ -94,14 +96,14 @@ export function exportToJSON(
       messagesPerSecond: stats.messagesPerSecond,
       busLoad: stats.busLoad,
       uptimeMs: stats.uptime,
-      perIdStats: Array.from(stats.perIdStats.values()).map(idStat => ({
-        canId: formatCANId(idStat.canId, idStat.canId > 0x7FF),
+      perIdStats: Array.from(stats.perIdStats.values()).map((idStat) => ({
+        canId: formatCANId(idStat.canId, idStat.canId > 0x7ff),
         canIdDecimal: idStat.canId,
         count: idStat.count,
         lastSeen: idStat.lastSeen.toISOString(),
         frequency: idStat.frequency,
-        averageIntervalMs: idStat.averageInterval
-      }))
+        averageIntervalMs: idStat.averageInterval,
+      })),
     };
   }
 
@@ -111,15 +113,18 @@ export function exportToJSON(
 /**
  * Export messages to plain text format
  */
-export function exportToText(messages: CANMessage[], includeTimestamps: boolean = true): string {
+export function exportToText(
+  messages: CANMessage[],
+  includeTimestamps: boolean = true,
+): string {
   const lines: string[] = [];
 
-  lines.push('='.repeat(80));
-  lines.push('uCAN Message Log Export');
+  lines.push("=".repeat(80));
+  lines.push("uCAN Message Log Export");
   lines.push(`Export Date: ${new Date().toISOString()}`);
   lines.push(`Total Messages: ${messages.length}`);
-  lines.push('='.repeat(80));
-  lines.push('');
+  lines.push("=".repeat(80));
+  lines.push("");
 
   for (const message of messages) {
     const parts: string[] = [];
@@ -131,25 +136,29 @@ export function exportToText(messages: CANMessage[], includeTimestamps: boolean 
     parts.push(message.direction);
     parts.push(`ID=${formatCANId(message.canId, message.isExtended)}`);
     parts.push(`[${message.length}]`);
-    parts.push(formatDataBytes(message.data, ' '));
+    parts.push(formatDataBytes(message.data, " "));
 
     if (message.error) {
       parts.push(`ERROR: ${message.error}`);
     }
 
-    lines.push(parts.join(' '));
+    lines.push(parts.join(" "));
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
  * Download file to browser
  */
-export function downloadFile(content: string, filename: string, mimeType: string): void {
+export function downloadFile(
+  content: string,
+  filename: string,
+  mimeType: string,
+): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
 
   link.href = url;
   link.download = filename;
@@ -164,8 +173,12 @@ export function downloadFile(content: string, filename: string, mimeType: string
 /**
  * Export messages with configuration
  */
-export function exportMessages(messages: CANMessage[], config: ExportConfig, stats?: BusStatistics): void {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+export function exportMessages(
+  messages: CANMessage[],
+  config: ExportConfig,
+  stats?: BusStatistics,
+): void {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const baseFilename = config.filename || `ucan-log-${timestamp}`;
 
   let content: string;
@@ -173,22 +186,31 @@ export function exportMessages(messages: CANMessage[], config: ExportConfig, sta
   let extension: string;
 
   switch (config.format) {
-    case 'csv':
-      content = exportToCSV(messages, config.includeTimestamps, config.includeRawData);
-      mimeType = 'text/csv';
-      extension = 'csv';
+    case "csv":
+      content = exportToCSV(
+        messages,
+        config.includeTimestamps,
+        config.includeRawData,
+      );
+      mimeType = "text/csv";
+      extension = "csv";
       break;
 
-    case 'json':
-      content = exportToJSON(messages, config.includeTimestamps, config.includeStats, stats);
-      mimeType = 'application/json';
-      extension = 'json';
+    case "json":
+      content = exportToJSON(
+        messages,
+        config.includeTimestamps,
+        config.includeStats,
+        stats,
+      );
+      mimeType = "application/json";
+      extension = "json";
       break;
 
-    case 'txt':
+    case "txt":
       content = exportToText(messages, config.includeTimestamps);
-      mimeType = 'text/plain';
-      extension = 'txt';
+      mimeType = "text/plain";
+      extension = "txt";
       break;
 
     default:
@@ -213,26 +235,28 @@ export function exportStatsSummary(stats: BusStatistics): void {
       messagesPerSecond: stats.messagesPerSecond,
       busLoad: stats.busLoad,
       uptimeMs: stats.uptime,
-      uptimeFormatted: formatUptime(stats.uptime)
+      uptimeFormatted: formatUptime(stats.uptime),
     },
     perIdStatistics: Array.from(stats.perIdStats.values())
       .sort((a, b) => b.count - a.count)
-      .map(idStat => ({
-        canId: formatCANId(idStat.canId, idStat.canId > 0x7FF),
+      .map((idStat) => ({
+        canId: formatCANId(idStat.canId, idStat.canId > 0x7ff),
         canIdDecimal: idStat.canId,
         count: idStat.count,
-        percentage: ((idStat.count / (stats.rxCount + stats.txCount)) * 100).toFixed(2) + '%',
+        percentage:
+          ((idStat.count / (stats.rxCount + stats.txCount)) * 100).toFixed(2) +
+          "%",
         lastSeen: idStat.lastSeen.toISOString(),
-        frequency: idStat.frequency.toFixed(2) + ' msg/s',
-        averageIntervalMs: idStat.averageInterval.toFixed(2) + ' ms'
-      }))
+        frequency: idStat.frequency.toFixed(2) + " msg/s",
+        averageIntervalMs: idStat.averageInterval.toFixed(2) + " ms",
+      })),
   };
 
   const content = JSON.stringify(summary, null, 2);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const filename = `ucan-stats-${timestamp}.json`;
 
-  downloadFile(content, filename, 'application/json');
+  downloadFile(content, filename, "application/json");
 }
 
 /**
@@ -251,5 +275,5 @@ function formatUptime(uptimeMs: number): string {
   if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
   if (seconds % 60 > 0) parts.push(`${seconds % 60}s`);
 
-  return parts.join(' ') || '0s';
+  return parts.join(" ") || "0s";
 }

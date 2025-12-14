@@ -5,9 +5,7 @@
  * Produces coordinates for blocks and edge routing for visualization.
  */
 
-import {
-  EdgeType
-} from './types';
+import { EdgeType } from "./types";
 import type {
   ControlFlowGraph,
   CFGLayout,
@@ -15,8 +13,8 @@ import type {
   EdgeLayout,
   LayoutOptions,
   Point,
-  BasicBlock
-} from './types';
+  BasicBlock,
+} from "./types";
 
 export class CFGLayoutEngine {
   private options: LayoutOptions;
@@ -39,7 +37,7 @@ export class CFGLayoutEngine {
       return {
         blocks: new Map(),
         edges: [],
-        bounds: { width: 0, height: 0, minX: 0, minY: 0 }
+        bounds: { width: 0, height: 0, minX: 0, minY: 0 },
       };
     }
 
@@ -61,7 +59,7 @@ export class CFGLayoutEngine {
     return {
       blocks: blockLayouts,
       edges: edgeLayouts,
-      bounds
+      bounds,
     };
   }
 
@@ -77,7 +75,7 @@ export class CFGLayoutEngine {
 
     // BFS to assign levels
     const queue: Array<{ id: string; level: number }> = [
-      { id: cfg.entryBlock, level: 0 }
+      { id: cfg.entryBlock, level: 0 },
     ];
     const visited = new Set<string>();
 
@@ -122,7 +120,10 @@ export class CFGLayoutEngine {
    * Reorder blocks within each layer to minimize edge crossings.
    * Uses iterative improvement with barycentric positioning.
    */
-  private reduceCrossings(layers: Map<number, string[]>, cfg: ControlFlowGraph): void {
+  private reduceCrossings(
+    layers: Map<number, string[]>,
+    cfg: ControlFlowGraph,
+  ): void {
     const maxIterations = 10;
 
     for (let iter = 0; iter < maxIterations; iter++) {
@@ -158,7 +159,10 @@ export class CFGLayoutEngine {
             }
           }
 
-          barycenters.set(blockId, count > 0 ? sum / count : layer.indexOf(blockId));
+          barycenters.set(
+            blockId,
+            count > 0 ? sum / count : layer.indexOf(blockId),
+          );
         }
 
         // Sort layer by barycenter
@@ -180,7 +184,10 @@ export class CFGLayoutEngine {
   /**
    * Get the level of a block
    */
-  private getBlockLevel(blockId: string, layers: Map<number, string[]>): number | undefined {
+  private getBlockLevel(
+    blockId: string,
+    layers: Map<number, string[]>,
+  ): number | undefined {
     for (const [level, layer] of layers) {
       if (layer.includes(blockId)) {
         return level;
@@ -192,9 +199,12 @@ export class CFGLayoutEngine {
   /**
    * Phase 3: Assign X,Y coordinates to blocks
    */
-  private assignCoordinates(layers: Map<number, string[]>): Map<string, BlockLayout> {
+  private assignCoordinates(
+    layers: Map<number, string[]>,
+  ): Map<string, BlockLayout> {
     const layouts = new Map<string, BlockLayout>();
-    const { blockWidth, blockHeight, horizontalSpacing, verticalSpacing } = this.options;
+    const { blockWidth, blockHeight, horizontalSpacing, verticalSpacing } =
+      this.options;
 
     const sortedLevels = Array.from(layers.keys()).sort((a, b) => a - b);
 
@@ -203,7 +213,8 @@ export class CFGLayoutEngine {
       const y = level * (blockHeight + verticalSpacing);
 
       // Center blocks horizontally
-      const totalWidth = layer.length * blockWidth + (layer.length - 1) * horizontalSpacing;
+      const totalWidth =
+        layer.length * blockWidth + (layer.length - 1) * horizontalSpacing;
       let startX = 0;
 
       if (this.options.compactLayout) {
@@ -223,7 +234,7 @@ export class CFGLayoutEngine {
           y,
           width: blockWidth,
           height: blockHeight,
-          level
+          level,
         });
       }
     }
@@ -238,7 +249,7 @@ export class CFGLayoutEngine {
    */
   private routeEdges(
     blockLayouts: Map<string, BlockLayout>,
-    cfg: ControlFlowGraph
+    cfg: ControlFlowGraph,
   ): EdgeLayout[] {
     const edges: EdgeLayout[] = [];
 
@@ -255,7 +266,7 @@ export class CFGLayoutEngine {
           toLayout,
           edge.type,
           block,
-          cfg
+          cfg,
         );
 
         edges.push(edgeLayout);
@@ -273,7 +284,7 @@ export class CFGLayoutEngine {
     to: BlockLayout,
     type: EdgeType,
     fromBlock: BasicBlock,
-    cfg: ControlFlowGraph
+    cfg: ControlFlowGraph,
   ): EdgeLayout {
     // Calculate edge color
     const color = this.getEdgeColor(type);
@@ -286,7 +297,13 @@ export class CFGLayoutEngine {
     const isBackEdge = to.level <= from.level;
 
     // Generate bezier control points
-    const points = this.generateEdgePath(fromPoint, toPoint, isBackEdge, from, to);
+    const points = this.generateEdgePath(
+      fromPoint,
+      toPoint,
+      isBackEdge,
+      from,
+      to,
+    );
 
     return {
       from: from.id,
@@ -294,7 +311,7 @@ export class CFGLayoutEngine {
       type,
       points,
       color,
-      isBackEdge
+      isBackEdge,
     };
   }
 
@@ -304,7 +321,7 @@ export class CFGLayoutEngine {
   private getBlockExitPoint(layout: BlockLayout): Point {
     return {
       x: layout.x + layout.width / 2,
-      y: layout.y + layout.height
+      y: layout.y + layout.height,
     };
   }
 
@@ -314,7 +331,7 @@ export class CFGLayoutEngine {
   private getBlockEntryPoint(layout: BlockLayout): Point {
     return {
       x: layout.x + layout.width / 2,
-      y: layout.y
+      y: layout.y,
     };
   }
 
@@ -326,7 +343,7 @@ export class CFGLayoutEngine {
     to: Point,
     isBackEdge: boolean,
     fromLayout: BlockLayout,
-    toLayout: BlockLayout
+    toLayout: BlockLayout,
   ): Point[] {
     if (isBackEdge) {
       // Back-edges curve around to the side
@@ -337,7 +354,7 @@ export class CFGLayoutEngine {
         from,
         { x: from.x + offset, y: from.y + 30 },
         { x: to.x + offset, y: to.y - 30 },
-        to
+        to,
       ];
     }
 
@@ -356,7 +373,7 @@ export class CFGLayoutEngine {
       from,
       { x: from.x, y: from.y + controlOffset },
       { x: to.x, y: to.y - controlOffset },
-      to
+      to,
     ];
   }
 
@@ -365,20 +382,25 @@ export class CFGLayoutEngine {
    */
   private getEdgeColor(type: EdgeType): string {
     const colors = {
-      [EdgeType.UNCONDITIONAL]: '#9ca3af',      // Gray
-      [EdgeType.CONDITIONAL_TRUE]: '#10b981',   // Green
-      [EdgeType.CONDITIONAL_FALSE]: '#ef4444',  // Red
-      [EdgeType.CALL]: '#a855f7',               // Purple
-      [EdgeType.RETURN]: '#ec4899'              // Pink
+      [EdgeType.UNCONDITIONAL]: "#9ca3af", // Gray
+      [EdgeType.CONDITIONAL_TRUE]: "#10b981", // Green
+      [EdgeType.CONDITIONAL_FALSE]: "#ef4444", // Red
+      [EdgeType.CALL]: "#a855f7", // Purple
+      [EdgeType.RETURN]: "#ec4899", // Pink
     };
 
-    return colors[type] || '#9ca3af';
+    return colors[type] || "#9ca3af";
   }
 
   /**
    * Calculate bounding box for layout
    */
-  private calculateBounds(blockLayouts: Map<string, BlockLayout>): { width: number; height: number; minX: number; minY: number } {
+  private calculateBounds(blockLayouts: Map<string, BlockLayout>): {
+    width: number;
+    height: number;
+    minX: number;
+    minY: number;
+  } {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -397,7 +419,7 @@ export class CFGLayoutEngine {
       width: maxX - minX + padding * 2,
       height: maxY - minY + padding * 2,
       minX,
-      minY
+      minY,
     };
   }
 }

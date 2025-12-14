@@ -4,14 +4,20 @@
  * Main exports for the GDB Remote Serial Protocol implementation.
  */
 
-export { GdbClient } from './GdbClient';
-export { RspProtocol } from './RspProtocol';
-export { SerialTransport } from './SerialTransport';
-export { BlackMagicCommands } from './BlackMagicCommands';
-export { TargetInfo } from './TargetInfo';
+export { GdbClient } from "./GdbClient";
+export { RspProtocol } from "./RspProtocol";
+export { SerialTransport } from "./SerialTransport";
+export { BlackMagicCommands } from "./BlackMagicCommands";
+export { TargetInfo } from "./TargetInfo";
 
 // Export enums as values
-export { ConnectionState, PowerState, DebugInterface, BreakpointType, ExecutionState } from './types';
+export {
+  ConnectionState,
+  PowerState,
+  DebugInterface,
+  BreakpointType,
+  ExecutionState,
+} from "./types";
 
 // Export types
 export type {
@@ -27,12 +33,8 @@ export type {
   GdbClientConfig,
   RegisterInfo,
   Breakpoint,
-  ThreadInfo
-} from './types';
+  ThreadInfo,
+} from "./types";
 
 // Export TargetInfo types
-export type {
-  ChipInfo,
-  MemoryRegion,
-  TargetInformation
-} from './TargetInfo';
+export type { ChipInfo, MemoryRegion, TargetInformation } from "./TargetInfo";

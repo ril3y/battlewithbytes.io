@@ -25,6 +25,7 @@ import type {
 import { loadHeaders } from "../lib/platform/HeaderLoader";
 import { getPlatformManager } from "../lib/platform/PlatformManager";
 import { LibraryPanel } from "./LibraryPanel";
+import { WasmManagerPanel } from "./WasmManagerPanel";
 import { FirstTimeSetupModal } from "./FirstTimeSetupModal";
 import { EditProjectModal } from "./EditProjectModal";
 import { HexViewer, isBinaryContent } from "./HexViewer";
@@ -319,7 +320,7 @@ function BattleForgeIDEContent() {
 
   // Right sidebar tab state
   const [rightSidebarTab, setRightSidebarTab] = useState<
-    "platform" | "libraries"
+    "platform" | "libraries" | "toolchains"
   >("platform");
 
   // Resizable panel state
@@ -642,7 +643,7 @@ clean:
               const configFileName = configMatch[1];
               const userConfigPath = `/src/${configFileName}`;
               // Only copy if file doesn't already exist in src
-              if (!files.get(userConfigPath)) {
+              if (!getFile(userConfigPath)) {
                 addFile(userConfigPath, content, true); // true = editable
                 configTemplatesCopied++;
               }
@@ -736,7 +737,7 @@ clean:
                 progress.stage === "error"
                   ? "error"
                   : progress.stage === "warning"
-                    ? "warn"
+                    ? "warning"
                     : "info",
               );
             }
@@ -898,7 +899,7 @@ SECTIONS
 
     try {
       const { family, device } = selectedPlatform;
-      const linkerUrl = `/platforms/stm32/${family.id}/linker/${device.linkerScript}`;
+      const linkerUrl = `/tools/battleforge/platforms/stm32/${family.id}/linker/${device.linkerScript}`;
       const response = await fetch(linkerUrl);
       if (!response.ok) {
         log(
@@ -1542,6 +1543,12 @@ SECTIONS
             >
               Libraries
             </button>
+            <button
+              className={`sidebar-tab ${rightSidebarTab === "toolchains" ? "active" : ""}`}
+              onClick={() => setRightSidebarTab("toolchains")}
+            >
+              Toolchains
+            </button>
           </div>
 
           {/* Platform Tab Content */}
@@ -1579,7 +1586,7 @@ SECTIONS
                     <div className="platform-details">
                       <span>{currentProject.platform.architecture}</span>
                       <span className="platform-pending-text">
-                        Tap to configure headers
+                        Click to configure platform
                       </span>
                     </div>
                   </div>
@@ -1653,6 +1660,13 @@ SECTIONS
                   log(`Removed ${name} from /libs`, "info");
                 }}
               />
+            </div>
+          )}
+
+          {/* Toolchains Tab Content */}
+          {rightSidebarTab === "toolchains" && (
+            <div className="library-panel-container">
+              <WasmManagerPanel onLog={log} />
             </div>
           )}
         </div>

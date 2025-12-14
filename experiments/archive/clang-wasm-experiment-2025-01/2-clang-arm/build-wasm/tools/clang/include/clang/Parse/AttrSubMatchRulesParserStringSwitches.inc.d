@@ -1,1 +1,0 @@
-tools/clang/include/clang/Parse/AttrSubMatchRulesParserStringSwitches.inc: /build/llvm-project/clang/include/clang/Parse/../../clang/Basic/ASTNode.td /build/llvm-project/clang/include/clang/Parse/../../clang/Basic/AttrDocs.td /build/llvm-project/clang/include/clang/Parse/../../clang/Basic/DeclNodes.td /build/llvm-project/clang/include/clang/Parse/../../clang/Basic/StmtNodes.td

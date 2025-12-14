@@ -4,39 +4,39 @@
  * Core type definitions for control flow analysis and visualization
  */
 
-import type { DisassembledInstruction } from '../disasm/ArmDisassembler';
+import type { DisassembledInstruction } from "../disasm/ArmDisassembler";
 
 /**
  * Type of basic block based on its terminating instruction
  */
 export enum BlockType {
-  ENTRY = 'entry',               // Function entry point
-  NORMAL = 'normal',             // Regular sequential code
-  CONDITIONAL = 'conditional',   // Ends with conditional branch
-  CALL = 'call',                 // Ends with function call
-  RETURN = 'return',             // Ends with return instruction
-  EXIT = 'exit',                 // Dead end (no successors)
-  UNREACHABLE = 'unreachable'    // Unreachable code detected
+  ENTRY = "entry", // Function entry point
+  NORMAL = "normal", // Regular sequential code
+  CONDITIONAL = "conditional", // Ends with conditional branch
+  CALL = "call", // Ends with function call
+  RETURN = "return", // Ends with return instruction
+  EXIT = "exit", // Dead end (no successors)
+  UNREACHABLE = "unreachable", // Unreachable code detected
 }
 
 /**
  * Type of edge connecting two basic blocks
  */
 export enum EdgeType {
-  UNCONDITIONAL = 'unconditional', // Direct jump or fall-through
-  CONDITIONAL_TRUE = 'true',       // Branch taken
-  CONDITIONAL_FALSE = 'false',     // Branch not taken (fall-through)
-  CALL = 'call',                   // Function call
-  RETURN = 'return'                // Return from function
+  UNCONDITIONAL = "unconditional", // Direct jump or fall-through
+  CONDITIONAL_TRUE = "true", // Branch taken
+  CONDITIONAL_FALSE = "false", // Branch not taken (fall-through)
+  CALL = "call", // Function call
+  RETURN = "return", // Return from function
 }
 
 /**
  * Edge connecting two basic blocks with metadata
  */
 export interface CFGEdge {
-  target: string;              // Target block ID
-  type: EdgeType;              // Edge type
-  condition?: string;          // Condition string (e.g., "Z==1", "N==0")
+  target: string; // Target block ID
+  type: EdgeType; // Edge type
+  condition?: string; // Condition string (e.g., "Z==1", "N==0")
 }
 
 /**
@@ -48,58 +48,58 @@ export interface CFGEdge {
  * - No branches in the middle
  */
 export interface BasicBlock {
-  id: string;                     // Unique identifier (hex address)
-  startAddress: number;           // First instruction address
-  endAddress: number;             // Last instruction address (inclusive)
+  id: string; // Unique identifier (hex address)
+  startAddress: number; // First instruction address
+  endAddress: number; // Last instruction address (inclusive)
   instructions: DisassembledInstruction[];
-  type: BlockType;                // Block classification
+  type: BlockType; // Block classification
 
   // Graph connectivity
-  predecessors: string[];         // IDs of blocks that jump here
-  successors: string[];           // IDs of blocks this jumps to
-  edges: CFGEdge[];               // Outgoing edges with metadata
+  predecessors: string[]; // IDs of blocks that jump here
+  successors: string[]; // IDs of blocks this jumps to
+  edges: CFGEdge[]; // Outgoing edges with metadata
 
   // Analysis metadata
-  dominates?: string[];           // IDs of blocks this dominates
-  postDominates?: string[];       // IDs of blocks this post-dominates
-  loopHeader?: boolean;           // Is this a loop header?
-  loopDepth?: number;             // Nesting level of loops
+  dominates?: string[]; // IDs of blocks this dominates
+  postDominates?: string[]; // IDs of blocks this post-dominates
+  loopHeader?: boolean; // Is this a loop header?
+  loopDepth?: number; // Nesting level of loops
 }
 
 /**
  * Complete control flow graph for a function or code region
  */
 export interface ControlFlowGraph {
-  blocks: Map<string, BasicBlock>;  // All basic blocks indexed by ID
-  entryBlock: string;               // Entry point block ID
-  exitBlocks: string[];             // Exit block IDs (returns, dead ends)
+  blocks: Map<string, BasicBlock>; // All basic blocks indexed by ID
+  entryBlock: string; // Entry point block ID
+  exitBlocks: string[]; // Exit block IDs (returns, dead ends)
 
   // Function metadata
-  functionStart: number;            // Function start address
-  functionEnd: number;              // Function end address
+  functionStart: number; // Function start address
+  functionEnd: number; // Function end address
 
   // Analysis results
   metadata: {
     architecture: Architecture;
     totalInstructions: number;
     totalBlocks: number;
-    cyclomaticComplexity: number;   // Measure of code complexity (E - N + 2)
-    maxLoopDepth: number;            // Maximum nesting of loops
+    cyclomaticComplexity: number; // Measure of code complexity (E - N + 2)
+    maxLoopDepth: number; // Maximum nesting of loops
   };
 
   // Optional enhancements
-  dominatorTree?: Map<string, string[]>;  // Dominator relationships
-  loops?: Loop[];                         // Detected loops
+  dominatorTree?: Map<string, string[]>; // Dominator relationships
+  loops?: Loop[]; // Detected loops
 }
 
 /**
  * Loop structure detected in control flow
  */
 export interface Loop {
-  header: string;                  // Loop header block ID
-  backedge: string;                // Block that jumps back to header
-  blocks: Set<string>;             // All blocks in loop body
-  depth: number;                   // Nesting depth (1 = outermost)
+  header: string; // Loop header block ID
+  backedge: string; // Block that jumps back to header
+  blocks: Set<string>; // All blocks in loop body
+  depth: number; // Nesting depth (1 = outermost)
 }
 
 /**
@@ -107,23 +107,23 @@ export interface Loop {
  */
 export interface BlockLayout {
   id: string;
-  x: number;                       // Top-left X coordinate
-  y: number;                       // Top-left Y coordinate
+  x: number; // Top-left X coordinate
+  y: number; // Top-left Y coordinate
   width: number;
   height: number;
-  level: number;                   // Hierarchical level (for layered layout)
+  level: number; // Hierarchical level (for layered layout)
 }
 
 /**
  * Layout information for rendering an edge
  */
 export interface EdgeLayout {
-  from: string;                    // Source block ID
-  to: string;                      // Target block ID
+  from: string; // Source block ID
+  to: string; // Target block ID
   type: EdgeType;
-  points: Point[];                 // Bezier control points
-  color: string;                   // Rendering color
-  isBackEdge?: boolean;            // Is this a loop back-edge?
+  points: Point[]; // Bezier control points
+  color: string; // Rendering color
+  isBackEdge?: boolean; // Is this a loop back-edge?
 }
 
 /**
@@ -152,7 +152,7 @@ export interface CFGLayout {
  * Options for layout computation
  */
 export interface LayoutOptions {
-  algorithm: 'hierarchical' | 'force-directed';
+  algorithm: "hierarchical" | "force-directed";
   blockWidth: number;
   blockHeight: number;
   horizontalSpacing: number;
@@ -164,7 +164,7 @@ export interface LayoutOptions {
 /**
  * CPU architecture for architecture-specific analysis
  */
-export type Architecture = 'ARM' | 'RISC-V' | 'MIPS' | 'x86' | 'x86-64';
+export type Architecture = "ARM" | "RISC-V" | "MIPS" | "x86" | "x86-64";
 
 /**
  * Options for basic block identification
@@ -172,9 +172,9 @@ export type Architecture = 'ARM' | 'RISC-V' | 'MIPS' | 'x86' | 'x86-64';
 export interface BlockAnalysisOptions {
   architecture: Architecture;
   startAddress: number;
-  maxInstructions?: number;        // Limit analysis size
-  detectLoops?: boolean;           // Enable loop detection
-  detectUnreachable?: boolean;     // Mark unreachable code
+  maxInstructions?: number; // Limit analysis size
+  detectLoops?: boolean; // Enable loop detection
+  detectUnreachable?: boolean; // Mark unreachable code
 }
 
 /**
@@ -182,8 +182,8 @@ export interface BlockAnalysisOptions {
  */
 export interface CFGAnalysisResult {
   cfg: ControlFlowGraph;
-  warnings: string[];              // Analysis warnings (e.g., unreachable code)
-  errors: string[];                // Analysis errors
+  warnings: string[]; // Analysis warnings (e.g., unreachable code)
+  errors: string[]; // Analysis errors
   statistics: {
     analysisTimeMs: number;
     blocksCreated: number;

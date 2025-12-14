@@ -104,7 +104,7 @@ export interface ArmAnalyzerInstance {
   analyze_from_bytes(bytes: Uint8Array): AnalysisResults;
   analyze_from_bytes_with_progress(
     bytes: Uint8Array,
-    progressCallback?: ProgressCallback
+    progressCallback?: ProgressCallback,
   ): AnalysisResults;
   analyze_from_disasm(disasmData: DisasmData): AnalysisResults;
   get_xrefs_to(address: number): XrefResult[];
@@ -117,12 +117,12 @@ export interface ArmAnalyzerInstance {
 }
 
 export interface ArchitectureInfo {
-  architecture: string;      // "ArmCortexM4"
-  chip_name: string;         // "STM32F407"
-  manufacturer: string;      // "STMicroelectronics"
-  supported: boolean;        // true if decoder available
-  confidence: number;        // 0.0-1.0 match confidence
-  flash_base?: number;       // Optional flash base address from vector table
+  architecture: string; // "ArmCortexM4"
+  chip_name: string; // "STM32F407"
+  manufacturer: string; // "STMicroelectronics"
+  supported: boolean; // true if decoder available
+  confidence: number; // 0.0-1.0 match confidence
+  flash_base?: number; // Optional flash base address from vector table
 }
 
 export interface WasmAnalyzerModule {
@@ -162,27 +162,34 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
   // Start new initialization
   initPromise = (async () => {
     try {
-      console.log('[WasmAnalyzer] Loading WASM module from /wasm/battlemagic_analyzer_bg.wasm');
+      console.log(
+        "[WasmAnalyzer] Loading WASM module from /wasm/battlemagic_analyzer_bg.wasm",
+      );
 
       // Import the glue code from local copy (same pattern as wasm-loader.ts)
       const glueModule = await import(
         /* webpackChunkName: "battlemagic-analyzer-glue" */
         /* webpackMode: "lazy" */
-        './battlemagic_analyzer_bg.js'
+        "./battlemagic_analyzer_bg.js"
       );
 
       // Fetch WASM from public directory
-      const response = await fetch('/wasm/battlemagic_analyzer_bg.wasm');
+      const response = await fetch("/tools/battleforge/wasm/battlemagic_analyzer_bg.wasm");
       if (!response.ok) {
         throw new Error(`Failed to fetch WASM: ${response.statusText}`);
       }
       const wasmBytes = await response.arrayBuffer();
 
       // Instantiate WASM with the glue code as imports
-      const result = await WebAssembly.instantiate(wasmBytes, {
-        './battlemagic_analyzer_bg.js': glueModule,
-        wbg: glueModule
-      });
+      // Use type assertion to bypass strict typing on WebAssembly imports
+      const imports = {
+        "./battlemagic_analyzer_bg.js": glueModule,
+        wbg: glueModule,
+      };
+      const result = await WebAssembly.instantiate(
+        wasmBytes,
+        imports as unknown as WebAssembly.Imports
+      );
 
       // Set the WASM instance
       if (glueModule.__wbg_set_wasm) {
@@ -191,11 +198,11 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
 
       // Start the module if needed
       const startFn = result.instance.exports.__wbindgen_start;
-      if (typeof startFn === 'function') {
+      if (typeof startFn === "function") {
         startFn();
       }
 
-      console.log('[WasmAnalyzer] WASM module initialized successfully');
+      console.log("[WasmAnalyzer] WASM module initialized successfully");
 
       wasmModule = {
         ArmAnalyzer: glueModule.ArmAnalyzer,
@@ -203,14 +210,17 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
         init: glueModule.init || (() => {}),
         detect_architecture_wasm: glueModule.detect_architecture_wasm,
         get_supported_chips_wasm: glueModule.get_supported_chips_wasm,
-        is_architecture_supported_wasm: glueModule.is_architecture_supported_wasm,
+        is_architecture_supported_wasm:
+          glueModule.is_architecture_supported_wasm,
       };
 
       return wasmModule;
     } catch (error) {
-      console.error('[WasmAnalyzer] Failed to load WASM:', error);
+      console.error("[WasmAnalyzer] Failed to load WASM:", error);
       initPromise = null;
-      throw new Error(`Failed to load WASM analyzer: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to load WASM analyzer: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   })();
 
@@ -225,7 +235,9 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
  * @param baseAddress - Base address of the firmware/binary
  * @returns Promise that resolves to a new ArmAnalyzer instance
  */
-export async function createAnalyzer(baseAddress: number): Promise<ArmAnalyzerInstance> {
+export async function createAnalyzer(
+  baseAddress: number,
+): Promise<ArmAnalyzerInstance> {
   const wasmMod = await loadWasmAnalyzer();
   return new wasmMod.ArmAnalyzer(baseAddress);
 }
@@ -254,9 +266,11 @@ export function resetWasmCache(): void {
  * @param targetDescription - Target description string from BMP scan (e.g., "STM32F407VG")
  * @returns Architecture info including support status and confidence
  */
-export async function detectArchitecture(targetDescription: string): Promise<ArchitectureInfo> {
+export async function detectArchitecture(
+  targetDescription: string,
+): Promise<ArchitectureInfo> {
   // Use TypeScript chip database (supports custom chips)
-  const { getChipDatabase } = await import('./chips/ChipDatabase');
+  const { getChipDatabase } = await import("./chips/ChipDatabase");
   const chipDb = getChipDatabase();
   return chipDb.detectArchitecture(targetDescription);
 }
@@ -267,22 +281,27 @@ export async function detectArchitecture(targetDescription: string): Promise<Arc
  * @returns Array of all chips in the database with support status
  */
 export async function getSupportedChips(): Promise<ArchitectureInfo[]> {
-  const { getChipDatabase } = await import('./chips/ChipDatabase');
+  const { getChipDatabase } = await import("./chips/ChipDatabase");
   const chipDb = getChipDatabase();
   await chipDb.ready();
 
-  return chipDb.getAllChips()
-    .filter(chip => chip.supported)
-    .map(chip => ({
+  return chipDb
+    .getAllChips()
+    .filter((chip) => chip.supported)
+    .map((chip) => ({
       architecture: chip.architecture,
       chip_name: chip.family,
       manufacturer: chip.manufacturer,
       supported: chip.supported,
       confidence: 1.0,
       architecture_name: chip.architecture,
-      isa_family: chip.architecture.startsWith('ArmCortex') ? 'ARM' :
-                  chip.architecture.startsWith('Mips') ? 'MIPS' :
-                  chip.architecture.startsWith('RiscV') ? 'RISC-V' : 'Unknown',
+      isa_family: chip.architecture.startsWith("ArmCortex")
+        ? "ARM"
+        : chip.architecture.startsWith("Mips")
+          ? "MIPS"
+          : chip.architecture.startsWith("RiscV")
+            ? "RISC-V"
+            : "Unknown",
       flash_base: parseInt(chip.flashBase, 16),
       flash_size: parseInt(chip.flashSize, 16),
       ram_base: parseInt(chip.ramBase, 16),
@@ -297,16 +316,18 @@ export async function getSupportedChips(): Promise<ArchitectureInfo[]> {
  * @param archName - Architecture name (e.g., "ArmCortexM4", "Mips32")
  * @returns True if we have a decoder for this architecture
  */
-export async function isArchitectureSupported(archName: string): Promise<boolean> {
+export async function isArchitectureSupported(
+  archName: string,
+): Promise<boolean> {
   // ARM Cortex-M architectures are supported
   const supported = [
-    'ArmCortexM0',
-    'ArmCortexM0Plus',
-    'ArmCortexM3',
-    'ArmCortexM4',
-    'ArmCortexM7',
-    'ArmCortexM23',
-    'ArmCortexM33',
+    "ArmCortexM0",
+    "ArmCortexM0Plus",
+    "ArmCortexM3",
+    "ArmCortexM4",
+    "ArmCortexM7",
+    "ArmCortexM23",
+    "ArmCortexM33",
   ];
 
   return supported.includes(archName);

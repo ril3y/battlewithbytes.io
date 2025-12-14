@@ -21,7 +21,7 @@
  *   PC-relative branches have their branchTarget calculated automatically
  */
 
-import type { DisassembledInstruction } from './ArmDisassembler';
+import type { DisassembledInstruction } from "./ArmDisassembler";
 
 // Capstone types (dynamic import - typing not available)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,12 +34,34 @@ type CapstoneInstruction = any;
  * Used to classify instructions as branches
  */
 const ARM_BRANCH_MNEMONICS = new Set([
-  'b', 'bl', 'bx', 'blx', 'bxj',
-  'beq', 'bne', 'bcs', 'bhs', 'bcc', 'blo',
-  'bmi', 'bpl', 'bvs', 'bvc', 'bhi', 'bls',
-  'bge', 'blt', 'bgt', 'ble', 'bal',
-  'b.w', 'bl.w',
-  'cbz', 'cbnz', 'tbb', 'tbh'
+  "b",
+  "bl",
+  "bx",
+  "blx",
+  "bxj",
+  "beq",
+  "bne",
+  "bcs",
+  "bhs",
+  "bcc",
+  "blo",
+  "bmi",
+  "bpl",
+  "bvs",
+  "bvc",
+  "bhi",
+  "bls",
+  "bge",
+  "blt",
+  "bgt",
+  "ble",
+  "bal",
+  "b.w",
+  "bl.w",
+  "cbz",
+  "cbnz",
+  "tbb",
+  "tbh",
 ]);
 
 /**
@@ -51,17 +73,17 @@ const isReturnInstruction = (mnemonic: string, operands: string): boolean => {
   const opLower = operands.toLowerCase();
 
   // BX LR or BLX LR
-  if ((mnLower === 'bx' || mnLower === 'blx') && opLower.includes('lr')) {
+  if ((mnLower === "bx" || mnLower === "blx") && opLower.includes("lr")) {
     return true;
   }
 
   // POP with PC in register list
-  if (mnLower === 'pop' && opLower.includes('pc')) {
+  if (mnLower === "pop" && opLower.includes("pc")) {
     return true;
   }
 
   // MOV PC, LR
-  if (mnLower === 'mov' && opLower.includes('pc') && opLower.includes('lr')) {
+  if (mnLower === "mov" && opLower.includes("pc") && opLower.includes("lr")) {
     return true;
   }
 
@@ -110,38 +132,44 @@ export class CapstoneDisassembler {
       try {
         // Dynamic import to avoid bundle bloat
         // Capstone.js exports MCapstone, and we need to initialize it first
-        // @ts-expect-error - No type definitions available for this module
-        const capstoneModule = await import('@alexaltea/capstone-js/dist/capstone.min.js');
+        const capstonePath = "@alexaltea/capstone-js/dist/capstone.min.js";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const capstoneModule = await (import(capstonePath) as Promise<any>);
 
         // The module exports MCapstone which needs to be initialized
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const MCapstone = (capstoneModule as any).default || capstoneModule;
 
         // MCapstone is a promise that resolves when WASM is ready
-        console.log('[CapstoneDisassembler] Waiting for WebAssembly to initialize...');
+        console.log(
+          "[CapstoneDisassembler] Waiting for WebAssembly to initialize...",
+        );
         const cs = await MCapstone;
 
         if (!cs || !cs.Capstone) {
-          throw new Error('Capstone module did not initialize properly');
+          throw new Error("Capstone module did not initialize properly");
         }
 
-        console.log('[CapstoneDisassembler] WebAssembly module initialized');
+        console.log("[CapstoneDisassembler] WebAssembly module initialized");
         this.cs = cs;
 
         // Create ARM Thumb disassembler instance
         // ARCH_ARM + MODE_THUMB for ARM Cortex-M processors
         // MODE_MCLASS adds Cortex-M specific instructions
-        const mode = cs.MODE_THUMB | cs.MODE_MCLASS | (this.littleEndian ? 0 : cs.MODE_BIG_ENDIAN);
+        const mode =
+          cs.MODE_THUMB |
+          cs.MODE_MCLASS |
+          (this.littleEndian ? 0 : cs.MODE_BIG_ENDIAN);
         this.capstone = new cs.Capstone(cs.ARCH_ARM, mode);
 
         // Note: detail() method is not available in Capstone.js
         // The JavaScript version provides basic disassembly without detailed operand info
 
         this.isInitialized = true;
-        console.log('[CapstoneDisassembler] Initialized successfully');
+        console.log("[CapstoneDisassembler] Initialized successfully");
       } catch (err) {
         this.initPromise = null; // Allow retry
-        console.error('[CapstoneDisassembler] Initialization failed:', err);
+        console.error("[CapstoneDisassembler] Initialization failed:", err);
         throw new Error(`Failed to initialize Capstone: ${err}`);
       }
     })();
@@ -168,7 +196,7 @@ export class CapstoneDisassembler {
   async disassemble(
     data: Uint8Array,
     baseAddress: number,
-    isThumb: boolean = true
+    isThumb: boolean = true,
   ): Promise<DisassembledInstruction[]> {
     // Ensure initialized
     if (!this.isReady()) {
@@ -176,7 +204,7 @@ export class CapstoneDisassembler {
     }
 
     if (!this.capstone) {
-      throw new Error('Capstone not initialized');
+      throw new Error("Capstone not initialized");
     }
 
     // Handle empty data
@@ -188,29 +216,36 @@ export class CapstoneDisassembler {
       // Note: Mode switching is not typically needed for Cortex-M as it's always Thumb
       // If ARM mode is needed, create a new Capstone instance with different mode
       if (!isThumb) {
-        console.warn('[CapstoneDisassembler] ARM mode requested but instance is Thumb mode');
+        console.warn(
+          "[CapstoneDisassembler] ARM mode requested but instance is Thumb mode",
+        );
         // For ARM mode, we would need to create a new instance with MODE_ARM
         // This is rarely needed for Cortex-M processors
       }
 
       // Disassemble using Capstone
-      const instructions: CapstoneInstruction[] = this.capstone.disasm(data, baseAddress);
+      const instructions: CapstoneInstruction[] = this.capstone.disasm(
+        data,
+        baseAddress,
+      );
 
       // Convert to our interface
       return this.convertInstructions(instructions, data, baseAddress);
     } catch (err) {
-      console.error('[CapstoneDisassembler] Disassembly failed:', err);
+      console.error("[CapstoneDisassembler] Disassembly failed:", err);
 
       // Graceful fallback: return single instruction showing error
-      return [{
-        address: baseAddress,
-        bytes: data.slice(0, Math.min(4, data.length)),
-        mnemonic: '.invalid',
-        operands: `; error: ${err}`,
-        size: Math.min(4, data.length),
-        isBranch: false,
-        comment: 'Capstone disassembly failed'
-      }];
+      return [
+        {
+          address: baseAddress,
+          bytes: data.slice(0, Math.min(4, data.length)),
+          mnemonic: ".invalid",
+          operands: `; error: ${err}`,
+          size: Math.min(4, data.length),
+          isBranch: false,
+          comment: "Capstone disassembly failed",
+        },
+      ];
     }
   }
 
@@ -225,7 +260,7 @@ export class CapstoneDisassembler {
   private convertInstructions(
     csInstructions: CapstoneInstruction[],
     originalData: Uint8Array,
-    baseAddress: number
+    baseAddress: number,
   ): DisassembledInstruction[] {
     const results: DisassembledInstruction[] = [];
 
@@ -237,8 +272,8 @@ export class CapstoneDisassembler {
         const bytes = originalData.slice(offset, offset + size);
 
         // Get mnemonic and operands
-        const mnemonic = csInst.mnemonic || '.unknown';
-        const operands = csInst.op_str || '';
+        const mnemonic = csInst.mnemonic || ".unknown";
+        const operands = csInst.op_str || "";
 
         // Detect if this is a branch instruction
         const isBranch = this.isBranchInstruction(mnemonic, operands);
@@ -251,14 +286,14 @@ export class CapstoneDisassembler {
             mnemonic,
             operands,
             csInst.address,
-            size
+            size,
           );
         }
 
         // Add comment for return instructions
         let comment: string | undefined = undefined;
         if (isReturnInstruction(mnemonic, operands)) {
-          comment = 'return';
+          comment = "return";
         }
 
         results.push({
@@ -269,19 +304,22 @@ export class CapstoneDisassembler {
           size,
           isBranch,
           branchTarget,
-          comment
+          comment,
         });
       } catch (err) {
-        console.warn('[CapstoneDisassembler] Error converting instruction:', err);
+        console.warn(
+          "[CapstoneDisassembler] Error converting instruction:",
+          err,
+        );
         // Add placeholder instruction
         results.push({
           address: csInst.address || baseAddress,
           bytes: new Uint8Array([0]),
-          mnemonic: '.error',
-          operands: '',
+          mnemonic: ".error",
+          operands: "",
           size: 2,
           isBranch: false,
-          comment: 'conversion error'
+          comment: "conversion error",
         });
       }
     }
@@ -306,7 +344,7 @@ export class CapstoneDisassembler {
     }
 
     // Check for conditional suffixes (e.g., "b.n", "beq.w")
-    const mnBase = mnLower.split('.')[0];
+    const mnBase = mnLower.split(".")[0];
     if (ARM_BRANCH_MNEMONICS.has(mnBase)) {
       return true;
     }
@@ -332,12 +370,12 @@ export class CapstoneDisassembler {
   private calculateBranchTarget(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _csInst: any,
-     
+
     _mnemonic: string,
     operands: string,
     address: number,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _size: number
+    _size: number,
   ): number | undefined {
     try {
       // Try to extract target from operands
@@ -370,7 +408,10 @@ export class CapstoneDisassembler {
       // Could not determine target
       return undefined;
     } catch (err) {
-      console.warn('[CapstoneDisassembler] Error calculating branch target:', err);
+      console.warn(
+        "[CapstoneDisassembler] Error calculating branch target:",
+        err,
+      );
       return undefined;
     }
   }
@@ -382,16 +423,19 @@ export class CapstoneDisassembler {
    * @param showBytes Whether to show instruction bytes
    * @returns Formatted string
    */
-  formatInstruction(inst: DisassembledInstruction, showBytes: boolean = true): string {
-    const addr = `0x${inst.address.toString(16).padStart(8, '0')}`;
+  formatInstruction(
+    inst: DisassembledInstruction,
+    showBytes: boolean = true,
+  ): string {
+    const addr = `0x${inst.address.toString(16).padStart(8, "0")}`;
     const bytes = showBytes
       ? Array.from(inst.bytes)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join(' ')
-          .padEnd(12, ' ')
-      : '';
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join(" ")
+          .padEnd(12, " ")
+      : "";
 
-    const mnem = inst.mnemonic.padEnd(8, ' ');
+    const mnem = inst.mnemonic.padEnd(8, " ");
     let line = showBytes
       ? `${addr}: ${bytes} ${mnem} ${inst.operands}`
       : `${addr}: ${mnem} ${inst.operands}`;
@@ -411,7 +455,9 @@ export class CapstoneDisassembler {
    * @param instructions Array of disassembled instructions
    * @returns Map of source address to set of target addresses
    */
-  analyzeControlFlow(instructions: DisassembledInstruction[]): Map<number, Set<number>> {
+  analyzeControlFlow(
+    instructions: DisassembledInstruction[],
+  ): Map<number, Set<number>> {
     const flowMap = new Map<number, Set<number>>();
 
     for (const inst of instructions) {
@@ -435,19 +481,26 @@ export class CapstoneDisassembler {
    * @param index Index of instruction to check
    * @returns True if instruction appears to be a function entry
    */
-  isFunctionEntry(instructions: DisassembledInstruction[], index: number): boolean {
+  isFunctionEntry(
+    instructions: DisassembledInstruction[],
+    index: number,
+  ): boolean {
     if (index >= instructions.length) return false;
 
     const inst = instructions[index];
 
     // Check if this instruction is targeted by BL (function call)
-    for (let i = Math.max(0, index - 20); i < Math.min(instructions.length, index + 20); i++) {
+    for (
+      let i = Math.max(0, index - 20);
+      i < Math.min(instructions.length, index + 20);
+      i++
+    ) {
       if (i === index) continue;
       const other = instructions[i];
       if (other.isBranch && other.branchTarget === inst.address) {
         // Check if it's a BL (function call)
         const mnem = other.mnemonic.toLowerCase();
-        if (mnem === 'bl' || mnem === 'blx' || mnem === 'bl.w') {
+        if (mnem === "bl" || mnem === "blx" || mnem === "bl.w") {
           return true;
         }
       }
@@ -455,14 +508,14 @@ export class CapstoneDisassembler {
 
     // Check for common function prologue patterns
     const mnem = inst.mnemonic.toLowerCase();
-    if (mnem === 'push' && inst.operands.includes('lr')) {
+    if (mnem === "push" && inst.operands.includes("lr")) {
       return true;
     }
 
     // Check if preceded by alignment padding or data
     if (index > 0) {
       const prev = instructions[index - 1];
-      if (prev.mnemonic === '.word' || prev.mnemonic === '.dword') {
+      if (prev.mnemonic === ".word" || prev.mnemonic === ".dword") {
         return true;
       }
     }
@@ -480,7 +533,7 @@ export class CapstoneDisassembler {
       try {
         this.capstone.close();
       } catch (err) {
-        console.warn('[CapstoneDisassembler] Error disposing:', err);
+        console.warn("[CapstoneDisassembler] Error disposing:", err);
       }
       this.capstone = null;
     }
@@ -499,7 +552,7 @@ export class CapstoneDisassembler {
  * @returns Initialized CapstoneDisassembler instance
  */
 export async function createCapstoneDisassembler(
-  littleEndian: boolean = true
+  littleEndian: boolean = true,
 ): Promise<CapstoneDisassembler> {
   const disasm = new CapstoneDisassembler(littleEndian);
   await disasm.initialize();

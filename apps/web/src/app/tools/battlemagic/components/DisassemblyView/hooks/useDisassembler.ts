@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { WasmDisassembler } from '../../../lib/disasm/WasmDisassembler';
-import { ArmDisassembler } from '../../../lib/arch/arm/disasm';
+import { useEffect, useRef, useState } from "react";
+import { WasmDisassembler } from "../../../lib/disasm/WasmDisassembler";
+import { ArmDisassembler } from "../../../lib/arch/arm/disasm";
 
 /**
  * Hook for managing disassembler initialization
@@ -20,23 +20,28 @@ export function useDisassembler(onOutput?: (message: string) => void) {
   useEffect(() => {
     const initDisassembler = async () => {
       try {
-        console.log('[DisassemblyView] Initializing WASM disassembler...');
+        console.log("[DisassemblyView] Initializing WASM disassembler...");
         setIsLoading(true);
         const wasm = new WasmDisassembler();
         await wasm.initialize();
         disassembler.current = wasm;
         setDisassemblerReady(true);
         setIsLoading(false);
-        console.log('[DisassemblyView] WASM disassembler initialized successfully');
+        console.log(
+          "[DisassemblyView] WASM disassembler initialized successfully",
+        );
       } catch (err) {
-        console.error('[DisassemblyView] Failed to initialize WASM, falling back to ArmDisassembler:', err);
+        console.error(
+          "[DisassemblyView] Failed to initialize WASM, falling back to ArmDisassembler:",
+          err,
+        );
         // Fallback to custom ARM disassembler
         disassembler.current = new ArmDisassembler();
         setDisassemblerReady(true);
         setIsLoading(false);
         setError(null); // Clear error since we have a fallback
-        console.log('[DisassemblyView] Using ArmDisassembler fallback');
-        onOutput?.('[Using ArmDisassembler (WASM failed to load)]');
+        console.log("[DisassemblyView] Using ArmDisassembler fallback");
+        onOutput?.("[Using ArmDisassembler (WASM failed to load)]");
       }
     };
 
@@ -44,7 +49,7 @@ export function useDisassembler(onOutput?: (message: string) => void) {
 
     return () => {
       // Cleanup on unmount
-      if (disassembler.current && 'dispose' in disassembler.current) {
+      if (disassembler.current && "dispose" in disassembler.current) {
         disassembler.current.dispose();
       }
     };
@@ -55,6 +60,6 @@ export function useDisassembler(onOutput?: (message: string) => void) {
     disassemblerReady,
     isLoading,
     error,
-    setError
+    setError,
   };
 }

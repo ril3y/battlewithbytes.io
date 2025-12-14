@@ -1,0 +1,169 @@
+{
+  "id": "adafruit_feather_esp32_v2",
+  "name": "Adafruit ESP32 Feather V2",
+  "vendor": "adafruit",
+  "version": "1.0.0",
+  "description": "The ESP32 Feather V2 is Adafruit's upgraded Feather ESP32, with 8MB Flash, 2MB PSRAM, USB-C, and a STEMMA QT connector.",
+
+  "assets": {
+    "image": "https://cdn-learn.adafruit.com/assets/assets/000/111/179/original/adafruit_products_ESP32_Feather_V2_Top.jpg",
+    "pinout": "https://cdn-learn.adafruit.com/assets/assets/000/111/204/original/adafruit_products_Adafruit_ESP32_Feather_V2_Pinout.png",
+    "thumbnail": "https://cdn-shop.adafruit.com/310x233/5400-00.jpg"
+  },
+
+  "documentation": {
+    "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf",
+    "schematic": "https://learn.adafruit.com/assets/111211",
+    "productPage": "https://www.adafruit.com/product/5400",
+    "pinout": "https://learn.adafruit.com/adafruit-esp32-feather-v2/pinouts",
+    "guides": [
+      "https://learn.adafruit.com/adafruit-esp32-feather-v2",
+      "https://learn.adafruit.com/adafruit-esp32-feather-v2/arduino-ide-setup"
+    ]
+  },
+
+  "namedPins": {
+    "LED_BUILTIN": {
+      "gpio": 13,
+      "arduino": 13,
+      "features": ["PWM", "DIGITAL_OUT"],
+      "notes": "Red onboard LED"
+    },
+    "NEOPIXEL": {
+      "gpio": 0,
+      "arduino": 0,
+      "features": ["NEOPIXEL", "DIGITAL_OUT"],
+      "notes": "Single WS2812B NeoPixel"
+    },
+    "NEOPIXEL_POWER": {
+      "gpio": 2,
+      "arduino": 2,
+      "features": ["DIGITAL_OUT"],
+      "notes": "Must be HIGH to power NeoPixel"
+    },
+    "BUTTON": {
+      "gpio": 38,
+      "arduino": 38,
+      "features": ["DIGITAL_IN", "PULLUP"],
+      "notes": "Boot button, active LOW"
+    },
+    "I2C_SDA": { "gpio": 22, "arduino": 22, "features": ["I2C_SDA", "DIGITAL"] },
+    "I2C_SCL": { "gpio": 20, "arduino": 20, "features": ["I2C_SCL", "DIGITAL"] },
+    "SPI_MOSI": { "gpio": 35, "features": ["SPI_MOSI"] },
+    "SPI_MISO": { "gpio": 37, "features": ["SPI_MISO"] },
+    "SPI_SCK": { "gpio": 36, "features": ["SPI_SCK"] },
+    "SERIAL_TX": { "gpio": 1, "features": ["UART_TX"] },
+    "SERIAL_RX": { "gpio": 3, "features": ["UART_RX"] },
+    "A0": { "gpio": 26, "arduino": 26, "features": ["ADC", "DAC", "TOUCH"] },
+    "VBAT_SENSE": { "gpio": 35, "features": ["ADC"], "notes": "Battery voltage divider (1/2)" }
+  },
+
+  "chip": {
+    "platform": "esp32",
+    "family": "esp32",
+    "device": "esp32",
+    "architecture": "xtensa-lx6"
+  },
+
+  "memory": {
+    "flash": 8388608,
+    "flashNote": "8MB SPI Flash (W25Q64)",
+    "ram": 520192,
+    "ramAvailable": 327680
+  },
+
+  "build": {
+    "frequency": 240000000,
+    "defines": ["ARDUINO_ADAFRUIT_FEATHER_ESP32_V2", "BOARD_HAS_PSRAM", "CONFIG_SPIRAM_SUPPORT"],
+    "compilerFlags": ["-DARDUINO_PARTITION_default_8MB"]
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "GPIO13", "gpio": 13, "arduino": 13 },
+    "neopixel": { "pin": "GPIO0", "gpio": 0, "arduino": 0 },
+    "serial": { "rx": "GPIO3", "tx": "GPIO1" },
+    "i2c": { "sda": "GPIO22", "scl": "GPIO20" },
+    "spi": { "mosi": "GPIO35", "miso": "GPIO37", "sck": "GPIO36" }
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "esp32",
+      "variant": "adafruit_feather_esp32_v2",
+      "coreUrl": "https://github.com/espressif/arduino-esp32",
+      "defines": ["ARDUINO=10819"]
+    }
+  },
+
+  "upload": {
+    "methods": ["esptool", "dfu"],
+    "default": "esptool",
+    "bootloader": { "type": "esptool", "familyId": "0x1c5f21b0" }
+  },
+
+  "features": ["WiFi", "BLE", "PSRAM", "STEMMA_QT", "NeoPixel", "LiPo_Charger", "USB-C"],
+  "tags": ["feather", "iot", "wireless", "beginner-friendly"],
+
+  "examples": [
+    {
+      "id": "blink_led",
+      "name": "Blink LED",
+      "description": "Blink the red onboard LED on GPIO 13",
+      "category": "Getting Started",
+      "difficulty": "beginner",
+      "framework": "arduino",
+      "files": [
+        {
+          "path": "/src/BlinkLED.ino",
+          "content": "/**\n * Adafruit ESP32 Feather V2 - LED Blink Example\n * Blinks the red onboard LED connected to GPIO 13\n */\n\n#define LED_PIN 13  // Red LED on ESP32 Feather V2\n\nvoid setup() {\n  pinMode(LED_PIN, OUTPUT);\n  Serial.begin(115200);\n  Serial.println(\"ESP32 Feather V2 LED Blink\");\n}\n\nvoid loop() {\n  digitalWrite(LED_PIN, HIGH);\n  delay(500);\n  digitalWrite(LED_PIN, LOW);\n  delay(500);\n}"
+        }
+      ]
+    },
+    {
+      "id": "neopixel_rainbow",
+      "name": "NeoPixel Rainbow",
+      "description": "Display rainbow colors on the onboard NeoPixel",
+      "category": "Getting Started",
+      "difficulty": "beginner",
+      "framework": "arduino",
+      "libraries": ["Adafruit_NeoPixel"],
+      "features": ["NEOPIXEL"],
+      "files": [
+        {
+          "path": "/src/NeoPixelRainbow.ino",
+          "content": "/**\n * Adafruit ESP32 Feather V2 - NeoPixel Rainbow\n * The onboard NeoPixel is on GPIO 0, power controlled by GPIO 2\n */\n\n#include <Adafruit_NeoPixel.h>\n\n#define NEOPIXEL_PIN 0\n#define NEOPIXEL_POWER 2\n#define NUM_PIXELS 1\n\nAdafruit_NeoPixel pixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);\n\nvoid setup() {\n  Serial.begin(115200);\n  \n  // Power on the NeoPixel\n  pinMode(NEOPIXEL_POWER, OUTPUT);\n  digitalWrite(NEOPIXEL_POWER, HIGH);\n  \n  pixel.begin();\n  pixel.setBrightness(50);\n  Serial.println(\"NeoPixel Rainbow Started!\");\n}\n\nvoid loop() {\n  static uint16_t hue = 0;\n  pixel.setPixelColor(0, pixel.gamma32(pixel.ColorHSV(hue)));\n  pixel.show();\n  hue += 256;\n  delay(20);\n}"
+        }
+      ]
+    },
+    {
+      "id": "wifi_scan",
+      "name": "WiFi Scanner",
+      "description": "Scan for nearby WiFi networks and display on Serial",
+      "category": "WiFi",
+      "difficulty": "beginner",
+      "framework": "arduino",
+      "features": ["WiFi"],
+      "files": [
+        {
+          "path": "/src/WiFiScan.ino",
+          "content": "/**\n * Adafruit ESP32 Feather V2 - WiFi Scanner\n * Scans for nearby WiFi networks and prints to Serial\n */\n\n#include <WiFi.h>\n\nvoid setup() {\n  Serial.begin(115200);\n  delay(1000);\n  \n  Serial.println(\"\\nESP32 Feather V2 WiFi Scanner\");\n  Serial.println(\"==============================\");\n  \n  WiFi.mode(WIFI_STA);\n  WiFi.disconnect();\n  delay(100);\n}\n\nvoid loop() {\n  Serial.println(\"\\nScanning for networks...\");\n  \n  int n = WiFi.scanNetworks();\n  \n  if (n == 0) {\n    Serial.println(\"No networks found\");\n  } else {\n    Serial.printf(\"%d networks found:\\n\", n);\n    for (int i = 0; i < n; ++i) {\n      Serial.printf(\"%2d: %-32s  %ddBm  %s\\n\", \n        i + 1, \n        WiFi.SSID(i).c_str(), \n        WiFi.RSSI(i),\n        (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? \"Open\" : \"Secured\"\n      );\n    }\n  }\n  \n  delay(5000);\n}"
+        }
+      ]
+    },
+    {
+      "id": "i2c_scanner",
+      "name": "I2C Scanner",
+      "description": "Scan the STEMMA QT I2C bus for connected devices",
+      "category": "Communication",
+      "difficulty": "beginner",
+      "framework": "arduino",
+      "features": ["STEMMA_QT"],
+      "files": [
+        {
+          "path": "/src/I2CScanner.ino",
+          "content": "/**\n * Adafruit ESP32 Feather V2 - I2C Scanner\n * Scans the STEMMA QT I2C bus for connected devices\n * I2C pins: SDA=GPIO22, SCL=GPIO20\n */\n\n#include <Wire.h>\n\nvoid setup() {\n  Wire.begin(22, 20);  // SDA=22, SCL=20 for Feather V2\n  Serial.begin(115200);\n  delay(1000);\n  \n  Serial.println(\"\\nI2C Scanner - STEMMA QT Bus\");\n  Serial.println(\"============================\");\n  Serial.println(\"Scanning...\");\n}\n\nvoid loop() {\n  byte error, address;\n  int nDevices = 0;\n  \n  for (address = 1; address < 127; address++) {\n    Wire.beginTransmission(address);\n    error = Wire.endTransmission();\n    \n    if (error == 0) {\n      Serial.printf(\"I2C device found at address 0x%02X\\n\", address);\n      nDevices++;\n    }\n  }\n  \n  if (nDevices == 0) {\n    Serial.println(\"No I2C devices found\\n\");\n  } else {\n    Serial.printf(\"Found %d device(s)\\n\\n\", nDevices);\n  }\n  \n  delay(5000);\n}"
+        }
+      ]
+    }
+  ]
+}

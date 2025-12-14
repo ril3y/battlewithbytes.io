@@ -5,16 +5,16 @@
  * Persists settings to localStorage
  */
 
-import { AppConfig, DEFAULT_APP_CONFIG } from '../types';
+import { AppConfig, DEFAULT_APP_CONFIG } from "../types";
 
-const CONFIG_STORAGE_KEY = 'ucan-config';
+const CONFIG_STORAGE_KEY = "ucan-config";
 
 /**
  * Load configuration from localStorage
  * Returns default config if not found or invalid
  */
 export function loadConfig(): AppConfig {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return DEFAULT_APP_CONFIG;
   }
 
@@ -33,15 +33,17 @@ export function loadConfig(): AppConfig {
         dataBits: parsed.serial?.dataBits ?? DEFAULT_APP_CONFIG.serial.dataBits,
         stopBits: parsed.serial?.stopBits ?? DEFAULT_APP_CONFIG.serial.stopBits,
         parity: parsed.serial?.parity ?? DEFAULT_APP_CONFIG.serial.parity,
-        flowControl: parsed.serial?.flowControl ?? DEFAULT_APP_CONFIG.serial.flowControl
+        flowControl:
+          parsed.serial?.flowControl ?? DEFAULT_APP_CONFIG.serial.flowControl,
       },
       maxMessages: parsed.maxMessages ?? DEFAULT_APP_CONFIG.maxMessages,
       autoScroll: parsed.autoScroll ?? DEFAULT_APP_CONFIG.autoScroll,
-      showTimestamps: parsed.showTimestamps ?? DEFAULT_APP_CONFIG.showTimestamps,
-      showRawHex: parsed.showRawHex ?? DEFAULT_APP_CONFIG.showRawHex
+      showTimestamps:
+        parsed.showTimestamps ?? DEFAULT_APP_CONFIG.showTimestamps,
+      showRawHex: parsed.showRawHex ?? DEFAULT_APP_CONFIG.showRawHex,
     };
   } catch (error) {
-    console.error('Failed to load config from localStorage:', error);
+    console.error("Failed to load config from localStorage:", error);
     return DEFAULT_APP_CONFIG;
   }
 }
@@ -50,15 +52,15 @@ export function loadConfig(): AppConfig {
  * Save configuration to localStorage
  */
 export function saveConfig(config: AppConfig): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
   try {
     localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    console.log('Configuration saved:', config);
+    console.log("Configuration saved:", config);
   } catch (error) {
-    console.error('Failed to save config to localStorage:', error);
+    console.error("Failed to save config to localStorage:", error);
   }
 }
 
@@ -66,7 +68,7 @@ export function saveConfig(config: AppConfig): void {
  * Reset configuration to defaults
  */
 export function resetConfig(): AppConfig {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     localStorage.removeItem(CONFIG_STORAGE_KEY);
   }
   return DEFAULT_APP_CONFIG;
@@ -79,7 +81,9 @@ export function validateConfig(config: AppConfig): string[] {
   const errors: string[] = [];
 
   // Validate baud rate
-  const validBaudRates = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
+  const validBaudRates = [
+    9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600,
+  ];
   if (!validBaudRates.includes(config.serial.baudRate)) {
     errors.push(`Invalid baud rate: ${config.serial.baudRate}`);
   }
@@ -95,7 +99,7 @@ export function validateConfig(config: AppConfig): string[] {
   }
 
   // Validate parity
-  if (!['none', 'even', 'odd'].includes(config.serial.parity)) {
+  if (!["none", "even", "odd"].includes(config.serial.parity)) {
     errors.push(`Invalid parity: ${config.serial.parity}`);
   }
 

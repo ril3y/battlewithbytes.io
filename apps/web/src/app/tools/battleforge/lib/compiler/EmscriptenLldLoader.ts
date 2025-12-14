@@ -146,7 +146,7 @@ export async function executeLld(
         _lldArgs: ${JSON.stringify(args)},
 
         locateFile: function(path) {
-          var url = "${baseUrl}/wasm/clang_arm/" + path;
+          var url = "${baseUrl}/tools/battleforge/wasm/clang_arm/" + path;
           console.log('[lld] locateFile:', path, '->', url);
           return url;
         },
@@ -324,7 +324,7 @@ export async function executeLld(
 
     // Now load lld.js - use absolute URL
     const script = iframeWindow.document.createElement("script");
-    script.src = `${baseUrl}/wasm/clang_arm/lld.js`;
+    script.src = `${baseUrl}/tools/battleforge/wasm/clang_arm/lld.js`;
     console.log("[EmscriptenLld] Loading script:", script.src);
 
     script.onload = () => {

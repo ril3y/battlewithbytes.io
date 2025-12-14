@@ -4,7 +4,7 @@
  * Manages UART serial port connection and output
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export interface UartConnectionState {
   // State
@@ -17,7 +17,9 @@ export interface UartConnectionState {
   // Setters
   setUartConnected: (connected: boolean) => void;
   setUartPort: (port: SerialPort | null) => void;
-  setUartReader: (reader: ReadableStreamDefaultReader<Uint8Array> | null) => void;
+  setUartReader: (
+    reader: ReadableStreamDefaultReader<Uint8Array> | null,
+  ) => void;
   setBaudRate: (rate: number) => void;
 
   // Actions
@@ -25,15 +27,18 @@ export interface UartConnectionState {
   clearUartOutput: () => void;
 }
 
-export function useUartConnection(initialBaudRate: number = 230400): UartConnectionState {
+export function useUartConnection(
+  initialBaudRate: number = 230400,
+): UartConnectionState {
   const [uartConnected, setUartConnected] = useState(false);
   const [uartPort, setUartPort] = useState<SerialPort | null>(null);
-  const [uartReader, setUartReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const [uartReader, setUartReader] =
+    useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
   const [uartOutput, setUartOutput] = useState<string[]>([]);
   const [baudRate, setBaudRate] = useState(initialBaudRate);
 
   const addUartOutput = useCallback((message: string) => {
-    setUartOutput(prev => [...prev, message]);
+    setUartOutput((prev) => [...prev, message]);
   }, []);
 
   const clearUartOutput = useCallback(() => {

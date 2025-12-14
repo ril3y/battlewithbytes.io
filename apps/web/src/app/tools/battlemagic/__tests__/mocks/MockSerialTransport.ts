@@ -3,7 +3,7 @@
  * Simulates serial port communication without requiring actual hardware
  */
 
-import type { SerialConfig } from '../../lib/gdb/types';
+import type { SerialConfig } from "../../lib/gdb/types";
 
 type DataHandler = (data: string) => void;
 type ErrorHandler = (error: Error) => void;
@@ -54,14 +54,14 @@ export class MockSerialTransport {
 
   async send(data: string): Promise<void> {
     if (!this.isConnected) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
     this.sentData.push(data);
   }
 
   async sendBytes(data: Uint8Array): Promise<void> {
     if (!this.isConnected) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
     const text = new TextDecoder().decode(data);
     this.sentData.push(text);
@@ -72,7 +72,7 @@ export class MockSerialTransport {
   }
 
   offData(handler: DataHandler): void {
-    this.dataHandlers = this.dataHandlers.filter(h => h !== handler);
+    this.dataHandlers = this.dataHandlers.filter((h) => h !== handler);
   }
 
   onError(handler: ErrorHandler): void {
@@ -80,7 +80,7 @@ export class MockSerialTransport {
   }
 
   offError(handler: ErrorHandler): void {
-    this.errorHandlers = this.errorHandlers.filter(h => h !== handler);
+    this.errorHandlers = this.errorHandlers.filter((h) => h !== handler);
   }
 
   getPortInfo(): SerialPortInfo | null {
@@ -115,7 +115,7 @@ export class MockSerialTransport {
       const response = this.responseQueue.shift()!;
       this.notifyDataHandlers(response);
       // Small delay to allow processing
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
   }
 
@@ -124,7 +124,7 @@ export class MockSerialTransport {
       try {
         handler(data);
       } catch (error) {
-        console.error('Error in data handler:', error);
+        console.error("Error in data handler:", error);
       }
     }
   }
@@ -134,7 +134,7 @@ export class MockSerialTransport {
       try {
         handler(error);
       } catch (err) {
-        console.error('Error in error handler:', err);
+        console.error("Error in error handler:", err);
       }
     }
   }

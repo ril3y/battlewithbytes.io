@@ -7,7 +7,7 @@
  * - Consistent styling
  */
 
-import React from 'react';
+import React from "react";
 
 export interface BaseWidgetProps {
   label?: string;
@@ -24,7 +24,7 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
   showLabel = true,
   width,
   height,
-  className = '',
+  className = "",
   error,
   children,
 }) => {

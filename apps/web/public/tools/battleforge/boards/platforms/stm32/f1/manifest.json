@@ -1,0 +1,77 @@
+{
+  "$schema": "../../../schema/platform-v1.schema.json",
+  "platform": "stm32",
+  "family": "f1",
+  "name": "STM32F1 Series",
+  "description": "STM32F1 Cortex-M3 microcontrollers - popular for learning ARM development",
+  "architecture": "cortex-m3",
+  "version": "1.0.0",
+
+  "headers": {
+    "url": "/platforms/stm32/f1/headers.tar.gz",
+    "hash": null,
+    "includes": [
+      "cmsis",
+      "device"
+    ]
+  },
+
+  "devices": [
+    {
+      "id": "stm32f103c8",
+      "name": "STM32F103C8",
+      "flash": 65536,
+      "ram": 20480,
+      "frequency": 72000000,
+      "defines": ["STM32F103xB", "STM32F1"],
+      "linkerScript": "STM32F103C8Tx_FLASH.ld"
+    },
+    {
+      "id": "stm32f103cb",
+      "name": "STM32F103CB",
+      "flash": 131072,
+      "ram": 20480,
+      "frequency": 72000000,
+      "defines": ["STM32F103xB", "STM32F1"],
+      "linkerScript": "STM32F103CBTx_FLASH.ld"
+    },
+    {
+      "id": "stm32f103rb",
+      "name": "STM32F103RB",
+      "flash": 131072,
+      "ram": 20480,
+      "frequency": 72000000,
+      "defines": ["STM32F103xB", "STM32F1"],
+      "linkerScript": "STM32F103RBTx_FLASH.ld"
+    }
+  ],
+
+  "build": {
+    "compilerFlags": [
+      "-mcpu=cortex-m3",
+      "-mthumb",
+      "-mfloat-abi=soft"
+    ],
+    "linkerFlags": [
+      "-mcpu=cortex-m3",
+      "-mthumb",
+      "--specs=nano.specs",
+      "--specs=nosys.specs"
+    ],
+    "defines": [
+      "USE_HAL_DRIVER"
+    ]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "stm32duino",
+      "coreUrl": "https://github.com/stm32duino/Arduino_Core_STM32",
+      "packageIndex": "https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json"
+    },
+    "native": {
+      "sdk": "stm32cube",
+      "sdkVersion": "1.8.5"
+    }
+  }
+}

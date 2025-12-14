@@ -3,34 +3,31 @@
  * Tests for GDB client connection, command sending, and response handling
  */
 
-import { MockSerialTransport } from '../../mocks/MockSerialTransport';
+import { MockSerialTransport } from "../../mocks/MockSerialTransport";
 
 // Mock SerialTransport before importing GdbClient
-jest.mock('../../../lib/gdb/SerialTransport', () => ({
+jest.mock("../../../lib/gdb/SerialTransport", () => ({
   SerialTransport: MockSerialTransport,
 }));
 
-import { GdbClient } from '../../../lib/gdb/GdbClient';
-import { ConnectionState } from '../../../lib/gdb/types';
+import { GdbClient } from "../../../lib/gdb/GdbClient";
+import { ConnectionState } from "../../../lib/gdb/types";
 import {
   createMockPacket,
   createMemoryReadResponse,
   createRegisterResponse,
   createStopReplyPacket,
-} from '../../utils/testHelpers';
-import { SAMPLE_MEMORY, REGISTER_DATA } from '../../fixtures/testData';
+} from "../../utils/testHelpers";
+import { SAMPLE_MEMORY, REGISTER_DATA } from "../../fixtures/testData";
 
-describe('GdbClient', () => {
+describe("GdbClient", () => {
   let client: GdbClient;
   let mockTransport: MockSerialTransport;
 
   beforeEach(() => {
     // Create fresh mock for each test
     mockTransport = new MockSerialTransport();
-    client = new GdbClient(
-      { commandTimeout: 1000, debug: false },
-      {}
-    );
+    client = new GdbClient({ commandTimeout: 1000, debug: false }, {});
   });
 
   afterEach(async () => {
@@ -44,30 +41,30 @@ describe('GdbClient', () => {
     }
   });
 
-  describe('Initialization', () => {
-    it('should create client with default config', () => {
+  describe("Initialization", () => {
+    it("should create client with default config", () => {
       expect(client).toBeDefined();
       expect(client.getState()).toBe(ConnectionState.DISCONNECTED);
     });
 
-    it('should create client with custom config', () => {
+    it("should create client with custom config", () => {
       const customClient = new GdbClient({ commandTimeout: 5000 });
       expect(customClient).toBeDefined();
     });
 
-    it('should be unsupported on non-Web Serial environments', () => {
+    it("should be unsupported on non-Web Serial environments", () => {
       const isSupported = GdbClient.isSupported();
-      expect(typeof isSupported).toBe('boolean');
+      expect(typeof isSupported).toBe("boolean");
     });
 
-    it('should start in DISCONNECTED state', () => {
+    it("should start in DISCONNECTED state", () => {
       expect(client.getState()).toBe(ConnectionState.DISCONNECTED);
       expect(client.isConnected()).toBe(false);
     });
   });
 
-  describe('Connection Management', () => {
-    it('should refuse to connect when already connected', async () => {
+  describe("Connection Management", () => {
+    it("should refuse to connect when already connected", async () => {
       const mockPort = {} as SerialPort;
       // Note: In real tests, you'd need actual Web Serial API or proper mocking
       // This tests the logic path
@@ -77,13 +74,13 @@ describe('GdbClient', () => {
 
       try {
         await client.connect(mockPort);
-        fail('Should have thrown');
+        fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).toContain('Already connected');
+        expect((e as Error).message).toContain("Already connected");
       }
     });
 
-    it('should handle connection state transitions', async () => {
+    it("should handle connection state transitions", async () => {
       const states: ConnectionState[] = [];
       const stateChangeCallback = (state: ConnectionState) => {
         states.push(state);
@@ -91,7 +88,7 @@ describe('GdbClient', () => {
 
       client = new GdbClient(
         { commandTimeout: 500 },
-        { onStateChange: stateChangeCallback }
+        { onStateChange: stateChangeCallback },
       );
 
       // We can verify state change callbacks would be called
@@ -100,24 +97,24 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Command Queueing', () => {
-    it('should return error when sending command while disconnected', async () => {
+  describe("Command Queueing", () => {
+    it("should return error when sending command while disconnected", async () => {
       try {
-        await client.sendCommand('?');
-        fail('Should have thrown');
+        await client.sendCommand("?");
+        fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).toContain('Not connected');
+        expect((e as Error).message).toContain("Not connected");
       }
     });
 
-    it('should queue multiple commands', async () => {
+    it("should queue multiple commands", async () => {
       // Simulate connection
       (client as any).transport.isConnected = () => true;
 
       const commands: string[] = [];
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const originalSend = (client as any).transport.send.bind(
-        (client as any).transport
+        (client as any).transport,
       );
       (client as any).transport.send = jest
         .fn()
@@ -127,34 +124,34 @@ describe('GdbClient', () => {
 
       // Queue multiple commands
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const promise1 = client.sendCommand('?');
+      const promise1 = client.sendCommand("?");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const promise2 = client.sendCommand('g');
+      const promise2 = client.sendCommand("g");
 
       expect(commands.length).toBeGreaterThan(0);
     });
 
-    it('should reject commands exceeding queue size', async () => {
+    it("should reject commands exceeding queue size", async () => {
       // Create client with small queue
       const smallClient = new GdbClient({ maxQueueSize: 2 });
       (smallClient as any).transport.isConnected = () => true;
 
       try {
         for (let i = 0; i < 5; i++) {
-          await smallClient.sendCommand('?');
+          await smallClient.sendCommand("?");
         }
       } catch (e) {
-        expect((e as Error).message).toContain('queue');
+        expect((e as Error).message).toContain("queue");
       }
     });
   });
 
-  describe('Memory Operations', () => {
+  describe("Memory Operations", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should read memory from target', async () => {
+    it("should read memory from target", async () => {
       const mockResponse = createMemoryReadResponse(SAMPLE_MEMORY.simple);
       (client as any).transport.send = jest.fn();
 
@@ -169,9 +166,9 @@ describe('GdbClient', () => {
       expect(data.length).toBeGreaterThan(0);
     });
 
-    it('should write memory to target', async () => {
+    it("should write memory to target", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.writeMemory(0x08000000, SAMPLE_MEMORY.simple);
 
@@ -183,7 +180,7 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle different memory addresses', async () => {
+    it("should handle different memory addresses", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createMemoryReadResponse(new Uint8Array([0x42]));
 
@@ -197,11 +194,11 @@ describe('GdbClient', () => {
       }
     });
 
-    it('should handle hex string addresses', async () => {
+    it("should handle hex string addresses", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createMemoryReadResponse(new Uint8Array([0x01]));
 
-      const promise = client.readMemory('08000000', 1);
+      const promise = client.readMemory("08000000", 1);
       (client as any).handlePacket(mockResponse);
       const data = await promise;
 
@@ -209,12 +206,12 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Register Operations', () => {
+  describe("Register Operations", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should read all registers', async () => {
+    it("should read all registers", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
@@ -226,29 +223,29 @@ describe('GdbClient', () => {
       expect(registers.length).toBeGreaterThan(0);
     });
 
-    it('should read single register', async () => {
+    it("should read single register", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createRegisterResponse('12345678');
+      const mockResponse = createRegisterResponse("12345678");
 
       const promise = client.readRegister(0);
       (client as any).handlePacket(mockResponse);
       const value = await promise;
 
-      expect(value).toBe('12345678');
+      expect(value).toBe("12345678");
     });
 
-    it('should write single register', async () => {
+    it("should write single register", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
-      const promise = client.writeRegister(0, 'deadbeef');
+      const promise = client.writeRegister(0, "deadbeef");
       (client as any).handlePacket(mockResponse);
 
       await promise;
       expect(true).toBe(true);
     });
 
-    it('should format registers for display', async () => {
+    it("should format registers for display", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
@@ -258,18 +255,18 @@ describe('GdbClient', () => {
 
       expect(formattedRegs).toBeInstanceOf(Map);
       expect(formattedRegs.size).toBeGreaterThan(0);
-      expect(formattedRegs.has('r0')).toBe(true);
+      expect(formattedRegs.has("r0")).toBe(true);
     });
   });
 
-  describe('Breakpoint Management', () => {
+  describe("Breakpoint Management", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should insert software breakpoint', async () => {
+    it("should insert software breakpoint", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.insertBreakpoint(0x08000100, false);
       (client as any).handlePacket(mockResponse);
@@ -278,9 +275,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should insert hardware breakpoint', async () => {
+    it("should insert hardware breakpoint", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.insertBreakpoint(0x08000100, true);
       (client as any).handlePacket(mockResponse);
@@ -289,9 +286,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should remove software breakpoint', async () => {
+    it("should remove software breakpoint", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.removeBreakpoint(0x08000100, false);
       (client as any).handlePacket(mockResponse);
@@ -300,9 +297,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should remove hardware breakpoint', async () => {
+    it("should remove hardware breakpoint", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.removeBreakpoint(0x08000100, true);
       (client as any).handlePacket(mockResponse);
@@ -311,28 +308,28 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle breakpoint errors', async () => {
+    it("should handle breakpoint errors", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('E01');
+      const mockResponse = createMockPacket("E01");
 
       const promise = client.insertBreakpoint(0x08000100);
       (client as any).handlePacket(mockResponse);
 
       try {
         await promise;
-        fail('Should have thrown');
+        fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).toContain('Failed');
+        expect((e as Error).message).toContain("Failed");
       }
     });
   });
 
-  describe('Execution Control', () => {
+  describe("Execution Control", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should continue execution', async () => {
+    it("should continue execution", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createStopReplyPacket(5);
 
@@ -343,7 +340,7 @@ describe('GdbClient', () => {
       expect(reply.signal).toBe(5);
     });
 
-    it('should step one instruction', async () => {
+    it("should step one instruction", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createStopReplyPacket(5);
 
@@ -354,7 +351,7 @@ describe('GdbClient', () => {
       expect(reply.signal).toBe(5);
     });
 
-    it('should halt execution', async () => {
+    it("should halt execution", async () => {
       (client as any).transport.send = jest.fn();
 
       await client.halt();
@@ -362,7 +359,7 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should get backtrace', async () => {
+    it("should get backtrace", async () => {
       (client as any).transport.send = jest.fn();
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
@@ -375,14 +372,14 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Target Operations', () => {
+  describe("Target Operations", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should attach to target', async () => {
+    it("should attach to target", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.attach(0);
       (client as any).handlePacket(mockResponse);
@@ -391,10 +388,10 @@ describe('GdbClient', () => {
       expect(client.getState()).toBe(ConnectionState.ATTACHED);
     });
 
-    it('should detach from target', async () => {
+    it("should detach from target", async () => {
       (client as any).state = ConnectionState.ATTACHED;
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.detach();
       (client as any).handlePacket(mockResponse);
@@ -403,9 +400,9 @@ describe('GdbClient', () => {
       expect(client.getState()).toBe(ConnectionState.CONNECTED);
     });
 
-    it('should reset target', async () => {
+    it("should reset target", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.reset();
       (client as any).handlePacket(mockResponse);
@@ -415,14 +412,14 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Power Management', () => {
+  describe("Power Management", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should enable target power', async () => {
+    it("should enable target power", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.enableTargetPower();
       (client as any).handlePacket(mockResponse);
@@ -431,9 +428,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should disable target power', async () => {
+    it("should disable target power", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.disableTargetPower();
       (client as any).handlePacket(mockResponse);
@@ -443,15 +440,15 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Black Magic Probe Operations', () => {
+  describe("Black Magic Probe Operations", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should get BMP version', async () => {
+    it("should get BMP version", async () => {
       (client as any).transport.send = jest.fn();
       const versionData =
-        '426c61636b204d616769632050726f62652076657273696f6e20312e372e31'; // "Black Magic Probe version 1.7.1"
+        "426c61636b204d616769632050726f62652076657273696f6e20312e372e31"; // "Black Magic Probe version 1.7.1"
       const mockResponse = createMockPacket(versionData);
 
       const promise = client.getVersion();
@@ -461,9 +458,9 @@ describe('GdbClient', () => {
       expect(version).toBeDefined();
     });
 
-    it('should scan for SWD targets', async () => {
+    it("should scan for SWD targets", async () => {
       (client as any).transport.send = jest.fn();
-      const scanData = '417661696c61626c6520546172676574733a'; // "Available Targets:"
+      const scanData = "417661696c61626c6520546172676574733a"; // "Available Targets:"
       const mockResponse = createMockPacket(scanData);
 
       const promise = client.scanSwd();
@@ -474,9 +471,9 @@ describe('GdbClient', () => {
       expect(Array.isArray(result.targets)).toBe(true);
     });
 
-    it('should scan for JTAG targets', async () => {
+    it("should scan for JTAG targets", async () => {
       (client as any).transport.send = jest.fn();
-      const scanData = '417661696c61626c6520546172676574733a'; // "Available Targets:"
+      const scanData = "417661696c61626c6520546172676574733a"; // "Available Targets:"
       const mockResponse = createMockPacket(scanData);
 
       const promise = client.scanJtag();
@@ -488,80 +485,80 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Error Handling', () => {
+  describe("Error Handling", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should handle command timeout', async () => {
+    it("should handle command timeout", async () => {
       const shortTimeoutClient = new GdbClient({ commandTimeout: 50 });
       (shortTimeoutClient as any).transport.isConnected = () => true;
       (shortTimeoutClient as any).transport.send = jest.fn();
 
       // Don't send response, let it timeout
-      const promise = shortTimeoutClient.sendCommand('?');
+      const promise = shortTimeoutClient.sendCommand("?");
 
       try {
         await promise;
-        fail('Should have timed out');
+        fail("Should have timed out");
       } catch (e) {
-        expect((e as Error).message).toContain('timeout');
+        expect((e as Error).message).toContain("timeout");
       }
     });
 
-    it('should propagate error responses', async () => {
+    it("should propagate error responses", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('E01');
+      const mockResponse = createMockPacket("E01");
 
       const promise = client.readMemory(0x08000000, 16);
       (client as any).handlePacket(mockResponse);
 
       try {
         await promise;
-        fail('Should have thrown');
+        fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).toContain('Failed');
+        expect((e as Error).message).toContain("Failed");
       }
     });
 
-    it('should handle transport errors', async () => {
+    it("should handle transport errors", async () => {
       const errorCallback = jest.fn();
       const errorClient = new GdbClient({}, { onError: errorCallback });
       (errorClient as any).transport.isConnected = () => true;
 
-      const testError = new Error('Transport failed');
+      const testError = new Error("Transport failed");
       (errorClient as any).handleError(testError);
 
       expect(errorCallback).toHaveBeenCalledWith(testError);
       expect(errorClient.getState()).toBe(ConnectionState.ERROR);
     });
 
-    it('should cancel pending commands on disconnect', async () => {
+    it("should cancel pending commands on disconnect", async () => {
       (client as any).transport.isConnected = () => true;
       (client as any).transport.send = jest.fn();
 
-      const promise = client.sendCommand('?');
+      const promise = client.sendCommand("?");
 
       // Disconnect without responding
       await client.disconnect();
 
       try {
         await promise;
-        fail('Should have been rejected');
+        fail("Should have been rejected");
       } catch (e) {
-        expect((e as Error).message).toContain('Connection closed');
+        expect((e as Error).message).toContain("Connection closed");
       }
     });
   });
 
-  describe('Flash Operations', () => {
+  describe("Flash Operations", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should erase flash', async () => {
+    it("should erase flash", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.flashErase(0x08000000, 4096);
       (client as any).handlePacket(mockResponse);
@@ -570,9 +567,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should write to flash', async () => {
+    it("should write to flash", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const data = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
       const promise = client.flashWrite(0x08000000, data);
@@ -582,9 +579,9 @@ describe('GdbClient', () => {
       expect(true).toBe(true);
     });
 
-    it('should complete flash operations', async () => {
+    it("should complete flash operations", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
       const promise = client.flashDone();
       (client as any).handlePacket(mockResponse);
@@ -594,16 +591,16 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('Monitor Commands', () => {
+  describe("Monitor Commands", () => {
     beforeEach(() => {
       (client as any).transport.isConnected = () => true;
     });
 
-    it('should send monitor command', async () => {
+    it("should send monitor command", async () => {
       (client as any).transport.send = jest.fn();
-      const mockResponse = createMockPacket('OK');
+      const mockResponse = createMockPacket("OK");
 
-      const promise = client.sendMonitorCommand('version');
+      const promise = client.sendMonitorCommand("version");
       (client as any).handlePacket(mockResponse);
 
       const result = await promise;
@@ -611,8 +608,8 @@ describe('GdbClient', () => {
     });
   });
 
-  describe('State Management', () => {
-    it('should track state changes', () => {
+  describe("State Management", () => {
+    it("should track state changes", () => {
       const states: ConnectionState[] = [];
       const stateClient = new GdbClient(
         {},
@@ -620,14 +617,14 @@ describe('GdbClient', () => {
           onStateChange: (state) => {
             states.push(state);
           },
-        }
+        },
       );
 
       expect(stateClient.getState()).toBe(ConnectionState.DISCONNECTED);
       expect(states.length).toBe(0);
     });
 
-    it('should report isConnected status', () => {
+    it("should report isConnected status", () => {
       expect(client.isConnected()).toBe(false);
 
       (client as any).state = ConnectionState.CONNECTED;

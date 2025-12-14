@@ -91,6 +91,7 @@ A BattleMagic project includes:
 ### Versioning
 
 The project format uses semantic versioning:
+
 - **Version 1**: Initial release format
 - Future versions will include migration support
 
@@ -99,22 +100,22 @@ The project format uses semantic versioning:
 ### Creating a New Project
 
 ```typescript
-import { ProjectManager } from './lib/project/ProjectManager';
+import { ProjectManager } from "./lib/project/ProjectManager";
 
 const projectManager = new ProjectManager({
   onProjectLoaded: (project) => {
-    console.log('Loaded:', project.metadata.name);
+    console.log("Loaded:", project.metadata.name);
   },
   onProjectSaved: (project) => {
-    console.log('Saved:', project.metadata.name);
+    console.log("Saved:", project.metadata.name);
   },
   onError: (message) => {
-    console.error('Error:', message);
-  }
+    console.error("Error:", message);
+  },
 });
 
 // Create new project
-const project = projectManager.newProject('My Debug Session');
+const project = projectManager.newProject("My Debug Session");
 ```
 
 ### Saving a Project
@@ -219,6 +220,7 @@ The project system integrates with BattleMagicMonitor's state:
 ### Error Handling
 
 All operations include try/catch blocks and notify via callbacks:
+
 - Invalid JSON format
 - Missing required fields
 - File read/write failures
@@ -242,7 +244,9 @@ Potential additions for future versions:
 When loading projects with older version numbers:
 
 ```typescript
-export function migrateProject(project: BattleMagicProject): BattleMagicProject {
+export function migrateProject(
+  project: BattleMagicProject,
+): BattleMagicProject {
   const migrated = { ...project };
 
   // Version 1 -> 2 migration
@@ -260,6 +264,7 @@ export function migrateProject(project: BattleMagicProject): BattleMagicProject 
 ## File Size Considerations
 
 Typical project file sizes:
+
 - Minimal project: ~1KB
 - With breakpoints and notes: ~5-10KB
 - With extensive custom regions: ~20-50KB
@@ -277,16 +282,19 @@ localStorage quota is typically 5-10MB per origin, sufficient for many projects.
 ## Troubleshooting
 
 ### Project won't load
+
 - Check file is valid JSON
 - Verify all required fields are present
 - Check console for specific error messages
 
 ### Auto-save not working
+
 - Verify auto-save is enabled
 - Check localStorage is available
 - Check for quota exceeded errors
 
 ### Lost project data
+
 - Check localStorage for auto-saved data
 - Look for .bmproj files in downloads folder
 - Browser cache may contain backup data
@@ -294,6 +302,7 @@ localStorage quota is typically 5-10MB per origin, sufficient for many projects.
 ## API Reference
 
 See individual files for detailed API documentation:
+
 - [types.ts](./types.ts) - Type definitions and validation
 - [ProjectManager.ts](./ProjectManager.ts) - Core project operations
 - [ProjectMenu.tsx](../components/ProjectMenu.tsx) - UI component

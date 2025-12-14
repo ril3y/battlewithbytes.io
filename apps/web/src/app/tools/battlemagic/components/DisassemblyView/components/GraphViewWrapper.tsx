@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Graph View Wrapper Component
@@ -7,9 +7,9 @@
  * Shows instructions to load disassembly first if no instructions are available.
  */
 
-import React from 'react';
-import type { DisassembledInstruction } from '../../../lib/arch/arm/disasm';
-import { ControlFlowGraphView } from '../../ControlFlowGraphView';
+import React from "react";
+import type { DisassembledInstruction } from "../../../lib/arch/arm/disasm";
+import { ControlFlowGraphView } from "../../ControlFlowGraphView";
 
 interface GraphViewWrapperProps {
   isConnected: boolean;
@@ -22,7 +22,7 @@ export function GraphViewWrapper({
   isConnected,
   rawInstructions,
   programCounter,
-  onAddressClick
+  onAddressClick,
 }: GraphViewWrapperProps) {
   return (
     <div className="flex-1 overflow-hidden">
@@ -36,13 +36,23 @@ export function GraphViewWrapper({
           <div className="text-sm text-center mb-4 max-w-md">
             Load disassembly first:
             <ul className="mt-2 text-left list-disc list-inside">
-              <li>Switch to <span className="text-blue-400 font-bold">Linear</span> view</li>
-              <li>Click <span className="text-green-400 font-bold">Go to PC</span> to load instructions</li>
-              <li>Return to <span className="text-blue-400 font-bold">Graph</span> view</li>
+              <li>
+                Switch to{" "}
+                <span className="text-blue-400 font-bold">Linear</span> view
+              </li>
+              <li>
+                Click <span className="text-green-400 font-bold">Go to PC</span>{" "}
+                to load instructions
+              </li>
+              <li>
+                Return to <span className="text-blue-400 font-bold">Graph</span>{" "}
+                view
+              </li>
             </ul>
           </div>
           <div className="text-xs text-gray-500">
-            {programCounter !== undefined && `PC is at 0x${programCounter.toString(16).toUpperCase()}`}
+            {programCounter !== undefined &&
+              `PC is at 0x${programCounter.toString(16).toUpperCase()}`}
           </div>
         </div>
       ) : (

@@ -10,8 +10,8 @@ import {
   BreakpointParser,
   MonitorParser,
   ErrorParser,
-  RspParser
-} from './lib/gdb/RspParser';
+  RspParser,
+} from "./lib/gdb/RspParser";
 ```
 
 ## Pattern
@@ -41,11 +41,11 @@ if (result.success) {
 const result = RegisterParser.parseArmCortexM(hexResponse);
 
 if (result.success) {
-  const pc = result.data.pc;        // Program counter
-  const sp = result.data.sp;        // Stack pointer
-  const lr = result.data.lr;        // Link register
-  const r0 = result.data.r0;        // General registers
-  const xpsr = result.data.xpsr;    // Status (optional)
+  const pc = result.data.pc; // Program counter
+  const sp = result.data.sp; // Stack pointer
+  const lr = result.data.lr; // Link register
+  const r0 = result.data.r0; // General registers
+  const xpsr = result.data.xpsr; // Status (optional)
 }
 ```
 
@@ -55,20 +55,22 @@ if (result.success) {
 const result = RegisterParser.parseSingleRegister(hexResponse, regNum);
 
 if (result.success) {
-  console.log(`Register ${result.data.regNum}: 0x${result.data.value.toString(16)}`);
+  console.log(
+    `Register ${result.data.regNum}: 0x${result.data.value.toString(16)}`,
+  );
 }
 ```
 
 ### Convert to Little-Endian Hex
 
 ```typescript
-const hexValue = RegisterParser.toHex(0x08008000);  // "00800008"
+const hexValue = RegisterParser.toHex(0x08008000); // "00800008"
 ```
 
 ### Get Register Name
 
 ```typescript
-const name = RegisterParser.getRegisterName(15);  // "pc"
+const name = RegisterParser.getRegisterName(15); // "pc"
 ```
 
 ---
@@ -81,9 +83,9 @@ const name = RegisterParser.getRegisterName(15);  // "pc"
 const result = MemoryParser.parseMemoryRead(hexResponse, address, length);
 
 if (result.success) {
-  const bytes = result.data.data;           // Uint8Array
-  const text = new TextDecoder().decode(bytes);  // ASCII decode
-  const word = MemoryParser.readWord(bytes, 0);  // 32-bit word
+  const bytes = result.data.data; // Uint8Array
+  const text = new TextDecoder().decode(bytes); // ASCII decode
+  const word = MemoryParser.readWord(bytes, 0); // 32-bit word
 }
 ```
 
@@ -93,7 +95,7 @@ if (result.success) {
 const result = MemoryParser.parseMemoryWrite(response, address, length);
 
 if (result.success && result.data.success) {
-  console.log('Write succeeded');
+  console.log("Write succeeded");
 }
 ```
 
@@ -106,8 +108,8 @@ const hexString = MemoryParser.toHex(byteArray);
 ### Read Multi-Byte Values
 
 ```typescript
-const word = MemoryParser.readWord(data, offset);      // 32-bit
-const half = MemoryParser.readHalfword(data, offset);  // 16-bit
+const word = MemoryParser.readWord(data, offset); // 32-bit
+const half = MemoryParser.readHalfword(data, offset); // 16-bit
 ```
 
 ---
@@ -124,14 +126,14 @@ if (result.success) {
   console.log(`Reason: ${result.data.reason}`);
 
   // Check if detailed (T packet)
-  if ('rawInfo' in result.data) {
+  if ("rawInfo" in result.data) {
     const stop = result.data as StopReplyDetailed;
 
     if (stop.thread) console.log(`Thread: ${stop.thread}`);
     if (stop.watchAddr) console.log(`Watch: 0x${stop.watchAddr.toString(16)}`);
 
     if (stop.registers) {
-      const pc = stop.registers.get(15);  // PC from stop packet
+      const pc = stop.registers.get(15); // PC from stop packet
     }
   }
 }
@@ -152,7 +154,7 @@ const result = StopReplyParser.parseSimple(packet);
 ### Get Signal Name
 
 ```typescript
-const name = StopReplyParser.getSignalName(5);  // "SIGTRAP"
+const name = StopReplyParser.getSignalName(5); // "SIGTRAP"
 ```
 
 ---
@@ -180,7 +182,7 @@ const result = BreakpointParser.parseRemove(response, address, type);
 ### Get Type Name
 
 ```typescript
-const name = BreakpointParser.getTypeName(0);  // "Software Breakpoint"
+const name = BreakpointParser.getTypeName(0); // "Software Breakpoint"
 ```
 
 ---
@@ -193,14 +195,14 @@ const name = BreakpointParser.getTypeName(0);  // "Software Breakpoint"
 const result = MonitorParser.parse(packet);
 
 if (result.success) {
-  console.log(result.data.output);  // Decoded ASCII text
+  console.log(result.data.output); // Decoded ASCII text
 }
 ```
 
 ### Encode Monitor Command
 
 ```typescript
-const hexCmd = MonitorParser.encodeCommand('version');
+const hexCmd = MonitorParser.encodeCommand("version");
 const packet = `qRcmd,${hexCmd}`;
 ```
 
@@ -229,28 +231,28 @@ if (result.success) {
 const parsed = RspParser.parse(response);
 
 switch (parsed.type) {
-  case 'ok':
-    console.log('Success');
+  case "ok":
+    console.log("Success");
     break;
 
-  case 'error':
+  case "error":
     console.error(parsed.data.message);
     break;
 
-  case 'data':
-    console.log('Data:', parsed.data);
+  case "data":
+    console.log("Data:", parsed.data);
     break;
 
-  case 'stop':
-    console.log('Stopped:', parsed.data.reason);
+  case "stop":
+    console.log("Stopped:", parsed.data.reason);
     break;
 
-  case 'monitor':
-    console.log('Output:', parsed.data.output);
+  case "monitor":
+    console.log("Output:", parsed.data.output);
     break;
 
-  case 'empty':
-    console.log('No response');
+  case "empty":
+    console.log("No response");
     break;
 }
 ```
@@ -306,9 +308,9 @@ if (result.success) {
 ```typescript
 const result = StopReplyParser.parse(stopPacket);
 if (result.success && result.data.reason === StopReason.BREAKPOINT) {
-  console.log('Breakpoint hit!');
+  console.log("Breakpoint hit!");
 
-  if ('registers' in result.data && result.data.registers) {
+  if ("registers" in result.data && result.data.registers) {
     const pc = result.data.registers.get(15);
     console.log(`PC: 0x${pc?.toString(16)}`);
   }
@@ -346,13 +348,13 @@ interface ArmCortexMRegisters {
 
 ```typescript
 enum StopReason {
-  BREAKPOINT = 'breakpoint',
-  WATCHPOINT = 'watchpoint',
-  SINGLE_STEP = 'single-step',
-  SIGNAL = 'signal',
-  EXITED = 'exited',
-  TERMINATED = 'terminated',
-  UNKNOWN = 'unknown'
+  BREAKPOINT = "breakpoint",
+  WATCHPOINT = "watchpoint",
+  SINGLE_STEP = "single-step",
+  SIGNAL = "signal",
+  EXITED = "exited",
+  TERMINATED = "terminated",
+  UNKNOWN = "unknown",
 }
 ```
 
@@ -372,7 +374,7 @@ if (!result.success) {
 const data = result.data;
 
 // ✗ Wrong (unsafe)
-const data = Parser.parse(response).data;  // May crash!
+const data = Parser.parse(response).data; // May crash!
 ```
 
 ### Log Raw Data on Errors
@@ -394,7 +396,7 @@ if (!result.success) {
   return {
     pc: 0,
     sp: 0,
-    lr: 0
+    lr: 0,
   };
 }
 return result.data;
@@ -414,11 +416,11 @@ return result.data;
 ## Testing
 
 ```typescript
-import { RegisterParser } from './RspParser';
+import { RegisterParser } from "./RspParser";
 
-describe('My GDB operations', () => {
-  it('should parse registers', () => {
-    const mockResponse = '00000000'.repeat(16);
+describe("My GDB operations", () => {
+  it("should parse registers", () => {
+    const mockResponse = "00000000".repeat(16);
     const result = RegisterParser.parseArmCortexM(mockResponse);
 
     expect(result.success).toBe(true);

@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schema/library-v1.schema.json",
+  "id": "wire",
+  "name": "Wire",
+  "version": "1.0.0",
+  "description": "I2C/TWI library for Arduino",
+  "author": "Arduino",
+  "license": "LGPL-2.1",
+  "repository": "https://github.com/arduino/ArduinoCore-avr",
+
+  "url": "/libs/wire-1.0.0.tar.gz",
+  "hash": null,
+
+  "platforms": ["stm32", "nrf", "esp32", "rp2040", "avr", "samd"],
+  "architectures": ["*"],
+
+  "frameworks": ["arduino"],
+
+  "includes": ["src"],
+  "sources": ["src/*.cpp", "src/*.c"],
+
+  "dependencies": [],
+
+  "categories": ["communication", "i2c"],
+  "keywords": ["i2c", "twi", "wire", "communication", "sensors"]
+}

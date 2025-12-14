@@ -7,13 +7,16 @@
  */
 
 // Export the shared interface
-export type { DisassembledInstruction } from './ArmDisassembler';
+export type { DisassembledInstruction } from "./ArmDisassembler";
 
 // Export the lightweight custom disassembler
-export { ArmDisassembler } from './ArmDisassembler';
+export { ArmDisassembler } from "./ArmDisassembler";
 
 // Export the Capstone-based disassembler (recommended for production)
-export { CapstoneDisassembler, createCapstoneDisassembler } from './CapstoneDisassembler';
+export {
+  CapstoneDisassembler,
+  createCapstoneDisassembler,
+} from "./CapstoneDisassembler";
 
 /**
  * Quick reference:

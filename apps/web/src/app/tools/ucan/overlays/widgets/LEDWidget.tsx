@@ -5,9 +5,9 @@
  * Configurable colors for on/off states and size.
  */
 
-import React from 'react';
-import type { LEDWidgetConfig } from '../types';
-import { BaseWidget } from './BaseWidget';
+import React from "react";
+import type { LEDWidgetConfig } from "../types";
+import { BaseWidget } from "./BaseWidget";
 
 export interface LEDWidgetProps {
   config: LEDWidgetConfig;
@@ -15,13 +15,17 @@ export interface LEDWidgetProps {
   valid?: boolean;
 }
 
-export const LEDWidget: React.FC<LEDWidgetProps> = ({ config, value, valid = true }) => {
+export const LEDWidget: React.FC<LEDWidgetProps> = ({
+  config,
+  value,
+  valid = true,
+}) => {
   const {
     label,
     showLabel = true,
-    colorOn = '#00ff00',
-    colorOff = '#003300',
-    size = 'medium',
+    colorOn = "#00ff00",
+    colorOff = "#003300",
+    size = "medium",
   } = config;
 
   // Size mapping
@@ -36,18 +40,18 @@ export const LEDWidget: React.FC<LEDWidgetProps> = ({ config, value, valid = tru
   const ledStyle: React.CSSProperties = {
     width: `${diameter}px`,
     height: `${diameter}px`,
-    borderRadius: '50%',
+    borderRadius: "50%",
     backgroundColor: value ? colorOn : colorOff,
-    boxShadow: value ? `0 0 ${diameter / 2}px ${colorOn}` : 'none',
-    transition: 'all 0.2s ease',
-    border: '2px solid rgba(255, 255, 255, 0.2)',
+    boxShadow: value ? `0 0 ${diameter / 2}px ${colorOn}` : "none",
+    transition: "all 0.2s ease",
+    border: "2px solid rgba(255, 255, 255, 0.2)",
     opacity: valid ? 1 : 0.3,
   };
 
   return (
     <BaseWidget label={label} showLabel={showLabel}>
       <div className="flex items-center justify-center">
-        <div style={ledStyle} title={`${label}: ${value ? 'ON' : 'OFF'}`} />
+        <div style={ledStyle} title={`${label}: ${value ? "ON" : "OFF"}`} />
       </div>
     </BaseWidget>
   );

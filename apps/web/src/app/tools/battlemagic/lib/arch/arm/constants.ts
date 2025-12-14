@@ -13,52 +13,52 @@
 /**
  * System Control Space (SCS) base address
  */
-export const SCS_BASE = 0xE000E000;
+export const SCS_BASE = 0xe000e000;
 
 /**
  * System Control Block (SCB) base address
  */
-export const SCB_BASE = 0xE000ED00;
+export const SCB_BASE = 0xe000ed00;
 
 /**
  * SysTick Timer base address
  */
-export const SYSTICK_BASE = 0xE000E010;
+export const SYSTICK_BASE = 0xe000e010;
 
 /**
  * NVIC base address
  */
-export const NVIC_BASE = 0xE000E100;
+export const NVIC_BASE = 0xe000e100;
 
 /**
  * Debug base address
  */
-export const DEBUG_BASE = 0xE000EDF0;
+export const DEBUG_BASE = 0xe000edf0;
 
 /**
  * Flash Patch and Breakpoint (FPB) base address
  */
-export const FPB_BASE = 0xE0002000;
+export const FPB_BASE = 0xe0002000;
 
 /**
  * Data Watchpoint and Trace (DWT) base address
  */
-export const DWT_BASE = 0xE0001000;
+export const DWT_BASE = 0xe0001000;
 
 /**
  * Instrumentation Trace Macrocell (ITM) base address
  */
-export const ITM_BASE = 0xE0000000;
+export const ITM_BASE = 0xe0000000;
 
 /**
  * Trace Port Interface Unit (TPIU) base address
  */
-export const TPIU_BASE = 0xE0040000;
+export const TPIU_BASE = 0xe0040000;
 
 /**
  * Embedded Trace Macrocell (ETM) base address
  */
-export const ETM_BASE = 0xE0041000;
+export const ETM_BASE = 0xe0041000;
 
 /**
  * System Control Block register addresses
@@ -67,22 +67,22 @@ export const SCB_ADDRESSES = {
   CPUID: SCB_BASE + 0x00,
   ICSR: SCB_BASE + 0x04,
   VTOR: SCB_BASE + 0x08,
-  AIRCR: SCB_BASE + 0x0C,
+  AIRCR: SCB_BASE + 0x0c,
   SCR: SCB_BASE + 0x10,
   CCR: SCB_BASE + 0x14,
   SHPR1: SCB_BASE + 0x18,
-  SHPR2: SCB_BASE + 0x1C,
+  SHPR2: SCB_BASE + 0x1c,
   SHPR3: SCB_BASE + 0x20,
   SHCSR: SCB_BASE + 0x24,
   CFSR: SCB_BASE + 0x28,
   MMFSR: SCB_BASE + 0x28, // Byte 0 of CFSR
-  BFSR: SCB_BASE + 0x29,  // Byte 1 of CFSR
-  UFSR: SCB_BASE + 0x2A,  // Bytes 2-3 of CFSR
-  HFSR: SCB_BASE + 0x2C,
+  BFSR: SCB_BASE + 0x29, // Byte 1 of CFSR
+  UFSR: SCB_BASE + 0x2a, // Bytes 2-3 of CFSR
+  HFSR: SCB_BASE + 0x2c,
   DFSR: SCB_BASE + 0x30,
   MMFAR: SCB_BASE + 0x34,
   BFAR: SCB_BASE + 0x38,
-  AFSR: SCB_BASE + 0x3C,
+  AFSR: SCB_BASE + 0x3c,
 } as const;
 
 /**
@@ -92,7 +92,7 @@ export const DEBUG_ADDRESSES = {
   DHCSR: DEBUG_BASE + 0x00,
   DCRSR: DEBUG_BASE + 0x04,
   DCRDR: DEBUG_BASE + 0x08,
-  DEMCR: DEBUG_BASE + 0x0C,
+  DEMCR: DEBUG_BASE + 0x0c,
 } as const;
 
 /**
@@ -102,11 +102,11 @@ export const FPB_ADDRESSES = {
   FP_CTRL: FPB_BASE + 0x000,
   FP_REMAP: FPB_BASE + 0x004,
   FP_COMP0: FPB_BASE + 0x008,
-  FP_COMP1: FPB_BASE + 0x00C,
+  FP_COMP1: FPB_BASE + 0x00c,
   FP_COMP2: FPB_BASE + 0x010,
   FP_COMP3: FPB_BASE + 0x014,
   FP_COMP4: FPB_BASE + 0x018,
-  FP_COMP5: FPB_BASE + 0x01C,
+  FP_COMP5: FPB_BASE + 0x01c,
   FP_COMP6: FPB_BASE + 0x020,
   FP_COMP7: FPB_BASE + 0x024,
 } as const;
@@ -118,11 +118,11 @@ export const DWT_ADDRESSES = {
   DWT_CTRL: DWT_BASE + 0x000,
   DWT_CYCCNT: DWT_BASE + 0x004,
   DWT_CPICNT: DWT_BASE + 0x008,
-  DWT_EXCCNT: DWT_BASE + 0x00C,
+  DWT_EXCCNT: DWT_BASE + 0x00c,
   DWT_SLEEPCNT: DWT_BASE + 0x010,
   DWT_LSUCNT: DWT_BASE + 0x014,
   DWT_FOLDCNT: DWT_BASE + 0x018,
-  DWT_PCSR: DWT_BASE + 0x01C,
+  DWT_PCSR: DWT_BASE + 0x01c,
   DWT_COMP0: DWT_BASE + 0x020,
   DWT_MASK0: DWT_BASE + 0x024,
   DWT_FUNCTION0: DWT_BASE + 0x028,
@@ -146,12 +146,12 @@ export const DWT_ADDRESSES = {
 /**
  * DHCSR debug key (write to bits 31:16)
  */
-export const DHCSR_DBGKEY = 0xA05F;
+export const DHCSR_DBGKEY = 0xa05f;
 
 /**
  * AIRCR register key (write to bits 31:16)
  */
-export const AIRCR_VECTKEY = 0x05FA;
+export const AIRCR_VECTKEY = 0x05fa;
 
 /**
  * ============================================================================
@@ -202,12 +202,12 @@ export const FPU_REGISTER_NUMBERS = {
   S7: 0x47,
   S8: 0x48,
   S9: 0x49,
-  S10: 0x4A,
-  S11: 0x4B,
-  S12: 0x4C,
-  S13: 0x4D,
-  S14: 0x4E,
-  S15: 0x4F,
+  S10: 0x4a,
+  S11: 0x4b,
+  S12: 0x4c,
+  S13: 0x4d,
+  S14: 0x4e,
+  S15: 0x4f,
   S16: 0x50,
   S17: 0x51,
   S18: 0x52,
@@ -218,12 +218,12 @@ export const FPU_REGISTER_NUMBERS = {
   S23: 0x57,
   S24: 0x58,
   S25: 0x59,
-  S26: 0x5A,
-  S27: 0x5B,
-  S28: 0x5C,
-  S29: 0x5D,
-  S30: 0x5E,
-  S31: 0x5F,
+  S26: 0x5a,
+  S27: 0x5b,
+  S28: 0x5c,
+  S29: 0x5d,
+  S30: 0x5e,
+  S31: 0x5f,
   FPSCR: 0x60,
 } as const;
 
@@ -262,23 +262,23 @@ export const EXCEPTION_NUMBERS = {
  * PSR bit masks
  */
 export const PSR_MASKS = {
-  N_FLAG: 1 << 31,  // Negative
-  Z_FLAG: 1 << 30,  // Zero
-  C_FLAG: 1 << 29,  // Carry
-  V_FLAG: 1 << 28,  // Overflow
-  Q_FLAG: 1 << 27,  // Saturation
-  T_BIT: 1 << 24,   // Thumb state (always 1 on Cortex-M)
-  GE_MASK: 0x000F0000,    // Greater-Equal flags
-  EXCEPTION_MASK: 0x1FF,  // Exception number
+  N_FLAG: 1 << 31, // Negative
+  Z_FLAG: 1 << 30, // Zero
+  C_FLAG: 1 << 29, // Carry
+  V_FLAG: 1 << 28, // Overflow
+  Q_FLAG: 1 << 27, // Saturation
+  T_BIT: 1 << 24, // Thumb state (always 1 on Cortex-M)
+  GE_MASK: 0x000f0000, // Greater-Equal flags
+  EXCEPTION_MASK: 0x1ff, // Exception number
 } as const;
 
 /**
  * CONTROL register bit masks
  */
 export const CONTROL_MASKS = {
-  nPRIV: 1 << 0,  // Thread mode privilege
-  SPSEL: 1 << 1,  // Stack pointer select
-  FPCA: 1 << 2,   // FP context active
+  nPRIV: 1 << 0, // Thread mode privilege
+  SPSEL: 1 << 1, // Stack pointer select
+  FPCA: 1 << 2, // FP context active
 } as const;
 
 /**
@@ -293,45 +293,45 @@ export const INTERRUPT_MASKS = {
  * DHCSR bit masks
  */
 export const DHCSR_MASKS = {
-  C_DEBUGEN: 1 << 0,     // Debug enable
-  C_HALT: 1 << 1,        // Halt request
-  C_STEP: 1 << 2,        // Single step
-  C_MASKINTS: 1 << 3,    // Mask interrupts
-  C_SNAPSTALL: 1 << 5,   // Snap stall
-  S_REGRDY: 1 << 16,     // Register ready
-  S_HALT: 1 << 17,       // Halted
-  S_SLEEP: 1 << 18,      // Sleeping
-  S_LOCKUP: 1 << 19,     // Lockup
-  S_RETIRE_ST: 1 << 24,  // Instruction retired
-  S_RESET_ST: 1 << 25,   // Reset status
-  DBGKEY: 0xFFFF0000,    // Debug key field
+  C_DEBUGEN: 1 << 0, // Debug enable
+  C_HALT: 1 << 1, // Halt request
+  C_STEP: 1 << 2, // Single step
+  C_MASKINTS: 1 << 3, // Mask interrupts
+  C_SNAPSTALL: 1 << 5, // Snap stall
+  S_REGRDY: 1 << 16, // Register ready
+  S_HALT: 1 << 17, // Halted
+  S_SLEEP: 1 << 18, // Sleeping
+  S_LOCKUP: 1 << 19, // Lockup
+  S_RETIRE_ST: 1 << 24, // Instruction retired
+  S_RESET_ST: 1 << 25, // Reset status
+  DBGKEY: 0xffff0000, // Debug key field
 } as const;
 
 /**
  * DCRSR bit masks
  */
 export const DCRSR_MASKS = {
-  REGSEL: 0x1F,      // Register select
-  REGWnR: 1 << 16,   // Write (1) or Read (0)
+  REGSEL: 0x1f, // Register select
+  REGWnR: 1 << 16, // Write (1) or Read (0)
 } as const;
 
 /**
  * DEMCR bit masks
  */
 export const DEMCR_MASKS = {
-  VC_CORERESET: 1 << 0,   // Core reset vector catch
-  VC_MMERR: 1 << 4,       // MemManage vector catch
-  VC_NOCPERR: 1 << 5,     // No coprocessor vector catch
-  VC_CHKERR: 1 << 6,      // Check error vector catch
-  VC_STATERR: 1 << 7,     // State error vector catch
-  VC_BUSERR: 1 << 8,      // BusFault vector catch
-  VC_INTERR: 1 << 9,      // Interrupt error vector catch
-  VC_HARDERR: 1 << 10,    // HardFault vector catch
-  MON_EN: 1 << 16,        // Monitor enable
-  MON_PEND: 1 << 17,      // Monitor pend
-  MON_STEP: 1 << 18,      // Monitor step
-  MON_REQ: 1 << 19,       // Monitor request
-  TRCENA: 1 << 24,        // Trace enable
+  VC_CORERESET: 1 << 0, // Core reset vector catch
+  VC_MMERR: 1 << 4, // MemManage vector catch
+  VC_NOCPERR: 1 << 5, // No coprocessor vector catch
+  VC_CHKERR: 1 << 6, // Check error vector catch
+  VC_STATERR: 1 << 7, // State error vector catch
+  VC_BUSERR: 1 << 8, // BusFault vector catch
+  VC_INTERR: 1 << 9, // Interrupt error vector catch
+  VC_HARDERR: 1 << 10, // HardFault vector catch
+  MON_EN: 1 << 16, // Monitor enable
+  MON_PEND: 1 << 17, // Monitor pend
+  MON_STEP: 1 << 18, // Monitor step
+  MON_REQ: 1 << 19, // Monitor request
+  TRCENA: 1 << 24, // Trace enable
 } as const;
 
 /**
@@ -344,17 +344,17 @@ export const DEMCR_MASKS = {
  * ARM Cortex-M part numbers
  */
 export const CORTEX_M_PARTS = {
-  0xC20: 'Cortex-M0',
-  0xC60: 'Cortex-M0+',
-  0xC21: 'Cortex-M1',
-  0xC23: 'Cortex-M3',
-  0xC24: 'Cortex-M4',
-  0xC27: 'Cortex-M7',
-  0xD20: 'Cortex-M23',
-  0xD21: 'Cortex-M33',
-  0xD22: 'Cortex-M35P',
-  0xD23: 'Cortex-M55',
-  0xD24: 'Cortex-M85',
+  0xc20: "Cortex-M0",
+  0xc60: "Cortex-M0+",
+  0xc21: "Cortex-M1",
+  0xc23: "Cortex-M3",
+  0xc24: "Cortex-M4",
+  0xc27: "Cortex-M7",
+  0xd20: "Cortex-M23",
+  0xd21: "Cortex-M33",
+  0xd22: "Cortex-M35P",
+  0xd23: "Cortex-M55",
+  0xd24: "Cortex-M85",
 } as const;
 
 /**
@@ -367,10 +367,10 @@ export const CORTEX_M_PARTS = {
  * FP_COMP REPLACE field values
  */
 export const FP_COMP_REPLACE = {
-  REMAP: 0b00,              // Remap to flash patch
-  BREAKPOINT_LOWER: 0b01,   // Breakpoint on lower halfword
-  BREAKPOINT_UPPER: 0b10,   // Breakpoint on upper halfword
-  BREAKPOINT_BOTH: 0b11,    // Breakpoint on both halfwords (deprecated)
+  REMAP: 0b00, // Remap to flash patch
+  BREAKPOINT_LOWER: 0b01, // Breakpoint on lower halfword
+  BREAKPOINT_UPPER: 0b10, // Breakpoint on upper halfword
+  BREAKPOINT_BOTH: 0b11, // Breakpoint on both halfwords (deprecated)
 } as const;
 
 /**
@@ -390,12 +390,12 @@ export const MAX_FPB_COMPARATORS = 8;
 export const DWT_FUNCTION_CODES = {
   DISABLED: 0,
   PC_SAMPLE: 1,
-  DATA_ADDR_RO: 5,        // Read-only watchpoint
-  DATA_ADDR_WO: 6,        // Write-only watchpoint
-  DATA_ADDR_RW: 7,        // Read/write watchpoint
-  DATA_VALUE_RO: 8,       // Read with data value
-  DATA_VALUE_WO: 9,       // Write with data value
-  DATA_VALUE_RW: 10,      // Read/write with data value
+  DATA_ADDR_RO: 5, // Read-only watchpoint
+  DATA_ADDR_WO: 6, // Write-only watchpoint
+  DATA_ADDR_RW: 7, // Read/write watchpoint
+  DATA_VALUE_RO: 8, // Read with data value
+  DATA_VALUE_WO: 9, // Write with data value
+  DATA_VALUE_RW: 10, // Read/write with data value
 } as const;
 
 /**
@@ -424,38 +424,38 @@ export const MAX_DWT_COMPARATORS = 4;
 export const MEMORY_REGIONS = {
   CODE: {
     start: 0x00000000,
-    end: 0x1FFFFFFF,
-    name: 'Code',
+    end: 0x1fffffff,
+    name: "Code",
   },
   SRAM: {
     start: 0x20000000,
-    end: 0x3FFFFFFF,
-    name: 'SRAM',
+    end: 0x3fffffff,
+    name: "SRAM",
   },
   PERIPHERAL: {
     start: 0x40000000,
-    end: 0x5FFFFFFF,
-    name: 'Peripheral',
+    end: 0x5fffffff,
+    name: "Peripheral",
   },
   EXTERNAL_RAM: {
     start: 0x60000000,
-    end: 0x9FFFFFFF,
-    name: 'External RAM',
+    end: 0x9fffffff,
+    name: "External RAM",
   },
   EXTERNAL_DEVICE: {
-    start: 0xA0000000,
-    end: 0xDFFFFFFF,
-    name: 'External Device',
+    start: 0xa0000000,
+    end: 0xdfffffff,
+    name: "External Device",
   },
   PRIVATE_PERIPHERAL: {
-    start: 0xE0000000,
-    end: 0xE00FFFFF,
-    name: 'Private Peripheral Bus',
+    start: 0xe0000000,
+    end: 0xe00fffff,
+    name: "Private Peripheral Bus",
   },
   VENDOR_SPECIFIC: {
-    start: 0xE0100000,
-    end: 0xFFFFFFFF,
-    name: 'Vendor Specific',
+    start: 0xe0100000,
+    end: 0xffffffff,
+    name: "Vendor Specific",
   },
 } as const;
 

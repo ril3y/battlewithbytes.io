@@ -95,7 +95,7 @@ export function PlatformSelectorModal({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/platforms/registry.json");
+      const response = await fetch("/tools/battleforge/platforms/registry.json");
       if (!response.ok) throw new Error("Failed to load platform registry");
       const data = await response.json();
       setRegistry(data);
@@ -113,7 +113,7 @@ export function PlatformSelectorModal({
       if (!families.has(cacheKey)) {
         try {
           const response = await fetch(
-            `/platforms/${platform.id}/${familyId}/family.json`,
+            `/tools/battleforge/platforms/${platform.id}/${familyId}/family.json`,
           );
           if (response.ok) {
             const data = await response.json();
@@ -295,25 +295,25 @@ export function PlatformSelectorModal({
                       <div className="platform-icon">
                         {platform.id === "stm32" && (
                           <img
-                            src="/platforms/icons/st.ico"
+                            src="/tools/battleforge/platforms/icons/st.ico"
                             alt="STMicroelectronics"
                           />
                         )}
                         {platform.id === "esp32" && (
                           <img
-                            src="/platforms/icons/espressif.png"
+                            src="/tools/battleforge/platforms/icons/espressif.png"
                             alt="Espressif"
                           />
                         )}
                         {platform.id === "nrf" && (
                           <img
-                            src="/platforms/icons/nordic.png"
+                            src="/tools/battleforge/platforms/icons/nordic.png"
                             alt="Nordic Semiconductor"
                           />
                         )}
                         {platform.id === "rp2040" && (
                           <img
-                            src="/platforms/icons/raspberrypi.png"
+                            src="/tools/battleforge/platforms/icons/raspberrypi.png"
                             alt="Raspberry Pi"
                           />
                         )}

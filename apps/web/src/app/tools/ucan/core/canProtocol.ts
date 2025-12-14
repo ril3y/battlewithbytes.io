@@ -11,7 +11,7 @@
  * - STATS;RX:1234,TX:567,ERR:2
  */
 
-import { CANMessage, ProtocolMessage, MessageType } from '../types';
+import { CANMessage, ProtocolMessage, MessageType } from "../types";
 
 // Counter to ensure unique IDs even when multiple messages arrive in the same millisecond
 let messageCounter = 0;
@@ -29,38 +29,38 @@ export function parseProtocolLine(line: string): ProtocolMessage | null {
   }
 
   // Split by semicolon
-  const parts = trimmed.split(';');
+  const parts = trimmed.split(";");
 
   if (parts.length < 2) {
-    console.warn('Invalid protocol message:', line);
+    console.warn("Invalid protocol message:", line);
     return null;
   }
 
   const messageType = parts[0].trim() as MessageType;
 
   switch (messageType) {
-    case 'CAN_RX':
-    case 'CAN_TX':
+    case "CAN_RX":
+    case "CAN_TX":
       return parseCANMessage(parts, messageType);
 
-    case 'CAN_ERR':
+    case "CAN_ERR":
       return parseErrorMessage(parts);
 
-    case 'STATUS':
+    case "STATUS":
       return parseStatusMessage(parts);
 
-    case 'STATS':
+    case "STATS":
       return parseStatsMessage(parts);
 
-    case 'CAPS':
-    case 'ACTIONDEF':
-    case 'RULE':
-    case 'ACTION':
+    case "CAPS":
+    case "ACTIONDEF":
+    case "RULE":
+    case "ACTION":
       // Return raw message for CAPS, ACTIONDEF, RULE, and ACTION - handled in UCANMonitor
       return { type: messageType, raw: line };
 
     default:
-      console.warn('Unknown message type:', messageType);
+      console.warn("Unknown message type:", messageType);
       return { type: messageType, raw: line };
   }
 }
@@ -72,20 +72,23 @@ export function parseProtocolLine(line: string): ProtocolMessage | null {
  *   CAN_RX;0x123;01,02,03,04,05,06,07,08
  *   CAN_RX;0x1FFFFFFF;AA,BB,CC,DD;1635360000000
  */
-function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMessage | null {
+function parseCANMessage(
+  parts: string[],
+  type: "CAN_RX" | "CAN_TX",
+): ProtocolMessage | null {
   if (parts.length < 3) {
-    console.warn('Invalid CAN message format:', parts.join(';'));
+    console.warn("Invalid CAN message format:", parts.join(";"));
     return null;
   }
 
   // Parse CAN ID (supports 0x prefix)
   const canIdStr = parts[1].trim();
-  const canId = canIdStr.startsWith('0x')
+  const canId = canIdStr.startsWith("0x")
     ? parseInt(canIdStr.substring(2), 16)
     : parseInt(canIdStr, 16);
 
   if (isNaN(canId)) {
-    console.warn('Invalid CAN ID:', canIdStr);
+    console.warn("Invalid CAN ID:", canIdStr);
     return null;
   }
 
@@ -94,13 +97,13 @@ function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMe
   const data: number[] = [];
 
   if (dataStr) {
-    const bytes = dataStr.split(',');
+    const bytes = dataStr.split(",");
     for (const byte of bytes) {
       const trimmedByte = byte.trim();
       if (trimmedByte) {
         const value = parseInt(trimmedByte, 16);
         if (isNaN(value)) {
-          console.warn('Invalid data byte:', trimmedByte);
+          console.warn("Invalid data byte:", trimmedByte);
           return null;
         }
         data.push(value);
@@ -116,7 +119,7 @@ function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMe
     canId,
     data,
     timestamp: timestamp && !isNaN(timestamp) ? timestamp : undefined,
-    raw: parts.join(';')
+    raw: parts.join(";"),
   };
 }
 
@@ -125,14 +128,14 @@ function parseCANMessage(parts: string[], type: 'CAN_RX' | 'CAN_TX'): ProtocolMe
  * Format: CAN_ERR;BUS_OFF;Error description
  */
 function parseErrorMessage(parts: string[]): ProtocolMessage {
-  const errorCode = parts[1]?.trim() || 'UNKNOWN';
-  const errorMessage = parts[2]?.trim() || '';
+  const errorCode = parts[1]?.trim() || "UNKNOWN";
+  const errorMessage = parts[2]?.trim() || "";
 
   return {
-    type: 'CAN_ERR',
+    type: "CAN_ERR",
     error: errorCode,
     status: errorMessage,
-    raw: parts.join(';')
+    raw: parts.join(";"),
   };
 }
 
@@ -141,13 +144,13 @@ function parseErrorMessage(parts: string[]): ProtocolMessage {
  * Format: STATUS;CONNECTED;uCAN v1.0 Ready
  */
 function parseStatusMessage(parts: string[]): ProtocolMessage {
-  const statusCode = parts[1]?.trim() || '';
-  const statusMessage = parts[2]?.trim() || '';
+  const statusCode = parts[1]?.trim() || "";
+  const statusMessage = parts[2]?.trim() || "";
 
   return {
-    type: 'STATUS',
+    type: "STATUS",
     status: `${statusCode}: ${statusMessage}`,
-    raw: parts.join(';')
+    raw: parts.join(";"),
   };
 }
 
@@ -158,56 +161,66 @@ function parseStatusMessage(parts: string[]): ProtocolMessage {
  */
 function parseStatsMessage(parts: string[]): ProtocolMessage {
   if (parts.length < 5) {
-    console.warn('Invalid STATS format (expected at least 5 fields):', parts.join(';'));
+    console.warn(
+      "Invalid STATS format (expected at least 5 fields):",
+      parts.join(";"),
+    );
     return {
-      type: 'STATS',
-      raw: parts.join(';')
+      type: "STATS",
+      raw: parts.join(";"),
     };
   }
 
-  const rxCount = parseInt(parts[1]?.trim() || '0', 10);
-  const txCount = parseInt(parts[2]?.trim() || '0', 10);
-  const errorCount = parseInt(parts[3]?.trim() || '0', 10);
-  const busLoad = parseFloat(parts[4]?.trim() || '0');
+  const rxCount = parseInt(parts[1]?.trim() || "0", 10);
+  const txCount = parseInt(parts[2]?.trim() || "0", 10);
+  const errorCount = parseInt(parts[3]?.trim() || "0", 10);
+  const busLoad = parseFloat(parts[4]?.trim() || "0");
   const timestamp = parts[5] ? parseInt(parts[5].trim(), 10) : undefined;
 
   // Validate parsed values
   if (isNaN(rxCount) || isNaN(txCount) || isNaN(errorCount) || isNaN(busLoad)) {
-    console.warn('Invalid STATS values:', { rxCount, txCount, errorCount, busLoad });
+    console.warn("Invalid STATS values:", {
+      rxCount,
+      txCount,
+      errorCount,
+      busLoad,
+    });
     return {
-      type: 'STATS',
-      raw: parts.join(';')
+      type: "STATS",
+      raw: parts.join(";"),
     };
   }
 
   return {
-    type: 'STATS',
+    type: "STATS",
     stats: {
       rxCount,
       txCount,
       errorCount,
       busLoad,
-      timestamp
+      timestamp,
     },
-    raw: parts.join(';')
+    raw: parts.join(";"),
   };
 }
 
 /**
  * Convert protocol message to CANMessage
  */
-export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | null {
+export function protocolToCANMessage(
+  protocol: ProtocolMessage,
+): CANMessage | null {
   // Handle CAN messages (RX/TX)
-  if (protocol.type === 'CAN_RX' || protocol.type === 'CAN_TX') {
+  if (protocol.type === "CAN_RX" || protocol.type === "CAN_TX") {
     if (protocol.canId === undefined || !protocol.data) {
       return null;
     }
 
-    const direction = protocol.type === 'CAN_RX' ? 'RX' : 'TX';
+    const direction = protocol.type === "CAN_RX" ? "RX" : "TX";
     const data = new Uint8Array(protocol.data);
 
     // Determine if extended ID (29-bit vs 11-bit)
-    const isExtended = protocol.canId > 0x7FF;
+    const isExtended = protocol.canId > 0x7ff;
 
     // Use firmware timestamp if available, otherwise use current time
     const timestamp = protocol.timestamp
@@ -223,14 +236,14 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
       data,
       length: data.length,
       isExtended,
-      success: true
+      success: true,
     };
   }
 
   // Handle STATUS messages as info messages (but NOT STATS - those are just heartbeats)
-  if (protocol.type === 'STATUS') {
+  if (protocol.type === "STATUS") {
     // Create a pseudo CAN message for display purposes
-    const statusText = protocol.status || '';
+    const statusText = protocol.status || "";
     const textEncoder = new TextEncoder();
     const data = textEncoder.encode(statusText.substring(0, 8)); // Max 8 bytes for display
     const paddedData = new Uint8Array(8);
@@ -239,26 +252,26 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     return {
       id: `INFO_${Date.now()}_${messageCounter++}`,
       timestamp: new Date(),
-      direction: 'RX', // Show as received
+      direction: "RX", // Show as received
       type: protocol.type,
-      canId: 0x7FF, // Use max standard ID for info messages
+      canId: 0x7ff, // Use max standard ID for info messages
       data: paddedData,
       length: data.length,
       isExtended: false,
       success: true,
-      error: statusText
+      error: statusText,
     };
   }
 
   // STATS messages are just heartbeats - don't convert to CAN messages
   // They should be handled separately for connection status
-  if (protocol.type === 'STATS') {
+  if (protocol.type === "STATS") {
     return null; // Don't display as a message
   }
 
   // Handle error messages
-  if (protocol.type === 'CAN_ERR') {
-    const errorText = protocol.error || 'Unknown error';
+  if (protocol.type === "CAN_ERR") {
+    const errorText = protocol.error || "Unknown error";
     const textEncoder = new TextEncoder();
     const data = textEncoder.encode(errorText.substring(0, 8));
     const paddedData = new Uint8Array(8);
@@ -267,14 +280,14 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
     return {
       id: `ERR_${Date.now()}_${messageCounter++}`,
       timestamp: new Date(),
-      direction: 'RX',
+      direction: "RX",
       type: protocol.type,
-      canId: 0x7FE, // Use 0x7FE for error messages
+      canId: 0x7fe, // Use 0x7FE for error messages
       data: paddedData,
       length: data.length,
       isExtended: false,
       success: false,
-      error: errorText
+      error: errorText,
     };
   }
 
@@ -287,19 +300,22 @@ export function protocolToCANMessage(protocol: ProtocolMessage): CANMessage | nu
 export function formatCANId(canId: number, isExtended: boolean): string {
   if (isExtended) {
     // 29-bit extended ID (8 hex digits)
-    return `0x${canId.toString(16).toUpperCase().padStart(8, '0')}`;
+    return `0x${canId.toString(16).toUpperCase().padStart(8, "0")}`;
   } else {
     // 11-bit standard ID (3 hex digits)
-    return `0x${canId.toString(16).toUpperCase().padStart(3, '0')}`;
+    return `0x${canId.toString(16).toUpperCase().padStart(3, "0")}`;
   }
 }
 
 /**
  * Format data bytes for display
  */
-export function formatDataBytes(data: Uint8Array, separator: string = ' '): string {
+export function formatDataBytes(
+  data: Uint8Array,
+  separator: string = " ",
+): string {
   return Array.from(data)
-    .map(byte => byte.toString(16).toUpperCase().padStart(2, '0'))
+    .map((byte) => byte.toString(16).toUpperCase().padStart(2, "0"))
     .join(separator);
 }
 
@@ -309,24 +325,27 @@ export function formatDataBytes(data: Uint8Array, separator: string = ' '): stri
  */
 export function formatSendCommand(canId: number, data: Uint8Array): string {
   const idStr = canId.toString(16).toUpperCase();
-  const dataStr = formatDataBytes(data, ',');
+  const dataStr = formatDataBytes(data, ",");
   return `send:0x${idStr}:${dataStr}`;
 }
 
 /**
  * Validate CAN ID
  */
-export function isValidCANId(canId: number, allowExtended: boolean = true): boolean {
+export function isValidCANId(
+  canId: number,
+  allowExtended: boolean = true,
+): boolean {
   if (canId < 0) {
     return false;
   }
 
   if (allowExtended) {
     // 29-bit extended ID
-    return canId <= 0x1FFFFFFF;
+    return canId <= 0x1fffffff;
   } else {
     // 11-bit standard ID
-    return canId <= 0x7FF;
+    return canId <= 0x7ff;
   }
 }
 
@@ -343,9 +362,7 @@ export function isValidDataLength(length: number): boolean {
  */
 export function parseHexString(hexString: string): Uint8Array | null {
   // Remove common separators
-  const cleaned = hexString
-    .replace(/[\s,:-]/g, '')
-    .toUpperCase();
+  const cleaned = hexString.replace(/[\s,:-]/g, "").toUpperCase();
 
   // Validate hex characters
   if (!/^[0-9A-F]*$/.test(cleaned)) {
@@ -384,7 +401,7 @@ export function calculateCRC8(data: Uint8Array): number {
     }
   }
 
-  return crc & 0xFF;
+  return crc & 0xff;
 }
 
 /**
@@ -392,7 +409,7 @@ export function calculateCRC8(data: Uint8Array): number {
  */
 export function parseMultipleLines(lines: string): ProtocolMessage[] {
   return lines
-    .split('\n')
-    .map(line => parseProtocolLine(line))
+    .split("\n")
+    .map((line) => parseProtocolLine(line))
     .filter((msg): msg is ProtocolMessage => msg !== null);
 }

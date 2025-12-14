@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 /**
  * Global WASM Provider - loads the analyzer once at app startup
  * This prevents race conditions with component unmounting
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { loadWasmAnalyzer, type WasmAnalyzerModule } from '../lib/wasmAnalyzer';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { loadWasmAnalyzer, type WasmAnalyzerModule } from "../lib/wasmAnalyzer";
 
 interface WasmContextType {
   wasmModule: WasmAnalyzerModule | null;
@@ -17,7 +17,7 @@ interface WasmContextType {
 const WasmContext = createContext<WasmContextType>({
   wasmModule: null,
   isLoading: true,
-  error: null
+  error: null,
 });
 
 export function WasmProvider({ children }: { children: React.ReactNode }) {
@@ -29,19 +29,19 @@ export function WasmProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function load() {
-      console.log('[WasmProvider] Starting WASM load...');
+      console.log("[WasmProvider] Starting WASM load...");
       try {
         const wasmAnalyzer = await loadWasmAnalyzer();
 
         if (!cancelled) {
-          console.log('[WasmProvider] WASM loaded successfully');
+          console.log("[WasmProvider] WASM loaded successfully");
           setWasmModule(wasmAnalyzer);
           setIsLoading(false);
         }
       } catch (err) {
         if (!cancelled) {
           const errorMsg = err instanceof Error ? err.message : String(err);
-          console.error('[WasmProvider] Failed to load WASM:', errorMsg);
+          console.error("[WasmProvider] Failed to load WASM:", errorMsg);
           setError(errorMsg);
           setIsLoading(false);
         }
@@ -65,7 +65,7 @@ export function WasmProvider({ children }: { children: React.ReactNode }) {
 export function useWasm() {
   const context = useContext(WasmContext);
   if (!context) {
-    throw new Error('useWasm must be used within WasmProvider');
+    throw new Error("useWasm must be used within WasmProvider");
   }
   return context;
 }

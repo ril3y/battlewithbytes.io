@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Analysis Progress Modal
@@ -7,8 +7,8 @@
  * Shows current stage and progress percentage
  */
 
-import React from 'react';
-import { createPortal } from 'react-dom';
+import React from "react";
+import { createPortal } from "react-dom";
 
 interface AnalysisProgressModalProps {
   isVisible: boolean;
@@ -26,28 +26,29 @@ export default function AnalysisProgressModal({
   stage,
   progress,
   message,
-  title = 'Processing',
+  title = "Processing",
   onDismiss,
   onCancel,
-  showCancelButton = false
+  showCancelButton = false,
 }: AnalysisProgressModalProps) {
   if (!isVisible) return null;
 
   // Use portal to render at document.body level (bypasses any parent container issues)
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center"
       style={{ zIndex: 9999 }}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-6 min-w-[400px] max-w-[500px]" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-6 min-w-[400px] max-w-[500px]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
-          <h3 className="text-lg font-semibold text-white">
-            {title}
-          </h3>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
         </div>
 
         {/* Progress Bar */}
@@ -85,6 +86,6 @@ export default function AnalysisProgressModal({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

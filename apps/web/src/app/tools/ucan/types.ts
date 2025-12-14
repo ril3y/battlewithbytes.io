@@ -7,8 +7,17 @@
 // CAN Message Types
 // ============================================================================
 
-export type MessageDirection = 'RX' | 'TX';
-export type MessageType = 'CAN_RX' | 'CAN_TX' | 'CAN_ERR' | 'STATUS' | 'STATS' | 'CAPS' | 'ACTIONDEF' | 'RULE' | 'ACTION';
+export type MessageDirection = "RX" | "TX";
+export type MessageType =
+  | "CAN_RX"
+  | "CAN_TX"
+  | "CAN_ERR"
+  | "STATUS"
+  | "STATS"
+  | "CAPS"
+  | "ACTIONDEF"
+  | "RULE"
+  | "ACTION";
 
 /**
  * Core CAN message structure
@@ -132,9 +141,9 @@ export interface SerialConfig {
   /** Stop bits */
   stopBits: 1 | 2;
   /** Parity */
-  parity: 'none' | 'even' | 'odd';
+  parity: "none" | "even" | "odd";
   /** Flow control */
-  flowControl: 'none' | 'hardware';
+  flowControl: "none" | "hardware";
 }
 
 /**
@@ -144,8 +153,8 @@ export const DEFAULT_SERIAL_CONFIG: SerialConfig = {
   baudRate: 115200,
   dataBits: 8,
   stopBits: 1,
-  parity: 'none',
-  flowControl: 'none'
+  parity: "none",
+  flowControl: "none",
 };
 
 // ============================================================================
@@ -190,7 +199,7 @@ export interface DeviceInfo {
 // View Modes
 // ============================================================================
 
-export type ViewMode = 'list' | 'hex' | 'decoded' | 'stats' | 'timeline';
+export type ViewMode = "list" | "hex" | "decoded" | "stats" | "timeline";
 
 /**
  * Display options
@@ -214,19 +223,19 @@ export interface DisplayOptions {
  * Default display options
  */
 export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
-  viewMode: 'list',
+  viewMode: "list",
   showTimestamps: true,
   showRawHex: true,
   autoScroll: true,
   maxMessages: 10000,
-  paused: false
+  paused: false,
 };
 
 // ============================================================================
 // Export Configuration
 // ============================================================================
 
-export type ExportFormat = 'csv' | 'json' | 'txt';
+export type ExportFormat = "csv" | "json" | "txt";
 
 /**
  * Export configuration
@@ -266,7 +275,7 @@ export interface UF2Block {
 /**
  * Supported board types
  */
-export type BoardType = 'feather_m4_can' | 'pico' | 'esp32' | 'unknown';
+export type BoardType = "feather_m4_can" | "pico" | "esp32" | "unknown";
 
 /**
  * Board information
@@ -275,7 +284,7 @@ export interface BoardInfo {
   type: BoardType;
   name: string;
   familyId: number;
-  bootloaderSupport: 'uf2' | 'dfu' | 'esptool' | 'none';
+  bootloaderSupport: "uf2" | "dfu" | "esptool" | "none";
   description: string;
 }
 
@@ -441,7 +450,7 @@ export interface ActionRule {
   /** Action type */
   actionType: string;
   /** Parameter source: 'candata' or 'fixed' */
-  paramSource: 'candata' | 'fixed';
+  paramSource: "candata" | "fixed";
   /** Fixed parameters (when paramSource='fixed') */
   params?: string[];
   /** Whether rule is enabled */
@@ -476,5 +485,5 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   maxMessages: 10000,
   autoScroll: true,
   showTimestamps: true,
-  showRawHex: true
+  showRawHex: true,
 };

@@ -38,15 +38,16 @@ export default function Navigation() {
   return (
     <nav
       className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
-        scrolled
-          ? "bg-black/80 backdrop-blur-md shadow-lg"
-          : "bg-transparent"
+        scrolled ? "bg-black/80 backdrop-blur-md shadow-lg" : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="text-teal-300 font-mono font-bold text-xl">
+            <Link
+              href="/"
+              className="text-teal-300 font-mono font-bold text-xl"
+            >
               <span className="text-white">&lt;</span>
               Battle<span className="text-white">With</span>Bytes
               <span className="text-white">/&gt;</span>
@@ -120,7 +121,10 @@ export default function Navigation() {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-black/90 backdrop-blur-md" id="mobile-menu">
+        <div
+          className="md:hidden bg-black/90 backdrop-blur-md"
+          id="mobile-menu"
+        >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navItems.map((item) => {
               const isActive = pathname === item.path;
@@ -128,10 +132,11 @@ export default function Navigation() {
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive
                       ? "bg-teal-500 text-black"
                       : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                  }`}
                   aria-current={isActive ? "page" : undefined}
                   onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
                 >
@@ -147,14 +152,17 @@ export default function Navigation() {
         .nav-link {
           position: relative;
           color: #e9faf6;
-          font-family: 'Fira Mono', monospace;
+          font-family: "Fira Mono", monospace;
           font-size: 1.08rem;
           font-weight: 500;
           letter-spacing: 0.02em;
           padding: 0.38rem 1.1rem 0.38rem 1.1rem;
           border-radius: 1.3em;
           background: transparent;
-          transition: background 0.18s cubic-bezier(.4,0,.2,1), color 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+          transition:
+            background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+            color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+            box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           outline: none;
           box-shadow: none;
         }

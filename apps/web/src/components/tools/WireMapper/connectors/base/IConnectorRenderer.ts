@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import {
   Pin,
   ConnectorConfig,
   ConnectorShape,
   DynamicConfigSchema,
-} from '../../types'; // Use the refined types
+} from "../../types"; // Use the refined types
 
 /**
  * Interface for connector rendering logic and configuration.

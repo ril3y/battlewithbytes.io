@@ -6,8 +6,8 @@
  * probe-specific functionality.
  */
 
-import { PowerState } from './types';
-import type { Target, BmpVersion } from './types';
+import { PowerState } from "./types";
+import type { Target, BmpVersion } from "./types";
 
 /**
  * Black Magic Probe command builder and parser
@@ -25,8 +25,8 @@ export class BlackMagicCommands {
   static buildMonitorCommand(command: string): string {
     // Convert command to hex
     const hexCommand = Array.from(command)
-      .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
-      .join('');
+      .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
+      .join("");
     return `qRcmd,${hexCommand}`;
   }
 
@@ -39,7 +39,7 @@ export class BlackMagicCommands {
    * @returns Decoded string
    */
   static decodeMonitorResponse(hexData: string): string {
-    let result = '';
+    let result = "";
     for (let i = 0; i < hexData.length; i += 2) {
       const byte = parseInt(hexData.substring(i, i + 2), 16);
       result += String.fromCharCode(byte);
@@ -55,7 +55,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildSwdScan(): string {
-    return this.buildMonitorCommand('swdp_scan');
+    return this.buildMonitorCommand("swdp_scan");
   }
 
   /**
@@ -66,7 +66,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildJtagScan(): string {
-    return this.buildMonitorCommand('jtag_scan');
+    return this.buildMonitorCommand("jtag_scan");
   }
 
   /**
@@ -75,7 +75,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildPowerEnable(): string {
-    return this.buildMonitorCommand('tpwr enable');
+    return this.buildMonitorCommand("tpwr enable");
   }
 
   /**
@@ -84,7 +84,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildPowerDisable(): string {
-    return this.buildMonitorCommand('tpwr disable');
+    return this.buildMonitorCommand("tpwr disable");
   }
 
   /**
@@ -93,7 +93,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildVersionQuery(): string {
-    return this.buildMonitorCommand('version');
+    return this.buildMonitorCommand("version");
   }
 
   /**
@@ -102,7 +102,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildReset(): string {
-    return this.buildMonitorCommand('reset');
+    return this.buildMonitorCommand("reset");
   }
 
   /**
@@ -113,7 +113,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildHardReset(): string {
-    return this.buildMonitorCommand('hard_reset');
+    return this.buildMonitorCommand("hard_reset");
   }
 
   /**
@@ -135,7 +135,7 @@ export class BlackMagicCommands {
    * @returns Detach command
    */
   static buildDetach(): string {
-    return 'D';
+    return "D";
   }
 
   /**
@@ -146,7 +146,7 @@ export class BlackMagicCommands {
    * @returns Continue command
    */
   static buildContinue(): string {
-    return 'c';
+    return "c";
   }
 
   /**
@@ -157,7 +157,7 @@ export class BlackMagicCommands {
    * @returns Step command
    */
   static buildStep(): string {
-    return 's';
+    return "s";
   }
 
   /**
@@ -166,7 +166,7 @@ export class BlackMagicCommands {
    * @returns Interrupt character
    */
   static buildHalt(): string {
-    return '\x03';
+    return "\x03";
   }
 
   /**
@@ -179,9 +179,8 @@ export class BlackMagicCommands {
    * @returns Memory read command
    */
   static buildMemoryRead(address: number | string, length: number): string {
-    const addrHex = typeof address === 'number'
-      ? address.toString(16)
-      : address;
+    const addrHex =
+      typeof address === "number" ? address.toString(16) : address;
     const lengthHex = length.toString(16);
     return `m${addrHex},${lengthHex}`;
   }
@@ -196,13 +195,12 @@ export class BlackMagicCommands {
    * @returns Memory write command
    */
   static buildMemoryWrite(address: number | string, data: Uint8Array): string {
-    const addrHex = typeof address === 'number'
-      ? address.toString(16)
-      : address;
+    const addrHex =
+      typeof address === "number" ? address.toString(16) : address;
     const lengthHex = data.length.toString(16);
     const hexData = Array.from(data)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     return `M${addrHex},${lengthHex}:${hexData}`;
   }
 
@@ -214,7 +212,7 @@ export class BlackMagicCommands {
    * @returns Register read command
    */
   static buildReadRegisters(): string {
-    return 'g';
+    return "g";
   }
 
   /**
@@ -256,12 +254,11 @@ export class BlackMagicCommands {
   static buildInsertBreakpoint(
     address: number | string,
     hardware = false,
-    kind = 2
+    kind = 2,
   ): string {
-    const type = hardware ? '1' : '0';
-    const addrHex = typeof address === 'number'
-      ? address.toString(16)
-      : address;
+    const type = hardware ? "1" : "0";
+    const addrHex =
+      typeof address === "number" ? address.toString(16) : address;
     return `Z${type},${addrHex},${kind}`;
   }
 
@@ -279,12 +276,11 @@ export class BlackMagicCommands {
   static buildRemoveBreakpoint(
     address: number | string,
     hardware = false,
-    kind = 2
+    kind = 2,
   ): string {
-    const type = hardware ? '1' : '0';
-    const addrHex = typeof address === 'number'
-      ? address.toString(16)
-      : address;
+    const type = hardware ? "1" : "0";
+    const addrHex =
+      typeof address === "number" ? address.toString(16) : address;
     return `z${type},${addrHex},${kind}`;
   }
 
@@ -302,7 +298,7 @@ export class BlackMagicCommands {
    */
   static parseScanResults(scanOutput: string): Target[] {
     const targets: Target[] = [];
-    const lines = scanOutput.split('\n');
+    const lines = scanOutput.split("\n");
 
     // Look for target lines (format: " N      Description")
     for (const line of lines) {
@@ -316,7 +312,7 @@ export class BlackMagicCommands {
         targets.push({
           id,
           description,
-          type: description // Use description as type for now
+          type: description, // Use description as type for now
         });
       }
     }
@@ -335,7 +331,7 @@ export class BlackMagicCommands {
    */
   static parseVersion(versionOutput: string): BmpVersion {
     const version: BmpVersion = {
-      firmware: 'unknown'
+      firmware: "unknown",
     };
 
     // Extract firmware version
@@ -395,7 +391,7 @@ export class BlackMagicCommands {
    * @returns Supported query command
    */
   static buildQuerySupported(): string {
-    return 'qSupported:multiprocess+;swbreak+;hwbreak+;qRelocInsn+';
+    return "qSupported:multiprocess+;swbreak+;hwbreak+;qRelocInsn+";
   }
 
   /**
@@ -404,7 +400,7 @@ export class BlackMagicCommands {
    * @returns Thread info query command
    */
   static buildQueryThreadInfo(): string {
-    return 'qfThreadInfo';
+    return "qfThreadInfo";
   }
 
   /**
@@ -413,7 +409,7 @@ export class BlackMagicCommands {
    * @returns Current thread query
    */
   static buildQueryCurrentThread(): string {
-    return 'qC';
+    return "qC";
   }
 
   /**
@@ -427,7 +423,7 @@ export class BlackMagicCommands {
    * @returns Set thread command
    */
   static buildSetThread(threadId: number, forContinue = false): string {
-    const op = forContinue ? 'c' : 'g';
+    const op = forContinue ? "c" : "g";
     const id = threadId.toString(16);
     return `H${op}${id}`;
   }
@@ -440,7 +436,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildAutoScan(): string {
-    return this.buildMonitorCommand('auto_scan');
+    return this.buildMonitorCommand("auto_scan");
   }
 
   /**
@@ -449,7 +445,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildTargetsList(): string {
-    return this.buildMonitorCommand('targets');
+    return this.buildMonitorCommand("targets");
   }
 
   /**
@@ -459,7 +455,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildSetFrequency(frequency?: number): string {
-    const cmd = frequency ? `frequency ${frequency}` : 'frequency';
+    const cmd = frequency ? `frequency ${frequency}` : "frequency";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -480,7 +476,9 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildConnectReset(enable: boolean): string {
-    return this.buildMonitorCommand(`connect_srst ${enable ? 'enable' : 'disable'}`);
+    return this.buildMonitorCommand(
+      `connect_srst ${enable ? "enable" : "disable"}`,
+    );
   }
 
   /**
@@ -489,7 +487,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildHardSystemReset(): string {
-    return this.buildMonitorCommand('hard_srst');
+    return this.buildMonitorCommand("hard_srst");
   }
 
   /**
@@ -498,7 +496,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildTdiLowReset(): string {
-    return this.buildMonitorCommand('tdi_low_reset');
+    return this.buildMonitorCommand("tdi_low_reset");
   }
 
   /**
@@ -509,7 +507,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildMorse(): string {
-    return this.buildMonitorCommand('morse');
+    return this.buildMonitorCommand("morse");
   }
 
   /**
@@ -522,14 +520,18 @@ export class BlackMagicCommands {
    * @param channels - Channel numbers to decode
    * @returns Monitor command
    */
-  static buildTraceSwo(baudrate?: number, decode?: boolean, channels?: number[]): string {
-    let cmd = 'traceswo';
+  static buildTraceSwo(
+    baudrate?: number,
+    decode?: boolean,
+    channels?: number[],
+  ): string {
+    let cmd = "traceswo";
     if (baudrate) {
       cmd += ` ${baudrate}`;
       if (decode) {
-        cmd += ' decode';
+        cmd += " decode";
         if (channels && channels.length > 0) {
-          cmd += ` ${channels.join(' ')}`;
+          cmd += ` ${channels.join(" ")}`;
         }
       }
     }
@@ -545,7 +547,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildHeapInfo(heap?: string): string {
-    const cmd = heap ? `heapinfo ${heap}` : 'heapinfo';
+    const cmd = heap ? `heapinfo ${heap}` : "heapinfo";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -557,7 +559,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildMassErase(): string {
-    return this.buildMonitorCommand('mass_erase');
+    return this.buildMonitorCommand("mass_erase");
   }
 
   /**
@@ -569,7 +571,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildVectorCatch(vectors?: string): string {
-    const cmd = vectors ? `vector_catch ${vectors}` : 'vector_catch';
+    const cmd = vectors ? `vector_catch ${vectors}` : "vector_catch";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -582,7 +584,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildRtt(command?: string): string {
-    const cmd = command ? `rtt ${command}` : 'rtt';
+    const cmd = command ? `rtt ${command}` : "rtt";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -595,9 +597,10 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildSemihosting(enable?: boolean): string {
-    const cmd = enable !== undefined
-      ? `semihosting ${enable ? 'enable' : 'disable'}`
-      : 'semihosting';
+    const cmd =
+      enable !== undefined
+        ? `semihosting ${enable ? "enable" : "disable"}`
+        : "semihosting";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -608,7 +611,7 @@ export class BlackMagicCommands {
    * @returns Monitor command
    */
   static buildHelp(topic?: string): string {
-    const cmd = topic ? `help ${topic}` : 'help';
+    const cmd = topic ? `help ${topic}` : "help";
     return this.buildMonitorCommand(cmd);
   }
 
@@ -629,7 +632,9 @@ export class BlackMagicCommands {
    * @param response - Decoded response
    * @returns SWO configuration or null
    */
-  static parseSwoConfig(response: string): { baudrate?: number; channels?: number[] } | null {
+  static parseSwoConfig(
+    response: string,
+  ): { baudrate?: number; channels?: number[] } | null {
     const baudrateMatch = response.match(/baudrate:\s*(\d+)/i);
     const channelsMatch = response.match(/channels:\s*([\d\s]+)/i);
 
@@ -640,7 +645,7 @@ export class BlackMagicCommands {
     }
 
     if (channelsMatch) {
-      config.channels = channelsMatch[1].split(/\s+/).map(c => parseInt(c));
+      config.channels = channelsMatch[1].split(/\s+/).map((c) => parseInt(c));
     }
 
     return Object.keys(config).length > 0 ? config : null;
@@ -664,7 +669,7 @@ export class BlackMagicCommands {
       current?: number;
       source?: string;
     } = {
-      enabled: false
+      enabled: false,
     };
 
     // Check for voltage
@@ -681,16 +686,16 @@ export class BlackMagicCommands {
     }
 
     // Check for power source
-    if (response.includes('external')) {
-      result.source = 'external';
-    } else if (response.includes('internal') || response.includes('onboard')) {
-      result.source = 'internal';
+    if (response.includes("external")) {
+      result.source = "external";
+    } else if (response.includes("internal") || response.includes("onboard")) {
+      result.source = "internal";
     }
 
     // Check explicit enable/disable state
-    if (response.includes('enabled')) {
+    if (response.includes("enabled")) {
       result.enabled = true;
-    } else if (response.includes('disabled')) {
+    } else if (response.includes("disabled")) {
       result.enabled = false;
     }
 

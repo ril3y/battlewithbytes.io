@@ -5,7 +5,12 @@
  * without requiring browser APIs or actual hardware.
  */
 
-import { ISerialPort, ISerialPortProvider, SerialPortInfo, SerialConfig } from './ISerialPort';
+import {
+  ISerialPort,
+  ISerialPortProvider,
+  SerialPortInfo,
+  SerialConfig,
+} from "./ISerialPort";
 
 /**
  * Mock serial port for testing
@@ -29,11 +34,11 @@ export class MockSerialPort implements ISerialPort {
 
   async connect(config: SerialConfig): Promise<void> {
     if (this.connected) {
-      throw new Error('Port is already connected');
+      throw new Error("Port is already connected");
     }
 
     // Simulate connection delay
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     this.connected = true;
     this.config = config;
@@ -43,7 +48,7 @@ export class MockSerialPort implements ISerialPort {
     if (!this.connected) return;
 
     // Simulate disconnection delay
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     this.connected = false;
     this.config = undefined;
@@ -51,19 +56,19 @@ export class MockSerialPort implements ISerialPort {
 
   async write(data: Uint8Array): Promise<void> {
     if (!this.connected) {
-      throw new Error('Port is not connected');
+      throw new Error("Port is not connected");
     }
 
     // Store write history for verification in tests
     this.writeHistory.push(new Uint8Array(data));
 
     // Simulate write delay
-    await new Promise(resolve => setTimeout(resolve, 1));
+    await new Promise((resolve) => setTimeout(resolve, 1));
   }
 
   async read(): Promise<Uint8Array | null> {
     if (!this.connected) {
-      throw new Error('Port is not connected');
+      throw new Error("Port is not connected");
     }
 
     // Return mocked response if available
@@ -79,7 +84,7 @@ export class MockSerialPort implements ISerialPort {
     }
 
     // Simulate no data available
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
     return null;
   }
 
@@ -168,7 +173,9 @@ export class MockSerialProvider implements ISerialPortProvider {
     return true;
   }
 
-  async requestPort(filters?: Array<{ usbVendorId?: number; usbProductId?: number }>): Promise<ISerialPort | null> {
+  async requestPort(
+    filters?: Array<{ usbVendorId?: number; usbProductId?: number }>,
+  ): Promise<ISerialPort | null> {
     if (this.requestPortShouldFail) {
       return null;
     }
@@ -191,11 +198,15 @@ export class MockSerialProvider implements ISerialPortProvider {
   }
 
   async findPort(info: SerialPortInfo): Promise<ISerialPort | null> {
-    return this.availablePorts.find(port => {
-      const portInfo = port.getInfo();
-      return portInfo.vendorId === info.vendorId &&
-             portInfo.productId === info.productId;
-    }) || null;
+    return (
+      this.availablePorts.find((port) => {
+        const portInfo = port.getInfo();
+        return (
+          portInfo.vendorId === info.vendorId &&
+          portInfo.productId === info.productId
+        );
+      }) || null
+    );
   }
 
   // Test helper methods

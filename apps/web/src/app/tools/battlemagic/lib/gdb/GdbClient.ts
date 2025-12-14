@@ -11,10 +11,10 @@
  * - GdbClient: Orchestrates everything with async command queue
  */
 
-import { RspProtocol } from './RspProtocol';
-import { SerialTransport } from './SerialTransport';
-import { BlackMagicCommands } from './BlackMagicCommands';
-import { ConnectionState } from './types';
+import { RspProtocol } from "./RspProtocol";
+import { SerialTransport } from "./SerialTransport";
+import { BlackMagicCommands } from "./BlackMagicCommands";
+import { ConnectionState } from "./types";
 import type {
   GdbResponse,
   GdbClientConfig,
@@ -22,8 +22,8 @@ import type {
   Target,
   BmpVersion,
   StopReply,
-  SerialConfig
-} from './types';
+  SerialConfig,
+} from "./types";
 
 /**
  * Event callback types for GDB client
@@ -43,7 +43,7 @@ const DEFAULT_CONFIG: Required<GdbClientConfig> = {
   commandTimeout: 10000, // 10 seconds for monitor commands
   debug: false,
   maxQueueSize: 100,
-  ackMode: false // Default to NoAckMode for faster communication
+  ackMode: false, // Default to NoAckMode for faster communication
 };
 
 /**
@@ -59,10 +59,10 @@ export class GdbClient {
   private commandQueue: QueuedCommand[] = [];
   private currentCommand: QueuedCommand | null = null;
   private state: ConnectionState = ConnectionState.DISCONNECTED;
-  private receiveBuffer = '';
+  private receiveBuffer = "";
   private ackMode = true;
   private pendingAck = false;
-  private accumulatedOutput = ''; // Accumulate O packets until OK/ERROR
+  private accumulatedOutput = ""; // Accumulate O packets until OK/ERROR
 
   /**
    * Create a new GDB client instance
@@ -70,7 +70,10 @@ export class GdbClient {
    * @param config - Client configuration
    * @param callbacks - Event callbacks
    */
-  constructor(config: GdbClientConfig = {}, callbacks: GdbClientCallbacks = {}) {
+  constructor(
+    config: GdbClientConfig = {},
+    callbacks: GdbClientCallbacks = {},
+  ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.callbacks = callbacks;
     this.transport = new SerialTransport();
@@ -118,9 +121,12 @@ export class GdbClient {
    * @param port - Serial port to connect to
    * @param serialConfig - Serial port configuration
    */
-  async connect(port: SerialPort, serialConfig: SerialConfig = {}): Promise<void> {
+  async connect(
+    port: SerialPort,
+    serialConfig: SerialConfig = {},
+  ): Promise<void> {
     if (this.state !== ConnectionState.DISCONNECTED) {
-      throw new Error('Already connected');
+      throw new Error("Already connected");
     }
 
     try {
@@ -131,7 +137,7 @@ export class GdbClient {
 
       // Give the port a moment to stabilize before sending commands
       // This is especially important for ACK mode initialization
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Send initial handshake
       await this.initializeConnection();
@@ -149,7 +155,7 @@ export class GdbClient {
   async disconnect(): Promise<void> {
     // Cancel all pending commands
     for (const cmd of this.commandQueue) {
-      cmd.reject(new Error('Connection closed'));
+      cmd.reject(new Error("Connection closed"));
     }
     this.commandQueue = [];
     this.currentCommand = null;
@@ -175,7 +181,10 @@ export class GdbClient {
    * @returns True if connected
    */
   isConnected(): boolean {
-    return this.state === ConnectionState.CONNECTED || this.state === ConnectionState.ATTACHED;
+    return (
+      this.state === ConnectionState.CONNECTED ||
+      this.state === ConnectionState.ATTACHED
+    );
   }
 
   /**
@@ -187,8 +196,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildSwdScan();
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'data') {
-      throw new Error('Failed to scan for SWD targets');
+    if (response.type !== "data") {
+      throw new Error("Failed to scan for SWD targets");
     }
 
     // response.data is already decoded from O packets - don't decode again!
@@ -207,8 +216,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildJtagScan();
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'data') {
-      throw new Error('Failed to scan for JTAG targets');
+    if (response.type !== "data") {
+      throw new Error("Failed to scan for JTAG targets");
     }
 
     // response.data is already decoded from O packets - don't decode again!
@@ -225,8 +234,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildPowerEnable();
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'error') {
-      throw new Error('Failed to enable target power');
+    if (response.type === "error") {
+      throw new Error("Failed to enable target power");
     }
   }
 
@@ -237,8 +246,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildPowerDisable();
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'error') {
-      throw new Error('Failed to disable target power');
+    if (response.type === "error") {
+      throw new Error("Failed to disable target power");
     }
   }
 
@@ -251,8 +260,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildVersionQuery();
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'data') {
-      throw new Error('Failed to get version');
+    if (response.type !== "data") {
+      throw new Error("Failed to get version");
     }
 
     const decoded = BlackMagicCommands.decodeMonitorResponse(response.data);
@@ -266,8 +275,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildReset();
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'error') {
-      throw new Error('Failed to reset target');
+    if (response.type === "error") {
+      throw new Error("Failed to reset target");
     }
   }
 
@@ -280,7 +289,7 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildAttach(targetId);
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'error') {
+    if (response.type === "error") {
       throw new Error(`Failed to attach to target ${targetId}`);
     }
 
@@ -294,8 +303,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildDetach();
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'error') {
-      throw new Error('Failed to detach from target');
+    if (response.type === "error") {
+      throw new Error("Failed to detach from target");
     }
 
     this.setState(ConnectionState.CONNECTED);
@@ -314,16 +323,16 @@ export class GdbClient {
    */
   async continue(): Promise<void> {
     if (!this.transport.isConnected()) {
-      throw new Error('Not connected');
+      throw new Error("Not connected");
     }
 
     // Wait for any pending commands to complete
     while (this.currentCommand !== null || this.commandQueue.length > 0) {
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
     const cmd = BlackMagicCommands.buildContinue();
-    console.log('[GdbClient] Sending continue command (non-blocking)');
+    console.log("[GdbClient] Sending continue command (non-blocking)");
 
     // Encode the command as a proper GDB packet ($cmd#checksum)
     const packet = RspProtocol.encodePacket(cmd);
@@ -333,7 +342,7 @@ export class GdbClient {
     // by handleReceivedData() which will call notifyStopped()
     await this.transport.send(packet);
 
-    console.log('[GdbClient] Continue command sent, target is now running');
+    console.log("[GdbClient] Continue command sent, target is now running");
   }
 
   /**
@@ -345,15 +354,15 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildStep();
     const response = await this.sendCommand(cmd);
 
-    if (response.type === 'signal') {
+    if (response.type === "signal") {
       const stopReply: StopReply = {
-        signal: response.signal
+        signal: response.signal,
       };
       this.notifyStopped(stopReply);
       return stopReply;
     }
 
-    throw new Error('Unexpected response to step command');
+    throw new Error("Unexpected response to step command");
   }
 
   /**
@@ -376,7 +385,10 @@ export class GdbClient {
    * @param length - Number of bytes to read
    * @returns Memory data as byte array
    */
-  async readMemory(address: number | string, length: number): Promise<Uint8Array> {
+  async readMemory(
+    address: number | string,
+    length: number,
+  ): Promise<Uint8Array> {
     // Black Magic Probe has GDB packet size limitations
     // Read in chunks to avoid E02 errors
     const CHUNK_SIZE = 256; // Safe size that works reliably
@@ -386,19 +398,25 @@ export class GdbClient {
       const cmd = BlackMagicCommands.buildMemoryRead(address, length);
       const response = await this.sendCommand(cmd);
 
-      if (response.type !== 'data') {
-        const addrStr = typeof address === 'number' ? `0x${address.toString(16)}` : address;
+      if (response.type !== "data") {
+        const addrStr =
+          typeof address === "number" ? `0x${address.toString(16)}` : address;
         if (this.config.debug) {
-          console.error(`[GdbClient] Memory read failed at ${addrStr}, response type: ${response.type}`);
+          console.error(
+            `[GdbClient] Memory read failed at ${addrStr}, response type: ${response.type}`,
+          );
         }
-        throw new Error(`Failed to read memory at ${addrStr} (response: ${response.type})`);
+        throw new Error(
+          `Failed to read memory at ${addrStr} (response: ${response.type})`,
+        );
       }
 
       return RspProtocol.parseMemoryData(response.data);
     }
 
     // Large read - split into chunks
-    const baseAddr = typeof address === 'number' ? address : parseInt(address, 16);
+    const baseAddr =
+      typeof address === "number" ? address : parseInt(address, 16);
     const result = new Uint8Array(length);
     let offset = 0;
 
@@ -409,11 +427,15 @@ export class GdbClient {
       const cmd = BlackMagicCommands.buildMemoryRead(chunkAddr, chunkSize);
       const response = await this.sendCommand(cmd);
 
-      if (response.type !== 'data') {
+      if (response.type !== "data") {
         if (this.config.debug) {
-          console.error(`[GdbClient] Memory read failed at 0x${chunkAddr.toString(16)}, response type: ${response.type}`);
+          console.error(
+            `[GdbClient] Memory read failed at 0x${chunkAddr.toString(16)}, response type: ${response.type}`,
+          );
         }
-        throw new Error(`Failed to read memory at 0x${chunkAddr.toString(16)} (response: ${response.type})`);
+        throw new Error(
+          `Failed to read memory at 0x${chunkAddr.toString(16)} (response: ${response.type})`,
+        );
       }
 
       const chunkData = RspProtocol.parseMemoryData(response.data);
@@ -434,8 +456,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildMemoryWrite(address, data);
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'ok') {
-      throw new Error('Failed to write memory');
+    if (response.type !== "ok") {
+      throw new Error("Failed to write memory");
     }
   }
 
@@ -448,8 +470,8 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildReadRegisters();
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'data') {
-      throw new Error('Failed to read registers');
+    if (response.type !== "data") {
+      throw new Error("Failed to read registers");
     }
 
     return response.data;
@@ -465,7 +487,7 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildReadRegister(regNum);
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'data') {
+    if (response.type !== "data") {
       throw new Error(`Failed to read register ${regNum}`);
     }
 
@@ -482,7 +504,7 @@ export class GdbClient {
     const cmd = BlackMagicCommands.buildWriteRegister(regNum, value);
     const response = await this.sendCommand(cmd);
 
-    if (response.type !== 'ok') {
+    if (response.type !== "ok") {
       throw new Error(`Failed to write register ${regNum}`);
     }
   }
@@ -497,15 +519,35 @@ export class GdbClient {
     const registers = new Map<string, number>();
 
     if (this.config.debug) {
-      console.log('[getFormattedRegisters] Raw response:', response);
-      console.log('[getFormattedRegisters] Response length:', response.length);
+      console.log("[getFormattedRegisters] Raw response:", response);
+      console.log("[getFormattedRegisters] Response length:", response.length);
     }
 
     // ARM Cortex-M register layout (each register is 8 hex chars = 32 bits)
     const regNames = [
-      'r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
-      'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc',
-      'xpsr', 'msp', 'psp', 'primask', 'basepri', 'faultmask', 'control'
+      "r0",
+      "r1",
+      "r2",
+      "r3",
+      "r4",
+      "r5",
+      "r6",
+      "r7",
+      "r8",
+      "r9",
+      "r10",
+      "r11",
+      "r12",
+      "sp",
+      "lr",
+      "pc",
+      "xpsr",
+      "msp",
+      "psp",
+      "primask",
+      "basepri",
+      "faultmask",
+      "control",
     ];
 
     let offset = 0;
@@ -513,15 +555,19 @@ export class GdbClient {
       if (offset + 8 <= response.length) {
         const hexValue = response.substring(offset, offset + 8);
         if (this.config.debug) {
-          console.log(`[getFormattedRegisters] ${name}: hexValue="${hexValue}" (offset=${offset})`);
+          console.log(
+            `[getFormattedRegisters] ${name}: hexValue="${hexValue}" (offset=${offset})`,
+          );
         }
         // Convert from little-endian hex string
         const bytes = hexValue.match(/.{2}/g);
         if (bytes) {
-          const value = parseInt(bytes.reverse().join(''), 16);
+          const value = parseInt(bytes.reverse().join(""), 16);
           registers.set(name, value);
           if (this.config.debug) {
-            console.log(`[getFormattedRegisters] ${name} = 0x${value.toString(16).padStart(8, '0')}`);
+            console.log(
+              `[getFormattedRegisters] ${name} = 0x${value.toString(16).padStart(8, "0")}`,
+            );
           }
         }
         offset += 8;
@@ -545,14 +591,17 @@ export class GdbClient {
    *
    * @returns Stack frame information with addresses
    */
-  async getBacktrace(): Promise<Array<{ level: number; address: number; function?: string }>> {
-    const frames: Array<{ level: number; address: number; function?: string }> = [];
+  async getBacktrace(): Promise<
+    Array<{ level: number; address: number; function?: string }>
+  > {
+    const frames: Array<{ level: number; address: number; function?: string }> =
+      [];
 
     try {
       const regs = await this.getFormattedRegisters();
-      const pc = regs.get('pc');
-      const lr = regs.get('lr');
-      const sp = regs.get('sp');
+      const pc = regs.get("pc");
+      const lr = regs.get("lr");
+      const sp = regs.get("sp");
 
       if (pc === undefined || sp === undefined) {
         return frames;
@@ -561,17 +610,17 @@ export class GdbClient {
       // Frame 0: Current execution point
       frames.push({
         level: 0,
-        address: pc & ~1 // Clear Thumb bit for display
+        address: pc & ~1, // Clear Thumb bit for display
       });
 
       // Frame 1: Immediate caller (from LR)
-      if (lr !== undefined && lr !== 0 && lr !== 0xFFFFFFFF) {
+      if (lr !== undefined && lr !== 0 && lr !== 0xffffffff) {
         // Check if LR looks like a valid code address
         const lrAddr = lr & ~1; // Clear Thumb bit
         if (this.isValidCodeAddress(lrAddr)) {
           frames.push({
             level: 1,
-            address: lrAddr
+            address: lrAddr,
           });
         }
       }
@@ -583,7 +632,7 @@ export class GdbClient {
         stackFrames.forEach((addr) => {
           frames.push({
             level: frames.length,
-            address: addr & ~1 // Clear Thumb bit
+            address: addr & ~1, // Clear Thumb bit
           });
         });
       } catch {
@@ -593,7 +642,7 @@ export class GdbClient {
     } catch (error) {
       // Critical failure - return empty frames
       if (this.config.debug) {
-        console.error('[getBacktrace] Failed to get backtrace:', error);
+        console.error("[getBacktrace] Failed to get backtrace:", error);
       }
     }
 
@@ -628,12 +677,12 @@ export class GdbClient {
         }
 
         // Read little-endian 32-bit value
-        const value = (
-          stackData[offset] |
-          (stackData[offset + 1] << 8) |
-          (stackData[offset + 2] << 16) |
-          (stackData[offset + 3] << 24)
-        ) >>> 0;
+        const value =
+          (stackData[offset] |
+            (stackData[offset + 1] << 8) |
+            (stackData[offset + 2] << 16) |
+            (stackData[offset + 3] << 24)) >>>
+          0;
 
         // Check if this looks like a return address:
         // 1. Must have Thumb bit set (bit 0 = 1)
@@ -648,7 +697,7 @@ export class GdbClient {
       }
     } catch (error) {
       if (this.config.debug) {
-        console.log('[walkStack] Failed to read stack memory:', error);
+        console.log("[walkStack] Failed to read stack memory:", error);
       }
     }
 
@@ -691,23 +740,35 @@ export class GdbClient {
    * @param address - Breakpoint address
    * @param hardware - Use hardware breakpoint (default: false)
    */
-  async insertBreakpoint(address: number | string, hardware = false): Promise<void> {
+  async insertBreakpoint(
+    address: number | string,
+    hardware = false,
+  ): Promise<void> {
     const cmd = BlackMagicCommands.buildInsertBreakpoint(address, hardware);
 
-    console.log('[insertBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
+    console.log(
+      "[insertBreakpoint] Command:",
+      cmd,
+      "Address:",
+      address,
+      "Hardware:",
+      hardware,
+    );
 
     const response = await this.sendCommand(cmd);
 
-    console.log('[insertBreakpoint] Response:', response);
+    console.log("[insertBreakpoint] Response:", response);
 
-    if (response.type === 'error') {
-      const errorCode = response.code || 'unknown';
+    if (response.type === "error") {
+      const errorCode = response.code || "unknown";
 
       // Provide specific error messages based on GDB error codes
-      if (errorCode === 'E01' || errorCode === '01') {
+      if (errorCode === "E01" || errorCode === "01") {
         // E01 is often "no more resources" (e.g., out of hardware breakpoint units)
-        throw new Error(`E01 - No more hardware breakpoint units available (ARM Cortex-M limit: 4-6)`);
-      } else if (errorCode === 'E02' || errorCode === '02') {
+        throw new Error(
+          `E01 - No more hardware breakpoint units available (ARM Cortex-M limit: 4-6)`,
+        );
+      } else if (errorCode === "E02" || errorCode === "02") {
         throw new Error(`E02 - Invalid breakpoint command format`);
       } else {
         throw new Error(`Failed to insert breakpoint: ${errorCode}`);
@@ -715,14 +776,20 @@ export class GdbClient {
     }
 
     // Check for unsupported command (empty response might mean not supported)
-    if (response.type === 'empty') {
-      console.warn('[insertBreakpoint] Got empty response - command may not be supported');
-      console.warn('[insertBreakpoint] This usually means the breakpoint was NOT set');
-      throw new Error('Breakpoint command returned empty response (likely not supported by target)');
+    if (response.type === "empty") {
+      console.warn(
+        "[insertBreakpoint] Got empty response - command may not be supported",
+      );
+      console.warn(
+        "[insertBreakpoint] This usually means the breakpoint was NOT set",
+      );
+      throw new Error(
+        "Breakpoint command returned empty response (likely not supported by target)",
+      );
     }
 
     // Only accept 'ok' as true success
-    if (response.type !== 'ok') {
+    if (response.type !== "ok") {
       throw new Error(`Unexpected response type: ${response.type}`);
     }
   }
@@ -733,27 +800,39 @@ export class GdbClient {
    * @param address - Breakpoint address
    * @param hardware - Hardware breakpoint (default: false)
    */
-  async removeBreakpoint(address: number | string, hardware = false): Promise<void> {
+  async removeBreakpoint(
+    address: number | string,
+    hardware = false,
+  ): Promise<void> {
     const cmd = BlackMagicCommands.buildRemoveBreakpoint(address, hardware);
 
     if (this.config.debug) {
-      console.log('[removeBreakpoint] Command:', cmd, 'Address:', address, 'Hardware:', hardware);
+      console.log(
+        "[removeBreakpoint] Command:",
+        cmd,
+        "Address:",
+        address,
+        "Hardware:",
+        hardware,
+      );
     }
 
     const response = await this.sendCommand(cmd);
 
     if (this.config.debug) {
-      console.log('[removeBreakpoint] Response:', response);
+      console.log("[removeBreakpoint] Response:", response);
     }
 
     // Accept both 'ok' and 'empty' as success
-    if (response.type === 'ok' || response.type === 'empty') {
+    if (response.type === "ok" || response.type === "empty") {
       return;
     }
 
     // Provide detailed error message
-    if (response.type === 'error') {
-      throw new Error(`Failed to remove breakpoint: ${response.code || 'unknown error'}`);
+    if (response.type === "error") {
+      throw new Error(
+        `Failed to remove breakpoint: ${response.code || "unknown error"}`,
+      );
     }
 
     throw new Error(`Unexpected response type: ${response.type}`);
@@ -765,16 +844,16 @@ export class GdbClient {
   async sendMonitorCommand(command: string): Promise<string> {
     // Convert command to hex for qRcmd
     const hexCmd = Array.from(new TextEncoder().encode(command))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     const response = await this.sendCommand(`qRcmd,${hexCmd}`);
 
-    if (response.type === 'ok') {
-      return '';
+    if (response.type === "ok") {
+      return "";
     }
 
-    if (response.type === 'data' && response.data.startsWith('O')) {
+    if (response.type === "data" && response.data.startsWith("O")) {
       // Output from monitor command
       const hexOutput = response.data.slice(1);
       const bytes = [];
@@ -784,11 +863,11 @@ export class GdbClient {
       return new TextDecoder().decode(new Uint8Array(bytes));
     }
 
-    if (response.type === 'data') {
+    if (response.type === "data") {
       return response.data;
     }
 
-    return '';
+    return "";
   }
 
   /**
@@ -798,15 +877,15 @@ export class GdbClient {
     try {
       // Try multiple methods to get target info
       const methods = [
-        async () => await this.sendMonitorCommand('version'),
+        async () => await this.sendMonitorCommand("version"),
         async () => {
-          const response = await this.sendCommand('qAttached');
-          return typeof response === 'string' ? response : '';
+          const response = await this.sendCommand("qAttached");
+          return typeof response === "string" ? response : "";
         },
         async () => {
-          const response = await this.sendCommand('qSupported');
-          return response.type === 'data' ? response.data : '';
-        }
+          const response = await this.sendCommand("qSupported");
+          return response.type === "data" ? response.data : "";
+        },
       ];
 
       for (const method of methods) {
@@ -818,9 +897,9 @@ export class GdbClient {
         }
       }
 
-      return '';
+      return "";
     } catch {
-      return '';
+      return "";
     }
   }
 
@@ -830,9 +909,9 @@ export class GdbClient {
   async queryMemoryRegions(): Promise<string> {
     try {
       // Try 'info mem' via monitor command
-      return await this.sendMonitorCommand('info mem');
+      return await this.sendMonitorCommand("info mem");
     } catch {
-      return '';
+      return "";
     }
   }
 
@@ -865,24 +944,26 @@ export class GdbClient {
 
       const currentState = this.getState();
       if (this.config.debug) {
-        console.log('[GdbClient] Current state before reset:', currentState);
+        console.log("[GdbClient] Current state before reset:", currentState);
       }
 
       // Send monitor reset halt command
       // Note: BMP may report detach, but the target remains halted
-      await this.sendMonitorCommand('reset halt');
+      await this.sendMonitorCommand("reset halt");
 
       // Give the target time to settle after reset
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Update state to ATTACHED since reset halt keeps us attached
       this.state = ConnectionState.ATTACHED;
 
       if (this.config.debug) {
-        console.log('[GdbClient] Target reset and halted at entry point');
+        console.log("[GdbClient] Target reset and halted at entry point");
       }
     } catch (error) {
-      throw new Error(`Failed to reset and halt: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to reset and halt: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -910,9 +991,10 @@ export class GdbClient {
     // Offset 0x04: Reset Handler address (with Thumb bit set, e.g., 0x080000XX)
 
     // Use architecture-specific flash base if provided, otherwise try common addresses
-    const addressesToTry = archInfo?.flash_base !== undefined
-      ? [archInfo.flash_base]
-      : [0x00000000, 0x08000000]; // Try common Cortex-M addresses
+    const addressesToTry =
+      archInfo?.flash_base !== undefined
+        ? [archInfo.flash_base]
+        : [0x00000000, 0x08000000]; // Try common Cortex-M addresses
 
     let baseAddress: number | undefined;
     let vector0Data: Uint8Array | undefined;
@@ -925,7 +1007,9 @@ export class GdbClient {
         const v1 = await this.readMemory(addr + 4, 4);
 
         if (this.config.debug) {
-          console.log(`[getResetVector] Successfully read from 0x${addr.toString(16).toUpperCase()}`);
+          console.log(
+            `[getResetVector] Successfully read from 0x${addr.toString(16).toUpperCase()}`,
+          );
         }
 
         vector0Data = v0;
@@ -934,59 +1018,78 @@ export class GdbClient {
         break;
       } catch {
         if (this.config.debug) {
-          console.log(`[getResetVector] Failed to read from 0x${addr.toString(16).toUpperCase()}, trying next address...`);
+          console.log(
+            `[getResetVector] Failed to read from 0x${addr.toString(16).toUpperCase()}, trying next address...`,
+          );
         }
         continue;
       }
     }
 
     if (!vector0Data || !vector1Data || baseAddress === undefined) {
-      const triedAddrs = addressesToTry.map(a => `0x${a.toString(16).toUpperCase()}`).join(', ');
-      throw new Error(`Failed to read vector table from addresses: ${triedAddrs}`);
+      const triedAddrs = addressesToTry
+        .map((a) => `0x${a.toString(16).toUpperCase()}`)
+        .join(", ");
+      throw new Error(
+        `Failed to read vector table from addresses: ${triedAddrs}`,
+      );
     }
 
     // Parse Initial SP (Vector 0) - should point to end of RAM
-    const sp = (
-      vector0Data[0] |
-      (vector0Data[1] << 8) |
-      (vector0Data[2] << 16) |
-      (vector0Data[3] << 24)
-    ) >>> 0; // Unsigned 32-bit
+    const sp =
+      (vector0Data[0] |
+        (vector0Data[1] << 8) |
+        (vector0Data[2] << 16) |
+        (vector0Data[3] << 24)) >>>
+      0; // Unsigned 32-bit
 
     // Parse Reset Handler (Vector 1) - should point to flash code
-    const resetHandler = (
-      (vector1Data[0] |
+    const resetHandler =
+      ((vector1Data[0] |
         (vector1Data[1] << 8) |
         (vector1Data[2] << 16) |
         (vector1Data[3] << 24)) &
-      ~1 // Clear Thumb bit (LSB)
-    ) >>> 0; // Unsigned 32-bit
+        ~1) >>> // Clear Thumb bit (LSB)
+      0; // Unsigned 32-bit
 
     // Validate that Initial SP looks like a RAM address
     // ARM Cortex-M typically has RAM at 0x20000000 or 0x10000000
-    const isValidSP = (sp >= 0x10000000 && sp < 0x30000000);
+    const isValidSP = sp >= 0x10000000 && sp < 0x30000000;
 
     // Validate that Reset Handler looks like a flash address
-    const isValidResetHandler = (
+    const isValidResetHandler =
       (resetHandler >= 0x00000000 && resetHandler < 0x00100000) || // Aliased
-      (resetHandler >= 0x08000000 && resetHandler < 0x08100000)    // Physical
-    );
+      (resetHandler >= 0x08000000 && resetHandler < 0x08100000); // Physical
 
     if (!isValidSP) {
-      console.warn(`[getResetVector] Suspicious Initial SP: 0x${sp.toString(16).toUpperCase()}`);
-      console.warn('[getResetVector] Expected RAM address (0x10000000-0x30000000)');
+      console.warn(
+        `[getResetVector] Suspicious Initial SP: 0x${sp.toString(16).toUpperCase()}`,
+      );
+      console.warn(
+        "[getResetVector] Expected RAM address (0x10000000-0x30000000)",
+      );
     }
 
     if (!isValidResetHandler) {
-      console.warn(`[getResetVector] Suspicious Reset Handler: 0x${resetHandler.toString(16).toUpperCase()}`);
-      console.warn('[getResetVector] Expected flash address (0x00000000 or 0x08000000 range)');
+      console.warn(
+        `[getResetVector] Suspicious Reset Handler: 0x${resetHandler.toString(16).toUpperCase()}`,
+      );
+      console.warn(
+        "[getResetVector] Expected flash address (0x00000000 or 0x08000000 range)",
+      );
     }
 
     if (this.config.debug) {
-      console.log('[getResetVector] Vector table analysis:');
-      console.log(`  Base Address:   0x${baseAddress.toString(16).toUpperCase().padStart(8, '0')}`);
-      console.log(`  Initial SP:     0x${sp.toString(16).toUpperCase().padStart(8, '0')}`);
-      console.log(`  Reset Handler:  0x${resetHandler.toString(16).toUpperCase().padStart(8, '0')}`);
+      console.log("[getResetVector] Vector table analysis:");
+      console.log(
+        `  Base Address:   0x${baseAddress.toString(16).toUpperCase().padStart(8, "0")}`,
+      );
+      console.log(
+        `  Initial SP:     0x${sp.toString(16).toUpperCase().padStart(8, "0")}`,
+      );
+      console.log(
+        `  Reset Handler:  0x${resetHandler.toString(16).toUpperCase().padStart(8, "0")}`,
+      );
       console.log(`  Valid SP:       ${isValidSP}`);
       console.log(`  Valid Handler:  ${isValidResetHandler}`);
     }
@@ -994,7 +1097,7 @@ export class GdbClient {
     return {
       sp,
       resetHandler,
-      baseAddress
+      baseAddress,
     };
   }
 
@@ -1003,14 +1106,18 @@ export class GdbClient {
    */
   async flashErase(address: number, length: number): Promise<void> {
     // Try vFlashErase command first
-    const response = await this.sendCommand(`vFlashErase:${address.toString(16)},${length.toString(16)}`);
+    const response = await this.sendCommand(
+      `vFlashErase:${address.toString(16)},${length.toString(16)}`,
+    );
 
-    if (response.type === 'ok') {
+    if (response.type === "ok") {
       return;
     }
 
     // Fallback to monitor command for Black Magic Probe
-    await this.sendMonitorCommand(`erase ${address.toString(16)} ${length.toString(16)}`);
+    await this.sendMonitorCommand(
+      `erase ${address.toString(16)} ${length.toString(16)}`,
+    );
   }
 
   async flashWrite(address: number, data: Uint8Array): Promise<void> {
@@ -1021,11 +1128,11 @@ export class GdbClient {
 
   async flashDone(): Promise<void> {
     // Send vFlashDone to complete flash operations
-    const response = await this.sendCommand('vFlashDone');
+    const response = await this.sendCommand("vFlashDone");
 
     // BMP might not support this, which is OK
-    if (response.type !== 'ok' && response.type !== 'error') {
-      console.warn('vFlashDone not supported by target');
+    if (response.type !== "ok" && response.type !== "error") {
+      console.warn("vFlashDone not supported by target");
     }
   }
 
@@ -1039,11 +1146,11 @@ export class GdbClient {
    */
   async sendCommand(command: string): Promise<GdbResponse> {
     if (!this.transport.isConnected()) {
-      throw new Error('Not connected');
+      throw new Error("Not connected");
     }
 
     if (this.commandQueue.length >= this.config.maxQueueSize) {
-      throw new Error('Command queue full');
+      throw new Error("Command queue full");
     }
 
     return new Promise((resolve, reject) => {
@@ -1052,7 +1159,7 @@ export class GdbClient {
         resolve,
         reject,
         timestamp: Date.now(),
-        timeout: this.config.commandTimeout
+        timeout: this.config.commandTimeout,
       };
 
       this.commandQueue.push(queuedCommand);
@@ -1071,39 +1178,39 @@ export class GdbClient {
       const cmd = BlackMagicCommands.buildQuerySupported();
 
       if (this.config.debug) {
-        console.log('[GDB] Sending qSupported...');
+        console.log("[GDB] Sending qSupported...");
       }
 
       const response = await this.sendCommand(cmd);
 
       if (this.config.debug) {
-        console.log('[GDB] Supported features:', response);
+        console.log("[GDB] Supported features:", response);
       }
 
       // Optionally disable ACK mode for faster communication
       if (!this.config.ackMode) {
         if (this.config.debug) {
-          console.log('[GDB] Negotiating NoAckMode...');
+          console.log("[GDB] Negotiating NoAckMode...");
         }
 
-        const noAckResponse = await this.sendCommand('QStartNoAckMode');
+        const noAckResponse = await this.sendCommand("QStartNoAckMode");
 
         if (this.config.debug) {
-          console.log('[GDB] NoAckMode response:', noAckResponse);
+          console.log("[GDB] NoAckMode response:", noAckResponse);
         }
 
         // Give a moment for the final ACK to be sent before disabling ACK mode
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
 
         // After successful negotiation, disable ACK mode
         this.ackMode = false;
 
         if (this.config.debug) {
-          console.log('[GDB] NoAckMode enabled');
+          console.log("[GDB] NoAckMode enabled");
         }
       }
     } catch (error) {
-      console.error('[GDB] Initialization failed:', error);
+      console.error("[GDB] Initialization failed:", error);
       throw error;
     }
   }
@@ -1136,7 +1243,7 @@ export class GdbClient {
         if (this.currentCommand) {
           const cmd = this.currentCommand;
           this.currentCommand = null;
-          cmd.reject(new Error('Command timeout'));
+          cmd.reject(new Error("Command timeout"));
           this.processQueue();
         }
       }, this.currentCommand.timeout);
@@ -1167,7 +1274,9 @@ export class GdbClient {
     this.receiveBuffer += data;
 
     // Extract packets from buffer
-    const { packets, remaining } = RspProtocol.extractPackets(this.receiveBuffer);
+    const { packets, remaining } = RspProtocol.extractPackets(
+      this.receiveBuffer,
+    );
     this.receiveBuffer = remaining;
 
     // Process each packet
@@ -1199,7 +1308,7 @@ export class GdbClient {
     // Decode packet
     const decoded = RspProtocol.decodePacket(packet);
     if (!decoded) {
-      console.error('Failed to decode packet:', packet);
+      console.error("Failed to decode packet:", packet);
       // Send NAK if in ACK mode
       if (this.ackMode) {
         this.transport.send(RspProtocol.NAK);
@@ -1208,13 +1317,17 @@ export class GdbClient {
     }
 
     // Send ACK if in ACK mode
-    if (this.ackMode && packet !== RspProtocol.ACK && packet !== RspProtocol.NAK) {
+    if (
+      this.ackMode &&
+      packet !== RspProtocol.ACK &&
+      packet !== RspProtocol.NAK
+    ) {
       if (this.config.debug) {
-        console.log('[GDB] Sending ACK');
+        console.log("[GDB] Sending ACK");
       }
       // Don't await - send ACK asynchronously but immediately
-      this.transport.send(RspProtocol.ACK).catch(err => {
-        console.error('[GDB] Failed to send ACK:', err);
+      this.transport.send(RspProtocol.ACK).catch((err) => {
+        console.error("[GDB] Failed to send ACK:", err);
       });
     }
 
@@ -1222,17 +1335,19 @@ export class GdbClient {
     const response = RspProtocol.parseResponse(decoded.data);
 
     // Handle notifications (async stop events, etc.)
-    if (decoded.data.startsWith('%')) {
+    if (decoded.data.startsWith("%")) {
       this.handleNotification(decoded.data);
       return;
     }
 
     // Handle stop replies (T packets)
-    if (decoded.data.startsWith('T')) {
+    if (decoded.data.startsWith("T")) {
       const stopInfo = RspProtocol.parseStopReply(decoded.data);
       const stopReply: StopReply = {
         signal: stopInfo.signal,
-        thread: stopInfo.info.thread ? parseInt(stopInfo.info.thread, 16) : undefined
+        thread: stopInfo.info.thread
+          ? parseInt(stopInfo.info.thread, 16)
+          : undefined,
       };
 
       // If this is a response to a command, resolve it
@@ -1249,7 +1364,11 @@ export class GdbClient {
 
     // Console output (O packets - hex-encoded console output)
     // Note: Must check for 'O' followed by hex, not just 'O' to avoid matching 'OK'
-    if (decoded.data.startsWith('O') && decoded.data.length > 1 && decoded.data !== 'OK') {
+    if (
+      decoded.data.startsWith("O") &&
+      decoded.data.length > 1 &&
+      decoded.data !== "OK"
+    ) {
       const hexOutput = decoded.data.substring(1);
       const output = BlackMagicCommands.decodeMonitorResponse(hexOutput);
 
@@ -1273,10 +1392,10 @@ export class GdbClient {
         this.notifyTargetOutput(this.accumulatedOutput);
 
         this.currentCommand.resolve({
-          type: 'data',
-          data: this.accumulatedOutput
+          type: "data",
+          data: this.accumulatedOutput,
         });
-        this.accumulatedOutput = ''; // Reset accumulator
+        this.accumulatedOutput = ""; // Reset accumulator
       } else {
         this.currentCommand.resolve(response);
       }

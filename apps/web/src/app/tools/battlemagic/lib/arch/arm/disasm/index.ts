@@ -4,4 +4,4 @@
  * ARM-specific disassembler implementations
  */
 
-export { ArmDisassembler } from './ArmDisassembler';
+export { ArmDisassembler, type DisassembledInstruction } from "./ArmDisassembler";

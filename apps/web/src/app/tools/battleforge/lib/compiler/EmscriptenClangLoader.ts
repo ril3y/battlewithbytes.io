@@ -125,7 +125,7 @@ export async function executeClang(
         _clangArgs: ${JSON.stringify(args)},
 
         locateFile: function(path) {
-          var url = "${baseUrl}/wasm/clang_arm/" + path;
+          var url = "${baseUrl}/tools/battleforge/wasm/clang_arm/" + path;
           console.log('[clang] locateFile:', path, '->', url);
           return url;
         },
@@ -305,7 +305,7 @@ export async function executeClang(
 
     // Now load clang.js - use absolute URL
     const script = iframeWindow.document.createElement("script");
-    script.src = `${baseUrl}/wasm/clang_arm/clang.js`;
+    script.src = `${baseUrl}/tools/battleforge/wasm/clang_arm/clang.js`;
     console.log("[EmscriptenClang] Loading script:", script.src);
 
     script.onload = () => {

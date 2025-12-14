@@ -4,7 +4,7 @@
  * Exports all CFG analysis and visualization components.
  */
 
-export * from './types';
-export { BasicBlockAnalyzer } from './BasicBlockAnalyzer';
-export { ControlFlowAnalyzer } from './ControlFlowAnalyzer';
-export { CFGLayoutEngine } from './CFGLayoutEngine';
+export * from "./types";
+export { BasicBlockAnalyzer } from "./BasicBlockAnalyzer";
+export { ControlFlowAnalyzer } from "./ControlFlowAnalyzer";
+export { CFGLayoutEngine } from "./CFGLayoutEngine";

@@ -12,12 +12,12 @@
  * - FormatExporter: Handles different export formats (bin, hex, elf metadata)
  */
 
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GdbClient } from '../lib/gdb/GdbClient';
-import { TargetInfo, MemoryRegion, ChipInfo } from '../lib/gdb/TargetInfo';
-import { FileParser } from '../lib/flash/FileParser';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { GdbClient } from "../lib/gdb/GdbClient";
+import { TargetInfo, MemoryRegion, ChipInfo } from "../lib/gdb/TargetInfo";
+import { FileParser } from "../lib/flash/FileParser";
 
 /**
  * Extraction configuration
@@ -27,7 +27,7 @@ interface ExtractionConfig {
   endAddress: number;
   chunkSize: number;
   verifyAfterRead: boolean;
-  exportFormat: 'bin' | 'hex' | 'srec' | 'all';
+  exportFormat: "bin" | "hex" | "srec" | "all";
   autoDetectSize: boolean;
 }
 
@@ -60,83 +60,83 @@ interface MemoryPreset {
  */
 const MEMORY_PRESETS: MemoryPreset[] = [
   {
-    name: 'STM32F103C8T6 (BluePill)',
-    family: 'STM32F1',
+    name: "STM32F103C8T6 (BluePill)",
+    family: "STM32F1",
     flash: { start: 0x08000000, size: 0x10000 }, // 64KB
-    ram: { start: 0x20000000, size: 0x5000 }     // 20KB
+    ram: { start: 0x20000000, size: 0x5000 }, // 20KB
   },
   {
-    name: 'STM32F103RCT6',
-    family: 'STM32F1',
+    name: "STM32F103RCT6",
+    family: "STM32F1",
     flash: { start: 0x08000000, size: 0x40000 }, // 256KB
-    ram: { start: 0x20000000, size: 0xC000 }     // 48KB
+    ram: { start: 0x20000000, size: 0xc000 }, // 48KB
   },
   {
-    name: 'STM32F407VG (Discovery)',
-    family: 'STM32F4',
+    name: "STM32F407VG (Discovery)",
+    family: "STM32F4",
     flash: { start: 0x08000000, size: 0x100000 }, // 1MB
-    ram: { start: 0x20000000, size: 0x20000 }     // 128KB
+    ram: { start: 0x20000000, size: 0x20000 }, // 128KB
   },
   {
-    name: 'STM32F429ZI',
-    family: 'STM32F4',
+    name: "STM32F429ZI",
+    family: "STM32F4",
     flash: { start: 0x08000000, size: 0x200000 }, // 2MB
-    ram: { start: 0x20000000, size: 0x30000 }     // 192KB
+    ram: { start: 0x20000000, size: 0x30000 }, // 192KB
   },
   {
-    name: 'STM32F746NG (Discovery)',
-    family: 'STM32F7',
+    name: "STM32F746NG (Discovery)",
+    family: "STM32F7",
     flash: { start: 0x08000000, size: 0x100000 }, // 1MB
-    ram: { start: 0x20000000, size: 0x50000 }     // 320KB
+    ram: { start: 0x20000000, size: 0x50000 }, // 320KB
   },
   {
-    name: 'STM32H743ZI (Nucleo)',
-    family: 'STM32H7',
+    name: "STM32H743ZI (Nucleo)",
+    family: "STM32H7",
     flash: { start: 0x08000000, size: 0x200000 }, // 2MB
-    ram: { start: 0x20000000, size: 0x20000 }     // 128KB DTCM
+    ram: { start: 0x20000000, size: 0x20000 }, // 128KB DTCM
   },
   {
-    name: 'STM32L476RG (Nucleo)',
-    family: 'STM32L4',
+    name: "STM32L476RG (Nucleo)",
+    family: "STM32L4",
     flash: { start: 0x08000000, size: 0x100000 }, // 1MB
-    ram: { start: 0x20000000, size: 0x18000 }     // 96KB
+    ram: { start: 0x20000000, size: 0x18000 }, // 96KB
   },
   {
-    name: 'STM32G474RE (Nucleo)',
-    family: 'STM32G4',
-    flash: { start: 0x08000000, size: 0x80000 },  // 512KB
-    ram: { start: 0x20000000, size: 0x20000 }     // 128KB
+    name: "STM32G474RE (Nucleo)",
+    family: "STM32G4",
+    flash: { start: 0x08000000, size: 0x80000 }, // 512KB
+    ram: { start: 0x20000000, size: 0x20000 }, // 128KB
   },
   {
-    name: 'nRF52840',
-    family: 'nRF52',
+    name: "nRF52840",
+    family: "nRF52",
     flash: { start: 0x00000000, size: 0x100000 }, // 1MB
-    ram: { start: 0x20000000, size: 0x40000 }     // 256KB
+    ram: { start: 0x20000000, size: 0x40000 }, // 256KB
   },
   {
-    name: 'nRF52832',
-    family: 'nRF52',
-    flash: { start: 0x00000000, size: 0x80000 },  // 512KB
-    ram: { start: 0x20000000, size: 0x10000 }     // 64KB
+    name: "nRF52832",
+    family: "nRF52",
+    flash: { start: 0x00000000, size: 0x80000 }, // 512KB
+    ram: { start: 0x20000000, size: 0x10000 }, // 64KB
   },
   {
-    name: 'RP2040',
-    family: 'RP2040',
+    name: "RP2040",
+    family: "RP2040",
     flash: { start: 0x10000000, size: 0x200000 }, // 2MB external
-    ram: { start: 0x20000000, size: 0x42000 }     // 264KB
+    ram: { start: 0x20000000, size: 0x42000 }, // 264KB
   },
   {
-    name: 'SAMD21G18 (Arduino Zero)',
-    family: 'SAMD',
-    flash: { start: 0x00000000, size: 0x40000 },  // 256KB
-    ram: { start: 0x20000000, size: 0x8000 }      // 32KB
+    name: "SAMD21G18 (Arduino Zero)",
+    family: "SAMD",
+    flash: { start: 0x00000000, size: 0x40000 }, // 256KB
+    ram: { start: 0x20000000, size: 0x8000 }, // 32KB
   },
   {
-    name: 'ESP32-C3',
-    family: 'ESP32',
+    name: "ESP32-C3",
+    family: "ESP32",
     flash: { start: 0x00000000, size: 0x400000 }, // 4MB external
-    ram: { start: 0x3FC80000, size: 0x60000 }     // 384KB
-  }
+    ram: { start: 0x3fc80000, size: 0x60000 }, // 384KB
+  },
 ];
 
 /**
@@ -147,9 +147,11 @@ class FormatExporter {
    * Export data as raw binary
    */
   static exportBinary(data: Uint8Array, filename: string): void {
-    const blob = new Blob([data as BlobPart], { type: 'application/octet-stream' });
+    const blob = new Blob([data as BlobPart], {
+      type: "application/octet-stream",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     link.click();
@@ -159,11 +161,15 @@ class FormatExporter {
   /**
    * Export data as Intel HEX format
    */
-  static exportIntelHex(data: Uint8Array, baseAddress: number, filename: string): void {
+  static exportIntelHex(
+    data: Uint8Array,
+    baseAddress: number,
+    filename: string,
+  ): void {
     const hexString = FileParser.toIntelHex(data, baseAddress);
-    const blob = new Blob([hexString], { type: 'text/plain' });
+    const blob = new Blob([hexString], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     link.click();
@@ -173,11 +179,15 @@ class FormatExporter {
   /**
    * Export data as Motorola S-record format
    */
-  static exportSRecord(data: Uint8Array, baseAddress: number, filename: string): void {
+  static exportSRecord(
+    data: Uint8Array,
+    baseAddress: number,
+    filename: string,
+  ): void {
     const srecString = FileParser.toSRecord(data, baseAddress);
-    const blob = new Blob([srecString], { type: 'text/plain' });
+    const blob = new Blob([srecString], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     link.click();
@@ -191,7 +201,7 @@ class FormatExporter {
     config: ExtractionConfig,
     chipInfo: ChipInfo | null,
     extractedData: Uint8Array,
-    filename: string
+    filename: string,
   ): void {
     const metadata = {
       timestamp: new Date().toISOString(),
@@ -201,15 +211,17 @@ class FormatExporter {
         endAddress: `0x${config.endAddress.toString(16).toUpperCase()}`,
         size: extractedData.length,
         checksum: FileParser.calculateChecksum(extractedData),
-        format: config.exportFormat
+        format: config.exportFormat,
       },
-      tool: 'BattleMagic Firmware Extractor',
-      version: '1.0.0'
+      tool: "BattleMagic Firmware Extractor",
+      version: "1.0.0",
     };
 
-    const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(metadata, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     link.click();
@@ -225,15 +237,18 @@ interface FirmwareExtractorProps {
   isConnected: boolean;
 }
 
-export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareExtractorProps) {
+export default function FirmwareExtractor({
+  gdbClient,
+  isConnected,
+}: FirmwareExtractorProps) {
   // State management
   const [config, setConfig] = useState<ExtractionConfig>({
     startAddress: 0x08000000,
     endAddress: 0x08010000,
     chunkSize: 1024,
     verifyAfterRead: true,
-    exportFormat: 'all',
-    autoDetectSize: true
+    exportFormat: "all",
+    autoDetectSize: true,
   });
 
   const [progress, setProgress] = useState<ExtractionProgress>({
@@ -243,15 +258,15 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
     currentAddress: 0,
     percentComplete: 0,
     estimatedTimeRemaining: 0,
-    errors: []
+    errors: [],
   });
 
   const [detectedChip, setDetectedChip] = useState<ChipInfo | null>(null);
   const [memoryRegions, setMemoryRegions] = useState<MemoryRegion[]>([]);
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [selectedPreset, setSelectedPreset] = useState<string>("");
   const [extractedData, setExtractedData] = useState<Uint8Array | null>(null);
-  const [customStartAddress, setCustomStartAddress] = useState('0x08000000');
-  const [customEndAddress, setCustomEndAddress] = useState('0x08010000');
+  const [customStartAddress, setCustomStartAddress] = useState("0x08000000");
+  const [customEndAddress, setCustomEndAddress] = useState("0x08010000");
 
   // Refs for extraction control
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -274,27 +289,31 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
         const allRegions = [
           ...info.memory.flash,
           ...info.memory.ram,
-          ...info.memory.other
+          ...info.memory.other,
         ];
         setMemoryRegions(allRegions);
 
         // Auto-configure flash region if detected
         if (info.memory.flash.length > 0) {
           const flashRegion = info.memory.flash[0];
-          setConfig(prev => ({
+          setConfig((prev) => ({
             ...prev,
             startAddress: flashRegion.start,
-            endAddress: flashRegion.start + flashRegion.size
+            endAddress: flashRegion.start + flashRegion.size,
           }));
-          setCustomStartAddress(`0x${flashRegion.start.toString(16).toUpperCase()}`);
-          setCustomEndAddress(`0x${(flashRegion.start + flashRegion.size).toString(16).toUpperCase()}`);
+          setCustomStartAddress(
+            `0x${flashRegion.start.toString(16).toUpperCase()}`,
+          );
+          setCustomEndAddress(
+            `0x${(flashRegion.start + flashRegion.size).toString(16).toUpperCase()}`,
+          );
         }
       }
     } catch (error) {
-      console.error('Failed to detect chip:', error);
-      setProgress(prev => ({
+      console.error("Failed to detect chip:", error);
+      setProgress((prev) => ({
         ...prev,
-        errors: [...prev.errors, `Chip detection failed: ${error}`]
+        errors: [...prev.errors, `Chip detection failed: ${error}`],
       }));
     }
   }, [gdbClient, isConnected]);
@@ -303,46 +322,65 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
    * Apply memory preset
    */
   const applyPreset = useCallback((presetName: string) => {
-    const preset = MEMORY_PRESETS.find(p => p.name === presetName);
+    const preset = MEMORY_PRESETS.find((p) => p.name === presetName);
     if (!preset) return;
 
     setSelectedPreset(presetName);
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
       startAddress: preset.flash.start,
-      endAddress: preset.flash.start + preset.flash.size
+      endAddress: preset.flash.start + preset.flash.size,
     }));
     setCustomStartAddress(`0x${preset.flash.start.toString(16).toUpperCase()}`);
-    setCustomEndAddress(`0x${(preset.flash.start + preset.flash.size).toString(16).toUpperCase()}`);
+    setCustomEndAddress(
+      `0x${(preset.flash.start + preset.flash.size).toString(16).toUpperCase()}`,
+    );
   }, []);
 
   /**
    * Export extracted firmware
    */
-  const exportFirmware = useCallback((data?: Uint8Array) => {
-    const exportData = data || extractedData;
-    if (!exportData) return;
+  const exportFirmware = useCallback(
+    (data?: Uint8Array) => {
+      const exportData = data || extractedData;
+      if (!exportData) return;
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const chipName = detectedChip?.description.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-    const baseFilename = `firmware_${chipName}_${timestamp}`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const chipName =
+        detectedChip?.description.replace(/[^a-zA-Z0-9]/g, "_") || "unknown";
+      const baseFilename = `firmware_${chipName}_${timestamp}`;
 
-    // Export based on format selection
-    if (config.exportFormat === 'bin' || config.exportFormat === 'all') {
-      FormatExporter.exportBinary(exportData, `${baseFilename}.bin`);
-    }
+      // Export based on format selection
+      if (config.exportFormat === "bin" || config.exportFormat === "all") {
+        FormatExporter.exportBinary(exportData, `${baseFilename}.bin`);
+      }
 
-    if (config.exportFormat === 'hex' || config.exportFormat === 'all') {
-      FormatExporter.exportIntelHex(exportData, config.startAddress, `${baseFilename}.hex`);
-    }
+      if (config.exportFormat === "hex" || config.exportFormat === "all") {
+        FormatExporter.exportIntelHex(
+          exportData,
+          config.startAddress,
+          `${baseFilename}.hex`,
+        );
+      }
 
-    if (config.exportFormat === 'srec' || config.exportFormat === 'all') {
-      FormatExporter.exportSRecord(exportData, config.startAddress, `${baseFilename}.srec`);
-    }
+      if (config.exportFormat === "srec" || config.exportFormat === "all") {
+        FormatExporter.exportSRecord(
+          exportData,
+          config.startAddress,
+          `${baseFilename}.srec`,
+        );
+      }
 
-    // Always export metadata
-    FormatExporter.exportMetadata(config, detectedChip, exportData, `${baseFilename}_info.json`);
-  }, [extractedData, config, detectedChip]);
+      // Always export metadata
+      FormatExporter.exportMetadata(
+        config,
+        detectedChip,
+        exportData,
+        `${baseFilename}_info.json`,
+      );
+    },
+    [extractedData, config, detectedChip],
+  );
 
   /**
    * Start firmware extraction
@@ -359,7 +397,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       currentAddress: config.startAddress,
       percentComplete: 0,
       estimatedTimeRemaining: 0,
-      errors: []
+      errors: [],
     });
 
     // Create abort controller for cancellation
@@ -375,7 +413,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       while (bytesRead < totalBytes) {
         // Check for abort
         if (abortControllerRef.current?.signal.aborted) {
-          throw new Error('Extraction aborted by user');
+          throw new Error("Extraction aborted by user");
         }
 
         const currentAddress = config.startAddress + bytesRead;
@@ -390,9 +428,14 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
 
           // Verify if enabled
           if (config.verifyAfterRead) {
-            const verifyChunk = await gdbClient.readMemory(currentAddress, chunkSize);
+            const verifyChunk = await gdbClient.readMemory(
+              currentAddress,
+              chunkSize,
+            );
             if (!arraysEqual(chunk, verifyChunk)) {
-              throw new Error(`Verification failed at 0x${currentAddress.toString(16)}`);
+              throw new Error(
+                `Verification failed at 0x${currentAddress.toString(16)}`,
+              );
             }
           }
 
@@ -402,35 +445,41 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
           const bytesPerMs = bytesRead / elapsedTime;
           const remainingMs = remainingBytes / bytesPerMs;
 
-          setProgress(prev => ({
+          setProgress((prev) => ({
             ...prev,
             bytesRead,
             currentAddress,
             percentComplete,
-            estimatedTimeRemaining: Math.round(remainingMs / 1000)
+            estimatedTimeRemaining: Math.round(remainingMs / 1000),
           }));
         } catch (error) {
-          console.error(`Failed to read at 0x${currentAddress.toString(16)}:`, error);
-          setProgress(prev => ({
+          console.error(
+            `Failed to read at 0x${currentAddress.toString(16)}:`,
+            error,
+          );
+          setProgress((prev) => ({
             ...prev,
-            errors: [...prev.errors, `Read error at 0x${currentAddress.toString(16)}: ${error}`]
+            errors: [
+              ...prev.errors,
+              `Read error at 0x${currentAddress.toString(16)}: ${error}`,
+            ],
           }));
 
           // Try to continue with zeros for this chunk
-          data.fill(0xFF, bytesRead, bytesRead + chunkSize);
+          data.fill(0xff, bytesRead, bytesRead + chunkSize);
           bytesRead += chunkSize;
         }
 
         // Small delay to prevent overwhelming the target
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       // Extraction complete
       setExtractedData(data);
-      setProgress(prev => ({
+      setProgress((prev) => ({
         ...prev,
         isExtracting: false,
-        percentComplete: 100
+        percentComplete: 100,
       }));
 
       // Auto-export if data was successfully extracted
@@ -438,11 +487,11 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
         exportFirmware(data);
       }
     } catch (error) {
-      console.error('Extraction failed:', error);
-      setProgress(prev => ({
+      console.error("Extraction failed:", error);
+      setProgress((prev) => ({
         ...prev,
         isExtracting: false,
-        errors: [...prev.errors, `Extraction failed: ${error}`]
+        errors: [...prev.errors, `Extraction failed: ${error}`],
       }));
     } finally {
       abortControllerRef.current = null;
@@ -473,7 +522,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
    * Parse address input
    */
   const parseAddress = (input: string): number => {
-    const cleaned = input.trim().replace(/^0x/i, '');
+    const cleaned = input.trim().replace(/^0x/i, "");
     return parseInt(cleaned, 16);
   };
 
@@ -489,9 +538,12 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white p-4 overflow-y-auto">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-green-400 mb-2">Firmware Extractor</h2>
+        <h2 className="text-xl font-bold text-green-400 mb-2">
+          Firmware Extractor
+        </h2>
         <p className="text-sm text-gray-400">
-          Extract firmware from target MCU with automatic chip detection and multiple export formats
+          Extract firmware from target MCU with automatic chip detection and
+          multiple export formats
         </p>
       </div>
 
@@ -499,16 +551,22 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       <div className="mb-4 p-3 bg-gray-900 rounded border border-gray-700">
         <div className="flex items-center justify-between">
           <span className="text-sm">Connection Status:</span>
-          <span className={`text-sm font-mono ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-            {isConnected ? 'Connected' : 'Disconnected'}
+          <span
+            className={`text-sm font-mono ${isConnected ? "text-green-400" : "text-red-400"}`}
+          >
+            {isConnected ? "Connected" : "Disconnected"}
           </span>
         </div>
         {detectedChip && (
           <div className="mt-2">
             <span className="text-sm text-gray-400">Detected Chip: </span>
-            <span className="text-sm font-mono text-green-400">{detectedChip.description}</span>
+            <span className="text-sm font-mono text-green-400">
+              {detectedChip.description}
+            </span>
             {detectedChip.family && (
-              <span className="text-sm text-gray-500 ml-2">({detectedChip.family})</span>
+              <span className="text-sm text-gray-500 ml-2">
+                ({detectedChip.family})
+              </span>
             )}
           </div>
         )}
@@ -516,11 +574,15 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
 
       {/* Memory Configuration */}
       <div className="mb-4 p-3 bg-gray-900 rounded border border-gray-700">
-        <h3 className="text-sm font-bold text-green-400 mb-2">Memory Configuration</h3>
+        <h3 className="text-sm font-bold text-green-400 mb-2">
+          Memory Configuration
+        </h3>
 
         {/* Preset Selection */}
         <div className="mb-3">
-          <label className="block text-xs text-gray-400 mb-1">Chip Preset:</label>
+          <label className="block text-xs text-gray-400 mb-1">
+            Chip Preset:
+          </label>
           <select
             value={selectedPreset}
             onChange={(e) => applyPreset(e.target.value)}
@@ -528,7 +590,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
             disabled={!isConnected || progress.isExtracting}
           >
             <option value="">Custom</option>
-            {MEMORY_PRESETS.map(preset => (
+            {MEMORY_PRESETS.map((preset) => (
               <option key={preset.name} value={preset.name}>
                 {preset.name}
               </option>
@@ -539,7 +601,9 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
         {/* Address Range */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Start Address:</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              Start Address:
+            </label>
             <input
               type="text"
               value={customStartAddress}
@@ -547,7 +611,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
                 setCustomStartAddress(e.target.value);
                 try {
                   const addr = parseAddress(e.target.value);
-                  setConfig(prev => ({ ...prev, startAddress: addr }));
+                  setConfig((prev) => ({ ...prev, startAddress: addr }));
                 } catch {}
               }}
               className="w-full px-2 py-1 bg-gray-800 text-white text-sm font-mono rounded border border-gray-600 focus:border-green-400 focus:outline-none"
@@ -556,7 +620,9 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">End Address:</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              End Address:
+            </label>
             <input
               type="text"
               value={customEndAddress}
@@ -564,7 +630,7 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
                 setCustomEndAddress(e.target.value);
                 try {
                   const addr = parseAddress(e.target.value);
-                  setConfig(prev => ({ ...prev, endAddress: addr }));
+                  setConfig((prev) => ({ ...prev, endAddress: addr }));
                 } catch {}
               }}
               className="w-full px-2 py-1 bg-gray-800 text-white text-sm font-mono rounded border border-gray-600 focus:border-green-400 focus:outline-none"
@@ -576,14 +642,17 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
 
         {/* Size Display */}
         <div className="text-xs text-gray-400">
-          Size: {((config.endAddress - config.startAddress) / 1024).toFixed(1)} KB
-          ({(config.endAddress - config.startAddress).toLocaleString()} bytes)
+          Size: {((config.endAddress - config.startAddress) / 1024).toFixed(1)}{" "}
+          KB ({(config.endAddress - config.startAddress).toLocaleString()}{" "}
+          bytes)
         </div>
       </div>
 
       {/* Extraction Options */}
       <div className="mb-4 p-3 bg-gray-900 rounded border border-gray-700">
-        <h3 className="text-sm font-bold text-green-400 mb-2">Extraction Options</h3>
+        <h3 className="text-sm font-bold text-green-400 mb-2">
+          Extraction Options
+        </h3>
 
         <div className="space-y-2">
           {/* Chunk Size */}
@@ -591,7 +660,12 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
             <label className="text-xs text-gray-400">Chunk Size:</label>
             <select
               value={config.chunkSize}
-              onChange={(e) => setConfig(prev => ({ ...prev, chunkSize: parseInt(e.target.value) }))}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  chunkSize: parseInt(e.target.value),
+                }))
+              }
               className="px-2 py-1 bg-gray-800 text-white text-sm rounded border border-gray-600 focus:border-green-400 focus:outline-none"
               disabled={!isConnected || progress.isExtracting}
             >
@@ -608,7 +682,16 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
             <label className="text-xs text-gray-400">Export Format:</label>
             <select
               value={config.exportFormat}
-              onChange={(e) => setConfig(prev => ({ ...prev, exportFormat: e.target.value as 'bin' | 'hex' | 'srec' | 'all' }))}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  exportFormat: e.target.value as
+                    | "bin"
+                    | "hex"
+                    | "srec"
+                    | "all",
+                }))
+              }
               className="px-2 py-1 bg-gray-800 text-white text-sm rounded border border-gray-600 focus:border-green-400 focus:outline-none"
               disabled={!isConnected || progress.isExtracting}
             >
@@ -625,7 +708,12 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
               type="checkbox"
               id="verify"
               checked={config.verifyAfterRead}
-              onChange={(e) => setConfig(prev => ({ ...prev, verifyAfterRead: e.target.checked }))}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  verifyAfterRead: e.target.checked,
+                }))
+              }
               className="mr-2"
               disabled={!isConnected || progress.isExtracting}
             />
@@ -640,7 +728,12 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
               type="checkbox"
               id="autodetect"
               checked={config.autoDetectSize}
-              onChange={(e) => setConfig(prev => ({ ...prev, autoDetectSize: e.target.checked }))}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  autoDetectSize: e.target.checked,
+                }))
+              }
               className="mr-2"
               disabled={!isConnected || progress.isExtracting}
             />
@@ -654,7 +747,9 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       {/* Progress Display */}
       {progress.isExtracting && (
         <div className="mb-4 p-3 bg-gray-900 rounded border border-gray-700">
-          <h3 className="text-sm font-bold text-green-400 mb-2">Extraction Progress</h3>
+          <h3 className="text-sm font-bold text-green-400 mb-2">
+            Extraction Progress
+          </h3>
 
           {/* Progress Bar */}
           <div className="mb-2">
@@ -674,13 +769,18 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
             <div>
               <span className="text-gray-400">Current Address: </span>
               <span className="font-mono text-green-400">
-                0x{progress.currentAddress.toString(16).toUpperCase().padStart(8, '0')}
+                0x
+                {progress.currentAddress
+                  .toString(16)
+                  .toUpperCase()
+                  .padStart(8, "0")}
               </span>
             </div>
             <div>
               <span className="text-gray-400">Bytes Read: </span>
               <span className="font-mono text-green-400">
-                {progress.bytesRead.toLocaleString()} / {progress.totalBytes.toLocaleString()}
+                {progress.bytesRead.toLocaleString()} /{" "}
+                {progress.totalBytes.toLocaleString()}
               </span>
             </div>
             {progress.estimatedTimeRemaining > 0 && (
@@ -701,7 +801,9 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
           <h3 className="text-sm font-bold text-red-400 mb-2">Errors</h3>
           <div className="text-xs text-red-300 space-y-1 max-h-32 overflow-y-auto">
             {progress.errors.map((error, index) => (
-              <div key={index} className="font-mono">{error}</div>
+              <div key={index} className="font-mono">
+                {error}
+              </div>
             ))}
           </div>
         </div>
@@ -710,13 +812,18 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       {/* Success Message */}
       {extractedData && !progress.isExtracting && (
         <div className="mb-4 p-3 bg-green-900/20 rounded border border-green-700">
-          <h3 className="text-sm font-bold text-green-400 mb-2">Extraction Complete</h3>
+          <h3 className="text-sm font-bold text-green-400 mb-2">
+            Extraction Complete
+          </h3>
           <div className="text-xs text-green-300">
             Successfully extracted {extractedData.length.toLocaleString()} bytes
             ({(extractedData.length / 1024).toFixed(1)} KB)
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            Checksum: 0x{FileParser.calculateChecksum(extractedData).toString(16).toUpperCase()}
+            Checksum: 0x
+            {FileParser.calculateChecksum(extractedData)
+              .toString(16)
+              .toUpperCase()}
           </div>
         </div>
       )}
@@ -730,8 +837,8 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
               disabled={!isConnected}
               className={`flex-1 px-4 py-2 text-sm font-bold rounded transition-colors ${
                 isConnected
-                  ? 'bg-green-600 hover:bg-green-500 text-white'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  ? "bg-green-600 hover:bg-green-500 text-white"
+                  : "bg-gray-700 text-gray-400 cursor-not-allowed"
               }`}
             >
               Start Extraction
@@ -758,15 +865,23 @@ export default function FirmwareExtractor({ gdbClient, isConnected }: FirmwareEx
       {/* Detected Memory Regions */}
       {memoryRegions.length > 0 && (
         <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700">
-          <h3 className="text-sm font-bold text-green-400 mb-2">Detected Memory Regions</h3>
+          <h3 className="text-sm font-bold text-green-400 mb-2">
+            Detected Memory Regions
+          </h3>
           <div className="space-y-1 text-xs">
             {memoryRegions.map((region, index) => (
               <div key={index} className="flex justify-between font-mono">
                 <span className="text-gray-400">{region.name}:</span>
                 <span className="text-green-400">
-                  0x{region.start.toString(16).toUpperCase().padStart(8, '0')} -
-                  0x{(region.start + region.size).toString(16).toUpperCase().padStart(8, '0')}
-                  <span className="text-gray-500 ml-2">({(region.size / 1024).toFixed(0)}KB)</span>
+                  0x{region.start.toString(16).toUpperCase().padStart(8, "0")} -
+                  0x
+                  {(region.start + region.size)
+                    .toString(16)
+                    .toUpperCase()
+                    .padStart(8, "0")}
+                  <span className="text-gray-500 ml-2">
+                    ({(region.size / 1024).toFixed(0)}KB)
+                  </span>
                 </span>
               </div>
             ))}

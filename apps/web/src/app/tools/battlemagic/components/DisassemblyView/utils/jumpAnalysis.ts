@@ -5,7 +5,7 @@
  * to avoid overlapping jump arrows in the disassembly view.
  */
 
-import type { DisassemblyLine, JumpInfo } from '../types';
+import type { DisassemblyLine, JumpInfo } from "../types";
 
 /**
  * Analyze jumps for visualization in disassembly view
@@ -34,13 +34,17 @@ export function analyzeJumps(lines: DisassemblyLine[]): JumpInfo[] {
     const mnem = inst.mnemonic.toLowerCase();
 
     // Skip non-branch instructions
-    if (!mnem.startsWith('b') || mnem === 'bkpt') return;
+    if (!mnem.startsWith("b") || mnem === "bkpt") return;
 
     // Skip function calls and returns
-    if (mnem.startsWith('bl') || (mnem === 'bx' && inst.operands?.toLowerCase().includes('lr'))) return;
+    if (
+      mnem.startsWith("bl") ||
+      (mnem === "bx" && inst.operands?.toLowerCase().includes("lr"))
+    )
+      return;
 
     // Try to parse target address from operands
-    const operands = inst.operands || '';
+    const operands = inst.operands || "";
     const match = operands.match(/0x([0-9a-fA-F]+)/);
     if (!match) return;
 
@@ -53,10 +57,10 @@ export function analyzeJumps(lines: DisassemblyLine[]): JumpInfo[] {
     jumps.push({
       fromAddress: inst.address,
       toAddress,
-      type: toLine > fromLine ? 'forward' : 'backward',
+      type: toLine > fromLine ? "forward" : "backward",
       fromLine,
       toLine,
-      column: 0 // Will be assigned later to avoid overlaps
+      column: 0, // Will be assigned later to avoid overlaps
     });
   });
 
@@ -68,7 +72,7 @@ export function analyzeJumps(lines: DisassemblyLine[]): JumpInfo[] {
   });
 
   const usedColumns: Set<number>[] = [];
-  jumps.forEach(jump => {
+  jumps.forEach((jump) => {
     const minLine = Math.min(jump.fromLine, jump.toLine);
     const maxLine = Math.max(jump.fromLine, jump.toLine);
 

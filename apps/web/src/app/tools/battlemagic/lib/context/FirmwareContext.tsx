@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Firmware Context - Global cache for raw firmware bytes
@@ -16,7 +16,7 @@
  * - If cache miss: fall back to GDB read (live debugging mode)
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from "react";
 
 /**
  * Firmware Context State
@@ -34,13 +34,17 @@ interface FirmwareContextState {
   clearFirmware: () => void;
 }
 
-const FirmwareContext = createContext<FirmwareContextState | undefined>(undefined);
+const FirmwareContext = createContext<FirmwareContextState | undefined>(
+  undefined,
+);
 
 /**
  * Firmware Context Provider
  */
 export function FirmwareProvider({ children }: { children: React.ReactNode }) {
-  const [firmwareData, setFirmwareDataState] = useState<Uint8Array | null>(null);
+  const [firmwareData, setFirmwareDataState] = useState<Uint8Array | null>(
+    null,
+  );
   const [baseAddress, setBaseAddress] = useState(0);
   const [size, setSize] = useState(0);
 
@@ -49,7 +53,9 @@ export function FirmwareProvider({ children }: { children: React.ReactNode }) {
    * Creates a copy to prevent issues with detached ArrayBuffers
    */
   const setFirmwareData = useCallback((data: Uint8Array, baseAddr: number) => {
-    console.log(`[FirmwareContext] Caching firmware: ${data.length} bytes at 0x${baseAddr.toString(16).toUpperCase()}`);
+    console.log(
+      `[FirmwareContext] Caching firmware: ${data.length} bytes at 0x${baseAddr.toString(16).toUpperCase()}`,
+    );
     // Create a true copy to prevent ArrayBuffer detachment issues
     const firmwareCopy = new Uint8Array(data);
     setFirmwareDataState(firmwareCopy);
@@ -62,26 +68,29 @@ export function FirmwareProvider({ children }: { children: React.ReactNode }) {
    * Returns null if address is out of range or no firmware is loaded
    * Always returns a NEW Uint8Array copy to prevent ArrayBuffer detachment issues
    */
-  const readMemory = useCallback((address: number, readSize: number): Uint8Array | null => {
-    if (!firmwareData) {
-      return null;
-    }
+  const readMemory = useCallback(
+    (address: number, readSize: number): Uint8Array | null => {
+      if (!firmwareData) {
+        return null;
+      }
 
-    // Calculate offset from base address
-    const offset = address - baseAddress;
+      // Calculate offset from base address
+      const offset = address - baseAddress;
 
-    // Check bounds
-    if (offset < 0 || offset + readSize > size) {
-      console.warn(
-        `[FirmwareContext] Address 0x${address.toString(16)} (offset ${offset}) is out of firmware range [0x${baseAddress.toString(16)} - 0x${(baseAddress + size).toString(16)}]`
-      );
-      return null;
-    }
+      // Check bounds
+      if (offset < 0 || offset + readSize > size) {
+        console.warn(
+          `[FirmwareContext] Address 0x${address.toString(16)} (offset ${offset}) is out of firmware range [0x${baseAddress.toString(16)} - 0x${(baseAddress + size).toString(16)}]`,
+        );
+        return null;
+      }
 
-    // Return a NEW copy to prevent WASM DataView issues with detached ArrayBuffers
-    // slice() creates a new TypedArray with a new ArrayBuffer containing a copy
-    return new Uint8Array(firmwareData.slice(offset, offset + readSize));
-  }, [firmwareData, baseAddress, size]);
+      // Return a NEW copy to prevent WASM DataView issues with detached ArrayBuffers
+      // slice() creates a new TypedArray with a new ArrayBuffer containing a copy
+      return new Uint8Array(firmwareData.slice(offset, offset + readSize));
+    },
+    [firmwareData, baseAddress, size],
+  );
 
   /**
    * Check if firmware is loaded
@@ -94,7 +103,7 @@ export function FirmwareProvider({ children }: { children: React.ReactNode }) {
    * Clear firmware cache
    */
   const clearFirmware = useCallback(() => {
-    console.log('[FirmwareContext] Clearing firmware cache');
+    console.log("[FirmwareContext] Clearing firmware cache");
     setFirmwareDataState(null);
     setBaseAddress(0);
     setSize(0);
@@ -123,7 +132,7 @@ export function FirmwareProvider({ children }: { children: React.ReactNode }) {
 export function useFirmware() {
   const context = useContext(FirmwareContext);
   if (!context) {
-    throw new Error('useFirmware must be used within FirmwareProvider');
+    throw new Error("useFirmware must be used within FirmwareProvider");
   }
   return context;
 }

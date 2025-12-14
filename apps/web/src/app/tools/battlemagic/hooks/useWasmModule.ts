@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface WasmModuleState<T> {
   module: T | null;
@@ -20,7 +20,7 @@ export interface UseWasmModuleOptions {
 
 export function useWasmModule<T>(
   loader: () => Promise<T>,
-  options: UseWasmModuleOptions = {}
+  options: UseWasmModuleOptions = {},
 ) {
   const {
     trackProgress = false,
@@ -42,102 +42,108 @@ export function useWasmModule<T>(
   const attemptRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const log = useCallback((...args: unknown[]) => {
-    if (debug) console.log('[useWasmModule]', ...args);
-  }, [debug]);
+  const log = useCallback(
+    (...args: unknown[]) => {
+      if (debug) console.log("[useWasmModule]", ...args);
+    },
+    [debug],
+  );
 
-  const loadModule = useCallback(async (isRetry = false) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-
-    if (!isRetry) {
-      attemptRef.current = 0;
-    }
-
-    setState(prev => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-      progress: trackProgress ? 0 : prev.progress,
-    }));
-
-    log('Loading WASM module...', { attempt: attemptRef.current + 1 });
-
-    try {
-      if (trackProgress && mountedRef.current && !signal.aborted) {
-        setState(prev => ({ ...prev, progress: 10 }));
+  const loadModule = useCallback(
+    async (isRetry = false) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
-      const wasmModule = await loader();
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
 
-      if (signal.aborted) {
-        log('Load aborted');
-        return;
+      if (!isRetry) {
+        attemptRef.current = 0;
       }
 
-      if (trackProgress && mountedRef.current && !signal.aborted) {
-        setState(prev => ({ ...prev, progress: 90 }));
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      if (!mountedRef.current || signal.aborted) {
-        log('Component unmounted during initialization');
-        return;
-      }
-
-      setState({
-        module: wasmModule,
-        isLoading: false,
-        isInitialized: true,
+      setState((prev) => ({
+        ...prev,
+        isLoading: true,
         error: null,
-        progress: 100,
-      });
+        progress: trackProgress ? 0 : prev.progress,
+      }));
 
-      log('WASM module loaded successfully');
-    } catch (error) {
-      if (signal.aborted) {
-        log('Load aborted during error handling');
-        return;
-      }
+      log("Loading WASM module...", { attempt: attemptRef.current + 1 });
 
-      const err = error instanceof Error ? error : new Error(String(error));
-      log('WASM module load failed:', err);
+      try {
+        if (trackProgress && mountedRef.current && !signal.aborted) {
+          setState((prev) => ({ ...prev, progress: 10 }));
+        }
 
-      attemptRef.current += 1;
+        const wasmModule = await loader();
 
-      if (attemptRef.current < retries && mountedRef.current) {
-        log(`Retrying... (${attemptRef.current}/${retries})`);
-        
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
-        
-        if (!mountedRef.current || signal.aborted) {
+        if (signal.aborted) {
+          log("Load aborted");
           return;
         }
-        
-        loadModule(true);
-      } else {
-        setState(prev => ({
-          ...prev,
+
+        if (trackProgress && mountedRef.current && !signal.aborted) {
+          setState((prev) => ({ ...prev, progress: 90 }));
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        if (!mountedRef.current || signal.aborted) {
+          log("Component unmounted during initialization");
+          return;
+        }
+
+        setState({
+          module: wasmModule,
           isLoading: false,
-          error: err,
-          progress: 0,
-        }));
+          isInitialized: true,
+          error: null,
+          progress: 100,
+        });
+
+        log("WASM module loaded successfully");
+      } catch (error) {
+        if (signal.aborted) {
+          log("Load aborted during error handling");
+          return;
+        }
+
+        const err = error instanceof Error ? error : new Error(String(error));
+        log("WASM module load failed:", err);
+
+        attemptRef.current += 1;
+
+        if (attemptRef.current < retries && mountedRef.current) {
+          log(`Retrying... (${attemptRef.current}/${retries})`);
+
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+
+          if (!mountedRef.current || signal.aborted) {
+            return;
+          }
+
+          loadModule(true);
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: err,
+            progress: 0,
+          }));
+        }
       }
-    }
-  }, [loader, retries, retryDelay, trackProgress, log]);
+    },
+    [loader, retries, retryDelay, trackProgress, log],
+  );
 
   const reset = useCallback(() => {
-    log('Resetting WASM module');
-    
+    log("Resetting WASM module");
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     setState({
       module: null,
       isLoading: false,
@@ -145,12 +151,12 @@ export function useWasmModule<T>(
       error: null,
       progress: 0,
     });
-    
+
     attemptRef.current = 0;
   }, [log]);
 
   const reload = useCallback(() => {
-    log('Reloading WASM module');
+    log("Reloading WASM module");
     reset();
     loadModule();
   }, [reset, loadModule, log]);
@@ -163,15 +169,15 @@ export function useWasmModule<T>(
 
   useEffect(() => {
     mountedRef.current = true;
-    
+
     return () => {
       mountedRef.current = false;
-      
+
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      
-      log('Cleaning up WASM module');
+
+      log("Cleaning up WASM module");
     };
   }, [log]);
 

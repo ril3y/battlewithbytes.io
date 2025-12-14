@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import type { CommentType } from '../../../lib/db/AnalysisDatabase';
+import { useEffect } from "react";
+import type { CommentType } from "../../../lib/db/AnalysisDatabase";
 
 /**
  * Hook for managing keyboard shortcuts
@@ -38,59 +38,93 @@ export function useKeyboardShortcuts(
   setCommentType?: (type: CommentType) => void,
   showRenameModal?: boolean,
   setShowRenameModal?: (show: boolean) => void,
-  selectedFunctionAddress?: number | null
+  selectedFunctionAddress?: number | null,
 ) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if not typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
       // Only handle G key when mouse is over this panel and modal is not already open
-      if ((e.key === 'g' || e.key === 'G') && isMouseOverPanel && !showGoToModal) {
+      if (
+        (e.key === "g" || e.key === "G") &&
+        isMouseOverPanel &&
+        !showGoToModal
+      ) {
         e.preventDefault();
         setShowGoToModal(true);
-        setGoToAddress('');
+        setGoToAddress("");
         setGoToError(null);
       }
 
       // Handle N key for function renaming (when function is selected and mouse is over panel)
-      if ((e.key === 'n' || e.key === 'N') && isMouseOverPanel && !showRenameModal && setShowRenameModal && selectedFunctionAddress !== null && selectedFunctionAddress !== undefined) {
+      if (
+        (e.key === "n" || e.key === "N") &&
+        isMouseOverPanel &&
+        !showRenameModal &&
+        setShowRenameModal &&
+        selectedFunctionAddress !== null &&
+        selectedFunctionAddress !== undefined
+      ) {
         e.preventDefault();
         setShowRenameModal(true);
       }
 
       // Handle comment shortcuts (only when address is selected and mouse is over panel)
-      if (isMouseOverPanel && selectedAddress !== null && selectedAddress !== undefined && !showCommentModal && setShowCommentModal && setCommentType) {
+      if (
+        isMouseOverPanel &&
+        selectedAddress !== null &&
+        selectedAddress !== undefined &&
+        !showCommentModal &&
+        setShowCommentModal &&
+        setCommentType
+      ) {
         // ; key: Standard comment
-        if (e.key === ';' && !e.shiftKey && !e.ctrlKey) {
+        if (e.key === ";" && !e.shiftKey && !e.ctrlKey) {
           e.preventDefault();
-          setCommentType('standard');
+          setCommentType("standard");
           setShowCommentModal(true);
         }
         // Shift+; (:): Repeatable comment
-        else if (e.key === ':' && e.shiftKey && !e.ctrlKey) {
+        else if (e.key === ":" && e.shiftKey && !e.ctrlKey) {
           e.preventDefault();
-          setCommentType('repeatable');
+          setCommentType("repeatable");
           setShowCommentModal(true);
         }
         // Insert key: Anterior comment
-        else if (e.key === 'Insert' && !e.shiftKey && !e.ctrlKey) {
+        else if (e.key === "Insert" && !e.shiftKey && !e.ctrlKey) {
           e.preventDefault();
-          setCommentType('anterior');
+          setCommentType("anterior");
           setShowCommentModal(true);
         }
         // Ctrl+Shift+; (:): Block comment (less common, needs modifier to prevent conflicts)
-        else if (e.key === ':' && e.shiftKey && e.ctrlKey) {
+        else if (e.key === ":" && e.shiftKey && e.ctrlKey) {
           e.preventDefault();
-          setCommentType('block');
+          setCommentType("block");
           setShowCommentModal(true);
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMouseOverPanel, showGoToModal, setShowGoToModal, setGoToAddress, setGoToError, showCommentModal, setShowCommentModal, selectedAddress, setCommentType, showRenameModal, setShowRenameModal, selectedFunctionAddress]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isMouseOverPanel,
+    showGoToModal,
+    setShowGoToModal,
+    setGoToAddress,
+    setGoToError,
+    showCommentModal,
+    setShowCommentModal,
+    selectedAddress,
+    setCommentType,
+    showRenameModal,
+    setShowRenameModal,
+    selectedFunctionAddress,
+  ]);
 }

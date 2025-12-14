@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * DebuggerView - Multi-panel debugger layout (x64dbg-style)
@@ -7,13 +7,13 @@
  * with resizable panels and maximize functionality
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GdbClient } from '../lib/gdb/GdbClient';
-import RegistersPanel, { RegisterValue } from './RegistersPanel';
-import MemoryPanel from './MemoryPanel';
-import StackPanel, { StackFrame } from './StackPanel';
-import DisassemblyView from './DisassemblyView';
-import FunctionsPanel from './FunctionsPanel';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { GdbClient } from "../lib/gdb/GdbClient";
+import RegistersPanel, { RegisterValue } from "./RegistersPanel";
+import MemoryPanel from "./MemoryPanel";
+import StackPanel, { StackFrame } from "./StackPanel";
+import DisassemblyView from "./DisassemblyView";
+import FunctionsPanel from "./FunctionsPanel";
 
 interface DebuggerViewProps {
   gdbClient: GdbClient | null;
@@ -35,7 +35,7 @@ interface DebuggerViewProps {
   jumpToPCTrigger?: number; // Increment this to trigger a jump to PC
 }
 
-type MaximizedPanel = 'disasm' | 'registers' | 'stack' | 'memory' | null;
+type MaximizedPanel = "disasm" | "registers" | "stack" | "memory" | null;
 
 export default function DebuggerView({
   gdbClient,
@@ -50,10 +50,12 @@ export default function DebuggerView({
   breakpoints,
   onToggleBreakpoint,
   visiblePanels = { registers: true, stack: true, memory: true },
-  jumpToPCTrigger
+  jumpToPCTrigger,
 }: DebuggerViewProps) {
   const [maximizedPanel, setMaximizedPanel] = useState<MaximizedPanel>(null);
-  const [stackPanelTab, setStackPanelTab] = useState<'stack' | 'functions'>('stack');
+  const [stackPanelTab, setStackPanelTab] = useState<"stack" | "functions">(
+    "stack",
+  );
 
   // Panel sizing state - horizontal split (top/bottom), vertical split (left/right)
   const [horizontalSplit, setHorizontalSplit] = useState(50); // Top row height percentage
@@ -63,13 +65,18 @@ export default function DebuggerView({
   // Drag state
   const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [isDraggingTopVertical, setIsDraggingTopVertical] = useState(false);
-  const [isDraggingBottomVertical, setIsDraggingBottomVertical] = useState(false);
+  const [isDraggingBottomVertical, setIsDraggingBottomVertical] =
+    useState(false);
 
   // Memory jump state - address to jump to in memory view
-  const [memoryJumpAddress, setMemoryJumpAddress] = useState<number | undefined>();
+  const [memoryJumpAddress, setMemoryJumpAddress] = useState<
+    number | undefined
+  >();
 
   // Disassembly jump state - address to jump to in disassembly view
-  const [disassemblyJumpAddress, setDisassemblyJumpAddress] = useState<number | undefined>();
+  const [disassemblyJumpAddress, setDisassemblyJumpAddress] = useState<
+    number | undefined
+  >();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +88,7 @@ export default function DebuggerView({
   }, [programCounter]);
 
   const toggleMaximize = useCallback((panel: MaximizedPanel) => {
-    setMaximizedPanel(prev => prev === panel ? null : panel);
+    setMaximizedPanel((prev) => (prev === panel ? null : panel));
   }, []);
 
   // Handle address click from disassembly address column - jump to memory view
@@ -91,7 +98,7 @@ export default function DebuggerView({
 
   // Handle address click from registers - jump to disassembly
   const handleDisassemblyJump = useCallback((address: number) => {
-    console.log('[DebuggerView] Jump request to:', address.toString(16));
+    console.log("[DebuggerView] Jump request to:", address.toString(16));
     setDisassemblyJumpAddress(address);
   }, []);
 
@@ -102,8 +109,15 @@ export default function DebuggerView({
 
   // Jump to PC when trigger changes (e.g., after analysis completes)
   useEffect(() => {
-    if (jumpToPCTrigger !== undefined && jumpToPCTrigger > 0 && programCounter !== undefined) {
-      console.log('[DebuggerView] Jump to PC triggered:', programCounter.toString(16));
+    if (
+      jumpToPCTrigger !== undefined &&
+      jumpToPCTrigger > 0 &&
+      programCounter !== undefined
+    ) {
+      console.log(
+        "[DebuggerView] Jump to PC triggered:",
+        programCounter.toString(16),
+      );
       setDisassemblyJumpAddress(programCounter);
     }
   }, [jumpToPCTrigger, programCounter]);
@@ -113,49 +127,59 @@ export default function DebuggerView({
     setIsDraggingHorizontal(true);
   }, []);
 
-  const handleHorizontalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingHorizontal || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const offsetY = e.clientY - rect.top;
-    const newSplit = (offsetY / rect.height) * 100;
-    if (newSplit >= 20 && newSplit <= 80) {
-      setHorizontalSplit(newSplit);
-    }
-  }, [isDraggingHorizontal]);
+  const handleHorizontalMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingHorizontal || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const offsetY = e.clientY - rect.top;
+      const newSplit = (offsetY / rect.height) * 100;
+      if (newSplit >= 20 && newSplit <= 80) {
+        setHorizontalSplit(newSplit);
+      }
+    },
+    [isDraggingHorizontal],
+  );
 
   // Mouse handlers for top row vertical divider (disasm/registers split)
   const handleTopVerticalMouseDown = useCallback(() => {
     setIsDraggingTopVertical(true);
   }, []);
 
-  const handleTopVerticalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingTopVertical || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const newSplit = (offsetX / rect.width) * 100;
-    if (newSplit >= 30 && newSplit <= 85) {
-      setTopRowVerticalSplit(newSplit);
-    }
-  }, [isDraggingTopVertical]);
+  const handleTopVerticalMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingTopVertical || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const newSplit = (offsetX / rect.width) * 100;
+      if (newSplit >= 30 && newSplit <= 85) {
+        setTopRowVerticalSplit(newSplit);
+      }
+    },
+    [isDraggingTopVertical],
+  );
 
   // Mouse handlers for bottom row vertical divider (stack/memory split)
   const handleBottomVerticalMouseDown = useCallback(() => {
     setIsDraggingBottomVertical(true);
   }, []);
 
-  const handleBottomVerticalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingBottomVertical || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const newSplit = (offsetX / rect.width) * 100;
-    if (newSplit >= 20 && newSplit <= 80) {
-      setBottomRowVerticalSplit(newSplit);
-    }
-  }, [isDraggingBottomVertical]);
+  const handleBottomVerticalMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingBottomVertical || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const newSplit = (offsetX / rect.width) * 100;
+      if (newSplit >= 20 && newSplit <= 80) {
+        setBottomRowVerticalSplit(newSplit);
+      }
+    },
+    [isDraggingBottomVertical],
+  );
 
   // Setup event listeners for all drag operations
   useEffect(() => {
-    const isDragging = isDraggingHorizontal || isDraggingTopVertical || isDraggingBottomVertical;
+    const isDragging =
+      isDraggingHorizontal || isDraggingTopVertical || isDraggingBottomVertical;
 
     if (isDragging) {
       let moveHandler: (e: MouseEvent) => void;
@@ -174,16 +198,18 @@ export default function DebuggerView({
         setIsDraggingBottomVertical(false);
       };
 
-      window.addEventListener('mousemove', moveHandler);
-      window.addEventListener('mouseup', upHandler);
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = isDraggingHorizontal ? 'row-resize' : 'col-resize';
+      window.addEventListener("mousemove", moveHandler);
+      window.addEventListener("mouseup", upHandler);
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = isDraggingHorizontal
+        ? "row-resize"
+        : "col-resize";
 
       return () => {
-        window.removeEventListener('mousemove', moveHandler);
-        window.removeEventListener('mouseup', upHandler);
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
+        window.removeEventListener("mousemove", moveHandler);
+        window.removeEventListener("mouseup", upHandler);
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
       };
     }
   }, [
@@ -192,14 +218,14 @@ export default function DebuggerView({
     isDraggingBottomVertical,
     handleHorizontalMouseMove,
     handleTopVerticalMouseMove,
-    handleBottomVerticalMouseMove
+    handleBottomVerticalMouseMove,
   ]);
 
   // Panel header component
   const PanelHeader = ({
     title,
     panelKey,
-    onRefresh
+    onRefresh,
   }: {
     title: string;
     panelKey: MaximizedPanel;
@@ -256,20 +282,20 @@ export default function DebuggerView({
           title={maximizedPanel.toUpperCase()}
           panelKey={maximizedPanel}
           onRefresh={
-            maximizedPanel === 'registers'
+            maximizedPanel === "registers"
               ? onRefreshRegisters
-              : maximizedPanel === 'stack'
-              ? onRefreshStack
-              : undefined
+              : maximizedPanel === "stack"
+                ? onRefreshStack
+                : undefined
           }
         />
         <div className="flex-1 overflow-hidden">
-          {maximizedPanel === 'disasm' && (
+          {maximizedPanel === "disasm" && (
             <DisassemblyView
               onReadMemory={onReadMemory}
               programCounter={programCounter}
               isConnected={isConnected}
-              registers={new Map(registers.map(r => [r.name, r.value]))}
+              registers={new Map(registers.map((r) => [r.name, r.value]))}
               gdbClient={gdbClient}
               onOutput={onOutput}
               onAddressClick={handleMemoryJump}
@@ -279,7 +305,7 @@ export default function DebuggerView({
               onToggleBreakpoint={onToggleBreakpoint}
             />
           )}
-          {maximizedPanel === 'registers' && visiblePanels.registers && (
+          {maximizedPanel === "registers" && visiblePanels.registers && (
             <RegistersPanel
               registers={registers}
               onRefresh={onRefreshRegisters}
@@ -287,26 +313,26 @@ export default function DebuggerView({
               onAddressClick={handleDisassemblyJump}
             />
           )}
-          {maximizedPanel === 'stack' && visiblePanels.stack && (
+          {maximizedPanel === "stack" && visiblePanels.stack && (
             <div className="flex flex-col h-full">
               {/* Tabs */}
               <div className="flex border-b border-gray-700 bg-gray-900">
                 <button
-                  onClick={() => setStackPanelTab('stack')}
+                  onClick={() => setStackPanelTab("stack")}
                   className={`px-4 py-2 text-xs font-mono transition-colors ${
-                    stackPanelTab === 'stack'
-                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                      : 'text-gray-400 hover:text-gray-300'
+                    stackPanelTab === "stack"
+                      ? "bg-gray-950 text-green-400 border-b-2 border-green-400"
+                      : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   STACK
                 </button>
                 <button
-                  onClick={() => setStackPanelTab('functions')}
+                  onClick={() => setStackPanelTab("functions")}
                   className={`px-4 py-2 text-xs font-mono transition-colors ${
-                    stackPanelTab === 'functions'
-                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                      : 'text-gray-400 hover:text-gray-300'
+                    stackPanelTab === "functions"
+                      ? "bg-gray-950 text-green-400 border-b-2 border-green-400"
+                      : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   FUNCTIONS
@@ -314,22 +340,20 @@ export default function DebuggerView({
               </div>
               {/* Tab Content */}
               <div className="flex-1 overflow-hidden">
-                {stackPanelTab === 'stack' && (
+                {stackPanelTab === "stack" && (
                   <StackPanel
                     frames={stackFrames}
                     onRefresh={onRefreshStack}
                     isConnected={isConnected}
                   />
                 )}
-                {stackPanelTab === 'functions' && (
-                  <FunctionsPanel
-                    onNavigateToAddress={handleDisassemblyJump}
-                  />
+                {stackPanelTab === "functions" && (
+                  <FunctionsPanel onNavigateToAddress={handleDisassemblyJump} />
                 )}
               </div>
             </div>
           )}
-          {maximizedPanel === 'memory' && visiblePanels.memory && (
+          {maximizedPanel === "memory" && visiblePanels.memory && (
             <MemoryPanel
               onReadMemory={onReadMemory}
               isConnected={isConnected}
@@ -349,14 +373,19 @@ export default function DebuggerView({
       {/* Top Row: Disassembly | Registers */}
       <div className="flex" style={{ height: `${horizontalSplit}%` }}>
         {/* Disassembly Panel */}
-        <div className="flex flex-col" style={{ width: visiblePanels.registers ? `${topRowVerticalSplit}%` : '100%' }}>
+        <div
+          className="flex flex-col"
+          style={{
+            width: visiblePanels.registers ? `${topRowVerticalSplit}%` : "100%",
+          }}
+        >
           <PanelHeader title="DISASSEMBLY" panelKey="disasm" />
           <div className="flex-1 overflow-hidden">
             <DisassemblyView
               onReadMemory={onReadMemory}
               programCounter={programCounter}
               isConnected={isConnected}
-              registers={new Map(registers.map(r => [r.name, r.value]))}
+              registers={new Map(registers.map((r) => [r.name, r.value]))}
               gdbClient={gdbClient}
               onOutput={onOutput}
               onAddressClick={handleMemoryJump}
@@ -369,12 +398,21 @@ export default function DebuggerView({
         </div>
 
         {/* Vertical Divider - only show if registers panel is visible */}
-        {visiblePanels.registers && <VerticalDivider onMouseDown={handleTopVerticalMouseDown} />}
+        {visiblePanels.registers && (
+          <VerticalDivider onMouseDown={handleTopVerticalMouseDown} />
+        )}
 
         {/* Registers Panel */}
         {visiblePanels.registers && (
-          <div className="flex flex-col" style={{ width: `${100 - topRowVerticalSplit}%` }}>
-            <PanelHeader title="REGISTERS" panelKey="registers" onRefresh={onRefreshRegisters} />
+          <div
+            className="flex flex-col"
+            style={{ width: `${100 - topRowVerticalSplit}%` }}
+          >
+            <PanelHeader
+              title="REGISTERS"
+              panelKey="registers"
+              onRefresh={onRefreshRegisters}
+            />
             <div className="flex-1 overflow-hidden">
               <RegistersPanel
                 registers={registers}
@@ -397,26 +435,39 @@ export default function DebuggerView({
         <div className="flex" style={{ height: `${100 - horizontalSplit}%` }}>
           {/* Stack Panel with Tabs */}
           {visiblePanels.stack && (
-            <div className="flex flex-col" style={{ width: visiblePanels.memory ? `${bottomRowVerticalSplit}%` : '100%' }}>
-              <PanelHeader title="STACK / FUNCTIONS" panelKey="stack" onRefresh={stackPanelTab === 'stack' ? onRefreshStack : undefined} />
+            <div
+              className="flex flex-col"
+              style={{
+                width: visiblePanels.memory
+                  ? `${bottomRowVerticalSplit}%`
+                  : "100%",
+              }}
+            >
+              <PanelHeader
+                title="STACK / FUNCTIONS"
+                panelKey="stack"
+                onRefresh={
+                  stackPanelTab === "stack" ? onRefreshStack : undefined
+                }
+              />
               {/* Tabs */}
               <div className="flex border-b border-gray-700 bg-gray-900">
                 <button
-                  onClick={() => setStackPanelTab('stack')}
+                  onClick={() => setStackPanelTab("stack")}
                   className={`px-4 py-2 text-xs font-mono transition-colors ${
-                    stackPanelTab === 'stack'
-                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                      : 'text-gray-400 hover:text-gray-300'
+                    stackPanelTab === "stack"
+                      ? "bg-gray-950 text-green-400 border-b-2 border-green-400"
+                      : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   STACK
                 </button>
                 <button
-                  onClick={() => setStackPanelTab('functions')}
+                  onClick={() => setStackPanelTab("functions")}
                   className={`px-4 py-2 text-xs font-mono transition-colors ${
-                    stackPanelTab === 'functions'
-                      ? 'bg-gray-950 text-green-400 border-b-2 border-green-400'
-                      : 'text-gray-400 hover:text-gray-300'
+                    stackPanelTab === "functions"
+                      ? "bg-gray-950 text-green-400 border-b-2 border-green-400"
+                      : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   FUNCTIONS
@@ -424,17 +475,15 @@ export default function DebuggerView({
               </div>
               {/* Tab Content */}
               <div className="flex-1 overflow-hidden">
-                {stackPanelTab === 'stack' && (
+                {stackPanelTab === "stack" && (
                   <StackPanel
                     frames={stackFrames}
                     onRefresh={onRefreshStack}
                     isConnected={isConnected}
                   />
                 )}
-                {stackPanelTab === 'functions' && (
-                  <FunctionsPanel
-                    onNavigateToAddress={handleDisassemblyJump}
-                  />
+                {stackPanelTab === "functions" && (
+                  <FunctionsPanel onNavigateToAddress={handleDisassemblyJump} />
                 )}
               </div>
             </div>
@@ -447,7 +496,14 @@ export default function DebuggerView({
 
           {/* Memory Panel */}
           {visiblePanels.memory && (
-            <div className="flex flex-col" style={{ width: visiblePanels.stack ? `${100 - bottomRowVerticalSplit}%` : '100%' }}>
+            <div
+              className="flex flex-col"
+              style={{
+                width: visiblePanels.stack
+                  ? `${100 - bottomRowVerticalSplit}%`
+                  : "100%",
+              }}
+            >
               <PanelHeader title="MEMORY" panelKey="memory" />
               <div className="flex-1 overflow-hidden">
                 <MemoryPanel

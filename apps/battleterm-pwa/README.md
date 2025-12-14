@@ -40,6 +40,7 @@ The app is configured for static export and can be deployed to any static hostin
 3. Deploy the `out` directory to your hosting service
 
 Compatible hosting platforms:
+
 - GitHub Pages
 - Netlify
 - Vercel

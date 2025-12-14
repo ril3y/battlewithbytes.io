@@ -37,26 +37,31 @@ __tests__/
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 npm test
 ```
 
 ### Run battlemagic tests only
+
 ```bash
 npm test -- --testPathPattern="battlemagic"
 ```
 
 ### Run specific test suite
+
 ```bash
 npm test -- src/app/tools/battlemagic/__tests__/lib/gdb/RspProtocol.test.ts
 ```
 
 ### Run tests with coverage
+
 ```bash
 npm test -- --coverage --testPathPattern="battlemagic"
 ```
 
 ### Run tests in watch mode
+
 ```bash
 npm test -- --watch --testPathPattern="battlemagic"
 ```
@@ -175,22 +180,27 @@ npm test -- --testPathPattern="battlemagic" --bail
 ## Debugging Tests
 
 ### Enable debug output
+
 ```bash
 npm test -- --testPathPattern="battlemagic" --verbose
 ```
 
 ### Run single test
+
 ```bash
 npm test -- -t "should read memory from target"
 ```
 
 ### Run tests matching pattern
+
 ```bash
 npm test -- -t "Memory Operations"
 ```
 
 ### Debug in VS Code
+
 Add to `.vscode/launch.json`:
+
 ```json
 {
   "type": "node",
@@ -207,7 +217,7 @@ Add to `.vscode/launch.json`:
 ### Test Template
 
 ```typescript
-describe('Feature Name', () => {
+describe("Feature Name", () => {
   let instance: ClassToTest;
 
   beforeEach(() => {
@@ -218,12 +228,12 @@ describe('Feature Name', () => {
     // Cleanup if needed
   });
 
-  it('should do something', () => {
+  it("should do something", () => {
     const result = instance.doSomething();
     expect(result).toBe(expectedValue);
   });
 
-  it('should handle edge case', () => {
+  it("should handle edge case", () => {
     expect(() => instance.doSomething(invalidInput)).toThrow();
   });
 });
@@ -242,21 +252,25 @@ describe('Feature Name', () => {
 ## Troubleshooting
 
 ### Tests Timeout
+
 - Increase timeout: `jest.setTimeout(10000)` in test file
 - Check for unmocked async operations
 - Verify mock responses are queued properly
 
 ### "Cannot find module" Errors
+
 - Verify import paths are correct
 - Check that test files use proper path resolution
 - Ensure mocks are set up before imports
 
 ### Memory Leaks
+
 - Clean up event listeners in `afterEach`
 - Call `disconnect()` on clients
 - Clear all mocks with `jest.clearAllMocks()`
 
 ### Type Errors
+
 - Use `as any` for accessing private properties in tests (with caution)
 - Define proper types for mock objects
 - Use `jest.mocked()` for typed mocks

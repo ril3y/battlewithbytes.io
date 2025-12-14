@@ -1,1 +1,0 @@
-tools/clang/include/clang/Sema/AttrSpellingListIndex.inc: /build/llvm-project/clang/include/clang/Sema/../../clang/Basic/ASTNode.td /build/llvm-project/clang/include/clang/Sema/../../clang/Basic/AttrDocs.td /build/llvm-project/clang/include/clang/Sema/../../clang/Basic/DeclNodes.td /build/llvm-project/clang/include/clang/Sema/../../clang/Basic/StmtNodes.td

@@ -3,7 +3,9 @@
 ## Build Infrastructure
 
 ### Clang WASM Build Box
+
 A dedicated build server is available for compiling Clang/LLVM WASM binaries:
+
 - **Host:** 192.168.1.62 (Proxmox container)
 - **CPU:** 128 threads available
 - **User:** builder

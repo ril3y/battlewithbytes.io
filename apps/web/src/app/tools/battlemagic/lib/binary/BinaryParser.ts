@@ -19,8 +19,8 @@ import {
   SymbolInfo,
   MemoryRegion,
   ElfMachine,
-  ArchitectureMetadata
-} from './types';
+  ArchitectureMetadata,
+} from "./types";
 
 /**
  * ELF Header structure
@@ -85,7 +85,7 @@ export abstract class BinaryParser {
   protected readonly data: Uint8Array;
   protected readonly view: DataView;
   protected readonly options: BinaryParseOptions;
-  protected endianness: Endianness = 'little';
+  protected endianness: Endianness = "little";
   protected warnings: string[] = [];
 
   /**
@@ -100,7 +100,9 @@ export abstract class BinaryParser {
 
     // Validate file size
     if (this.options.maxFileSize && data.length > this.options.maxFileSize) {
-      throw new Error(`File size ${data.length} exceeds maximum ${this.options.maxFileSize}`);
+      throw new Error(
+        `File size ${data.length} exceeds maximum ${this.options.maxFileSize}`,
+      );
     }
   }
 
@@ -129,18 +131,19 @@ export abstract class BinaryParser {
       }
 
       // Detect endianness
-      this.endianness = this.options.forceEndianness || await this.detectEndianness();
+      this.endianness =
+        this.options.forceEndianness || (await this.detectEndianness());
 
       // Parse based on format
       let info: BinaryInfo;
       switch (format) {
-        case 'ELF':
+        case "ELF":
           info = await this.parseElf();
           break;
-        case 'RAW':
+        case "RAW":
           info = await this.parseRawBinary();
           break;
-        case 'AXF':
+        case "AXF":
           info = await this.parseAxf();
           break;
         default:
@@ -155,14 +158,14 @@ export abstract class BinaryParser {
         success: true,
         info,
         warnings: this.warnings,
-        duration: performance.now() - startTime
+        duration: performance.now() - startTime,
       };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
         warnings: this.warnings,
-        duration: performance.now() - startTime
+        duration: performance.now() - startTime,
       };
     }
   }
@@ -170,7 +173,9 @@ export abstract class BinaryParser {
   /**
    * Architecture-specific vector table parsing
    */
-  protected abstract parseVectorTable(baseAddress: number): Promise<VectorInfo[]>;
+  protected abstract parseVectorTable(
+    baseAddress: number,
+  ): Promise<VectorInfo[]>;
 
   /**
    * Architecture-specific entry point detection
@@ -180,62 +185,78 @@ export abstract class BinaryParser {
   /**
    * Architecture-specific metadata extraction
    */
-  protected abstract extractArchitectureMetadata(): Promise<Record<string, unknown>>;
+  protected abstract extractArchitectureMetadata(): Promise<
+    Record<string, unknown>
+  >;
 
   /**
    * Detect binary format from magic numbers and headers
    */
   protected async detectFormat(): Promise<BinaryFormat> {
     if (this.data.length < 4) {
-      return 'RAW';
+      return "RAW";
     }
 
     // Check ELF magic (0x7F 'E' 'L' 'F')
-    if (this.data[0] === 0x7F && this.data[1] === 0x45 &&
-        this.data[2] === 0x4C && this.data[3] === 0x46) {
-      return 'ELF';
+    if (
+      this.data[0] === 0x7f &&
+      this.data[1] === 0x45 &&
+      this.data[2] === 0x4c &&
+      this.data[3] === 0x46
+    ) {
+      return "ELF";
     }
 
     // Check for ARM AXF format (variant of ELF)
-    if (this.data[0] === 0x7F && this.data[1] === 0x45 &&
-        this.data[2] === 0x4C && this.data[3] === 0x46) {
+    if (
+      this.data[0] === 0x7f &&
+      this.data[1] === 0x45 &&
+      this.data[2] === 0x4c &&
+      this.data[3] === 0x46
+    ) {
       // Additional checks for ARM-specific ELF
       const machine = this.readU16(0x12);
       if (machine === ElfMachine.EM_ARM) {
-        return 'AXF';
+        return "AXF";
       }
     }
 
     // Check for PE format (MZ header)
-    if (this.data[0] === 0x4D && this.data[1] === 0x5A) {
-      return 'PE';
+    if (this.data[0] === 0x4d && this.data[1] === 0x5a) {
+      return "PE";
     }
 
     // Check for Mach-O format
     const magic32 = this.readU32(0);
-    if (magic32 === 0xFEEDFACE || magic32 === 0xFEEDFACF ||
-        magic32 === 0xCEFAEDFE || magic32 === 0xCFFAEDFE) {
-      return 'MACHO';
+    if (
+      magic32 === 0xfeedface ||
+      magic32 === 0xfeedfacf ||
+      magic32 === 0xcefaedfe ||
+      magic32 === 0xcffaedfe
+    ) {
+      return "MACHO";
     }
 
     // Check for S-record format
-    if (this.data[0] === 0x53) { // 'S'
+    if (this.data[0] === 0x53) {
+      // 'S'
       const text = new TextDecoder().decode(this.data.slice(0, 100));
       if (/^S[0-9][0-9A-Fa-f]+/m.test(text)) {
-        return 'SREC';
+        return "SREC";
       }
     }
 
     // Check for Intel HEX format
-    if (this.data[0] === 0x3A) { // ':'
+    if (this.data[0] === 0x3a) {
+      // ':'
       const text = new TextDecoder().decode(this.data.slice(0, 100));
       if (/^:[0-9A-Fa-f]+/m.test(text)) {
-        return 'HEX';
+        return "HEX";
       }
     }
 
     // Default to raw binary
-    return 'RAW';
+    return "RAW";
   }
 
   /**
@@ -244,22 +265,22 @@ export abstract class BinaryParser {
   protected async detectEndianness(): Promise<Endianness> {
     // Check ELF header for endianness
     if (this.isElf()) {
-      return this.data[5] === 1 ? 'little' : 'big';
+      return this.data[5] === 1 ? "little" : "big";
     }
 
     // For ARM, assume little endian by default
-    if (this.getArchitecture() === 'ARM') {
-      return 'little';
+    if (this.getArchitecture() === "ARM") {
+      return "little";
     }
 
     // For MIPS, try to detect from content patterns
-    if (this.getArchitecture() === 'MIPS') {
+    if (this.getArchitecture() === "MIPS") {
       // MIPS can be either, try to detect from known patterns
       return this.detectMipsEndianness();
     }
 
     // Default to little endian
-    return 'little';
+    return "little";
   }
 
   /**
@@ -280,13 +301,16 @@ export abstract class BinaryParser {
     }
 
     const metadata: BinaryMetadata = {
-      format: 'ELF',
+      format: "ELF",
       architecture: this.getArchitecture(),
       endianness: this.endianness,
       entryPoint,
       fileSize: this.data.length,
       hasSymbols: symbols && symbols.length > 0,
-      architectureMetadata: (await this.extractArchitectureMetadata()) as unknown as ArchitectureMetadata | undefined
+      architectureMetadata:
+        (await this.extractArchitectureMetadata()) as unknown as
+          | ArchitectureMetadata
+          | undefined,
     };
 
     return {
@@ -297,7 +321,7 @@ export abstract class BinaryParser {
       symbols,
       metadata,
       rawData: this.data,
-      warnings: this.warnings
+      warnings: this.warnings,
     };
   }
 
@@ -308,29 +332,34 @@ export abstract class BinaryParser {
     const baseAddress = this.options.baseAddress || 0x08000000; // Default to STM32 flash
 
     // For raw binaries, create a single .text section
-    const sections: SectionInfo[] = [{
-      name: '.text',
-      address: baseAddress,
-      size: this.data.length,
-      type: 'code',
-      flags: ['readable', 'executable', 'allocated'],
-      data: this.data
-    }];
+    const sections: SectionInfo[] = [
+      {
+        name: ".text",
+        address: baseAddress,
+        size: this.data.length,
+        type: "code",
+        flags: ["readable", "executable", "allocated"],
+        data: this.data,
+      },
+    ];
 
     // Parse vector table at the beginning of the binary
     const vectors = await this.parseVectorTable(baseAddress);
 
     // Detect entry point
-    const entryPoint = await this.detectEntryPoint() || baseAddress;
+    const entryPoint = (await this.detectEntryPoint()) || baseAddress;
 
     const metadata: BinaryMetadata = {
-      format: 'RAW',
+      format: "RAW",
       architecture: this.getArchitecture(),
       endianness: this.endianness,
       entryPoint,
       fileSize: this.data.length,
       loadSize: this.data.length,
-      architectureMetadata: (await this.extractArchitectureMetadata()) as unknown as ArchitectureMetadata | undefined
+      architectureMetadata:
+        (await this.extractArchitectureMetadata()) as unknown as
+          | ArchitectureMetadata
+          | undefined,
     };
 
     return {
@@ -340,7 +369,7 @@ export abstract class BinaryParser {
       sections,
       metadata,
       rawData: this.data,
-      warnings: this.warnings
+      warnings: this.warnings,
     };
   }
 
@@ -350,7 +379,7 @@ export abstract class BinaryParser {
   protected async parseAxf(): Promise<BinaryInfo> {
     // AXF is essentially ELF with ARM-specific extensions
     const info = await this.parseElf();
-    info.metadata.format = 'AXF';
+    info.metadata.format = "AXF";
     return info;
   }
 
@@ -399,21 +428,22 @@ export abstract class BinaryParser {
       if (current.address + current.size > next.address) {
         this.warnings.push(
           `Warning: Sections overlap: ${current.name} ends at 0x${(current.address + current.size).toString(16)}, ` +
-          `${next.name} starts at 0x${next.address.toString(16)}`
+            `${next.name} starts at 0x${next.address.toString(16)}`,
         );
       }
     }
 
     // Validate entry point is within a code section
     if (info.entryPoint) {
-      const containingSection = info.sections.find(s =>
-        s.address <= info.entryPoint &&
-        s.address + s.size > info.entryPoint &&
-        s.type === 'code'
+      const containingSection = info.sections.find(
+        (s) =>
+          s.address <= info.entryPoint &&
+          s.address + s.size > info.entryPoint &&
+          s.type === "code",
       );
       if (!containingSection) {
         this.warnings.push(
-          `Warning: Entry point 0x${info.entryPoint.toString(16)} is not within a code section`
+          `Warning: Entry point 0x${info.entryPoint.toString(16)} is not within a code section`,
         );
       }
     }
@@ -426,15 +456,15 @@ export abstract class BinaryParser {
   }
 
   protected readU16(offset: number): number {
-    return this.view.getUint16(offset, this.endianness === 'little');
+    return this.view.getUint16(offset, this.endianness === "little");
   }
 
   protected readU32(offset: number): number {
-    return this.view.getUint32(offset, this.endianness === 'little');
+    return this.view.getUint32(offset, this.endianness === "little");
   }
 
   protected readU64(offset: number): bigint {
-    return this.view.getBigUint64(offset, this.endianness === 'little');
+    return this.view.getBigUint64(offset, this.endianness === "little");
   }
 
   protected readI8(offset: number): number {
@@ -442,11 +472,11 @@ export abstract class BinaryParser {
   }
 
   protected readI16(offset: number): number {
-    return this.view.getInt16(offset, this.endianness === 'little');
+    return this.view.getInt16(offset, this.endianness === "little");
   }
 
   protected readI32(offset: number): number {
-    return this.view.getInt32(offset, this.endianness === 'little');
+    return this.view.getInt32(offset, this.endianness === "little");
   }
 
   protected readString(offset: number, maxLength: number = 256): string {
@@ -462,20 +492,22 @@ export abstract class BinaryParser {
   // ELF parsing helpers
 
   protected isElf(): boolean {
-    return this.data.length >= 4 &&
-           this.data[0] === 0x7F &&
-           this.data[1] === 0x45 &&
-           this.data[2] === 0x4C &&
-           this.data[3] === 0x46;
+    return (
+      this.data.length >= 4 &&
+      this.data[0] === 0x7f &&
+      this.data[1] === 0x45 &&
+      this.data[2] === 0x4c &&
+      this.data[3] === 0x46
+    );
   }
 
   protected parseElfHeader(): ElfHeader {
     if (!this.isElf()) {
-      throw new Error('Not an ELF file');
+      throw new Error("Not an ELF file");
     }
 
     const is64Bit = this.data[4] === 2;
-    const endianness = this.data[5] === 1 ? 'little' : 'big';
+    const endianness = this.data[5] === 1 ? "little" : "big";
     this.endianness = endianness;
 
     return {
@@ -485,15 +517,15 @@ export abstract class BinaryParser {
       machine: this.readU16(0x12),
       version: this.readU32(0x14),
       entryPoint: is64Bit ? Number(this.readU64(0x18)) : this.readU32(0x18),
-      phOffset: is64Bit ? Number(this.readU64(0x20)) : this.readU32(0x1C),
+      phOffset: is64Bit ? Number(this.readU64(0x20)) : this.readU32(0x1c),
       shOffset: is64Bit ? Number(this.readU64(0x28)) : this.readU32(0x20),
       flags: this.readU32(is64Bit ? 0x30 : 0x24),
       ehSize: this.readU16(is64Bit ? 0x34 : 0x28),
-      phEntSize: this.readU16(is64Bit ? 0x36 : 0x2A),
-      phNum: this.readU16(is64Bit ? 0x38 : 0x2C),
-      shEntSize: this.readU16(is64Bit ? 0x3A : 0x2E),
-      shNum: this.readU16(is64Bit ? 0x3C : 0x30),
-      shStrNdx: this.readU16(is64Bit ? 0x3E : 0x32)
+      phEntSize: this.readU16(is64Bit ? 0x36 : 0x2a),
+      phNum: this.readU16(is64Bit ? 0x38 : 0x2c),
+      shEntSize: this.readU16(is64Bit ? 0x3a : 0x2e),
+      shNum: this.readU16(is64Bit ? 0x3c : 0x30),
+      shStrNdx: this.readU16(is64Bit ? 0x3e : 0x32),
     };
   }
 
@@ -502,16 +534,28 @@ export abstract class BinaryParser {
     const { phOffset, phEntSize, phNum, is64Bit } = elfHeader;
 
     for (let i = 0; i < phNum; i++) {
-      const offset = phOffset + (i * phEntSize);
+      const offset = phOffset + i * phEntSize;
       headers.push({
         type: this.readU32(offset),
         flags: is64Bit ? this.readU32(offset + 4) : this.readU32(offset + 0x18),
-        offset: is64Bit ? Number(this.readU64(offset + 8)) : this.readU32(offset + 4),
-        vaddr: is64Bit ? Number(this.readU64(offset + 0x10)) : this.readU32(offset + 8),
-        paddr: is64Bit ? Number(this.readU64(offset + 0x18)) : this.readU32(offset + 0xC),
-        filesz: is64Bit ? Number(this.readU64(offset + 0x20)) : this.readU32(offset + 0x10),
-        memsz: is64Bit ? Number(this.readU64(offset + 0x28)) : this.readU32(offset + 0x14),
-        align: is64Bit ? Number(this.readU64(offset + 0x30)) : this.readU32(offset + 0x1C)
+        offset: is64Bit
+          ? Number(this.readU64(offset + 8))
+          : this.readU32(offset + 4),
+        vaddr: is64Bit
+          ? Number(this.readU64(offset + 0x10))
+          : this.readU32(offset + 8),
+        paddr: is64Bit
+          ? Number(this.readU64(offset + 0x18))
+          : this.readU32(offset + 0xc),
+        filesz: is64Bit
+          ? Number(this.readU64(offset + 0x20))
+          : this.readU32(offset + 0x10),
+        memsz: is64Bit
+          ? Number(this.readU64(offset + 0x28))
+          : this.readU32(offset + 0x14),
+        align: is64Bit
+          ? Number(this.readU64(offset + 0x30))
+          : this.readU32(offset + 0x1c),
       });
     }
 
@@ -523,18 +567,30 @@ export abstract class BinaryParser {
     const { shOffset, shEntSize, shNum, is64Bit } = elfHeader;
 
     for (let i = 0; i < shNum; i++) {
-      const offset = shOffset + (i * shEntSize);
+      const offset = shOffset + i * shEntSize;
       headers.push({
         nameOffset: this.readU32(offset),
         type: this.readU32(offset + 4),
-        flags: is64Bit ? Number(this.readU64(offset + 8)) : this.readU32(offset + 8),
-        addr: is64Bit ? Number(this.readU64(offset + 0x10)) : this.readU32(offset + 0xC),
-        offset: is64Bit ? Number(this.readU64(offset + 0x18)) : this.readU32(offset + 0x10),
-        size: is64Bit ? Number(this.readU64(offset + 0x20)) : this.readU32(offset + 0x14),
+        flags: is64Bit
+          ? Number(this.readU64(offset + 8))
+          : this.readU32(offset + 8),
+        addr: is64Bit
+          ? Number(this.readU64(offset + 0x10))
+          : this.readU32(offset + 0xc),
+        offset: is64Bit
+          ? Number(this.readU64(offset + 0x18))
+          : this.readU32(offset + 0x10),
+        size: is64Bit
+          ? Number(this.readU64(offset + 0x20))
+          : this.readU32(offset + 0x14),
         link: this.readU32(is64Bit ? offset + 0x28 : offset + 0x18),
-        info: this.readU32(is64Bit ? offset + 0x2C : offset + 0x1C),
-        addralign: is64Bit ? Number(this.readU64(offset + 0x30)) : this.readU32(offset + 0x20),
-        entsize: is64Bit ? Number(this.readU64(offset + 0x38)) : this.readU32(offset + 0x24)
+        info: this.readU32(is64Bit ? offset + 0x2c : offset + 0x1c),
+        addralign: is64Bit
+          ? Number(this.readU64(offset + 0x30))
+          : this.readU32(offset + 0x20),
+        entsize: is64Bit
+          ? Number(this.readU64(offset + 0x38))
+          : this.readU32(offset + 0x24),
       });
     }
 
@@ -542,14 +598,18 @@ export abstract class BinaryParser {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async extractSections(_sectionHeaders: SectionHeader[]): Promise<SectionInfo[]> {
+  protected async extractSections(
+    _sectionHeaders: SectionHeader[],
+  ): Promise<SectionInfo[]> {
     // Implementation would extract section data
     // This is a simplified version
     return [];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async parseSymbolTable(_sectionHeaders: SectionHeader[]): Promise<SymbolInfo[]> {
+  protected async parseSymbolTable(
+    _sectionHeaders: SectionHeader[],
+  ): Promise<SymbolInfo[]> {
     // Implementation would parse symbol table
     // This is a simplified version
     return [];
@@ -559,32 +619,36 @@ export abstract class BinaryParser {
     const regions: MemoryRegion[] = [];
 
     // Group sections by memory type
-    const flashSections = sections.filter(s => s.type === 'code' || s.type === 'rodata');
-    const ramSections = sections.filter(s => s.type === 'data' || s.type === 'bss');
+    const flashSections = sections.filter(
+      (s) => s.type === "code" || s.type === "rodata",
+    );
+    const ramSections = sections.filter(
+      (s) => s.type === "data" || s.type === "bss",
+    );
 
     if (flashSections.length > 0) {
-      const start = Math.min(...flashSections.map(s => s.address));
-      const end = Math.max(...flashSections.map(s => s.address + s.size));
+      const start = Math.min(...flashSections.map((s) => s.address));
+      const end = Math.max(...flashSections.map((s) => s.address + s.size));
       regions.push({
-        name: 'FLASH',
+        name: "FLASH",
         start,
         end,
         size: end - start,
-        type: 'flash',
-        permissions: ['read', 'execute']
+        type: "flash",
+        permissions: ["read", "execute"],
       });
     }
 
     if (ramSections.length > 0) {
-      const start = Math.min(...ramSections.map(s => s.address));
-      const end = Math.max(...ramSections.map(s => s.address + s.size));
+      const start = Math.min(...ramSections.map((s) => s.address));
+      const end = Math.max(...ramSections.map((s) => s.address + s.size));
       regions.push({
-        name: 'RAM',
+        name: "RAM",
         start,
         end,
         size: end - start,
-        type: 'ram',
-        permissions: ['read', 'write']
+        type: "ram",
+        permissions: ["read", "write"],
       });
     }
 
@@ -599,7 +663,7 @@ export abstract class BinaryParser {
   protected detectMipsEndianness(): Endianness {
     // MIPS-specific endianness detection logic
     // Look for known instruction patterns
-    return 'big'; // Default to big endian for MIPS
+    return "big"; // Default to big endian for MIPS
   }
 
   protected mergeWithDefaults(options: BinaryParseOptions): BinaryParseOptions {
@@ -609,7 +673,7 @@ export abstract class BinaryParser {
       parseDebugInfo: false,
       validateChecksums: true,
       maxFileSize: 100 * 1024 * 1024, // 100MB default
-      ...options
+      ...options,
     };
   }
 

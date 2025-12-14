@@ -11,8 +11,8 @@
  * - Supports multiple architectures (ARM Cortex-M, MIPS, RISC-V)
  */
 
-import { GdbClient } from '../gdb/GdbClient';
-import type { ArchitectureInfo } from '../wasmAnalyzer';
+import { GdbClient } from "../gdb/GdbClient";
+import type { ArchitectureInfo } from "../wasmAnalyzer";
 
 /**
  * Vector table parsed from firmware
@@ -62,12 +62,12 @@ export interface FirmwareDump {
  */
 export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
   const arch = archInfo.architecture;
-  const chipName = archInfo.chip_name || '';
+  const chipName = archInfo.chip_name || "";
 
   // ARM Cortex-M standard layouts
-  if (arch.startsWith('ArmCortex')) {
+  if (arch.startsWith("ArmCortex")) {
     // STM32 family layouts
-    if (chipName.startsWith('STM32F0')) {
+    if (chipName.startsWith("STM32F0")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x10000, // 64KB (varies by model)
@@ -76,7 +76,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32F1')) {
+    if (chipName.startsWith("STM32F1")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x20000, // 128KB (varies by model)
@@ -85,7 +85,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32F2')) {
+    if (chipName.startsWith("STM32F2")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x100000, // 1MB (varies by model)
@@ -94,7 +94,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32F3')) {
+    if (chipName.startsWith("STM32F3")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x40000, // 256KB (varies by model)
@@ -103,7 +103,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32F4')) {
+    if (chipName.startsWith("STM32F4")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x100000, // 1MB (varies by model, up to 2MB)
@@ -112,7 +112,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32F7')) {
+    if (chipName.startsWith("STM32F7")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x200000, // 2MB (varies by model)
@@ -121,7 +121,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32H7')) {
+    if (chipName.startsWith("STM32H7")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x200000, // 2MB (varies by model)
@@ -130,7 +130,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32L')) {
+    if (chipName.startsWith("STM32L")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x80000, // 512KB (varies by model)
@@ -139,7 +139,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
         vectorTableOffset: 0,
       };
     }
-    if (chipName.startsWith('STM32G')) {
+    if (chipName.startsWith("STM32G")) {
       return {
         flashBase: 0x08000000,
         flashSize: 0x80000, // 512KB (varies by model)
@@ -150,7 +150,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
     }
 
     // Nordic nRF52 family
-    if (chipName.startsWith('nRF52')) {
+    if (chipName.startsWith("nRF52")) {
       return {
         flashBase: 0x00000000,
         flashSize: 0x80000, // 512KB (varies by model)
@@ -161,7 +161,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
     }
 
     // Nordic nRF51 family
-    if (chipName.startsWith('nRF51')) {
+    if (chipName.startsWith("nRF51")) {
       return {
         flashBase: 0x00000000,
         flashSize: 0x40000, // 256KB
@@ -172,7 +172,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
     }
 
     // Microchip SAM D/E family
-    if (chipName.startsWith('SAM')) {
+    if (chipName.startsWith("SAM")) {
       return {
         flashBase: 0x00000000,
         flashSize: 0x40000, // 256KB (varies by model)
@@ -183,7 +183,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
     }
 
     // NXP LPC series
-    if (chipName.startsWith('LPC')) {
+    if (chipName.startsWith("LPC")) {
       return {
         flashBase: 0x00000000,
         flashSize: 0x80000, // 512KB (varies by model)
@@ -204,9 +204,9 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
   }
 
   // MIPS layouts (future support)
-  if (arch.startsWith('Mips')) {
+  if (arch.startsWith("Mips")) {
     return {
-      flashBase: 0x1FC00000, // MIPS reset vector
+      flashBase: 0x1fc00000, // MIPS reset vector
       flashSize: 0x100000, // 1MB default
       ramBase: 0x80000000, // KSEG0 cached
       ramSize: 0x10000, // 64KB default
@@ -215,7 +215,7 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
   }
 
   // RISC-V layouts (future support)
-  if (arch.startsWith('RiscV')) {
+  if (arch.startsWith("RiscV")) {
     return {
       flashBase: 0x20000000, // Common RISC-V flash base
       flashSize: 0x100000, // 1MB default
@@ -247,16 +247,23 @@ export function getMemoryLayout(archInfo: ArchitectureInfo): MemoryLayout {
  * @param offset Offset where vector table starts (usually 0)
  * @returns Parsed vector table or null if invalid
  */
-export function parseVectorTable(data: Uint8Array, offset = 0): VectorTable | null {
+export function parseVectorTable(
+  data: Uint8Array,
+  offset = 0,
+): VectorTable | null {
   if (data.length < offset + 8) {
-    console.warn('[FirmwareExtractor] Data too small to contain vector table');
+    console.warn("[FirmwareExtractor] Data too small to contain vector table");
     return null;
   }
 
-  const view = new DataView(data.buffer, data.byteOffset + offset, data.byteLength - offset);
+  const view = new DataView(
+    data.buffer,
+    data.byteOffset + offset,
+    data.byteLength - offset,
+  );
   const initialSP = view.getUint32(0, true); // Little-endian
   const resetVector = view.getUint32(4, true);
-  const resetAddress = resetVector & 0xFFFFFFFE; // Clear Thumb bit
+  const resetAddress = resetVector & 0xfffffffe; // Clear Thumb bit
 
   return { initialSP, resetVector, resetAddress };
 }
@@ -273,22 +280,27 @@ export function parseVectorTable(data: Uint8Array, offset = 0): VectorTable | nu
  * @param layout Memory layout for validation
  * @returns True if vector table appears valid
  */
-export function isValidVectorTable(vt: VectorTable, layout: MemoryLayout): boolean {
+export function isValidVectorTable(
+  vt: VectorTable,
+  layout: MemoryLayout,
+): boolean {
   // Check initial SP points to RAM (should be within RAM region)
-  const spValid = vt.initialSP >= layout.ramBase &&
-                  vt.initialSP <= (layout.ramBase + layout.ramSize);
+  const spValid =
+    vt.initialSP >= layout.ramBase &&
+    vt.initialSP <= layout.ramBase + layout.ramSize;
 
   // Check reset vector has Thumb bit set (for ARM Cortex-M)
   const thumbBitSet = (vt.resetVector & 0x1) === 0x1;
 
   // Check reset address points to valid code (within flash)
-  const resetValid = vt.resetAddress >= layout.flashBase &&
-                     vt.resetAddress < (layout.flashBase + layout.flashSize);
+  const resetValid =
+    vt.resetAddress >= layout.flashBase &&
+    vt.resetAddress < layout.flashBase + layout.flashSize;
 
   const valid = spValid && thumbBitSet && resetValid;
 
   if (!valid) {
-    console.warn('[FirmwareExtractor] Vector table validation failed:', {
+    console.warn("[FirmwareExtractor] Vector table validation failed:", {
       initialSP: `0x${vt.initialSP.toString(16).toUpperCase()}`,
       resetVector: `0x${vt.resetVector.toString(16).toUpperCase()}`,
       resetAddress: `0x${vt.resetAddress.toString(16).toUpperCase()}`,
@@ -320,14 +332,18 @@ export function isValidVectorTable(vt: VectorTable, layout: MemoryLayout): boole
 export async function dumpFirmware(
   gdbClient: GdbClient,
   archInfo: ArchitectureInfo,
-  progressCallback?: (progress: number, bytesRead: number, totalBytes: number) => void
+  progressCallback?: (
+    progress: number,
+    bytesRead: number,
+    totalBytes: number,
+  ) => void,
 ): Promise<FirmwareDump | null> {
   try {
     // Get memory layout for this chip
     const layout = getMemoryLayout(archInfo);
     const { flashBase, flashSize } = layout;
 
-    console.log('[FirmwareExtractor] Starting firmware dump:', {
+    console.log("[FirmwareExtractor] Starting firmware dump:", {
       chip: archInfo.chip_name,
       architecture: archInfo.architecture,
       flashBase: `0x${flashBase.toString(16).toUpperCase()}`,
@@ -359,52 +375,64 @@ export async function dumpFirmware(
     let vectorTable: VectorTable | null = null;
     let effectiveBaseAddress = flashBase;
 
-    if (archInfo.architecture.startsWith('ArmCortex')) {
+    if (archInfo.architecture.startsWith("ArmCortex")) {
       vectorTable = parseVectorTable(firmwareData, layout.vectorTableOffset);
 
       if (vectorTable && !isValidVectorTable(vectorTable, layout)) {
-        console.warn('[FirmwareExtractor] Vector table validation failed - firmware may be erased or read-protected');
+        console.warn(
+          "[FirmwareExtractor] Vector table validation failed - firmware may be erased or read-protected",
+        );
       }
 
       // Detect boot memory aliasing: If reset vector points below flashBase,
       // the firmware was likely linked for address 0x00000000 (boot alias).
       // This is common for STM32 where flash at 0x08000000 is aliased to 0x00000000.
       if (vectorTable && vectorTable.resetAddress < flashBase) {
-        console.log('[FirmwareExtractor] Detected boot memory aliasing:');
-        console.log(`  Reset vector points to: 0x${vectorTable.resetAddress.toString(16).toUpperCase()}`);
-        console.log(`  Physical flash base:    0x${flashBase.toString(16).toUpperCase()}`);
+        console.log("[FirmwareExtractor] Detected boot memory aliasing:");
+        console.log(
+          `  Reset vector points to: 0x${vectorTable.resetAddress.toString(16).toUpperCase()}`,
+        );
+        console.log(
+          `  Physical flash base:    0x${flashBase.toString(16).toUpperCase()}`,
+        );
 
         // Use 0x00000000 as the effective base address for analysis.
         // This ensures the WASM analyzer can validate vector table entries correctly.
         effectiveBaseAddress = 0x00000000;
 
-        console.log(`  Using effective base:   0x${effectiveBaseAddress.toString(16).toUpperCase()}`);
-        console.log('  This is normal for STM32 and similar chips with boot aliasing.');
+        console.log(
+          `  Using effective base:   0x${effectiveBaseAddress.toString(16).toUpperCase()}`,
+        );
+        console.log(
+          "  This is normal for STM32 and similar chips with boot aliasing.",
+        );
       }
     }
 
     const dump: FirmwareDump = {
       data: firmwareData,
-      baseAddress: effectiveBaseAddress,  // Use detected base address, not physical flash base
+      baseAddress: effectiveBaseAddress, // Use detected base address, not physical flash base
       size: flashSize,
       vectorTable,
       architecture: archInfo.architecture,
       memoryLayout: layout,
     };
 
-    console.log('[FirmwareExtractor] Firmware dump complete:', {
+    console.log("[FirmwareExtractor] Firmware dump complete:", {
       size: firmwareData.length,
       physicalFlashBase: `0x${flashBase.toString(16).toUpperCase()}`,
       effectiveBaseAddress: `0x${effectiveBaseAddress.toString(16).toUpperCase()}`,
-      vectorTable: vectorTable ? {
-        initialSP: `0x${vectorTable.initialSP.toString(16).toUpperCase()}`,
-        resetAddress: `0x${vectorTable.resetAddress.toString(16).toUpperCase()}`,
-      } : 'N/A',
+      vectorTable: vectorTable
+        ? {
+            initialSP: `0x${vectorTable.initialSP.toString(16).toUpperCase()}`,
+            resetAddress: `0x${vectorTable.resetAddress.toString(16).toUpperCase()}`,
+          }
+        : "N/A",
     });
 
     return dump;
   } catch (error) {
-    console.error('[FirmwareExtractor] Dump failed:', error);
+    console.error("[FirmwareExtractor] Dump failed:", error);
     return null;
   }
 }
@@ -437,12 +465,17 @@ export function prepareFirmwareForAnalysis(dump: FirmwareDump): {
  * @param filename Optional filename (auto-generated if not provided)
  */
 export function downloadFirmware(dump: FirmwareDump, filename?: string): void {
-  const blob = new Blob([dump.data], { type: 'application/octet-stream' });
+  // Create a new ArrayBuffer for Blob constructor compatibility
+  const buffer = new ArrayBuffer(dump.data.length);
+  new Uint8Array(buffer).set(dump.data);
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
 
   a.href = url;
-  a.download = filename || `firmware_${dump.chipInfo?.name?.replace(/\s+/g, '_') || 'dump'}_${Date.now()}.bin`;
+  a.download =
+    filename ||
+    `firmware_${dump.chipInfo?.name?.replace(/\s+/g, "_") || "dump"}_${Date.now()}.bin`;
 
   document.body.appendChild(a);
   a.click();

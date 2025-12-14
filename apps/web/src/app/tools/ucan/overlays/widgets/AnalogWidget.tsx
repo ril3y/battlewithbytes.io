@@ -4,9 +4,9 @@
  * Displays analog position values visually.
  */
 
-import React from 'react';
-import type { AnalogWidgetConfig } from '../types';
-import { BaseWidget } from './BaseWidget';
+import React from "react";
+import type { AnalogWidgetConfig } from "../types";
+import { BaseWidget } from "./BaseWidget";
 
 export interface AnalogWidgetProps {
   config: AnalogWidgetConfig;
@@ -35,68 +35,78 @@ export const AnalogWidget: React.FC<AnalogWidgetProps> = ({
   const displayUnit = unit || configUnit;
 
   // Calculate percentage
-  const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+  const percentage = Math.max(
+    0,
+    Math.min(100, ((value - min) / (max - min)) * 100),
+  );
 
   const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
   };
 
   const iconContainerStyle: React.CSSProperties = {
     width: `${width}px`,
     height: `${height}px`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   };
 
   // Simple visual representation based on icon type
   const renderIcon = () => {
     switch (icon) {
-      case 'pedal':
+      case "pedal":
         // Vertical bar representing pedal position
         return (
           <div
             style={{
-              width: '40px',
-              height: '80px',
-              backgroundColor: '#222222',
-              border: '2px solid #444444',
-              borderRadius: '4px',
-              position: 'relative',
-              overflow: 'hidden',
+              width: "40px",
+              height: "80px",
+              backgroundColor: "#222222",
+              border: "2px solid #444444",
+              borderRadius: "4px",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 bottom: 0,
                 left: 0,
-                width: '100%',
+                width: "100%",
                 height: `${percentage}%`,
-                backgroundColor: valid ? '#00ff00' : '#666666',
-                transition: 'height 0.2s ease',
+                backgroundColor: valid ? "#00ff00" : "#666666",
+                transition: "height 0.2s ease",
               }}
             />
           </div>
         );
 
-      case 'wheel':
+      case "wheel":
         // Circular indicator for steering angle
         const angle = -90 + (percentage / 100) * 180; // -90° to +90°
         return (
-          <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+          <div style={{ position: "relative", width: "80px", height: "80px" }}>
             <svg width="80" height="80">
-              <circle cx="40" cy="40" r="35" stroke="#444444" strokeWidth="3" fill="none" />
+              <circle
+                cx="40"
+                cy="40"
+                r="35"
+                stroke="#444444"
+                strokeWidth="3"
+                fill="none"
+              />
               <line
                 x1="40"
                 y1="40"
                 x2="40"
                 y2="10"
-                stroke={valid ? '#00ff00' : '#666666'}
+                stroke={valid ? "#00ff00" : "#666666"}
                 strokeWidth="4"
                 strokeLinecap="round"
                 transform={`rotate(${angle} 40 40)`}
@@ -105,33 +115,33 @@ export const AnalogWidget: React.FC<AnalogWidgetProps> = ({
           </div>
         );
 
-      case 'slider':
-      case 'stick':
+      case "slider":
+      case "stick":
       default:
         // Horizontal slider
         return (
           <div
             style={{
-              width: '100px',
-              height: '20px',
-              backgroundColor: '#222222',
-              border: '2px solid #444444',
-              borderRadius: '10px',
-              position: 'relative',
+              width: "100px",
+              height: "20px",
+              backgroundColor: "#222222",
+              border: "2px solid #444444",
+              borderRadius: "10px",
+              position: "relative",
             }}
           >
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 left: `${percentage}%`,
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                backgroundColor: valid ? '#00ff00' : '#666666',
-                boxShadow: valid ? '0 0 8px #00ff00' : 'none',
-                transition: 'left 0.2s ease',
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "16px",
+                height: "16px",
+                borderRadius: "50%",
+                backgroundColor: valid ? "#00ff00" : "#666666",
+                boxShadow: valid ? "0 0 8px #00ff00" : "none",
+                transition: "left 0.2s ease",
               }}
             />
           </div>
@@ -140,14 +150,14 @@ export const AnalogWidget: React.FC<AnalogWidgetProps> = ({
   };
 
   const valueStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    color: valid ? '#ffffff' : '#ff0000',
+    fontSize: "16px",
+    fontWeight: "bold",
+    fontFamily: "monospace",
+    color: valid ? "#ffffff" : "#ff0000",
   };
 
   const formattedValue =
-    typeof value === 'number' && !isNaN(value) ? value.toFixed(1) : '--';
+    typeof value === "number" && !isNaN(value) ? value.toFixed(1) : "--";
 
   return (
     <BaseWidget label={label} showLabel={showLabel}>

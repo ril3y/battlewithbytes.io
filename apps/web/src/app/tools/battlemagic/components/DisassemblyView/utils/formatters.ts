@@ -11,7 +11,7 @@
  * @returns Formatted address string (e.g., "0x08000000")
  */
 export function formatAddress(addr: number): string {
-  return `0x${addr.toString(16).toUpperCase().padStart(8, '0')}`;
+  return `0x${addr.toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
 /**
@@ -23,11 +23,11 @@ export function formatAddress(addr: number): string {
 export function formatBytes(bytes: Uint8Array | undefined): string {
   // Defensive: Handle undefined or null bytes
   if (!bytes || bytes.length === 0) {
-    return '';
+    return "";
   }
 
   const maxBytes = Math.min(bytes.length, 5);
   return Array.from(bytes.slice(0, maxBytes))
-    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-    .join(' ');
+    .map((b) => b.toString(16).toUpperCase().padStart(2, "0"))
+    .join(" ");
 }

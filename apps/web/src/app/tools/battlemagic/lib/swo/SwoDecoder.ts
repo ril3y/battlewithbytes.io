@@ -7,7 +7,7 @@
  * additional hardware support).
  */
 
-import { BaseDecoder } from './BaseDecoder';
+import { BaseDecoder } from "./BaseDecoder";
 import {
   DecoderOptions,
   DecoderState,
@@ -20,8 +20,8 @@ import {
   SyncPacket,
   OverflowPacket,
   HardwareEventType,
-  ExceptionType
-} from './types';
+  ExceptionType,
+} from "./types";
 
 /**
  * ITM Protocol Constants
@@ -85,7 +85,7 @@ export class SwoDecoder extends BaseDecoder {
         type: PacketType.SYNC,
         timestamp: Date.now(),
         raw: new Uint8Array(this.syncBuffer),
-        syncCount: this.MIN_SYNC_BYTES
+        syncCount: this.MIN_SYNC_BYTES,
       } as SyncPacket);
 
       // Reset sync buffer and move to header state
@@ -139,12 +139,12 @@ export class SwoDecoder extends BaseDecoder {
     }
 
     // Check for timestamp packets
-    if ((byte & 0x0F) === 0x00 && byte !== 0x00) {
+    if ((byte & 0x0f) === 0x00 && byte !== 0x00) {
       return true;
     }
 
     // Check for extension packets
-    if ((byte & 0x0B) === 0x08) {
+    if ((byte & 0x0b) === 0x08) {
       return true;
     }
 
@@ -163,10 +163,10 @@ export class SwoDecoder extends BaseDecoder {
     if (!header) {
       // Invalid header, return to sync search
       this.emitError({
-        type: 'parse',
+        type: "parse",
         message: `Invalid header byte: 0x${byte.toString(16)}`,
         context: { byte },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       this.state = DecoderState.SYNC_SEARCH;
       this.resetBuffer();
@@ -176,7 +176,10 @@ export class SwoDecoder extends BaseDecoder {
     this.currentHeader = header;
 
     // Handle different packet types
-    if (header.type === PacketType.SYNC || header.type === PacketType.OVERFLOW) {
+    if (
+      header.type === PacketType.SYNC ||
+      header.type === PacketType.OVERFLOW
+    ) {
       // These packets have no payload
       this.emitPacketFromHeader(header);
       this.state = DecoderState.HEADER;
@@ -201,7 +204,7 @@ export class SwoDecoder extends BaseDecoder {
       return {
         type: PacketType.OVERFLOW,
         size: 1,
-        raw: byte
+        raw: byte,
       };
     }
 
@@ -210,49 +213,49 @@ export class SwoDecoder extends BaseDecoder {
       return {
         type: PacketType.SYNC,
         size: 1,
-        raw: byte
+        raw: byte,
       };
     }
 
     // Check for instrumentation packet (0bSSSSSS01)
     if ((byte & 0x03) === 0x01) {
-      const port = (byte >> 3) & 0x1F;
+      const port = (byte >> 3) & 0x1f;
       const size = this.getPayloadSize((byte >> 1) & 0x01);
       return {
         type: PacketType.INSTRUMENTATION,
         size,
         port,
-        raw: byte
+        raw: byte,
       };
     }
 
     // Check for hardware source packet (0bAAAAA1S0)
     if ((byte & 0x04) === 0x04 && (byte & 0x01) === 0x00) {
-      const sourceId = (byte >> 3) & 0x1F;
+      const sourceId = (byte >> 3) & 0x1f;
       const size = this.getPayloadSize((byte >> 1) & 0x01);
       return {
         type: PacketType.HARDWARE,
         size,
         sourceId,
-        raw: byte
+        raw: byte,
       };
     }
 
     // Check for timestamp packet (0bCDDD0TS0)
-    if ((byte & 0x01) === 0x00 && (byte & 0x0E) !== 0x00) {
+    if ((byte & 0x01) === 0x00 && (byte & 0x0e) !== 0x00) {
       return {
         type: PacketType.TIMESTAMP,
         size: 1, // Initial byte, may have continuations
-        raw: byte
+        raw: byte,
       };
     }
 
     // Check for extension packet (0bCDDD1000)
-    if ((byte & 0x0F) === 0x08) {
+    if ((byte & 0x0f) === 0x08) {
       return {
         type: PacketType.EXTENSION,
         size: 1,
-        raw: byte
+        raw: byte,
       };
     }
 
@@ -265,10 +268,14 @@ export class SwoDecoder extends BaseDecoder {
   private getPayloadSize(sizeField: number): 1 | 2 | 4 {
     // Size field in header: 00=1, 01=2, 10=4 bytes
     switch (sizeField) {
-      case 0x00: return 1;
-      case 0x01: return 2;
-      case 0x02: return 4;
-      default: return 1;
+      case 0x00:
+        return 1;
+      case 0x01:
+        return 2;
+      case 0x02:
+        return 4;
+      default:
+        return 1;
     }
   }
 
@@ -300,7 +307,8 @@ export class SwoDecoder extends BaseDecoder {
     }
 
     // Check if we have all expected payload bytes
-    if (this.bufferPos >= this.expectedPayloadBytes + 1) { // +1 for header
+    if (this.bufferPos >= this.expectedPayloadBytes + 1) {
+      // +1 for header
       // Emit complete packet
       this.emitPacketFromBuffer();
 
@@ -324,7 +332,7 @@ export class SwoDecoder extends BaseDecoder {
           type: PacketType.OVERFLOW,
           timestamp,
           raw: new Uint8Array([header.raw]),
-          lostCount: undefined // Can't determine exact count
+          lostCount: undefined, // Can't determine exact count
         } as OverflowPacket);
         break;
 
@@ -361,7 +369,7 @@ export class SwoDecoder extends BaseDecoder {
         this.emitPacket({
           type: PacketType.UNKNOWN,
           timestamp,
-          raw
+          raw,
         });
     }
   }
@@ -377,7 +385,7 @@ export class SwoDecoder extends BaseDecoder {
 
     // Try to decode as ASCII text (common for printf)
     try {
-      text = new TextDecoder('utf-8', { fatal: false }).decode(data);
+      text = new TextDecoder("utf-8", { fatal: false }).decode(data);
       // Only keep if it's printable ASCII
       if (!/^[\x20-\x7E\r\n\t]*$/.test(text)) {
         text = undefined;
@@ -392,7 +400,7 @@ export class SwoDecoder extends BaseDecoder {
       raw,
       port: this.currentHeader!.port!,
       data,
-      text
+      text,
     } as InstrumentationPacket);
   }
 
@@ -409,32 +417,36 @@ export class SwoDecoder extends BaseDecoder {
     // Decode common hardware events
     switch (sourceId) {
       case HardwareEventType.PC_SAMPLE:
-        description = 'PC Sample';
+        description = "PC Sample";
         break;
 
       case HardwareEventType.EXCEPTION:
         if (payload.length >= 2) {
-          const exceptionNum = (payload[0] | (payload[1] << 8)) & 0x1FF;
+          const exceptionNum = (payload[0] | (payload[1] << 8)) & 0x1ff;
           const eventType = (payload[1] >> 4) & 0x03;
           description = `Exception ${this.getExceptionName(exceptionNum)} - ${
-            eventType === 1 ? 'Entry' : eventType === 2 ? 'Exit' : 'Return'
+            eventType === 1 ? "Entry" : eventType === 2 ? "Exit" : "Return"
           }`;
         }
         break;
 
       case HardwareEventType.PC_VALUE:
         if (payload.length === 4) {
-          const pc = payload[0] | (payload[1] << 8) | (payload[2] << 16) | (payload[3] << 24);
-          description = `PC: 0x${pc.toString(16).padStart(8, '0')}`;
+          const pc =
+            payload[0] |
+            (payload[1] << 8) |
+            (payload[2] << 16) |
+            (payload[3] << 24);
+          description = `PC: 0x${pc.toString(16).padStart(8, "0")}`;
         }
         break;
 
       case HardwareEventType.DATA_TRACE_ADDR:
-        description = 'Data Trace Address';
+        description = "Data Trace Address";
         break;
 
       case HardwareEventType.DATA_TRACE_DATA:
-        description = 'Data Trace Value';
+        description = "Data Trace Value";
         break;
 
       default:
@@ -447,7 +459,7 @@ export class SwoDecoder extends BaseDecoder {
       raw,
       sourceId,
       payload,
-      description
+      description,
     } as HardwarePacket);
   }
 
@@ -456,16 +468,26 @@ export class SwoDecoder extends BaseDecoder {
    */
   private getExceptionName(num: number): string {
     switch (num) {
-      case ExceptionType.RESET: return 'Reset';
-      case ExceptionType.NMI: return 'NMI';
-      case ExceptionType.HARDFAULT: return 'HardFault';
-      case ExceptionType.MEMMANAGE: return 'MemManage';
-      case ExceptionType.BUSFAULT: return 'BusFault';
-      case ExceptionType.USAGEFAULT: return 'UsageFault';
-      case ExceptionType.SVCALL: return 'SVCall';
-      case ExceptionType.DEBUGMON: return 'DebugMon';
-      case ExceptionType.PENDSV: return 'PendSV';
-      case ExceptionType.SYSTICK: return 'SysTick';
+      case ExceptionType.RESET:
+        return "Reset";
+      case ExceptionType.NMI:
+        return "NMI";
+      case ExceptionType.HARDFAULT:
+        return "HardFault";
+      case ExceptionType.MEMMANAGE:
+        return "MemManage";
+      case ExceptionType.BUSFAULT:
+        return "BusFault";
+      case ExceptionType.USAGEFAULT:
+        return "UsageFault";
+      case ExceptionType.SVCALL:
+        return "SVCall";
+      case ExceptionType.DEBUGMON:
+        return "DebugMon";
+      case ExceptionType.PENDSV:
+        return "PendSV";
+      case ExceptionType.SYSTICK:
+        return "SysTick";
       default:
         if (num >= 16) return `IRQ${num - 16}`;
         return `Exception${num}`;
@@ -497,7 +519,7 @@ export class SwoDecoder extends BaseDecoder {
       let shift = 3;
       for (let i = 1; i < raw.length; i++) {
         const byte = raw[i];
-        value |= (byte & 0x7F) << shift;
+        value |= (byte & 0x7f) << shift;
         shift += 7;
 
         // Check if more bytes follow
@@ -514,7 +536,7 @@ export class SwoDecoder extends BaseDecoder {
       raw,
       value,
       isAbsolute,
-      isContinuation
+      isContinuation,
     } as TimestampPacket);
   }
 
@@ -534,17 +556,17 @@ export class SwoDecoder extends BaseDecoder {
    */
   public getCapabilities(): string[] {
     const caps = [
-      'ITM instrumentation packets',
-      'Hardware source packets (DWT)',
-      'Timestamp packets',
-      'Exception trace',
-      'PC sampling',
-      'Overflow detection',
-      'Auto-synchronization'
+      "ITM instrumentation packets",
+      "Hardware source packets (DWT)",
+      "Timestamp packets",
+      "Exception trace",
+      "PC sampling",
+      "Overflow detection",
+      "Auto-synchronization",
     ];
 
     if (this.options.encoding === SwoEncoding.MANCHESTER) {
-      caps.push('Manchester encoding (limited support)');
+      caps.push("Manchester encoding (limited support)");
     }
 
     return caps;

@@ -4,13 +4,19 @@
  * Manages project metadata, save state, and auto-save settings
  */
 
-import { useState, useRef, useEffect } from 'react';
-import { ProjectManager } from '../../../lib/project/ProjectManager';
-import { MemoryRegion } from '../../../lib/memory/types';
-import { Breakpoint } from '../../BreakpointsManager';
+import { useState, useRef, useEffect } from "react";
+import { ProjectManager } from "../../../lib/project/ProjectManager";
+import { MemoryRegion } from "../../../lib/memory/MemoryMapParser";
+import { Breakpoint } from "../../BreakpointsManager";
 
 export interface ProjectCallbacks {
-  onProjectLoaded?: (name: string, baudRate: number, cpu: string, regions: MemoryRegion[], breakpoints: Breakpoint[]) => void;
+  onProjectLoaded?: (
+    name: string,
+    baudRate: number,
+    cpu: string,
+    regions: MemoryRegion[],
+    breakpoints: Breakpoint[],
+  ) => void;
   onProjectSaved?: (name: string) => void;
   onAutoSaveToggled?: (enabled: boolean) => void;
   addGdbOutput?: (message: string) => void;
@@ -31,8 +37,10 @@ export interface ProjectState {
   setLastUpdate: (date: Date) => void;
 }
 
-export function useProjectState(callbacks: ProjectCallbacks = {}): ProjectState {
-  const [projectName, setProjectName] = useState('Untitled Project');
+export function useProjectState(
+  callbacks: ProjectCallbacks = {},
+): ProjectState {
+  const [projectName, setProjectName] = useState("Untitled Project");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -49,23 +57,27 @@ export function useProjectState(callbacks: ProjectCallbacks = {}): ProjectState 
   useEffect(() => {
     const projectManager = new ProjectManager({
       onProjectLoaded: (project) => {
-        console.log('Project loaded:', project.metadata.name);
+        console.log("Project loaded:", project.metadata.name);
         setProjectName(project.metadata.name);
         setHasUnsavedChanges(false);
 
-        callbacksRef.current.addGdbOutput?.(`[Project loaded: ${project.metadata.name}]`);
+        callbacksRef.current.addGdbOutput?.(
+          `[Project loaded: ${project.metadata.name}]`,
+        );
         callbacksRef.current.onProjectLoaded?.(
           project.metadata.name,
           project.gdbSettings.baudRate,
           project.memoryMap.selectedCpu,
           project.memoryMap.customRegions,
-          project.breakpoints
+          project.breakpoints,
         );
       },
       onProjectSaved: (project) => {
-        console.log('Project saved:', project.metadata.name);
+        console.log("Project saved:", project.metadata.name);
         setHasUnsavedChanges(false);
-        callbacksRef.current.addGdbOutput?.(`[Project saved: ${project.metadata.name}]`);
+        callbacksRef.current.addGdbOutput?.(
+          `[Project saved: ${project.metadata.name}]`,
+        );
         callbacksRef.current.onProjectSaved?.(project.metadata.name);
       },
       onAutoSaveToggled: (enabled) => {
@@ -79,15 +91,17 @@ export function useProjectState(callbacks: ProjectCallbacks = {}): ProjectState 
     // Load project from localStorage if it exists
     const loaded = projectManager.loadFromLocalStorage();
     if (loaded) {
-      console.log('[ProjectState] Loaded project from localStorage');
+      console.log("[ProjectState] Loaded project from localStorage");
     } else {
-      console.log('[ProjectState] No saved project found, starting with new project');
+      console.log(
+        "[ProjectState] No saved project found, starting with new project",
+      );
     }
 
     // Start auto-save if enabled
     if (projectManager.isAutoSaveEnabled()) {
       projectManager.startAutoSave();
-      console.log('[ProjectState] Auto-save started');
+      console.log("[ProjectState] Auto-save started");
     }
 
     // Cleanup on unmount

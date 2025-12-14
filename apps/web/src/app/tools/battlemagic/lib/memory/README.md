@@ -9,18 +9,21 @@ This module solves the problem of hardcoded memory addresses and provides intell
 ## Features
 
 ### Auto-Detection
+
 - **MCU Type Detection**: Identifies STM32, nRF52, nRF51, ESP32, RP2040
 - **Architecture Detection**: ARM Thumb, ARM, RISC-V
 - **Memory Layout**: Automatically determines correct flash base address
 - **Protection Status**: Detects RDP, APPROTECT, flash encryption
 
 ### Protection Checking
+
 - **STM32**: RDP Level 0/1/2 detection
 - **Nordic nRF**: APPROTECT status
 - **ESP32**: Flash encryption detection
 - **Generic**: Read access testing
 
 ### User Experience
+
 - Clear error messages when protection is detected
 - Step-by-step unlock instructions (with warnings!)
 - Alternative analysis methods (upload binary files)
@@ -31,13 +34,16 @@ This module solves the problem of hardcoded memory addresses and provides intell
 ### Components
 
 #### 1. `types.ts`
+
 Type definitions for the entire module:
+
 - `McuFamily`: Enum of supported MCU families
 - `Architecture`: Supported CPU architectures
 - `ProtectionStatus`: Read/write protection states
 - `MemoryDetectionResult`: Complete detection result
 
 #### 2. `MemoryDetector.ts`
+
 Auto-detects MCU type and memory configuration:
 
 ```typescript
@@ -50,16 +56,18 @@ const result = await detector.detect();
 ```
 
 **Detection Methods:**
+
 1. GDB `monitor version` command parsing
 2. Memory probing at known flash addresses
 3. Memory region query (if supported)
 
 #### 3. `ProtectionChecker.ts`
+
 Checks memory protection for specific MCU families:
 
 ```typescript
 const checker = new ProtectionChecker(gdbClient);
-const protection = await checker.check('NRF52', 0x00000000);
+const protection = await checker.check("NRF52", 0x00000000);
 
 // protection.canRead: boolean
 // protection.unlockInstructions: string[]
@@ -67,6 +75,7 @@ const protection = await checker.check('NRF52', 0x00000000);
 ```
 
 **Protection Mechanisms Detected:**
+
 - **STM32 RDP**: Read Protection Levels 0, 1, 2
 - **nRF52 APPROTECT**: Enabled/disabled via UICR register
 - **ESP32 Flash Encryption**: Encrypted flash detection
@@ -87,7 +96,7 @@ The AnalysisPanel component uses the memory detection system:
 ### Basic Auto-Detection
 
 ```typescript
-import { MemoryDetector } from './lib/memory';
+import { MemoryDetector } from "./lib/memory";
 
 const detector = new MemoryDetector(gdbClient);
 const result = await detector.detect();
@@ -100,11 +109,11 @@ if (result.success) {
     // Proceed with analysis
     const memory = await gdbClient.readMemory(
       result.recommendedFlashBase,
-      result.recommendedReadSize
+      result.recommendedReadSize,
     );
   } else {
-    console.log('Protection enabled:', result.protection.details);
-    console.log('Unlock instructions:', result.protection.unlockInstructions);
+    console.log("Protection enabled:", result.protection.details);
+    console.log("Unlock instructions:", result.protection.unlockInstructions);
   }
 }
 ```
@@ -113,34 +122,38 @@ if (result.success) {
 
 ```typescript
 const manualConfig: ManualMemoryConfig = {
-  flashBase: 0x00000000,  // Nordic nRF52
-  readSize: 0x20000,       // 128KB
-  architecture: 'ARM Thumb',
-  force: true              // Override auto-detection
+  flashBase: 0x00000000, // Nordic nRF52
+  readSize: 0x20000, // 128KB
+  architecture: "ARM Thumb",
+  force: true, // Override auto-detection
 };
 ```
 
 ## Supported MCUs
 
 ### STM32 Family
+
 - **Flash Base**: `0x08000000`
 - **Protection**: RDP Levels 0/1/2
 - **Detection Method**: `monitor option` command
 - **Unlock**: STM32CubeProgrammer (WARNING: erases flash!)
 
 ### Nordic nRF52/nRF51
+
 - **Flash Base**: `0x00000000`
 - **Protection**: APPROTECT (UICR register)
 - **Detection Method**: Read UICR `0x10001208`
 - **Unlock**: `nrfjprog --recover` (WARNING: erases flash!)
 
 ### ESP32
+
 - **Flash Base**: `0x40000000`
 - **Protection**: Flash encryption
 - **Detection Method**: Memory read test
 - **Unlock**: Cannot disable once enabled
 
 ### Raspberry Pi RP2040
+
 - **Flash Base**: `0x10000000`
 - **Protection**: Usually none
 - **Detection Method**: Memory read test
@@ -150,6 +163,7 @@ const manualConfig: ManualMemoryConfig = {
 The system provides helpful guidance when things go wrong:
 
 ### Read Protection Detected
+
 ```
 Cannot read flash memory. Possible causes:
   - Read protection enabled (RDP/APPROTECT)
@@ -163,6 +177,7 @@ APPROTECT enabled - debug access disabled, flash cannot be read
 ```
 
 ### Unlock Instructions (Example: STM32)
+
 ```
 WARNING: Unlocking RDP will ERASE ALL FLASH MEMORY
 1. Use STM32CubeProgrammer or OpenOCD
@@ -177,24 +192,31 @@ Alternative: Analyze unprotected firmware backup
 ## UI Components
 
 ### Auto-Detect Button
+
 Triggers MCU detection and displays results in the Target Configuration panel.
 
 ### Detection Results
+
 Shows:
+
 - MCU name and family
 - Flash base address (hex)
 - Architecture (ARM Thumb/ARM/RISC-V)
 - Protection status (with visual indicator)
 
 ### Protection Warning
+
 Red alert box with:
+
 - Protection type (RDP/APPROTECT/etc.)
 - Detailed explanation
 - Expandable unlock instructions
 - Alternative methods
 
 ### Manual Configuration
+
 Collapsible panel with:
+
 - Flash base address (hex input)
 - Read size (dropdown)
 - Architecture (dropdown)
@@ -205,6 +227,7 @@ Collapsible panel with:
 The detector identifies standard memory regions:
 
 ### STM32
+
 ```typescript
 {
   name: 'Flash',
@@ -215,6 +238,7 @@ The detector identifies standard memory regions:
 ```
 
 ### nRF52840
+
 ```typescript
 {
   name: 'Flash',
@@ -237,6 +261,7 @@ The detector identifies standard memory regions:
 ## Testing
 
 ### Manual Testing Checklist
+
 - [ ] STM32 with RDP Level 0 (unprotected)
 - [ ] STM32 with RDP Level 1 (protected)
 - [ ] nRF52 with APPROTECT disabled
@@ -247,6 +272,7 @@ The detector identifies standard memory regions:
 - [ ] UI responsiveness
 
 ### Test with Real Hardware
+
 ```bash
 # Connect to nRF52840
 1. Connect BMP to nRF52840

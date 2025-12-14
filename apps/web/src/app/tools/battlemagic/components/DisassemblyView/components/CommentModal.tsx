@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Add Comment Modal Component
@@ -7,7 +7,7 @@
  * Comments are stored in the AnalysisContext and persist across sessions (when IndexedDB is added).
  */
 
-import React from 'react';
+import React from "react";
 
 export interface CommentModalProps {
   isOpen: boolean;
@@ -33,10 +33,10 @@ export default function CommentModal({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
       onSubmit(currentComment);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       onClose();
     }

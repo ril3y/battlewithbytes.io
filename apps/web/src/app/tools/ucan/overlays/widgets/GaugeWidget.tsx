@@ -4,9 +4,9 @@
  * Displays a value as a circular gauge with optional danger/warning zones.
  */
 
-import React from 'react';
-import type { GaugeWidgetConfig } from '../types';
-import { BaseWidget } from './BaseWidget';
+import React from "react";
+import type { GaugeWidgetConfig } from "../types";
+import { BaseWidget } from "./BaseWidget";
 
 export interface GaugeWidgetProps {
   config: GaugeWidgetConfig;
@@ -15,7 +15,12 @@ export interface GaugeWidgetProps {
   valid?: boolean;
 }
 
-export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, valid = true }) => {
+export const GaugeWidget: React.FC<GaugeWidgetProps> = ({
+  config,
+  value,
+  unit,
+  valid = true,
+}) => {
   const {
     label,
     showLabel = true,
@@ -67,14 +72,30 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, v
   const needleRotation = `rotate(${angle} ${centerX} ${centerY})`;
 
   const formattedValue =
-    typeof value === 'number' && !isNaN(value) ? value.toFixed(1) : '--';
+    typeof value === "number" && !isNaN(value) ? value.toFixed(1) : "--";
 
   return (
-    <BaseWidget label={label} showLabel={showLabel} width={width} height={height}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-        <svg width={size} height={size} style={{ filter: 'drop-shadow(0 0 4px rgba(0,255,0,0.3))' }}>
+    <BaseWidget
+      label={label}
+      showLabel={showLabel}
+      width={width}
+      height={height}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        <svg
+          width={size}
+          height={size}
+          style={{ filter: "drop-shadow(0 0 4px rgba(0,255,0,0.3))" }}
+        >
           {/* Background arc */}
-          {createArc(-135, 135, '#333333')}
+          {createArc(-135, 135, "#333333")}
 
           {/* Warning zone */}
           {warningZone && (
@@ -82,7 +103,7 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, v
               {createArc(
                 -135 + ((warningZone[0] - min) / (max - min)) * 270,
                 -135 + ((warningZone[1] - min) / (max - min)) * 270,
-                '#ffaa0044'
+                "#ffaa0044",
               )}
             </>
           )}
@@ -93,13 +114,13 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, v
               {createArc(
                 -135 + ((dangerZone[0] - min) / (max - min)) * 270,
                 -135 + ((dangerZone[1] - min) / (max - min)) * 270,
-                '#ff000044'
+                "#ff000044",
               )}
             </>
           )}
 
           {/* Active arc */}
-          {valid && createArc(-135, angle, '#00ff00')}
+          {valid && createArc(-135, angle, "#00ff00")}
 
           {/* Tick marks */}
           {Array.from({ length: segments + 1 }).map((_, i) => {
@@ -134,7 +155,7 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, v
               y1={centerY}
               x2={centerX}
               y2={centerY - radius * 0.7}
-              stroke={valid ? '#ffffff' : '#ff0000'}
+              stroke={valid ? "#ffffff" : "#ff0000"}
               strokeWidth={3}
               strokeLinecap="round"
             />
@@ -148,13 +169,18 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({ config, value, unit, v
         <div
           style={{
             fontSize: `${size * 0.12}px`,
-            fontWeight: 'bold',
-            fontFamily: 'monospace',
-            color: valid ? '#00ff00' : '#ff0000',
+            fontWeight: "bold",
+            fontFamily: "monospace",
+            color: valid ? "#00ff00" : "#ff0000",
           }}
         >
           {formattedValue}
-          {displayUnit && <span style={{ fontSize: '0.7em', color: '#888888' }}> {displayUnit}</span>}
+          {displayUnit && (
+            <span style={{ fontSize: "0.7em", color: "#888888" }}>
+              {" "}
+              {displayUnit}
+            </span>
+          )}
         </div>
       </div>
     </BaseWidget>

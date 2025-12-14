@@ -9,17 +9,23 @@
  * - Context menu interactions
  */
 
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import UCANMonitor from '../UCANMonitor';
-import { CANMessage } from '../../types';
-import * as exporters from '../../utils/exporters';
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import UCANMonitor from "../UCANMonitor";
+import { CANMessage } from "../../types";
+import * as exporters from "../../utils/exporters";
 
 // Mock child components
-jest.mock('../MessageLog', () => ({
+jest.mock("../MessageLog", () => ({
   __esModule: true,
-  default: ({ messages, onMessageSelect }: { messages: CANMessage[]; onMessageSelect: (id: string) => void }) => (
+  default: ({
+    messages,
+    onMessageSelect,
+  }: {
+    messages: CANMessage[];
+    onMessageSelect: (id: string) => void;
+  }) => (
     <div data-testid="message-log">
       <div>Message count: {messages.length}</div>
       {messages.map((msg: CANMessage) => (
@@ -31,9 +37,15 @@ jest.mock('../MessageLog', () => ({
   ),
 }));
 
-jest.mock('../FilterPanel', () => ({
+jest.mock("../FilterPanel", () => ({
   __esModule: true,
-  default: ({ totalMessages, filteredMessages }: { totalMessages: number; filteredMessages: number }) => (
+  default: ({
+    totalMessages,
+    filteredMessages,
+  }: {
+    totalMessages: number;
+    filteredMessages: number;
+  }) => (
     <div data-testid="filter-panel">
       <div>Total: {totalMessages}</div>
       <div>Filtered: {filteredMessages}</div>
@@ -41,48 +53,55 @@ jest.mock('../FilterPanel', () => ({
   ),
 }));
 
-jest.mock('../BoardInfoPanel', () => ({
+jest.mock("../BoardInfoPanel", () => ({
   __esModule: true,
-  default: ({ isConnected, capabilities }: { isConnected: boolean; capabilities?: { board: string } }) => (
+  default: ({
+    isConnected,
+    capabilities,
+  }: {
+    isConnected: boolean;
+    capabilities?: { board: string };
+  }) => (
     <div data-testid="board-info-panel">
-      <div>Connected: {isConnected ? 'Yes' : 'No'}</div>
+      <div>Connected: {isConnected ? "Yes" : "No"}</div>
       {capabilities && <div>Board: {capabilities.board}</div>}
     </div>
   ),
 }));
 
-jest.mock('../SendPanel', () => ({
+jest.mock("../SendPanel", () => ({
   __esModule: true,
   default: ({ isConnected }: { isConnected: boolean }) => (
     <div data-testid="send-panel">
-      <div>Can send: {isConnected ? 'Yes' : 'No'}</div>
+      <div>Can send: {isConnected ? "Yes" : "No"}</div>
     </div>
   ),
 }));
 
-jest.mock('../PacketDetailModal', () => ({
+jest.mock("../PacketDetailModal", () => ({
   __esModule: true,
-  default: ({ isOpen, message }: { isOpen: boolean; message?: { id: string } }) => (
+  default: ({
+    isOpen,
+    message,
+  }: {
+    isOpen: boolean;
+    message?: { id: string };
+  }) =>
     isOpen ? (
-      <div data-testid="packet-detail-modal">
-        Detail for: {message?.id}
-      </div>
-    ) : null
-  ),
+      <div data-testid="packet-detail-modal">Detail for: {message?.id}</div>
+    ) : null,
 }));
 
-jest.mock('../SettingsModal', () => ({
+jest.mock("../SettingsModal", () => ({
   __esModule: true,
-  default: ({ isOpen }: { isOpen: boolean }) => (
-    isOpen ? <div data-testid="settings-modal">Settings</div> : null
-  ),
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="settings-modal">Settings</div> : null,
 }));
 
-jest.mock('../RuleBuilderModal', () => ({
+jest.mock("../RuleBuilderModal", () => ({
   __esModule: true,
-  default: ({ isOpen }: { isOpen: boolean }) => (
-    isOpen ? <div data-testid="rule-builder-modal">Rule Builder</div> : null
-  ),
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="rule-builder-modal">Rule Builder</div> : null,
 }));
 
 interface ContextMenuOption {
@@ -90,9 +109,15 @@ interface ContextMenuOption {
   onClick: () => void;
 }
 
-jest.mock('../ContextMenu', () => ({
+jest.mock("../ContextMenu", () => ({
   __esModule: true,
-  default: ({ options, onClose }: { options: ContextMenuOption[]; onClose: () => void }) => (
+  default: ({
+    options,
+    onClose,
+  }: {
+    options: ContextMenuOption[];
+    onClose: () => void;
+  }) => (
     <div data-testid="context-menu">
       {options.map((opt: ContextMenuOption, i: number) => (
         <button key={i} onClick={opt.onClick}>
@@ -104,9 +129,15 @@ jest.mock('../ContextMenu', () => ({
   ),
 }));
 
-jest.mock('../CollapsiblePanel', () => ({
+jest.mock("../CollapsiblePanel", () => ({
   __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+  default: ({
+    children,
+    title,
+  }: {
+    children: React.ReactNode;
+    title: string;
+  }) => (
     <div data-testid="collapsible-panel">
       <div>{title}</div>
       {children}
@@ -115,15 +146,23 @@ jest.mock('../CollapsiblePanel', () => ({
 }));
 
 // Mock Next.js components
-jest.mock('next/image', () => ({
+jest.mock("next/image", () => ({
   __esModule: true,
   // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    <img {...props} />
+  ),
 }));
 
-jest.mock('next/link', () => ({
+jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
 }));
 
 // Mock SerialBridge
@@ -137,32 +176,32 @@ const mockSerialBridge = {
   getPort: jest.fn(),
 };
 
-jest.mock('../../core/serialBridge', () => ({
+jest.mock("../../core/serialBridge", () => ({
   SerialBridge: jest.fn().mockImplementation(() => mockSerialBridge),
   isSerialSupported: jest.fn(() => true),
   getAuthorizedPorts: jest.fn(() => Promise.resolve([])),
 }));
 
 // Mock other utilities
-jest.mock('../../utils/deviceStorage', () => ({
+jest.mock("../../utils/deviceStorage", () => ({
   saveLastDevice: jest.fn(),
   loadLastDevice: jest.fn(() => null),
-  formatDeviceName: jest.fn(() => 'Test Device'),
+  formatDeviceName: jest.fn(() => "Test Device"),
   isMatchingDevice: jest.fn(() => false),
 }));
 
-jest.mock('../../utils/exporters', () => ({
+jest.mock("../../utils/exporters", () => ({
   exportMessages: jest.fn(),
   exportStatsSummary: jest.fn(),
 }));
 
-jest.mock('../../core/canProtocol', () => ({
+jest.mock("../../core/canProtocol", () => ({
   protocolToCANMessage: jest.fn((msg) => {
-    if (msg.type === 'CAN_RX' || msg.type === 'CAN_TX') {
+    if (msg.type === "CAN_RX" || msg.type === "CAN_TX") {
       return {
         id: `msg-${Date.now()}-${Math.random()}`,
         timestamp: new Date(),
-        direction: msg.type === 'CAN_RX' ? 'RX' : 'TX',
+        direction: msg.type === "CAN_RX" ? "RX" : "TX",
         type: msg.type,
         canId: msg.canId || 0x100,
         data: new Uint8Array(msg.data || []),
@@ -174,13 +213,13 @@ jest.mock('../../core/canProtocol', () => ({
   }),
 }));
 
-jest.mock('../../core/messageBuffer', () => ({
+jest.mock("../../core/messageBuffer", () => ({
   MessageBuffer: jest.fn().mockImplementation(() => ({
     addMessage: jest.fn(),
     getAllMessages: jest.fn(() => []),
     getFilteredMessages: jest.fn(() => []),
     getFilter: jest.fn(() => ({
-      directions: new Set(['RX', 'TX']),
+      directions: new Set(["RX", "TX"]),
       canIds: new Set(),
       errorsOnly: false,
     })),
@@ -204,30 +243,30 @@ jest.mock('../../core/messageBuffer', () => ({
   })),
 }));
 
-describe('UCANMonitor Integration Tests', () => {
+describe("UCANMonitor Integration Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Initial Render', () => {
-    test('renders main UI components', () => {
+  describe("Initial Render", () => {
+    test("renders main UI components", () => {
       render(<UCANMonitor />);
 
       expect(screen.getByText(/uCAN Monitor/i)).toBeInTheDocument();
-      expect(screen.getByTestId('message-log')).toBeInTheDocument();
-      expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
-      expect(screen.getByTestId('board-info-panel')).toBeInTheDocument();
-      expect(screen.getByTestId('send-panel')).toBeInTheDocument();
+      expect(screen.getByTestId("message-log")).toBeInTheDocument();
+      expect(screen.getByTestId("filter-panel")).toBeInTheDocument();
+      expect(screen.getByTestId("board-info-panel")).toBeInTheDocument();
+      expect(screen.getByTestId("send-panel")).toBeInTheDocument();
     });
 
-    test('displays disconnected state initially', () => {
+    test("displays disconnected state initially", () => {
       render(<UCANMonitor />);
 
       expect(screen.getByText(/Disconnected/i)).toBeInTheDocument();
-      expect(screen.getByText('Connected: No')).toBeInTheDocument();
+      expect(screen.getByText("Connected: No")).toBeInTheDocument();
     });
 
-    test('shows default statistics', () => {
+    test("shows default statistics", () => {
       render(<UCANMonitor />);
 
       expect(screen.getByText(/RX:/)).toBeInTheDocument();
@@ -236,14 +275,14 @@ describe('UCANMonitor Integration Tests', () => {
     });
   });
 
-  describe('View Mode Controls', () => {
-    test('allows switching between view modes', async () => {
+  describe("View Mode Controls", () => {
+    test("allows switching between view modes", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const listButton = screen.getByRole('button', { name: /List/i });
-      const hexButton = screen.getByRole('button', { name: /Hex/i });
-      const statsButton = screen.getByRole('button', { name: /Stats/i });
+      const listButton = screen.getByRole("button", { name: /List/i });
+      const hexButton = screen.getByRole("button", { name: /Hex/i });
+      const statsButton = screen.getByRole("button", { name: /Stats/i });
 
       expect(listButton).toBeInTheDocument();
       expect(hexButton).toBeInTheDocument();
@@ -251,101 +290,109 @@ describe('UCANMonitor Integration Tests', () => {
 
       // Switch to hex view
       await user.click(hexButton);
-      expect(hexButton).toHaveClass('bg-green-600');
+      expect(hexButton).toHaveClass("bg-green-600");
 
       // Switch to stats view
       await user.click(statsButton);
-      expect(statsButton).toHaveClass('bg-green-600');
+      expect(statsButton).toHaveClass("bg-green-600");
     });
   });
 
-  describe('Pause/Resume Controls', () => {
-    test('allows pausing message capture', async () => {
+  describe("Pause/Resume Controls", () => {
+    test("allows pausing message capture", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const pauseButton = screen.getByRole('button', { name: /Pause/i });
+      const pauseButton = screen.getByRole("button", { name: /Pause/i });
       await user.click(pauseButton);
 
       expect(screen.getByText(/PAUSED/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Resume/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Resume/i }),
+      ).toBeInTheDocument();
     });
 
-    test('allows resuming message capture', async () => {
+    test("allows resuming message capture", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const pauseButton = screen.getByRole('button', { name: /Pause/i });
+      const pauseButton = screen.getByRole("button", { name: /Pause/i });
       await user.click(pauseButton);
 
-      const resumeButton = screen.getByRole('button', { name: /Resume/i });
+      const resumeButton = screen.getByRole("button", { name: /Resume/i });
       await user.click(resumeButton);
 
       expect(screen.queryByText(/PAUSED/i)).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Pause/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Pause/i }),
+      ).toBeInTheDocument();
     });
   });
 
-  describe('Auto-Scroll Toggle', () => {
-    test('allows toggling auto-scroll', async () => {
+  describe("Auto-Scroll Toggle", () => {
+    test("allows toggling auto-scroll", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const autoScrollButton = screen.getByRole('button', { name: /Auto-Scroll/i });
+      const autoScrollButton = screen.getByRole("button", {
+        name: /Auto-Scroll/i,
+      });
       await user.click(autoScrollButton);
 
       expect(screen.getByText(/SCROLL LOCKED/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Scroll Locked/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Scroll Locked/i }),
+      ).toBeInTheDocument();
     });
   });
 
-  describe('Export Functionality', () => {
-    test('shows export options', () => {
+  describe("Export Functionality", () => {
+    test("shows export options", () => {
       render(<UCANMonitor />);
 
-      expect(screen.getByRole('button', { name: /CSV/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /JSON/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /CSV/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /JSON/i })).toBeInTheDocument();
     });
 
-    test('can export as CSV', async () => {
+    test("can export as CSV", async () => {
       const user = userEvent.setup();
-      const exportMessagesSpy = jest.spyOn(exporters, 'exportMessages');
+      const exportMessagesSpy = jest.spyOn(exporters, "exportMessages");
 
       render(<UCANMonitor />);
 
-      const csvButton = screen.getByRole('button', { name: /CSV/i });
+      const csvButton = screen.getByRole("button", { name: /CSV/i });
       await user.click(csvButton);
 
       expect(exportMessagesSpy).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ format: 'csv' }),
-        expect.anything()
+        expect.objectContaining({ format: "csv" }),
+        expect.anything(),
       );
     });
 
-    test('can export as JSON', async () => {
+    test("can export as JSON", async () => {
       const user = userEvent.setup();
-      const exportMessagesSpy = jest.spyOn(exporters, 'exportMessages');
+      const exportMessagesSpy = jest.spyOn(exporters, "exportMessages");
 
       render(<UCANMonitor />);
 
-      const jsonButton = screen.getByRole('button', { name: /JSON/i });
+      const jsonButton = screen.getByRole("button", { name: /JSON/i });
       await user.click(jsonButton);
 
       expect(exportMessagesSpy).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ format: 'json' }),
-        expect.anything()
+        expect.objectContaining({ format: "json" }),
+        expect.anything(),
       );
     });
   });
 
-  describe('Clear Messages', () => {
-    test('can clear all messages', async () => {
+  describe("Clear Messages", () => {
+    test("can clear all messages", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const clearButton = screen.getByRole('button', { name: /Clear/i });
+      const clearButton = screen.getByRole("button", { name: /Clear/i });
       await user.click(clearButton);
 
       // MessageBuffer.clear should have been called
@@ -354,68 +401,70 @@ describe('UCANMonitor Integration Tests', () => {
     });
   });
 
-  describe('Settings Modal', () => {
-    test('opens settings modal when settings button clicked', async () => {
+  describe("Settings Modal", () => {
+    test("opens settings modal when settings button clicked", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
       // Find settings button by SVG icon
-      const settingsButton = screen.getByRole('button', { name: /Settings/i });
+      const settingsButton = screen.getByRole("button", { name: /Settings/i });
       await user.click(settingsButton);
 
-      expect(screen.getByTestId('settings-modal')).toBeInTheDocument();
+      expect(screen.getByTestId("settings-modal")).toBeInTheDocument();
     });
   });
 
-  describe('Rule Builder Modal', () => {
-    test('opens rule builder when create rule button clicked', async () => {
+  describe("Rule Builder Modal", () => {
+    test("opens rule builder when create rule button clicked", async () => {
       const user = userEvent.setup();
       render(<UCANMonitor />);
 
-      const createRuleButton = screen.getByRole('button', { name: /Create Action Rule/i });
+      const createRuleButton = screen.getByRole("button", {
+        name: /Create Action Rule/i,
+      });
       await user.click(createRuleButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('rule-builder-modal')).toBeInTheDocument();
+        expect(screen.getByTestId("rule-builder-modal")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Navigation', () => {
-    test('displays back to home link', () => {
+  describe("Navigation", () => {
+    test("displays back to home link", () => {
       render(<UCANMonitor />);
 
-      const homeLink = screen.getByRole('link', { name: /Back to Home/i });
+      const homeLink = screen.getByRole("link", { name: /Back to Home/i });
       expect(homeLink).toBeInTheDocument();
-      expect(homeLink).toHaveAttribute('href', '/');
+      expect(homeLink).toHaveAttribute("href", "/");
     });
   });
 
-  describe('Component Integration', () => {
-    test('message log receives correct props', () => {
+  describe("Component Integration", () => {
+    test("message log receives correct props", () => {
       render(<UCANMonitor />);
 
-      const messageLog = screen.getByTestId('message-log');
+      const messageLog = screen.getByTestId("message-log");
       expect(messageLog).toBeInTheDocument();
-      expect(screen.getByText('Message count: 0')).toBeInTheDocument();
+      expect(screen.getByText("Message count: 0")).toBeInTheDocument();
     });
 
-    test('filter panel shows message counts', () => {
+    test("filter panel shows message counts", () => {
       render(<UCANMonitor />);
 
-      expect(screen.getByText('Total: 0')).toBeInTheDocument();
-      expect(screen.getByText('Filtered: 0')).toBeInTheDocument();
+      expect(screen.getByText("Total: 0")).toBeInTheDocument();
+      expect(screen.getByText("Filtered: 0")).toBeInTheDocument();
     });
 
-    test('board info panel reflects connection state', () => {
+    test("board info panel reflects connection state", () => {
       render(<UCANMonitor />);
 
-      expect(screen.getByText('Connected: No')).toBeInTheDocument();
+      expect(screen.getByText("Connected: No")).toBeInTheDocument();
     });
   });
 
-  describe('Cleanup', () => {
-    test('disconnects on unmount', () => {
+  describe("Cleanup", () => {
+    test("disconnects on unmount", () => {
       const { unmount } = render(<UCANMonitor />);
 
       // Mock isConnected to return true
@@ -426,35 +475,35 @@ describe('UCANMonitor Integration Tests', () => {
       expect(mockSerialBridge.disconnect).toHaveBeenCalled();
     });
 
-    test('removes beforeunload listener on unmount', () => {
-      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+    test("removes beforeunload listener on unmount", () => {
+      const removeEventListenerSpy = jest.spyOn(window, "removeEventListener");
 
       const { unmount } = render(<UCANMonitor />);
       unmount();
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'beforeunload',
-        expect.any(Function)
+        "beforeunload",
+        expect.any(Function),
       );
 
       removeEventListenerSpy.mockRestore();
     });
   });
 
-  describe('Accessibility', () => {
-    test('has proper heading structure', () => {
+  describe("Accessibility", () => {
+    test("has proper heading structure", () => {
       render(<UCANMonitor />);
 
-      const heading = screen.getByRole('heading', { name: /uCAN Monitor/i });
+      const heading = screen.getByRole("heading", { name: /uCAN Monitor/i });
       expect(heading).toBeInTheDocument();
     });
 
-    test('all buttons are keyboard accessible', () => {
+    test("all buttons are keyboard accessible", () => {
       const { container } = render(<UCANMonitor />);
 
-      const buttons = container.querySelectorAll('button');
-      buttons.forEach(button => {
-        expect(button).not.toHaveAttribute('tabindex', '-1');
+      const buttons = container.querySelectorAll("button");
+      buttons.forEach((button) => {
+        expect(button).not.toHaveAttribute("tabindex", "-1");
       });
     });
   });

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Message Log Component
@@ -6,11 +6,21 @@
  * Wireshark-like display for CAN packets with filtering and search
  */
 
-import React, { useRef, useEffect, useState } from 'react';
-import { CANMessage } from '../types';
-import { formatTimestamp, formatCANId, formatBytes, formatBinary, formatASCII } from '../utils/formatters';
-import { normalizeCANId, getInlineAnnotations, formatDecodedField } from '../overlays/decoder/messageDecoder';
-import type { DecodedMessage } from '../overlays/types';
+import React, { useRef, useEffect, useState } from "react";
+import { CANMessage } from "../types";
+import {
+  formatTimestamp,
+  formatCANId,
+  formatBytes,
+  formatBinary,
+  formatASCII,
+} from "../utils/formatters";
+import {
+  normalizeCANId,
+  getInlineAnnotations,
+  formatDecodedField,
+} from "../overlays/decoder/messageDecoder";
+import type { DecodedMessage } from "../overlays/types";
 
 interface MessageLogProps {
   messages: CANMessage[];
@@ -18,7 +28,7 @@ interface MessageLogProps {
   selectedMessageId?: string;
   autoScroll?: boolean;
   showTimestamps?: boolean;
-  viewMode?: 'list' | 'hex' | 'decoded' | 'detail';
+  viewMode?: "list" | "hex" | "decoded" | "detail";
   reverseOrder?: boolean;
   onContextMenu?: (message: CANMessage, x: number, y: number) => void;
   decodedMessages?: Map<string, DecodedMessage>;
@@ -31,12 +41,12 @@ export default function MessageLog({
   selectedMessageId,
   autoScroll = true,
   showTimestamps = true,
-  viewMode = 'list',
+  viewMode = "list",
   reverseOrder = true,
   onContextMenu,
   decodedMessages,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isOverlayActive = false
+  isOverlayActive = false,
 }: MessageLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -54,23 +64,29 @@ export default function MessageLog({
     }
   }, [messages, autoScroll, reverseOrder]);
 
-  const handleMessageClick = React.useCallback((message: CANMessage) => {
-    if (onMessageSelect) {
-      onMessageSelect(message.id);
-    }
-  }, [onMessageSelect]);
+  const handleMessageClick = React.useCallback(
+    (message: CANMessage) => {
+      if (onMessageSelect) {
+        onMessageSelect(message.id);
+      }
+    },
+    [onMessageSelect],
+  );
 
-  const handleMessageRightClick = React.useCallback((e: React.MouseEvent, message: CANMessage) => {
-    e.preventDefault();
-    if (onContextMenu) {
-      onContextMenu(message, e.clientX, e.clientY);
-    }
-  }, [onContextMenu]);
+  const handleMessageRightClick = React.useCallback(
+    (e: React.MouseEvent, message: CANMessage) => {
+      e.preventDefault();
+      if (onContextMenu) {
+        onContextMenu(message, e.clientX, e.clientY);
+      }
+    },
+    [onContextMenu],
+  );
 
   // Apply reverse order if requested - memoize to avoid re-computation
-  const displayMessages = React.useMemo(() =>
-    reverseOrder ? [...messages].reverse() : messages,
-    [messages, reverseOrder]
+  const displayMessages = React.useMemo(
+    () => (reverseOrder ? [...messages].reverse() : messages),
+    [messages, reverseOrder],
   );
 
   if (messages.length === 0) {
@@ -78,7 +94,9 @@ export default function MessageLog({
       <div className="flex items-center justify-center h-full text-gray-500">
         <div className="text-center">
           <p className="text-lg mb-2">📭 No messages captured</p>
-          <p className="text-sm">Connect to a uCAN device to start capturing CAN packets</p>
+          <p className="text-sm">
+            Connect to a uCAN device to start capturing CAN packets
+          </p>
         </div>
       </div>
     );
@@ -87,12 +105,10 @@ export default function MessageLog({
   return (
     <div className="h-full flex flex-col bg-gray-950">
       {/* Header Row */}
-      {viewMode === 'list' && (
+      {viewMode === "list" && (
         <div className="sticky top-0 bg-gray-800 border-b-2 border-gray-600 px-2 py-2 text-sm font-semibold text-gray-200 z-10">
           <div className="flex items-center gap-2">
-            {showTimestamps && (
-              <span className="w-20 flex-shrink-0">Time</span>
-            )}
+            {showTimestamps && <span className="w-20 flex-shrink-0">Time</span>}
             <span className="w-10 flex-shrink-0">Dir</span>
             <span className="w-20 flex-shrink-0">CAN ID</span>
             <span className="w-8 flex-shrink-0 text-center">Len</span>
@@ -104,9 +120,9 @@ export default function MessageLog({
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto"
-        style={{ scrollBehavior: autoScroll ? 'smooth' : 'auto' }}
+        style={{ scrollBehavior: autoScroll ? "smooth" : "auto" }}
       >
-        {viewMode === 'list' && (
+        {viewMode === "list" && (
           <div className="divide-y divide-gray-800">
             {displayMessages.map((message) => (
               <MessageRow
@@ -124,7 +140,7 @@ export default function MessageLog({
           </div>
         )}
 
-        {viewMode === 'hex' && (
+        {viewMode === "hex" && (
           <div className="p-2 space-y-2">
             {displayMessages.map((message) => {
               const canIdStr = normalizeCANId(message.canId);
@@ -141,7 +157,7 @@ export default function MessageLog({
           </div>
         )}
 
-        {viewMode === 'decoded' && (
+        {viewMode === "decoded" && (
           <div className="p-2 space-y-2">
             {displayMessages.map((message) => {
               const canIdStr = normalizeCANId(message.canId);
@@ -158,9 +174,9 @@ export default function MessageLog({
           </div>
         )}
 
-        {viewMode === 'detail' && selectedMessageId && (
+        {viewMode === "detail" && selectedMessageId && (
           <DetailedMessageView
-            message={messages.find(m => m.id === selectedMessageId)}
+            message={messages.find((m) => m.id === selectedMessageId)}
           />
         )}
       </div>
@@ -190,35 +206,41 @@ const MessageRow = React.memo(function MessageRow({
   onClick,
   onContextMenu,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
 }: MessageRowProps) {
   // Special styling for INFO messages (STATS/STATUS)
-  const isInfoMessage = message.type === 'STATS' || message.type === 'STATUS';
-  const isErrorMessage = message.type === 'CAN_ERR';
+  const isInfoMessage = message.type === "STATS" || message.type === "STATUS";
+  const isErrorMessage = message.type === "CAN_ERR";
 
   const directionColor = isInfoMessage
-    ? 'text-cyan-400'
+    ? "text-cyan-400"
     : isErrorMessage
-    ? 'text-red-400'
-    : message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
+      ? "text-red-400"
+      : message.direction === "RX"
+        ? "text-green-400"
+        : "text-blue-400";
 
   const directionBg = isInfoMessage
-    ? 'bg-cyan-600/5'
+    ? "bg-cyan-600/5"
     : isErrorMessage
-    ? 'bg-red-600/5'
-    : message.direction === 'RX' ? 'bg-green-600/5' : 'bg-blue-600/5';
+      ? "bg-red-600/5"
+      : message.direction === "RX"
+        ? "bg-green-600/5"
+        : "bg-blue-600/5";
 
   const directionSymbol = isInfoMessage
-    ? 'ℹ️'
+    ? "ℹ️"
     : isErrorMessage
-    ? '❌'
-    : message.direction === 'RX' ? '🟢' : '🔵';
+      ? "❌"
+      : message.direction === "RX"
+        ? "🟢"
+        : "🔵";
 
   const rowBg = isSelected
-    ? 'bg-yellow-600/20 border-l-4 border-yellow-500'
+    ? "bg-yellow-600/20 border-l-4 border-yellow-500"
     : isHovered
-    ? 'bg-gray-800/50'
-    : directionBg;
+      ? "bg-gray-800/50"
+      : directionBg;
 
   return (
     <div
@@ -237,7 +259,9 @@ const MessageRow = React.memo(function MessageRow({
         )}
 
         {/* Direction / Type */}
-        <span className={`${directionColor} w-10 flex-shrink-0 flex items-center gap-0.5`}>
+        <span
+          className={`${directionColor} w-10 flex-shrink-0 flex items-center gap-0.5`}
+        >
           <span className="text-xs">{directionSymbol}</span>
           <span className="font-semibold text-xs">
             {isInfoMessage ? message.type.substring(0, 4) : message.direction}
@@ -245,7 +269,9 @@ const MessageRow = React.memo(function MessageRow({
         </span>
 
         {/* CAN ID */}
-        <span className={`${directionColor} font-bold w-20 flex-shrink-0 font-mono`}>
+        <span
+          className={`${directionColor} font-bold w-20 flex-shrink-0 font-mono`}
+        >
           {formatCANId(message.canId, message.isExtended)}
         </span>
 
@@ -259,9 +285,9 @@ const MessageRow = React.memo(function MessageRow({
           {Array.from(message.data).map((byte, idx) => (
             <span
               key={idx}
-              className={`flex-shrink-0 ${idx % 2 === 0 ? 'text-gray-300' : 'text-gray-400'}`}
+              className={`flex-shrink-0 ${idx % 2 === 0 ? "text-gray-300" : "text-gray-400"}`}
             >
-              {byte.toString(16).toUpperCase().padStart(2, '0')}
+              {byte.toString(16).toUpperCase().padStart(2, "0")}
             </span>
           ))}
         </div>
@@ -286,22 +312,34 @@ interface HexMessageRowProps {
   decodedMessage?: DecodedMessage;
 }
 
-const HexMessageRow = React.memo(function HexMessageRow({ message, showTimestamps, decodedMessage }: HexMessageRowProps) {
-  const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
+const HexMessageRow = React.memo(function HexMessageRow({
+  message,
+  showTimestamps,
+  decodedMessage,
+}: HexMessageRowProps) {
+  const directionColor =
+    message.direction === "RX" ? "text-green-400" : "text-blue-400";
 
   // Get inline annotations if message is decoded
-  const annotations = decodedMessage ? getInlineAnnotations(decodedMessage) : [];
-  const annotationMap = new Map(annotations.map(a => [a.byteIndex, a.annotation]));
+  const annotations = decodedMessage
+    ? getInlineAnnotations(decodedMessage)
+    : [];
+  const annotationMap = new Map(
+    annotations.map((a) => [a.byteIndex, a.annotation]),
+  );
 
   return (
     <div className="border border-gray-800 rounded p-2 bg-gray-900/50">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-800 text-xs">
         {showTimestamps && (
-          <span className="text-gray-500 font-mono">{formatTimestamp(message.timestamp)}</span>
+          <span className="text-gray-500 font-mono">
+            {formatTimestamp(message.timestamp)}
+          </span>
         )}
         <span className={`${directionColor} font-mono`}>
-          {message.direction} {formatCANId(message.canId, message.isExtended)} [{message.length}]
+          {message.direction} {formatCANId(message.canId, message.isExtended)} [
+          {message.length}]
         </span>
         {decodedMessage && (
           <span className="text-cyan-400 text-[10px]">
@@ -319,7 +357,7 @@ const HexMessageRow = React.memo(function HexMessageRow({ message, showTimestamp
             {Array.from(message.data).map((byte, idx) => (
               <div key={idx} className="flex items-center gap-1">
                 <span>[{idx}]</span>
-                <span>{byte.toString(16).toUpperCase().padStart(2, '0')}</span>
+                <span>{byte.toString(16).toUpperCase().padStart(2, "0")}</span>
                 {annotationMap.has(idx) && (
                   <span className="text-cyan-400 text-[10px] ml-2">
                     {annotationMap.get(idx)}
@@ -333,19 +371,25 @@ const HexMessageRow = React.memo(function HexMessageRow({ message, showTimestamp
         {/* Binary */}
         <div>
           <div className="text-[10px] text-gray-500 mb-1">Binary</div>
-          <div className="text-gray-400 text-[10px] break-all font-mono">{formatBinary(message.data, ' ')}</div>
+          <div className="text-gray-400 text-[10px] break-all font-mono">
+            {formatBinary(message.data, " ")}
+          </div>
         </div>
 
         {/* Decimal */}
         <div>
           <div className="text-[10px] text-gray-500 mb-1">Decimal</div>
-          <div className="text-gray-300 font-mono">{Array.from(message.data).join(' ')}</div>
+          <div className="text-gray-300 font-mono">
+            {Array.from(message.data).join(" ")}
+          </div>
         </div>
 
         {/* ASCII */}
         <div>
           <div className="text-[10px] text-gray-500 mb-1">ASCII</div>
-          <div className="text-gray-300 font-mono">{formatASCII(message.data)}</div>
+          <div className="text-gray-300 font-mono">
+            {formatASCII(message.data)}
+          </div>
         </div>
       </div>
     </div>
@@ -382,8 +426,10 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-900/50 border border-gray-700 rounded p-4">
           <div className="text-xs text-gray-500 mb-1">Direction</div>
-          <div className={`text-lg font-bold ${message.direction === 'RX' ? 'text-green-400' : 'text-blue-400'}`}>
-            {message.direction === 'RX' ? '🟢 Receive' : '🔵 Transmit'}
+          <div
+            className={`text-lg font-bold ${message.direction === "RX" ? "text-green-400" : "text-blue-400"}`}
+          >
+            {message.direction === "RX" ? "🟢 Receive" : "🔵 Transmit"}
           </div>
         </div>
 
@@ -392,14 +438,16 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
           <div className="text-lg font-bold text-white">
             {formatCANId(message.canId, message.isExtended)}
             <span className="text-sm text-gray-400 ml-2">
-              ({message.canId}) {message.isExtended ? 'Extended' : 'Standard'}
+              ({message.canId}) {message.isExtended ? "Extended" : "Standard"}
             </span>
           </div>
         </div>
 
         <div className="bg-gray-900/50 border border-gray-700 rounded p-4">
           <div className="text-xs text-gray-500 mb-1">Data Length</div>
-          <div className="text-lg font-bold text-white">{message.length} bytes</div>
+          <div className="text-lg font-bold text-white">
+            {message.length} bytes
+          </div>
         </div>
 
         <div className="bg-gray-900/50 border border-gray-700 rounded p-4">
@@ -410,13 +458,15 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
 
       {/* Data Breakdown */}
       <div className="bg-gray-900/50 border border-gray-700 rounded p-4">
-        <h4 className="text-sm font-semibold text-gray-300 mb-3">Data Breakdown</h4>
+        <h4 className="text-sm font-semibold text-gray-300 mb-3">
+          Data Breakdown
+        </h4>
         <div className="space-y-4">
           {/* Hex */}
           <div>
             <div className="text-xs text-gray-500 mb-1">Hexadecimal</div>
             <div className="font-mono text-white bg-black/30 p-2 rounded">
-              {formatBytes(message.data, ' ')}
+              {formatBytes(message.data, " ")}
             </div>
           </div>
 
@@ -424,7 +474,7 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
           <div>
             <div className="text-xs text-gray-500 mb-1">Binary</div>
             <div className="font-mono text-white bg-black/30 p-2 rounded text-xs break-all">
-              {formatBinary(message.data, ' ')}
+              {formatBinary(message.data, " ")}
             </div>
           </div>
 
@@ -432,15 +482,17 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
           <div>
             <div className="text-xs text-gray-500 mb-1">Decimal</div>
             <div className="font-mono text-white bg-black/30 p-2 rounded">
-              {Array.from(message.data).join(' ')}
+              {Array.from(message.data).join(" ")}
             </div>
           </div>
 
           {/* ASCII */}
           <div>
-            <div className="text-xs text-gray-500 mb-1">ASCII (printable characters)</div>
+            <div className="text-xs text-gray-500 mb-1">
+              ASCII (printable characters)
+            </div>
             <div className="font-mono text-white bg-black/30 p-2 rounded">
-              {formatASCII(message.data) || '(no printable characters)'}
+              {formatASCII(message.data) || "(no printable characters)"}
             </div>
           </div>
 
@@ -461,11 +513,17 @@ function DetailedMessageView({ message }: DetailedMessageViewProps) {
                 {Array.from(message.data).map((byte, idx) => (
                   <tr key={idx} className="text-white">
                     <td className="py-2 text-gray-400">{idx}</td>
-                    <td className="font-mono">{byte.toString(16).toUpperCase().padStart(2, '0')}</td>
-                    <td>{byte}</td>
-                    <td className="font-mono text-xs">{byte.toString(2).padStart(8, '0')}</td>
                     <td className="font-mono">
-                      {byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.'}
+                      {byte.toString(16).toUpperCase().padStart(2, "0")}
+                    </td>
+                    <td>{byte}</td>
+                    <td className="font-mono text-xs">
+                      {byte.toString(2).padStart(8, "0")}
+                    </td>
+                    <td className="font-mono">
+                      {byte >= 32 && byte <= 126
+                        ? String.fromCharCode(byte)
+                        : "."}
                     </td>
                   </tr>
                 ))}
@@ -495,23 +553,33 @@ interface DecodedMessageRowProps {
   decodedMessage?: DecodedMessage;
 }
 
-const DecodedMessageRow = React.memo(function DecodedMessageRow({ message, showTimestamps, decodedMessage }: DecodedMessageRowProps) {
-  const directionColor = message.direction === 'RX' ? 'text-green-400' : 'text-blue-400';
+const DecodedMessageRow = React.memo(function DecodedMessageRow({
+  message,
+  showTimestamps,
+  decodedMessage,
+}: DecodedMessageRowProps) {
+  const directionColor =
+    message.direction === "RX" ? "text-green-400" : "text-blue-400";
 
   if (!decodedMessage) {
     return (
       <div className="border border-gray-800 rounded p-2 bg-gray-900/50">
         <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-800 text-xs">
           {showTimestamps && (
-            <span className="text-gray-500 font-mono">{formatTimestamp(message.timestamp)}</span>
+            <span className="text-gray-500 font-mono">
+              {formatTimestamp(message.timestamp)}
+            </span>
           )}
           <span className={`${directionColor} font-mono`}>
-            {message.direction} {formatCANId(message.canId, message.isExtended)} [{message.length}]
+            {message.direction} {formatCANId(message.canId, message.isExtended)}{" "}
+            [{message.length}]
           </span>
-          <span className="text-gray-500 text-[10px]">No definition loaded</span>
+          <span className="text-gray-500 text-[10px]">
+            No definition loaded
+          </span>
         </div>
         <div className="text-gray-500 text-xs">
-          Raw: {formatBytes(message.data, ' ')}
+          Raw: {formatBytes(message.data, " ")}
         </div>
       </div>
     );
@@ -523,7 +591,9 @@ const DecodedMessageRow = React.memo(function DecodedMessageRow({ message, showT
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
         <div className="flex items-center gap-2">
           {showTimestamps && (
-            <span className="text-gray-500 font-mono text-xs">{formatTimestamp(message.timestamp)}</span>
+            <span className="text-gray-500 font-mono text-xs">
+              {formatTimestamp(message.timestamp)}
+            </span>
           )}
           <span className={`${directionColor} font-mono text-sm font-semibold`}>
             {message.direction} {formatCANId(message.canId, message.isExtended)}
@@ -548,21 +618,32 @@ const DecodedMessageRow = React.memo(function DecodedMessageRow({ message, showT
           <div
             key={fieldName}
             className={`flex items-center justify-between p-2 rounded ${
-              field.valid ? 'bg-gray-800/50' : 'bg-red-900/20 border border-red-500/30'
+              field.valid
+                ? "bg-gray-800/50"
+                : "bg-red-900/20 border border-red-500/30"
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-gray-300 text-sm font-medium">{field.name}</span>
+              <span className="text-gray-300 text-sm font-medium">
+                {field.name}
+              </span>
               {field.description && (
-                <span className="text-gray-500 text-xs">({field.description})</span>
+                <span className="text-gray-500 text-xs">
+                  ({field.description})
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className={`font-mono text-sm ${field.valid ? 'text-green-400' : 'text-red-400'}`}>
+              <span
+                className={`font-mono text-sm ${field.valid ? "text-green-400" : "text-red-400"}`}
+              >
                 {formatDecodedField(field)}
               </span>
               {!field.valid && (
-                <span className="text-red-400 text-xs" title="Value out of valid range">
+                <span
+                  className="text-red-400 text-xs"
+                  title="Value out of valid range"
+                >
                   ⚠️
                 </span>
               )}

@@ -371,7 +371,7 @@ export class LibraryManager {
           `Downloading config template: ${manifest.configTemplate}...`,
         );
         try {
-          const configUrl = `/libraries/${libraryId}/${manifest.configTemplate}`;
+          const configUrl = `/tools/battleforge/libraries/${libraryId}/${manifest.configTemplate}`;
           const configResponse = await fetch(configUrl);
           if (configResponse.ok) {
             const configContent = new Uint8Array(

@@ -5,9 +5,9 @@
  * including chip identification, memory layout, and connection status.
  */
 
-import { BlackMagicCommands } from './BlackMagicCommands';
-import type { GdbClient } from './GdbClient';
-import type { Target, BmpVersion } from './types';
+import { BlackMagicCommands } from "./BlackMagicCommands";
+import type { GdbClient } from "./GdbClient";
+import type { Target, BmpVersion } from "./types";
 
 /**
  * Target chip information
@@ -36,7 +36,7 @@ export interface MemoryRegion {
   /** Size in bytes */
   size: number;
   /** Access permissions */
-  access: 'r' | 'w' | 'rw' | 'rx' | 'rwx';
+  access: "r" | "w" | "rw" | "rx" | "rwx";
 }
 
 /**
@@ -44,7 +44,7 @@ export interface MemoryRegion {
  */
 export interface TargetInformation {
   /** Connection state */
-  connectionState: 'disconnected' | 'probe_connected' | 'target_attached';
+  connectionState: "disconnected" | "probe_connected" | "target_attached";
   /** Target voltage in volts */
   voltage: number | null;
   /** Chip information */
@@ -56,7 +56,7 @@ export interface TargetInformation {
     other: MemoryRegion[];
   };
   /** Debug interface in use */
-  interface: 'swd' | 'jtag' | null;
+  interface: "swd" | "jtag" | null;
   /** Probe version */
   probeVersion: BmpVersion | null;
   /** Supported features */
@@ -95,7 +95,7 @@ export class TargetInfo {
       interface: null,
       probeVersion: null,
       features: [],
-      rawDescription: undefined
+      rawDescription: undefined,
     };
 
     // Get probe version (always available if connected)
@@ -103,14 +103,14 @@ export class TargetInfo {
       try {
         info.probeVersion = await this.getProbeVersion();
       } catch (e) {
-        console.warn('Failed to get probe version:', e);
+        console.warn("Failed to get probe version:", e);
       }
 
       // Get supported features
       try {
         info.features = await this.getSupportedFeatures();
       } catch (e) {
-        console.warn('Failed to get supported features:', e);
+        console.warn("Failed to get supported features:", e);
       }
     }
 
@@ -128,12 +128,12 @@ export class TargetInfo {
     }
 
     // If attached, get memory map
-    if (info.connectionState === 'target_attached') {
+    if (info.connectionState === "target_attached") {
       try {
         const memoryMap = await this.getMemoryMap();
         info.memory = memoryMap;
       } catch (e) {
-        console.warn('Failed to get memory map:', e);
+        console.warn("Failed to get memory map:", e);
       }
 
       // Try to get chip ID via direct register read
@@ -143,7 +143,7 @@ export class TargetInfo {
           info.chip.id = chipId;
         }
       } catch (e) {
-        console.warn('Failed to read chip ID:', e);
+        console.warn("Failed to read chip ID:", e);
       }
     }
 
@@ -153,15 +153,15 @@ export class TargetInfo {
   /**
    * Get connection state
    */
-  private getConnectionState(): TargetInformation['connectionState'] {
+  private getConnectionState(): TargetInformation["connectionState"] {
     const state = this.client.getState();
     switch (state) {
-      case 'attached':
-        return 'target_attached';
-      case 'connected':
-        return 'probe_connected';
+      case "attached":
+        return "target_attached";
+      case "connected":
+        return "probe_connected";
       default:
-        return 'disconnected';
+        return "disconnected";
     }
   }
 
@@ -178,7 +178,7 @@ export class TargetInfo {
   private async scanForTargets(): Promise<{
     targets: Target[];
     voltage: number | null;
-    interface: 'swd' | 'jtag' | null;
+    interface: "swd" | "jtag" | null;
   } | null> {
     // Try SWD first (most common for ARM Cortex-M)
     try {
@@ -187,11 +187,11 @@ export class TargetInfo {
         return {
           targets: swdResult.targets,
           voltage: swdResult.voltage,
-          interface: 'swd'
+          interface: "swd",
         };
       }
     } catch (e) {
-      console.debug('SWD scan failed:', e);
+      console.debug("SWD scan failed:", e);
     }
 
     // Try JTAG if SWD failed
@@ -201,11 +201,11 @@ export class TargetInfo {
         return {
           targets: jtagResult.targets,
           voltage: jtagResult.voltage,
-          interface: 'jtag'
+          interface: "jtag",
         };
       }
     } catch (e) {
-      console.debug('JTAG scan failed:', e);
+      console.debug("JTAG scan failed:", e);
     }
 
     return null;
@@ -217,52 +217,55 @@ export class TargetInfo {
   private parseChipInfo(target: Target): ChipInfo {
     const desc = target.description;
     const info: ChipInfo = {
-      id: '',
-      description: desc
+      id: "",
+      description: desc,
     };
 
     // Common patterns in Black Magic Probe target descriptions
     // Examples: "STM32F407VG", "STM32L4xx", "nRF52840", "SAMD21", "LPC1768"
 
     // STM32 family
-    if (desc.includes('STM32')) {
-      info.manufacturer = 'STMicroelectronics';
+    if (desc.includes("STM32")) {
+      info.manufacturer = "STMicroelectronics";
       info.core = this.detectCortexCore(desc);
 
       if (desc.match(/STM32F[0-4]/)) {
-        info.family = 'STM32F' + desc.match(/STM32F([0-4])/)?.[1];
+        info.family = "STM32F" + desc.match(/STM32F([0-4])/)?.[1];
       } else if (desc.match(/STM32L[0-4]/)) {
-        info.family = 'STM32L' + desc.match(/STM32L([0-4])/)?.[1];
+        info.family = "STM32L" + desc.match(/STM32L([0-4])/)?.[1];
       } else if (desc.match(/STM32G[0-4]/)) {
-        info.family = 'STM32G' + desc.match(/STM32G([0-4])/)?.[1];
+        info.family = "STM32G" + desc.match(/STM32G([0-4])/)?.[1];
       } else if (desc.match(/STM32H7/)) {
-        info.family = 'STM32H7';
-        info.core = 'Cortex-M7';
+        info.family = "STM32H7";
+        info.core = "Cortex-M7";
       }
     }
     // Nordic nRF
-    else if (desc.includes('nRF')) {
-      info.manufacturer = 'Nordic Semiconductor';
-      info.family = desc.match(/nRF\d+/)?.[0] || 'nRF';
-      info.core = 'Cortex-M4';
+    else if (desc.includes("nRF")) {
+      info.manufacturer = "Nordic Semiconductor";
+      info.family = desc.match(/nRF\d+/)?.[0] || "nRF";
+      info.core = "Cortex-M4";
     }
     // Atmel/Microchip SAMD
-    else if (desc.includes('SAMD') || desc.includes('SAME')) {
-      info.manufacturer = 'Microchip';
-      info.family = desc.match(/SAM[DE]\d+/)?.[0] || 'SAM';
-      info.core = desc.includes('SAMD5') || desc.includes('SAME5') ? 'Cortex-M4' : 'Cortex-M0+';
+    else if (desc.includes("SAMD") || desc.includes("SAME")) {
+      info.manufacturer = "Microchip";
+      info.family = desc.match(/SAM[DE]\d+/)?.[0] || "SAM";
+      info.core =
+        desc.includes("SAMD5") || desc.includes("SAME5")
+          ? "Cortex-M4"
+          : "Cortex-M0+";
     }
     // NXP LPC
-    else if (desc.includes('LPC')) {
-      info.manufacturer = 'NXP';
-      info.family = desc.match(/LPC\d+/)?.[0] || 'LPC';
+    else if (desc.includes("LPC")) {
+      info.manufacturer = "NXP";
+      info.family = desc.match(/LPC\d+/)?.[0] || "LPC";
       info.core = this.detectCortexCore(desc);
     }
     // RP2040
-    else if (desc.includes('RP2040')) {
-      info.manufacturer = 'Raspberry Pi';
-      info.family = 'RP2040';
-      info.core = 'Cortex-M0+';
+    else if (desc.includes("RP2040")) {
+      info.manufacturer = "Raspberry Pi";
+      info.family = "RP2040";
+      info.core = "Cortex-M0+";
     }
 
     return info;
@@ -272,23 +275,25 @@ export class TargetInfo {
    * Detect Cortex core type from description
    */
   private detectCortexCore(desc: string): string {
-    if (desc.includes('Cortex-M0')) return 'Cortex-M0+';
-    if (desc.includes('Cortex-M3')) return 'Cortex-M3';
-    if (desc.includes('Cortex-M4')) return 'Cortex-M4';
-    if (desc.includes('Cortex-M7')) return 'Cortex-M7';
-    if (desc.includes('Cortex-M23')) return 'Cortex-M23';
-    if (desc.includes('Cortex-M33')) return 'Cortex-M33';
+    if (desc.includes("Cortex-M0")) return "Cortex-M0+";
+    if (desc.includes("Cortex-M3")) return "Cortex-M3";
+    if (desc.includes("Cortex-M4")) return "Cortex-M4";
+    if (desc.includes("Cortex-M7")) return "Cortex-M7";
+    if (desc.includes("Cortex-M23")) return "Cortex-M23";
+    if (desc.includes("Cortex-M33")) return "Cortex-M33";
 
     // Guess based on STM32 family
-    if (desc.includes('STM32F0')) return 'Cortex-M0';
-    if (desc.includes('STM32F1') || desc.includes('STM32F2')) return 'Cortex-M3';
-    if (desc.includes('STM32F3') || desc.includes('STM32F4')) return 'Cortex-M4';
-    if (desc.includes('STM32F7')) return 'Cortex-M7';
-    if (desc.includes('STM32L0')) return 'Cortex-M0+';
-    if (desc.includes('STM32L1')) return 'Cortex-M3';
-    if (desc.includes('STM32L4')) return 'Cortex-M4';
+    if (desc.includes("STM32F0")) return "Cortex-M0";
+    if (desc.includes("STM32F1") || desc.includes("STM32F2"))
+      return "Cortex-M3";
+    if (desc.includes("STM32F3") || desc.includes("STM32F4"))
+      return "Cortex-M4";
+    if (desc.includes("STM32F7")) return "Cortex-M7";
+    if (desc.includes("STM32L0")) return "Cortex-M0+";
+    if (desc.includes("STM32L1")) return "Cortex-M3";
+    if (desc.includes("STM32L4")) return "Cortex-M4";
 
-    return 'Cortex-M';
+    return "Cortex-M";
   }
 
   /**
@@ -296,27 +301,29 @@ export class TargetInfo {
    *
    * Uses 'monitor memory_map' command or XML target description
    */
-  private async getMemoryMap(): Promise<TargetInformation['memory']> {
-    const memory: TargetInformation['memory'] = {
+  private async getMemoryMap(): Promise<TargetInformation["memory"]> {
+    const memory: TargetInformation["memory"] = {
       flash: [],
       ram: [],
-      other: []
+      other: [],
     };
 
     try {
       // Try monitor command first
-      const cmd = BlackMagicCommands.buildMonitorCommand('memory_map');
+      const cmd = BlackMagicCommands.buildMonitorCommand("memory_map");
       const response = await this.client.sendCommand(cmd);
 
-      if (response.type === 'data') {
+      if (response.type === "data") {
         const decoded = BlackMagicCommands.decodeMonitorResponse(response.data);
         const regions = this.parseMemoryMap(decoded);
 
         for (const region of regions) {
-          if (region.name.toLowerCase().includes('flash')) {
+          if (region.name.toLowerCase().includes("flash")) {
             memory.flash.push(region);
-          } else if (region.name.toLowerCase().includes('ram') ||
-                     region.name.toLowerCase().includes('sram')) {
+          } else if (
+            region.name.toLowerCase().includes("ram") ||
+            region.name.toLowerCase().includes("sram")
+          ) {
             memory.ram.push(region);
           } else {
             memory.other.push(region);
@@ -326,27 +333,31 @@ export class TargetInfo {
     } catch {
       // Fallback: Try qXfer:memory-map:read
       try {
-        const xmlResponse = await this.client.sendCommand('qXfer:memory-map:read::0,1000');
-        if (xmlResponse.type === 'data') {
+        const xmlResponse = await this.client.sendCommand(
+          "qXfer:memory-map:read::0,1000",
+        );
+        if (xmlResponse.type === "data") {
           // Parse XML memory map (simplified)
           const regions = this.parseXmlMemoryMap(xmlResponse.data);
-          memory.flash = regions.filter(r => r.name.includes('flash'));
-          memory.ram = regions.filter(r => r.name.includes('ram'));
-          memory.other = regions.filter(r => !r.name.includes('flash') && !r.name.includes('ram'));
+          memory.flash = regions.filter((r) => r.name.includes("flash"));
+          memory.ram = regions.filter((r) => r.name.includes("ram"));
+          memory.other = regions.filter(
+            (r) => !r.name.includes("flash") && !r.name.includes("ram"),
+          );
         }
       } catch {
         // If all else fails, use typical Cortex-M memory layout
         memory.flash.push({
-          name: 'Flash',
+          name: "Flash",
           start: 0x08000000,
           size: 0x100000, // 1MB assumed
-          access: 'rx'
+          access: "rx",
         });
         memory.ram.push({
-          name: 'SRAM',
+          name: "SRAM",
           start: 0x20000000,
           size: 0x20000, // 128KB assumed
-          access: 'rwx'
+          access: "rwx",
         });
       }
     }
@@ -359,12 +370,14 @@ export class TargetInfo {
    */
   private parseMemoryMap(output: string): MemoryRegion[] {
     const regions: MemoryRegion[] = [];
-    const lines = output.split('\n');
+    const lines = output.split("\n");
 
     for (const line of lines) {
       // Expected format: "Flash: 0x08000000 - 0x08100000 (1024K)"
       // Or: "RAM: 0x20000000 - 0x20020000 (128K)"
-      const match = line.match(/(\w+):\s*0x([0-9a-fA-F]+)\s*-\s*0x([0-9a-fA-F]+)\s*\((\d+)K?\)/);
+      const match = line.match(
+        /(\w+):\s*0x([0-9a-fA-F]+)\s*-\s*0x([0-9a-fA-F]+)\s*\((\d+)K?\)/,
+      );
       if (match) {
         const name = match[1];
         const start = parseInt(match[2], 16);
@@ -375,7 +388,7 @@ export class TargetInfo {
           name,
           start,
           size,
-          access: name.toLowerCase().includes('flash') ? 'rx' : 'rwx'
+          access: name.toLowerCase().includes("flash") ? "rx" : "rwx",
         });
       }
     }
@@ -390,7 +403,8 @@ export class TargetInfo {
     const regions: MemoryRegion[] = [];
 
     // Very simple XML parsing for memory regions
-    const memoryRegex = /<memory\s+type="(\w+)"\s+start="(0x[0-9a-fA-F]+)"\s+length="(0x[0-9a-fA-F]+)"/g;
+    const memoryRegex =
+      /<memory\s+type="(\w+)"\s+start="(0x[0-9a-fA-F]+)"\s+length="(0x[0-9a-fA-F]+)"/g;
     let match;
 
     while ((match = memoryRegex.exec(xml)) !== null) {
@@ -398,7 +412,7 @@ export class TargetInfo {
         name: match[1],
         start: parseInt(match[2], 16),
         size: parseInt(match[3], 16),
-        access: match[1].toLowerCase().includes('flash') ? 'rx' : 'rwx'
+        access: match[1].toLowerCase().includes("flash") ? "rx" : "rwx",
       });
     }
 
@@ -411,13 +425,13 @@ export class TargetInfo {
   private async readChipId(): Promise<string | null> {
     try {
       // STM32 DBGMCU_IDCODE register
-      const stm32IdAddr = 0xE0042000;
+      const stm32IdAddr = 0xe0042000;
       const idData = await this.client.readMemory(stm32IdAddr, 4);
       const idValue = new DataView(idData.buffer).getUint32(0, true);
 
-      if (idValue !== 0 && idValue !== 0xFFFFFFFF) {
-        const devId = (idValue & 0xFFF);
-        const revId = (idValue >> 16) & 0xFFFF;
+      if (idValue !== 0 && idValue !== 0xffffffff) {
+        const devId = idValue & 0xfff;
+        const revId = (idValue >> 16) & 0xffff;
         return `DEV:0x${devId.toString(16).toUpperCase()} REV:0x${revId.toString(16).toUpperCase()}`;
       }
     } catch {
@@ -426,11 +440,11 @@ export class TargetInfo {
 
     try {
       // ARM Cortex-M CPUID register
-      const cpuidAddr = 0xE000ED00;
+      const cpuidAddr = 0xe000ed00;
       const cpuidData = await this.client.readMemory(cpuidAddr, 4);
       const cpuidValue = new DataView(cpuidData.buffer).getUint32(0, true);
 
-      if (cpuidValue !== 0 && cpuidValue !== 0xFFFFFFFF) {
+      if (cpuidValue !== 0 && cpuidValue !== 0xffffffff) {
         // CPUID register format: [31:24]Implementer [23:20]Variant [19:16]Architecture [15:4]PartNo [3:0]Revision
         // We'll just return the full CPUID value for now
         return `CPUID:0x${cpuidValue.toString(16).toUpperCase()}`;
@@ -449,12 +463,12 @@ export class TargetInfo {
     const features: string[] = [];
 
     try {
-      const response = await this.client.sendCommand('qSupported');
-      if (response.type === 'data') {
+      const response = await this.client.sendCommand("qSupported");
+      if (response.type === "data") {
         // Parse supported features
-        const items = response.data.split(';');
+        const items = response.data.split(";");
         for (const item of items) {
-          if (item.includes('+') || item.includes('=')) {
+          if (item.includes("+") || item.includes("=")) {
             const feature = item.split(/[+=]/)[0];
             if (feature) features.push(feature);
           }
@@ -466,18 +480,18 @@ export class TargetInfo {
 
     // Check for Black Magic specific features
     const bmpFeatures = [
-      'swdp_scan',
-      'jtag_scan',
-      'tpwr',
-      'monitor',
-      'hard_reset'
+      "swdp_scan",
+      "jtag_scan",
+      "tpwr",
+      "monitor",
+      "hard_reset",
     ];
 
     for (const feature of bmpFeatures) {
       try {
         const cmd = BlackMagicCommands.buildMonitorCommand(`help ${feature}`);
         const response = await this.client.sendCommand(cmd);
-        if (response.type === 'data') {
+        if (response.type === "data") {
           features.push(feature);
         }
       } catch {
@@ -505,7 +519,7 @@ export class TargetInfo {
    * Format address for display
    */
   static formatAddress(addr: number): string {
-    return '0x' + addr.toString(16).toUpperCase().padStart(8, '0');
+    return "0x" + addr.toString(16).toUpperCase().padStart(8, "0");
   }
 }
 

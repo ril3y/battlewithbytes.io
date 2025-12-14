@@ -11,25 +11,25 @@
  * - metadata: Analysis metadata (base address, firmware size, timestamps)
  */
 
-const DB_NAME = 'battlemagic-analysis';
+const DB_NAME = "battlemagic-analysis";
 const DB_VERSION = 4; // Updated to fix comment storage (composite key: address + comment_type)
 
 // Object store names
-export const STORE_FUNCTIONS = 'functions';
-export const STORE_COMMENTS = 'comments';
-export const STORE_XREFS = 'xrefs';
-export const STORE_METADATA = 'metadata';
-export const STORE_VECTOR_TABLE = 'vector_table';
+export const STORE_FUNCTIONS = "functions";
+export const STORE_COMMENTS = "comments";
+export const STORE_XREFS = "xrefs";
+export const STORE_METADATA = "metadata";
+export const STORE_VECTOR_TABLE = "vector_table";
 
 /**
  * Function entry in database
  */
 export interface DbFunction {
-  address: number;           // Primary key
-  name: string;              // Function name (sub_1000 or user-renamed)
-  callers: number[];         // Addresses that call this function
-  callees: number[];         // Addresses this function calls
-  xref_count: number;        // Total xrefs to this function
+  address: number; // Primary key
+  name: string; // Function name (sub_1000 or user-renamed)
+  callers: number[]; // Addresses that call this function
+  callees: number[]; // Addresses this function calls
+  xref_count: number; // Total xrefs to this function
   is_user_renamed?: boolean; // True if user manually renamed this function
 }
 
@@ -37,46 +37,46 @@ export interface DbFunction {
  * Vector table entry in database
  */
 export interface DbVectorTableEntry {
-  vector_number: number;     // Primary key
-  handler_address: number;   // Handler function address
-  handler_name: string;      // Handler name (can be user-renamed)
-  is_valid: boolean;         // Whether this vector is valid
+  vector_number: number; // Primary key
+  handler_address: number; // Handler function address
+  handler_name: string; // Handler name (can be user-renamed)
+  is_valid: boolean; // Whether this vector is valid
 }
 
 /**
  * Comment type enum matching IDA Pro conventions
  */
-export type CommentType = 'standard' | 'repeatable' | 'anterior' | 'block';
+export type CommentType = "standard" | "repeatable" | "anterior" | "block";
 
 /**
  * Comment entry in database
  */
 export interface DbComment {
-  id: string;                // Primary key (composite: `${address}_${comment_type}`)
-  address: number;           // Address of the comment
-  text: string;              // Comment text
+  id: string; // Primary key (composite: `${address}_${comment_type}`)
+  address: number; // Address of the comment
+  text: string; // Comment text
   comment_type: CommentType; // Comment type (standard, repeatable, anterior, block)
-  timestamp: number;         // When comment was created/modified
+  timestamp: number; // When comment was created/modified
 }
 
 /**
  * Cross-reference entry in database
  */
 export interface DbXref {
-  id: string;                // Primary key (composite: `${from}_${to}_${type}`)
-  from_addr: number;         // Source address
-  to_addr: number;           // Target address
-  xref_type: number;         // XrefType enum value
-  instruction: string;       // Instruction mnemonic
-  operands: string;          // Instruction operands
+  id: string; // Primary key (composite: `${from}_${to}_${type}`)
+  from_addr: number; // Source address
+  to_addr: number; // Target address
+  xref_type: number; // XrefType enum value
+  instruction: string; // Instruction mnemonic
+  operands: string; // Instruction operands
 }
 
 /**
  * Metadata entry in database
  */
 export interface DbMetadata {
-  key: string;               // Primary key
-  value: unknown;            // Stored value (JSON-serializable)
+  key: string; // Primary key
+  value: unknown; // Stored value (JSON-serializable)
 }
 
 /**
@@ -115,65 +115,90 @@ export class AnalysisDatabase {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[AnalysisDB] Failed to open database:', request.error);
+        console.error("[AnalysisDB] Failed to open database:", request.error);
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[AnalysisDB] Database opened successfully');
+        console.log("[AnalysisDB] Database opened successfully");
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
-        console.log('[AnalysisDB] Upgrading database schema from version', oldVersion, 'to', DB_VERSION);
+        console.log(
+          "[AnalysisDB] Upgrading database schema from version",
+          oldVersion,
+          "to",
+          DB_VERSION,
+        );
 
         // Create object stores (for new databases)
         if (!db.objectStoreNames.contains(STORE_FUNCTIONS)) {
-          const functionsStore = db.createObjectStore(STORE_FUNCTIONS, { keyPath: 'address' });
-          functionsStore.createIndex('name', 'name', { unique: false });
-          console.log('[AnalysisDB] Created functions store');
+          const functionsStore = db.createObjectStore(STORE_FUNCTIONS, {
+            keyPath: "address",
+          });
+          functionsStore.createIndex("name", "name", { unique: false });
+          console.log("[AnalysisDB] Created functions store");
         }
 
         if (!db.objectStoreNames.contains(STORE_COMMENTS)) {
-          const commentsStore = db.createObjectStore(STORE_COMMENTS, { keyPath: 'id' });
-          commentsStore.createIndex('address', 'address', { unique: false });
-          commentsStore.createIndex('timestamp', 'timestamp', { unique: false });
-          commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
-          console.log('[AnalysisDB] Created comments store');
+          const commentsStore = db.createObjectStore(STORE_COMMENTS, {
+            keyPath: "id",
+          });
+          commentsStore.createIndex("address", "address", { unique: false });
+          commentsStore.createIndex("timestamp", "timestamp", {
+            unique: false,
+          });
+          commentsStore.createIndex("comment_type", "comment_type", {
+            unique: false,
+          });
+          console.log("[AnalysisDB] Created comments store");
         }
 
         if (!db.objectStoreNames.contains(STORE_XREFS)) {
-          const xrefsStore = db.createObjectStore(STORE_XREFS, { keyPath: 'id' });
-          xrefsStore.createIndex('from_addr', 'from_addr', { unique: false });
-          xrefsStore.createIndex('to_addr', 'to_addr', { unique: false });
-          xrefsStore.createIndex('xref_type', 'xref_type', { unique: false });
-          console.log('[AnalysisDB] Created xrefs store');
+          const xrefsStore = db.createObjectStore(STORE_XREFS, {
+            keyPath: "id",
+          });
+          xrefsStore.createIndex("from_addr", "from_addr", { unique: false });
+          xrefsStore.createIndex("to_addr", "to_addr", { unique: false });
+          xrefsStore.createIndex("xref_type", "xref_type", { unique: false });
+          console.log("[AnalysisDB] Created xrefs store");
         }
 
         if (!db.objectStoreNames.contains(STORE_METADATA)) {
-          db.createObjectStore(STORE_METADATA, { keyPath: 'key' });
-          console.log('[AnalysisDB] Created metadata store');
+          db.createObjectStore(STORE_METADATA, { keyPath: "key" });
+          console.log("[AnalysisDB] Created metadata store");
         }
 
         if (!db.objectStoreNames.contains(STORE_VECTOR_TABLE)) {
-          const vectorTableStore = db.createObjectStore(STORE_VECTOR_TABLE, { keyPath: 'vector_number' });
-          vectorTableStore.createIndex('handler_address', 'handler_address', { unique: false });
-          vectorTableStore.createIndex('is_valid', 'is_valid', { unique: false });
-          console.log('[AnalysisDB] Created vector_table store');
+          const vectorTableStore = db.createObjectStore(STORE_VECTOR_TABLE, {
+            keyPath: "vector_number",
+          });
+          vectorTableStore.createIndex("handler_address", "handler_address", {
+            unique: false,
+          });
+          vectorTableStore.createIndex("is_valid", "is_valid", {
+            unique: false,
+          });
+          console.log("[AnalysisDB] Created vector_table store");
         }
 
         // Migration from v1 to v2: Add comment_type field to existing comments
         if (oldVersion < 2 && oldVersion >= 1) {
-          console.log('[AnalysisDB] Migrating comments to v2 schema (adding comment_type)');
+          console.log(
+            "[AnalysisDB] Migrating comments to v2 schema (adding comment_type)",
+          );
           const transaction = (event.target as IDBOpenDBRequest).transaction!;
           const commentsStore = transaction.objectStore(STORE_COMMENTS);
 
           // Add comment_type index if upgrading from v1
-          if (!commentsStore.indexNames.contains('comment_type')) {
-            commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
+          if (!commentsStore.indexNames.contains("comment_type")) {
+            commentsStore.createIndex("comment_type", "comment_type", {
+              unique: false,
+            });
           }
 
           // Migrate existing comments to have 'standard' type
@@ -183,7 +208,7 @@ export class AnalysisDatabase {
             if (cursor) {
               const comment = cursor.value;
               if (!comment.comment_type) {
-                comment.comment_type = 'standard';
+                comment.comment_type = "standard";
                 cursor.update(comment);
               }
               cursor.continue();
@@ -193,12 +218,19 @@ export class AnalysisDatabase {
 
         // Migration from v3 to v4: Recreate comments store with composite key
         if (oldVersion < 4 && oldVersion >= 1) {
-          console.log('[AnalysisDB] Migrating comments to v4 schema (composite key: address + comment_type)');
+          console.log(
+            "[AnalysisDB] Migrating comments to v4 schema (composite key: address + comment_type)",
+          );
           const transaction = (event.target as IDBOpenDBRequest).transaction!;
 
           // Read all existing comments before deleting the store
           const oldCommentsStore = transaction.objectStore(STORE_COMMENTS);
-          const existingComments: Array<{address: number; text: string; comment_type: CommentType; timestamp: number}> = [];
+          const existingComments: Array<{
+            address: number;
+            text: string;
+            comment_type: CommentType;
+            timestamp: number;
+          }> = [];
 
           const readRequest = oldCommentsStore.openCursor();
           readRequest.onsuccess = (e) => {
@@ -208,13 +240,15 @@ export class AnalysisDatabase {
               existingComments.push({
                 address: comment.address,
                 text: comment.text,
-                comment_type: comment.comment_type || 'standard',
+                comment_type: comment.comment_type || "standard",
                 timestamp: comment.timestamp || Date.now(),
               });
               cursor.continue();
             } else {
               // All comments read, now recreate the store
-              console.log(`[AnalysisDB] Read ${existingComments.length} existing comments`);
+              console.log(
+                `[AnalysisDB] Read ${existingComments.length} existing comments`,
+              );
 
               // Delete old comments store
               if (db.objectStoreNames.contains(STORE_COMMENTS)) {
@@ -222,13 +256,21 @@ export class AnalysisDatabase {
               }
 
               // Create new comments store with composite key
-              const commentsStore = db.createObjectStore(STORE_COMMENTS, { keyPath: 'id' });
-              commentsStore.createIndex('address', 'address', { unique: false });
-              commentsStore.createIndex('timestamp', 'timestamp', { unique: false });
-              commentsStore.createIndex('comment_type', 'comment_type', { unique: false });
+              const commentsStore = db.createObjectStore(STORE_COMMENTS, {
+                keyPath: "id",
+              });
+              commentsStore.createIndex("address", "address", {
+                unique: false,
+              });
+              commentsStore.createIndex("timestamp", "timestamp", {
+                unique: false,
+              });
+              commentsStore.createIndex("comment_type", "comment_type", {
+                unique: false,
+              });
 
               // Migrate existing comments to new schema
-              existingComments.forEach(comment => {
+              existingComments.forEach((comment) => {
                 const newComment: DbComment = {
                   id: `${comment.address}_${comment.comment_type}`,
                   address: comment.address,
@@ -239,7 +281,9 @@ export class AnalysisDatabase {
                 commentsStore.add(newComment);
               });
 
-              console.log(`[AnalysisDB] Migrated ${existingComments.length} comments to v4 schema`);
+              console.log(
+                `[AnalysisDB] Migrated ${existingComments.length} comments to v4 schema`,
+              );
             }
           };
         }
@@ -257,7 +301,7 @@ export class AnalysisDatabase {
       this.db.close();
       this.db = null;
       this.dbPromise = null;
-      console.log('[AnalysisDB] Database closed');
+      console.log("[AnalysisDB] Database closed");
     }
   }
 
@@ -268,7 +312,7 @@ export class AnalysisDatabase {
     await this.init();
     const transaction = this.db!.transaction(
       [STORE_FUNCTIONS, STORE_COMMENTS, STORE_XREFS, STORE_METADATA],
-      'readwrite'
+      "readwrite",
     );
 
     await Promise.all([
@@ -278,7 +322,7 @@ export class AnalysisDatabase {
       this.clearStore(transaction.objectStore(STORE_METADATA)),
     ]);
 
-    console.log('[AnalysisDB] Database cleared');
+    console.log("[AnalysisDB] Database cleared");
   }
 
   private clearStore(store: IDBObjectStore): Promise<void> {
@@ -298,7 +342,7 @@ export class AnalysisDatabase {
    */
   async saveFunction(func: DbFunction): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_FUNCTIONS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_FUNCTIONS, "readwrite");
     const store = transaction.objectStore(STORE_FUNCTIONS);
 
     return new Promise((resolve, reject) => {
@@ -313,7 +357,7 @@ export class AnalysisDatabase {
    */
   async saveFunctions(functions: DbFunction[]): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_FUNCTIONS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_FUNCTIONS, "readwrite");
     const store = transaction.objectStore(STORE_FUNCTIONS);
 
     return new Promise((resolve, reject) => {
@@ -323,7 +367,7 @@ export class AnalysisDatabase {
         return;
       }
 
-      functions.forEach(func => {
+      functions.forEach((func) => {
         const request = store.put(func);
         request.onsuccess = () => {
           pending--;
@@ -339,7 +383,7 @@ export class AnalysisDatabase {
    */
   async getFunction(address: number): Promise<DbFunction | null> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_FUNCTIONS, 'readonly');
+    const transaction = this.db!.transaction(STORE_FUNCTIONS, "readonly");
     const store = transaction.objectStore(STORE_FUNCTIONS);
 
     return new Promise((resolve, reject) => {
@@ -354,7 +398,7 @@ export class AnalysisDatabase {
    */
   async getAllFunctions(): Promise<DbFunction[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_FUNCTIONS, 'readonly');
+    const transaction = this.db!.transaction(STORE_FUNCTIONS, "readonly");
     const store = transaction.objectStore(STORE_FUNCTIONS);
 
     return new Promise((resolve, reject) => {
@@ -369,7 +413,7 @@ export class AnalysisDatabase {
    */
   async deleteFunction(address: number): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_FUNCTIONS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_FUNCTIONS, "readwrite");
     const store = transaction.objectStore(STORE_FUNCTIONS);
 
     return new Promise((resolve, reject) => {
@@ -388,7 +432,7 @@ export class AnalysisDatabase {
    */
   async saveComment(comment: DbComment): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readwrite");
     const store = transaction.objectStore(STORE_COMMENTS);
 
     return new Promise((resolve, reject) => {
@@ -403,7 +447,7 @@ export class AnalysisDatabase {
    */
   async saveComments(comments: DbComment[]): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readwrite");
     const store = transaction.objectStore(STORE_COMMENTS);
 
     return new Promise((resolve, reject) => {
@@ -413,7 +457,7 @@ export class AnalysisDatabase {
         return;
       }
 
-      comments.forEach(comment => {
+      comments.forEach((comment) => {
         const request = store.put(comment);
         request.onsuccess = () => {
           pending--;
@@ -427,9 +471,12 @@ export class AnalysisDatabase {
   /**
    * Get a comment by address and type
    */
-  async getComment(address: number, commentType: CommentType = 'standard'): Promise<DbComment | null> {
+  async getComment(
+    address: number,
+    commentType: CommentType = "standard",
+  ): Promise<DbComment | null> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readonly');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readonly");
     const store = transaction.objectStore(STORE_COMMENTS);
     const id = `${address}_${commentType}`;
 
@@ -445,9 +492,9 @@ export class AnalysisDatabase {
    */
   async getCommentsAtAddress(address: number): Promise<DbComment[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readonly');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readonly");
     const store = transaction.objectStore(STORE_COMMENTS);
-    const index = store.index('address');
+    const index = store.index("address");
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(address);
@@ -461,7 +508,7 @@ export class AnalysisDatabase {
    */
   async getAllComments(): Promise<DbComment[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readonly');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readonly");
     const store = transaction.objectStore(STORE_COMMENTS);
 
     return new Promise((resolve, reject) => {
@@ -474,9 +521,12 @@ export class AnalysisDatabase {
   /**
    * Delete a comment by address and type
    */
-  async deleteComment(address: number, commentType: CommentType = 'standard'): Promise<void> {
+  async deleteComment(
+    address: number,
+    commentType: CommentType = "standard",
+  ): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_COMMENTS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_COMMENTS, "readwrite");
     const store = transaction.objectStore(STORE_COMMENTS);
     const id = `${address}_${commentType}`;
 
@@ -496,7 +546,7 @@ export class AnalysisDatabase {
    */
   async saveXref(xref: DbXref): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_XREFS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_XREFS, "readwrite");
     const store = transaction.objectStore(STORE_XREFS);
 
     return new Promise((resolve, reject) => {
@@ -511,7 +561,7 @@ export class AnalysisDatabase {
    */
   async saveXrefs(xrefs: DbXref[]): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_XREFS, 'readwrite');
+    const transaction = this.db!.transaction(STORE_XREFS, "readwrite");
     const store = transaction.objectStore(STORE_XREFS);
 
     return new Promise((resolve, reject) => {
@@ -521,7 +571,7 @@ export class AnalysisDatabase {
         return;
       }
 
-      xrefs.forEach(xref => {
+      xrefs.forEach((xref) => {
         const request = store.put(xref);
         request.onsuccess = () => {
           pending--;
@@ -537,7 +587,7 @@ export class AnalysisDatabase {
    */
   async getAllXrefs(): Promise<DbXref[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_XREFS, 'readonly');
+    const transaction = this.db!.transaction(STORE_XREFS, "readonly");
     const store = transaction.objectStore(STORE_XREFS);
 
     return new Promise((resolve, reject) => {
@@ -552,9 +602,9 @@ export class AnalysisDatabase {
    */
   async getXrefsFrom(fromAddr: number): Promise<DbXref[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_XREFS, 'readonly');
+    const transaction = this.db!.transaction(STORE_XREFS, "readonly");
     const store = transaction.objectStore(STORE_XREFS);
-    const index = store.index('from_addr');
+    const index = store.index("from_addr");
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(fromAddr);
@@ -568,9 +618,9 @@ export class AnalysisDatabase {
    */
   async getXrefsTo(toAddr: number): Promise<DbXref[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_XREFS, 'readonly');
+    const transaction = this.db!.transaction(STORE_XREFS, "readonly");
     const store = transaction.objectStore(STORE_XREFS);
-    const index = store.index('to_addr');
+    const index = store.index("to_addr");
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(toAddr);
@@ -588,7 +638,7 @@ export class AnalysisDatabase {
    */
   async saveVectorTable(entries: DbVectorTableEntry[]): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readwrite');
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, "readwrite");
     const store = transaction.objectStore(STORE_VECTOR_TABLE);
 
     return new Promise((resolve, reject) => {
@@ -598,7 +648,7 @@ export class AnalysisDatabase {
         return;
       }
 
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         const request = store.put(entry);
         request.onsuccess = () => {
           pending--;
@@ -614,7 +664,7 @@ export class AnalysisDatabase {
    */
   async getAllVectorTableEntries(): Promise<DbVectorTableEntry[]> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readonly');
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, "readonly");
     const store = transaction.objectStore(STORE_VECTOR_TABLE);
 
     return new Promise((resolve, reject) => {
@@ -627,9 +677,11 @@ export class AnalysisDatabase {
   /**
    * Get vector table entry by vector number
    */
-  async getVectorTableEntry(vectorNum: number): Promise<DbVectorTableEntry | null> {
+  async getVectorTableEntry(
+    vectorNum: number,
+  ): Promise<DbVectorTableEntry | null> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, 'readonly');
+    const transaction = this.db!.transaction(STORE_VECTOR_TABLE, "readonly");
     const store = transaction.objectStore(STORE_VECTOR_TABLE);
 
     return new Promise((resolve, reject) => {
@@ -648,7 +700,7 @@ export class AnalysisDatabase {
    */
   async setMetadata(key: string, value: unknown): Promise<void> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_METADATA, 'readwrite');
+    const transaction = this.db!.transaction(STORE_METADATA, "readwrite");
     const store = transaction.objectStore(STORE_METADATA);
 
     return new Promise((resolve, reject) => {
@@ -663,7 +715,7 @@ export class AnalysisDatabase {
    */
   async getMetadata<T = unknown>(key: string): Promise<T | null> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_METADATA, 'readonly');
+    const transaction = this.db!.transaction(STORE_METADATA, "readonly");
     const store = transaction.objectStore(STORE_METADATA);
 
     return new Promise((resolve, reject) => {
@@ -681,7 +733,7 @@ export class AnalysisDatabase {
    */
   async getAllMetadata(): Promise<Record<string, unknown>> {
     await this.init();
-    const transaction = this.db!.transaction(STORE_METADATA, 'readonly');
+    const transaction = this.db!.transaction(STORE_METADATA, "readonly");
     const store = transaction.objectStore(STORE_METADATA);
 
     return new Promise((resolve, reject) => {
@@ -689,7 +741,7 @@ export class AnalysisDatabase {
       request.onsuccess = () => {
         const entries = request.result as DbMetadata[];
         const metadata: Record<string, unknown> = {};
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           metadata[entry.key] = entry.value;
         });
         resolve(metadata);
@@ -727,9 +779,9 @@ export class AnalysisDatabase {
 
     // Convert to JSON blob
     const json = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = new Blob([json], { type: "application/json" });
 
-    console.log('[AnalysisDB] Exported database:', {
+    console.log("[AnalysisDB] Exported database:", {
       functions: functions.length,
       comments: comments.length,
       xrefs: xrefs.length,
@@ -742,12 +794,12 @@ export class AnalysisDatabase {
   /**
    * Download database as .mdb file
    */
-  async downloadMdb(filename: string = 'analysis.mdb'): Promise<void> {
+  async downloadMdb(filename: string = "analysis.mdb"): Promise<void> {
     const blob = await this.exportToMdb();
 
     // Create download link
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -769,11 +821,17 @@ export class AnalysisDatabase {
     const data: MdbExport = JSON.parse(text);
 
     // Validate format
-    if (!data.version || !data.functions || !data.comments || !data.xrefs || !data.metadata) {
-      throw new Error('Invalid .mdb file format');
+    if (
+      !data.version ||
+      !data.functions ||
+      !data.comments ||
+      !data.xrefs ||
+      !data.metadata
+    ) {
+      throw new Error("Invalid .mdb file format");
     }
 
-    console.log('[AnalysisDB] Importing database:', {
+    console.log("[AnalysisDB] Importing database:", {
       version: data.version,
       functions: data.functions.length,
       comments: data.comments.length,
@@ -788,18 +846,20 @@ export class AnalysisDatabase {
       this.saveFunctions(data.functions),
       this.saveComments(data.comments),
       this.saveXrefs(data.xrefs),
-      ...Object.entries(data.metadata).map(([key, value]) => this.setMetadata(key, value)),
+      ...Object.entries(data.metadata).map(([key, value]) =>
+        this.setMetadata(key, value),
+      ),
     ]);
 
-    console.log('[AnalysisDB] Database imported successfully');
+    console.log("[AnalysisDB] Database imported successfully");
   }
 
   /**
    * Upload and import .mdb file
    */
   async uploadMdb(file: File): Promise<void> {
-    if (!file.name.endsWith('.mdb')) {
-      throw new Error('File must have .mdb extension');
+    if (!file.name.endsWith(".mdb")) {
+      throw new Error("File must have .mdb extension");
     }
 
     await this.importFromMdb(file);
@@ -830,7 +890,7 @@ export class AnalysisDatabase {
       this.getAllFunctions(),
       this.getAllComments(),
       this.getAllXrefs(),
-      this.getMetadata<number>('lastModified'),
+      this.getMetadata<number>("lastModified"),
     ]);
 
     return {
@@ -854,7 +914,7 @@ export class AnalysisDatabase {
     const allFunctions = await this.getAllFunctions();
     const userRenamed = new Map<number, string>();
 
-    allFunctions.forEach(func => {
+    allFunctions.forEach((func) => {
       if (func.is_user_renamed) {
         userRenamed.set(func.address, func.name);
       }
@@ -871,7 +931,7 @@ export class AnalysisDatabase {
     await this.init();
     const transaction = this.db!.transaction(
       [STORE_XREFS, STORE_VECTOR_TABLE, STORE_FUNCTIONS],
-      'readwrite'
+      "readwrite",
     );
 
     await Promise.all([
@@ -880,7 +940,9 @@ export class AnalysisDatabase {
       this.clearStore(transaction.objectStore(STORE_FUNCTIONS)),
     ]);
 
-    console.log('[AnalysisDB] Cleared auto-generated data (xrefs, vector table, functions)');
+    console.log(
+      "[AnalysisDB] Cleared auto-generated data (xrefs, vector table, functions)",
+    );
   }
 }
 

@@ -131,7 +131,7 @@ export class FrameworkManager {
 
     // Fetch framework definition from server
     try {
-      const url = `/platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`;
+      const url = `/tools/battleforge/platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -205,7 +205,7 @@ export class FrameworkManager {
       message: "Downloading framework core files...",
     });
 
-    const response = await fetch(`/platforms/${coreUrl}`);
+    const response = await fetch(`/tools/battleforge/platforms/${coreUrl}`);
     if (!response.ok) {
       throw new Error(
         `Failed to download framework core files: ${response.status}`,

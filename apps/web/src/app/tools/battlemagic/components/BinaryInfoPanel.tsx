@@ -6,16 +6,16 @@
  * for setting breakpoints and navigating to addresses.
  */
 
-'use client';
+"use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   BinaryInfo,
   VectorInfo,
   Architecture,
-  VectorType
-} from '../lib/binary/types';
-import { ContextMenu } from './ContextMenu';
+  VectorType,
+} from "../lib/binary/types";
+import { ContextMenu } from "./ContextMenu";
 
 /**
  * Props for BinaryInfoPanel
@@ -53,19 +53,19 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
   onSetBreakpoint,
   onJumpToAddress,
   onViewMemory,
-  className = ''
+  className = "",
 }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['overview', 'vectors'])
+    new Set(["overview", "vectors"]),
   );
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedVector, setSelectedVector] = useState<VectorInfo | null>(null);
 
   /**
    * Toggle section expansion
    */
   const toggleSection = useCallback((section: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const next = new Set(prev);
       if (next.has(section)) {
         next.delete(section);
@@ -80,8 +80,8 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
    * Format address as hex string
    */
   const formatAddress = useCallback((addr: number | undefined): string => {
-    if (addr === undefined) return 'N/A';
-    return `0x${addr.toString(16).toUpperCase().padStart(8, '0')}`;
+    if (addr === undefined) return "N/A";
+    return `0x${addr.toString(16).toUpperCase().padStart(8, "0")}`;
   }, []);
 
   /**
@@ -98,13 +98,20 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
    */
   const getVectorTypeColor = useCallback((type: VectorType): string => {
     switch (type) {
-      case 'reset': return 'text-red-500';
-      case 'nmi': return 'text-orange-500';
-      case 'hardfault': return 'text-red-400';
-      case 'irq': return 'text-blue-500';
-      case 'exception': return 'text-yellow-500';
-      case 'trap': return 'text-purple-500';
-      default: return 'text-gray-500';
+      case "reset":
+        return "text-red-500";
+      case "nmi":
+        return "text-orange-500";
+      case "hardfault":
+        return "text-red-400";
+      case "irq":
+        return "text-blue-500";
+      case "exception":
+        return "text-yellow-500";
+      case "trap":
+        return "text-purple-500";
+      default:
+        return "text-gray-500";
     }
   }, []);
 
@@ -113,11 +120,16 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
    */
   const getArchitectureIcon = useCallback((arch: Architecture): string => {
     switch (arch) {
-      case 'ARM': return '🔧';
-      case 'MIPS': return '⚙️';
-      case 'RISCV': return '🚀';
-      case 'X86': return '💻';
-      default: return '❓';
+      case "ARM":
+        return "🔧";
+      case "MIPS":
+        return "⚙️";
+      case "RISCV":
+        return "🚀";
+      case "X86":
+        return "💻";
+      default:
+        return "❓";
     }
   }, []);
 
@@ -128,11 +140,12 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
     if (!binaryInfo || !searchTerm) return binaryInfo?.vectors || [];
 
     const term = searchTerm.toLowerCase();
-    return binaryInfo.vectors.filter(v =>
-      v.name.toLowerCase().includes(term) ||
-      v.type.toLowerCase().includes(term) ||
-      formatAddress(v.address).toLowerCase().includes(term) ||
-      formatAddress(v.handlerAddress).toLowerCase().includes(term)
+    return binaryInfo.vectors.filter(
+      (v) =>
+        v.name.toLowerCase().includes(term) ||
+        v.type.toLowerCase().includes(term) ||
+        formatAddress(v.address).toLowerCase().includes(term) ||
+        formatAddress(v.handlerAddress).toLowerCase().includes(term),
     );
   }, [binaryInfo, searchTerm, formatAddress]);
 
@@ -157,13 +170,13 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {/* Overview Section */}
       <div className="border-b border-gray-700">
         <button
-          onClick={() => toggleSection('overview')}
+          onClick={() => toggleSection("overview")}
           className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
         >
           <span className="font-medium">Overview</span>
-          <span>{expandedSections.has('overview') ? '▼' : '▶'}</span>
+          <span>{expandedSections.has("overview") ? "▼" : "▶"}</span>
         </button>
-        {expandedSections.has('overview') && (
+        {expandedSections.has("overview") && (
           <div className="px-4 py-2 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Architecture:</span>
@@ -175,42 +188,57 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Entry Point:</span>
-              <span className="font-mono text-blue-400 cursor-pointer hover:underline"
-                    onClick={() => onJumpToAddress?.(binaryInfo.entryPoint)}>
+              <span
+                className="font-mono text-blue-400 cursor-pointer hover:underline"
+                onClick={() => onJumpToAddress?.(binaryInfo.entryPoint)}
+              >
                 {formatAddress(binaryInfo.entryPoint)}
               </span>
             </div>
             {binaryInfo.stackPointer && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Stack Pointer:</span>
-                <span className="font-mono">{formatAddress(binaryInfo.stackPointer)}</span>
+                <span className="font-mono">
+                  {formatAddress(binaryInfo.stackPointer)}
+                </span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-gray-400">File Size:</span>
-              <span className="font-mono">{formatSize(binaryInfo.metadata.fileSize)}</span>
+              <span className="font-mono">
+                {formatSize(binaryInfo.metadata.fileSize)}
+              </span>
             </div>
             {binaryInfo.metadata.endianness && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Endianness:</span>
                 <span className="font-mono">
-                  {binaryInfo.metadata.endianness === 'little' ? 'Little Endian' : 'Big Endian'}
+                  {binaryInfo.metadata.endianness === "little"
+                    ? "Little Endian"
+                    : "Big Endian"}
                 </span>
               </div>
             )}
-            {binaryInfo.metadata.architectureMetadata?.arch === 'ARM' && (
+            {binaryInfo.metadata.architectureMetadata?.arch === "ARM" && (
               <>
                 <div className="flex justify-between">
                   <span className="text-gray-400">ARM Version:</span>
                   <span className="font-mono">
-                    {binaryInfo.metadata.architectureMetadata.specific.archVersion}
+                    {
+                      binaryInfo.metadata.architectureMetadata.specific
+                        .archVersion
+                    }
                   </span>
                 </div>
-                {binaryInfo.metadata.architectureMetadata.specific.processorType && (
+                {binaryInfo.metadata.architectureMetadata.specific
+                  .processorType && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Processor:</span>
                     <span className="font-mono">
-                      {binaryInfo.metadata.architectureMetadata.specific.processorType}
+                      {
+                        binaryInfo.metadata.architectureMetadata.specific
+                          .processorType
+                      }
                     </span>
                   </div>
                 )}
@@ -223,15 +251,15 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {/* Vector Table Section */}
       <div className="border-b border-gray-700">
         <button
-          onClick={() => toggleSection('vectors')}
+          onClick={() => toggleSection("vectors")}
           className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
         >
           <span className="font-medium">
             Vector Table ({binaryInfo.vectors.length} entries)
           </span>
-          <span>{expandedSections.has('vectors') ? '▼' : '▶'}</span>
+          <span>{expandedSections.has("vectors") ? "▼" : "▶"}</span>
         </button>
-        {expandedSections.has('vectors') && (
+        {expandedSections.has("vectors") && (
           <div className="px-4 py-2">
             {/* Search bar */}
             <input
@@ -261,7 +289,9 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
                         <span className="text-gray-500 font-mono w-8">
                           {vector.index}:
                         </span>
-                        <span className={`font-medium ${getVectorTypeColor(vector.type)}`}>
+                        <span
+                          className={`font-medium ${getVectorTypeColor(vector.type)}`}
+                        >
                           {vector.name}
                         </span>
                       </div>
@@ -288,25 +318,28 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {/* Sections */}
       <div className="border-b border-gray-700">
         <button
-          onClick={() => toggleSection('sections')}
+          onClick={() => toggleSection("sections")}
           className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
         >
           <span className="font-medium">
             Sections ({binaryInfo.sections.length})
           </span>
-          <span>{expandedSections.has('sections') ? '▼' : '▶'}</span>
+          <span>{expandedSections.has("sections") ? "▼" : "▶"}</span>
         </button>
-        {expandedSections.has('sections') && (
+        {expandedSections.has("sections") && (
           <div className="px-4 py-2">
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {binaryInfo.sections.map((section, idx) => (
-                <div key={idx} className="text-sm hover:bg-gray-700 px-2 py-1 rounded">
+                <div
+                  key={idx}
+                  className="text-sm hover:bg-gray-700 px-2 py-1 rounded"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-medium">{section.name}</span>
+                    <span className="font-mono font-medium">
+                      {section.name}
+                    </span>
                     <div className="flex items-center gap-4 text-xs">
-                      <span className="text-gray-400">
-                        {section.type}
-                      </span>
+                      <span className="text-gray-400">{section.type}</span>
                       <span className="font-mono text-gray-400">
                         {formatAddress(section.address)}
                       </span>
@@ -326,32 +359,41 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {binaryInfo.memoryMap && binaryInfo.memoryMap.length > 0 && (
         <div className="border-b border-gray-700">
           <button
-            onClick={() => toggleSection('memory')}
+            onClick={() => toggleSection("memory")}
             className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
           >
             <span className="font-medium">
               Memory Map ({binaryInfo.memoryMap.length} regions)
             </span>
-            <span>{expandedSections.has('memory') ? '▼' : '▶'}</span>
+            <span>{expandedSections.has("memory") ? "▼" : "▶"}</span>
           </button>
-          {expandedSections.has('memory') && (
+          {expandedSections.has("memory") && (
             <div className="px-4 py-2">
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {binaryInfo.memoryMap.map((region, idx) => (
-                  <div key={idx} className="text-sm hover:bg-gray-700 px-2 py-1 rounded">
+                  <div
+                    key={idx}
+                    className="text-sm hover:bg-gray-700 px-2 py-1 rounded"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{region.name}</span>
                       <div className="flex items-center gap-4 text-xs">
-                        <span className={`px-1 rounded ${
-                          region.type === 'flash' ? 'bg-blue-800' :
-                          region.type === 'ram' ? 'bg-green-800' :
-                          region.type === 'peripheral' ? 'bg-yellow-800' :
-                          'bg-gray-700'
-                        }`}>
+                        <span
+                          className={`px-1 rounded ${
+                            region.type === "flash"
+                              ? "bg-blue-800"
+                              : region.type === "ram"
+                                ? "bg-green-800"
+                                : region.type === "peripheral"
+                                  ? "bg-yellow-800"
+                                  : "bg-gray-700"
+                          }`}
+                        >
                           {region.type}
                         </span>
                         <span className="font-mono text-gray-400">
-                          {formatAddress(region.start)} - {formatAddress(region.end)}
+                          {formatAddress(region.start)} -{" "}
+                          {formatAddress(region.end)}
                         </span>
                         <span className="text-gray-500">
                           {formatSize(region.size)}
@@ -370,27 +412,30 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {binaryInfo.symbols && binaryInfo.symbols.length > 0 && (
         <div className="border-b border-gray-700">
           <button
-            onClick={() => toggleSection('symbols')}
+            onClick={() => toggleSection("symbols")}
             className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
           >
             <span className="font-medium">
               Symbols ({binaryInfo.symbols.length})
             </span>
-            <span>{expandedSections.has('symbols') ? '▼' : '▶'}</span>
+            <span>{expandedSections.has("symbols") ? "▼" : "▶"}</span>
           </button>
-          {expandedSections.has('symbols') && (
+          {expandedSections.has("symbols") && (
             <div className="px-4 py-2">
               <div className="space-y-1 max-h-64 overflow-y-auto">
                 {binaryInfo.symbols.slice(0, 100).map((symbol, idx) => (
-                  <div key={idx} className="text-sm hover:bg-gray-700 px-2 py-1 rounded">
+                  <div
+                    key={idx}
+                    className="text-sm hover:bg-gray-700 px-2 py-1 rounded"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-mono">{symbol.name}</span>
                       <div className="flex items-center gap-4 text-xs">
-                        <span className="text-gray-400">
-                          {symbol.type}
-                        </span>
-                        <span className="font-mono text-blue-400 cursor-pointer hover:underline"
-                              onClick={() => onJumpToAddress?.(symbol.address)}>
+                        <span className="text-gray-400">{symbol.type}</span>
+                        <span
+                          className="font-mono text-blue-400 cursor-pointer hover:underline"
+                          onClick={() => onJumpToAddress?.(symbol.address)}
+                        >
                           {formatAddress(symbol.address)}
                         </span>
                       </div>
@@ -407,15 +452,15 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
       {binaryInfo.warnings && binaryInfo.warnings.length > 0 && (
         <div className="border-b border-gray-700">
           <button
-            onClick={() => toggleSection('warnings')}
+            onClick={() => toggleSection("warnings")}
             className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
           >
             <span className="font-medium text-yellow-500">
               ⚠️ Warnings ({binaryInfo.warnings.length})
             </span>
-            <span>{expandedSections.has('warnings') ? '▼' : '▶'}</span>
+            <span>{expandedSections.has("warnings") ? "▼" : "▶"}</span>
           </button>
-          {expandedSections.has('warnings') && (
+          {expandedSections.has("warnings") && (
             <div className="px-4 py-2">
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {binaryInfo.warnings.map((warning, idx) => (
@@ -443,38 +488,40 @@ export const BinaryInfoPanel: React.FC<BinaryInfoPanelProps> = ({
                 }
                 setSelectedVector(null);
               },
-              icon: '🔴'
+              icon: "🔴",
             },
             {
-              label: 'Jump to handler',
+              label: "Jump to handler",
               onClick: () => {
                 if (selectedVector.handlerAddress) {
                   onJumpToAddress?.(selectedVector.handlerAddress);
                 }
                 setSelectedVector(null);
               },
-              icon: '➡️'
+              icon: "➡️",
             },
             {
-              label: 'View in memory',
+              label: "View in memory",
               onClick: () => {
                 if (selectedVector.handlerAddress) {
                   onViewMemory?.(selectedVector.handlerAddress);
                 }
                 setSelectedVector(null);
               },
-              icon: '👁️'
+              icon: "👁️",
             },
             {
-              label: 'Copy address',
+              label: "Copy address",
               onClick: () => {
                 if (selectedVector.handlerAddress) {
-                  navigator.clipboard.writeText(formatAddress(selectedVector.handlerAddress));
+                  navigator.clipboard.writeText(
+                    formatAddress(selectedVector.handlerAddress),
+                  );
                 }
                 setSelectedVector(null);
               },
-              icon: '📋'
-            }
+              icon: "📋",
+            },
           ]}
           onClose={() => setSelectedVector(null)}
         />

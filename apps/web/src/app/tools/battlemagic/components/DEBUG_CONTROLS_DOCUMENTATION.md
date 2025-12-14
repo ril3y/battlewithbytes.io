@@ -7,6 +7,7 @@ The Debug Control Toolbar provides intuitive, keyboard-accessible controls for G
 ## Components
 
 ### 1. DebugControlToolbar.tsx
+
 **Location:** `X:\battlewithbytes.io\src\app\tools\battlemagic\components\DebugControlToolbar.tsx`
 
 Main component that provides all debug control buttons and keyboard shortcuts.
@@ -15,11 +16,11 @@ Main component that provides all debug control buttons and keyboard shortcuts.
 
 ```typescript
 interface DebugControlToolbarProps {
-  gdbClient: GdbClient | null;          // GDB client instance
-  executionState: ExecutionState;        // Current execution state
-  onStateChange?: (state: ExecutionState) => void;  // State change callback
-  onCommandExecuted?: (command: string) => void;    // Command execution callback
-  isAttached: boolean;                   // Whether target is attached
+  gdbClient: GdbClient | null; // GDB client instance
+  executionState: ExecutionState; // Current execution state
+  onStateChange?: (state: ExecutionState) => void; // State change callback
+  onCommandExecuted?: (command: string) => void; // Command execution callback
+  isAttached: boolean; // Whether target is attached
 }
 ```
 
@@ -27,14 +28,15 @@ interface DebugControlToolbarProps {
 
 ```typescript
 enum ExecutionState {
-  STOPPED = 'stopped',        // Target execution halted
-  RUNNING = 'running',        // Target actively executing
-  STEPPING = 'stepping',      // Single-stepping
-  UNKNOWN = 'unknown'         // Unknown state
+  STOPPED = "stopped", // Target execution halted
+  RUNNING = "running", // Target actively executing
+  STEPPING = "stepping", // Single-stepping
+  UNKNOWN = "unknown", // Unknown state
 }
 ```
 
 ### 2. GdbPanel.tsx (Enhanced)
+
 **Location:** `X:\battlewithbytes.io\src\app\tools\battlemagic\components\GdbPanel.tsx`
 
 Updated to include the DebugControlToolbar and track execution state.
@@ -55,55 +57,63 @@ Updated to include the DebugControlToolbar and track execution state.
 ## Debug Control Buttons
 
 ### Button Layout
-| Icon | Label | Keyboard Shortcut | Function |
-|------|-------|-------------------|----------|
-| ▶ | Continue | F5 | Resume execution |
-| ⏸ | Pause | F6 | Halt execution (Ctrl+C) |
-| ⏩ | Step Over | F10 | Step over function calls |
-| ⬇ | Step Into | F11 | Step into functions |
-| ⬆ | Step Out | Shift+F11 | Step out of current function |
-| ↺ | Restart | Ctrl+Shift+F5 | Restart execution (GDB 'run') |
-| 🔄 | Reset | — | Reset target (GDB 'monitor reset') |
+
+| Icon | Label     | Keyboard Shortcut | Function                           |
+| ---- | --------- | ----------------- | ---------------------------------- |
+| ▶   | Continue  | F5                | Resume execution                   |
+| ⏸   | Pause     | F6                | Halt execution (Ctrl+C)            |
+| ⏩   | Step Over | F10               | Step over function calls           |
+| ⬇   | Step Into | F11               | Step into functions                |
+| ⬆   | Step Out  | Shift+F11         | Step out of current function       |
+| ↺    | Restart   | Ctrl+Shift+F5     | Restart execution (GDB 'run')      |
+| 🔄   | Reset     | —                 | Reset target (GDB 'monitor reset') |
 
 ### Button Behavior
 
 #### Continue/Run (▶)
+
 - **GDB Command:** `c` (continue)
 - **State Effect:** Sets execution state to RUNNING
 - **Enabled When:** Target is paused/stopped
 - **Color:** Green (success variant)
 
 #### Pause/Break (⏸)
+
 - **GDB Command:** Ctrl+C (interrupt signal)
 - **State Effect:** Sets execution state to STOPPED
 - **Enabled When:** Target is running
 - **Color:** Yellow (warning variant)
 
 #### Step Over (⏩)
+
 - **GDB Command:** `n` (next instruction)
 - **State Effect:** Sets execution state to STEPPING
 - **Enabled When:** Target is paused
 - **Color:** Default gray
 
 #### Step Into (⬇)
+
 - **GDB Command:** `s` (step instruction)
 - **State Effect:** Sets execution state to STEPPING
 - **Enabled When:** Target is paused
 - **Color:** Default gray
 
 #### Step Out (⬆)
+
 - **GDB Command:** `finish` (step out)
 - **State Effect:** Sets execution state to STEPPING
 - **Enabled When:** Target is paused
 - **Color:** Default gray
 
 #### Restart (↺)
+
 - **GDB Command:** `run` (restart execution)
 - **State Effect:** Sets execution state to RUNNING
 - **Enabled When:** Always enabled (except if not attached)
 - **Color:** Default gray
 
 #### Reset (🔄)
+
 - **GDB Command:** `monitor reset` (target reset)
 - **State Effect:** N/A (target resets)
 - **Enabled When:** Always enabled (except if not attached)
@@ -112,6 +122,7 @@ Updated to include the DebugControlToolbar and track execution state.
 ## Keyboard Shortcuts
 
 ### Standard Debugger Shortcuts
+
 - **F5**: Continue/Run execution
 - **F6**: Pause/Break execution
 - **F10**: Step Over (next instruction)
@@ -122,12 +133,14 @@ Updated to include the DebugControlToolbar and track execution state.
 ### Keyboard Shortcut Implementation
 
 Shortcuts are implemented via global `keydown` event listener that:
+
 1. Checks if GDB is connected
 2. Checks if target is attached
 3. Prevents default browser behavior
 4. Executes corresponding button action
 
 All shortcuts are context-aware and respect:
+
 - Connection state
 - Attachment state
 - Execution state (some only work when paused)
@@ -135,6 +148,7 @@ All shortcuts are context-aware and respect:
 ## Visual Design
 
 ### Color Scheme
+
 ```
 Enabled States:
 - Default (Gray): bg-gray-700, text-gray-200
@@ -152,6 +166,7 @@ Hover States:
 ```
 
 ### Layout
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ State: STOPPED │ ▶ ⏸ ⏩ ⬇ ⬆ ↺ 🔄    [Executing] │
@@ -159,6 +174,7 @@ Hover States:
 ```
 
 ### Tooltips
+
 - Position: Above button (bottom-full)
 - Show on hover: Displays in 250ms
 - Content: Button description + keyboard shortcut
@@ -172,14 +188,12 @@ The GdbPanel tracks execution state by monitoring output messages:
 
 ```typescript
 // Stops execution
-if (lastLine.includes('[target stopped]') ||
-    lastLine.includes('signal')) {
+if (lastLine.includes("[target stopped]") || lastLine.includes("signal")) {
   setExecutionState(ExecutionState.STOPPED);
 }
 
 // Resumes execution
-if (lastLine.includes('[state] running') ||
-    lastLine.includes('continuing')) {
+if (lastLine.includes("[state] running") || lastLine.includes("continuing")) {
   setExecutionState(ExecutionState.RUNNING);
 }
 ```
@@ -201,15 +215,15 @@ Displayed in header as: `PC: 0x08001234`
 
 All button actions use existing GdbClient methods:
 
-| Button | Method | Type |
-|--------|--------|------|
-| Continue | `gdbClient.continue()` | Instance Method |
-| Pause | `gdbClient.halt()` | Instance Method |
-| Step Over | `gdbClient.step()` | Instance Method |
-| Step Into | `gdbClient.step()` | Instance Method |
-| Step Out | `gdbClient.sendCommand('finish')` | Raw Command |
-| Restart | `gdbClient.sendCommand('run')` | Raw Command |
-| Reset | `gdbClient.reset()` | Instance Method |
+| Button    | Method                            | Type            |
+| --------- | --------------------------------- | --------------- |
+| Continue  | `gdbClient.continue()`            | Instance Method |
+| Pause     | `gdbClient.halt()`                | Instance Method |
+| Step Over | `gdbClient.step()`                | Instance Method |
+| Step Into | `gdbClient.step()`                | Instance Method |
+| Step Out  | `gdbClient.sendCommand('finish')` | Raw Command     |
+| Restart   | `gdbClient.sendCommand('run')`    | Raw Command     |
+| Reset     | `gdbClient.reset()`               | Instance Method |
 
 ### Method Signatures
 
@@ -241,23 +255,27 @@ async sendCommand(command: string): Promise<GdbResponse>
 ## Implementation Features
 
 ### Responsive Design
+
 - Icon always visible (smaller screens)
 - Label hidden on small screens (sm: breakpoint)
 - Touch-friendly button sizes (px-3 py-2)
 - Stack responsively on narrow screens
 
 ### Error Handling
+
 - Errors logged to console (not shown to user)
 - Non-blocking: execution continues even if command fails
 - Timeout handled by underlying GdbClient (5-15 seconds)
 
 ### Visual Feedback
+
 - **Executing Indicator**: Pulsing dot appears during command execution
 - **Button States**: Disabled buttons clearly indicated
 - **Hover Effects**: Bright borders and shadows on hover
 - **State Indicator**: Real-time execution state display
 
 ### Accessibility
+
 - All buttons have descriptive titles (hover tooltips)
 - Keyboard shortcuts listed in tooltips
 - Clear visual state indicators
@@ -280,6 +298,7 @@ async sendCommand(command: string): Promise<GdbResponse>
 ### Accessing Current PC
 
 The current PC is available in the output and displayed in the header:
+
 ```
 GDB | Connected | Attached | PC: 0x08001a2c
 ```
@@ -300,6 +319,7 @@ No additional changes needed in BattleMagicMonitor for basic functionality.
 ### Unit Testing
 
 Test DebugControlToolbar with:
+
 ```typescript
 // Mock GdbClient
 const mockGdbClient = {
@@ -309,7 +329,7 @@ const mockGdbClient = {
   step: jest.fn(),
   reset: jest.fn(),
   sendCommand: jest.fn(),
-  getState: () => ConnectionState.ATTACHED
+  getState: () => ConnectionState.ATTACHED,
 };
 
 // Test button enables/disables
@@ -320,6 +340,7 @@ const mockGdbClient = {
 ### Integration Testing
 
 Test in BattleMagicMonitor context:
+
 1. Connect to real/mock GDB
 2. Attach to target
 3. Execute debug commands
@@ -379,6 +400,7 @@ The GdbPanel already supports command history with ↑/↓ navigation.
 ### Advanced Debugging
 
 Future versions could add:
+
 - Memory watch windows
 - Disassembly view with PC indicator
 - Stack unwinding

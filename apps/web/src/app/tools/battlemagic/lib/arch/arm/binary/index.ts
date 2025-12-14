@@ -4,4 +4,4 @@
  * ARM-specific binary format parsing
  */
 
-export { ArmBinaryParser } from './ArmBinaryParser';
+export { ArmBinaryParser } from "./ArmBinaryParser";

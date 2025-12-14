@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Configuration Modal Component
@@ -9,7 +9,7 @@
  * - Display options
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 // TODO: Move these to types.ts when this component is actually used
 interface AppConfig {
@@ -17,7 +17,7 @@ interface AppConfig {
     baudRate: number;
     dataBits: 7 | 8;
     stopBits: 1 | 2;
-    parity: 'none' | 'even' | 'odd';
+    parity: "none" | "even" | "odd";
   };
   maxMessages: number;
   autoScroll: boolean;
@@ -30,7 +30,7 @@ const DEFAULT_APP_CONFIG: AppConfig = {
     baudRate: 115200,
     dataBits: 8,
     stopBits: 1,
-    parity: 'none',
+    parity: "none",
   },
   maxMessages: 1000,
   autoScroll: true,
@@ -45,7 +45,12 @@ interface ConfigModalProps {
   onSave: (config: AppConfig) => void;
 }
 
-export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigModalProps) {
+export default function ConfigModal({
+  isOpen,
+  onClose,
+  config,
+  onSave,
+}: ConfigModalProps) {
   const [editedConfig, setEditedConfig] = useState<AppConfig>(config);
 
   // Update local state when config prop changes
@@ -96,13 +101,20 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Baud Rate</label>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Baud Rate
+                </label>
                 <select
                   value={editedConfig.serial.baudRate}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    serial: { ...editedConfig.serial, baudRate: parseInt(e.target.value) }
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      serial: {
+                        ...editedConfig.serial,
+                        baudRate: parseInt(e.target.value),
+                      },
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-green-500 transition-colors"
                 >
                   <option value={9600}>9600</option>
@@ -118,13 +130,20 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Data Bits</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Data Bits
+                  </label>
                   <select
                     value={editedConfig.serial.dataBits}
-                    onChange={(e) => setEditedConfig({
-                      ...editedConfig,
-                      serial: { ...editedConfig.serial, dataBits: parseInt(e.target.value) as 7 | 8 }
-                    })}
+                    onChange={(e) =>
+                      setEditedConfig({
+                        ...editedConfig,
+                        serial: {
+                          ...editedConfig.serial,
+                          dataBits: parseInt(e.target.value) as 7 | 8,
+                        },
+                      })
+                    }
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-green-500 transition-colors"
                   >
                     <option value={7}>7</option>
@@ -133,13 +152,20 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Stop Bits</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Stop Bits
+                  </label>
                   <select
                     value={editedConfig.serial.stopBits}
-                    onChange={(e) => setEditedConfig({
-                      ...editedConfig,
-                      serial: { ...editedConfig.serial, stopBits: parseInt(e.target.value) as 1 | 2 }
-                    })}
+                    onChange={(e) =>
+                      setEditedConfig({
+                        ...editedConfig,
+                        serial: {
+                          ...editedConfig.serial,
+                          stopBits: parseInt(e.target.value) as 1 | 2,
+                        },
+                      })
+                    }
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-green-500 transition-colors"
                   >
                     <option value={1}>1 (Default)</option>
@@ -149,13 +175,20 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Parity</label>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Parity
+                </label>
                 <select
                   value={editedConfig.serial.parity}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    serial: { ...editedConfig.serial, parity: e.target.value as 'none' | 'even' | 'odd' }
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      serial: {
+                        ...editedConfig.serial,
+                        parity: e.target.value as "none" | "even" | "odd",
+                      },
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-green-500 transition-colors"
                 >
                   <option value="none">None (Default)</option>
@@ -182,10 +215,12 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                   max={50000}
                   step={100}
                   value={editedConfig.maxMessages}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    maxMessages: parseInt(e.target.value) || 2000
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      maxMessages: parseInt(e.target.value) || 2000,
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-green-500 transition-colors"
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -194,9 +229,18 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                 <div className="mt-2 text-xs text-gray-400">
                   <p>Approximate history at different bus loads:</p>
                   <ul className="list-disc list-inside ml-2 mt-1 space-y-1">
-                    <li>High traffic (1000 msg/s): ~{Math.round(editedConfig.maxMessages / 1000)} seconds</li>
-                    <li>Medium traffic (100 msg/s): ~{Math.round(editedConfig.maxMessages / 100 / 60)} minutes</li>
-                    <li>Low traffic (10 msg/s): ~{Math.round(editedConfig.maxMessages / 10 / 60)} minutes</li>
+                    <li>
+                      High traffic (1000 msg/s): ~
+                      {Math.round(editedConfig.maxMessages / 1000)} seconds
+                    </li>
+                    <li>
+                      Medium traffic (100 msg/s): ~
+                      {Math.round(editedConfig.maxMessages / 100 / 60)} minutes
+                    </li>
+                    <li>
+                      Low traffic (10 msg/s): ~
+                      {Math.round(editedConfig.maxMessages / 10 / 60)} minutes
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -213,10 +257,12 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                 <input
                   type="checkbox"
                   checked={editedConfig.autoScroll}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    autoScroll: e.target.checked
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      autoScroll: e.target.checked,
+                    })
+                  }
                   className="w-5 h-5 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <div>
@@ -233,10 +279,12 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                 <input
                   type="checkbox"
                   checked={editedConfig.showTimestamps}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    showTimestamps: e.target.checked
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      showTimestamps: e.target.checked,
+                    })
+                  }
                   className="w-5 h-5 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <div>
@@ -253,10 +301,12 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
                 <input
                   type="checkbox"
                   checked={editedConfig.showRawHex}
-                  onChange={(e) => setEditedConfig({
-                    ...editedConfig,
-                    showRawHex: e.target.checked
-                  })}
+                  onChange={(e) =>
+                    setEditedConfig({
+                      ...editedConfig,
+                      showRawHex: e.target.checked,
+                    })
+                  }
                   className="w-5 h-5 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <div>

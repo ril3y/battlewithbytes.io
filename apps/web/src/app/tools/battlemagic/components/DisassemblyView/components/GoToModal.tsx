@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Go To Address Modal Component
@@ -7,7 +7,7 @@
  * Supports hex addresses, decimal values, and $pc relative syntax.
  */
 
-import React from 'react';
+import React from "react";
 
 export interface GoToModalProps {
   isOpen: boolean;
@@ -32,10 +32,10 @@ export default function GoToModal({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       onSubmit(goToAddress);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       onClose();
     }

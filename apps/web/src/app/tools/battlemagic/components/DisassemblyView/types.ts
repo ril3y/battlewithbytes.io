@@ -1,5 +1,5 @@
-import type { DisassembledInstruction } from '../../lib/arch/arm/disasm';
-import { GdbClient } from '../../lib/gdb/GdbClient';
+import type { DisassembledInstruction } from "../../lib/arch/arm/disasm";
+import { GdbClient } from "../../lib/gdb/GdbClient";
 
 /**
  * Props for the DisassemblyView component
@@ -44,7 +44,7 @@ export interface DisassemblyLine {
  * - linear: Traditional sequential disassembly view
  * - graph: Control flow graph visualization
  */
-export type ViewMode = 'linear' | 'graph';
+export type ViewMode = "linear" | "graph";
 
 /**
  * Information about a jump/branch instruction for visualization
@@ -55,7 +55,7 @@ export type ViewMode = 'linear' | 'graph';
 export interface JumpInfo {
   fromAddress: number;
   toAddress: number;
-  type: 'forward' | 'backward' | 'conditional';
+  type: "forward" | "backward" | "conditional";
   fromLine: number;
   toLine: number;
   column: number;

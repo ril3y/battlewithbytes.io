@@ -5,14 +5,14 @@
  * Intelligently determines the correct flash base address and memory regions
  */
 
-import { GdbClient } from '../gdb/GdbClient';
-import { McuFamily, Architecture, ProtectionStatus } from './types';
+import { GdbClient } from "../gdb/GdbClient";
+import { McuFamily, Architecture, ProtectionStatus } from "./types";
 import type {
   McuInfo,
   MemoryRegion,
   MemoryDetectionResult,
-  ProtectionInfo
-} from './types';
+  ProtectionInfo,
+} from "./types";
 
 /**
  * Known MCU flash base addresses
@@ -23,18 +23,18 @@ const KNOWN_FLASH_BASES: Record<McuFamily, number> = {
   NRF51: 0x00000000,
   ESP32: 0x40000000,
   RP2040: 0x10000000,
-  Unknown: 0x08000000 // Default fallback
+  Unknown: 0x08000000, // Default fallback
 };
 
 /**
  * MCU family detection patterns
  */
 const MCU_PATTERNS = [
-  { pattern: /STM32/i, family: 'STM32' as McuFamily },
-  { pattern: /nRF52/i, family: 'NRF52' as McuFamily },
-  { pattern: /nRF51/i, family: 'NRF51' as McuFamily },
-  { pattern: /ESP32/i, family: 'ESP32' as McuFamily },
-  { pattern: /RP2040/i, family: 'RP2040' as McuFamily }
+  { pattern: /STM32/i, family: "STM32" as McuFamily },
+  { pattern: /nRF52/i, family: "NRF52" as McuFamily },
+  { pattern: /nRF51/i, family: "NRF51" as McuFamily },
+  { pattern: /ESP32/i, family: "ESP32" as McuFamily },
+  { pattern: /RP2040/i, family: "RP2040" as McuFamily },
 ];
 
 export class MemoryDetector {
@@ -58,10 +58,14 @@ export class MemoryDetector {
 
       // Step 3: Build protection info
       const protection: ProtectionInfo = {
-        status: canRead ? ProtectionStatus.NONE : ProtectionStatus.READ_PROTECTED,
-        details: canRead ? 'Memory is readable' : 'Memory read failed - protection may be enabled',
+        status: canRead
+          ? ProtectionStatus.NONE
+          : ProtectionStatus.READ_PROTECTED,
+        details: canRead
+          ? "Memory is readable"
+          : "Memory read failed - protection may be enabled",
         canRead,
-        canWrite: false // We don't test writes during detection
+        canWrite: false, // We don't test writes during detection
       };
 
       // Step 4: Determine recommended settings
@@ -73,7 +77,7 @@ export class MemoryDetector {
         mcu,
         protection,
         recommendedFlashBase,
-        recommendedReadSize
+        recommendedReadSize,
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -86,11 +90,11 @@ export class MemoryDetector {
           details: `Detection failed: ${errorMsg}`,
           status: ProtectionStatus.UNKNOWN,
           canRead: false,
-          canWrite: false
+          canWrite: false,
         },
         recommendedFlashBase: 0x08000000,
         recommendedReadSize: 0x10000,
-        error: errorMsg
+        error: errorMsg,
       };
     }
   }
@@ -99,40 +103,40 @@ export class MemoryDetector {
    * Detect MCU family and architecture
    */
   private async detectMcu(): Promise<McuInfo> {
-    let detectionMethod = 'unknown';
-    let family: McuFamily = 'Unknown' as McuFamily;
-    let name = 'Unknown MCU';
-    let architecture: Architecture = 'ARM Thumb' as Architecture;
+    let detectionMethod = "unknown";
+    let family: McuFamily = "Unknown" as McuFamily;
+    let name = "Unknown MCU";
+    let architecture: Architecture = "ARM Thumb" as Architecture;
 
     try {
       // Method 1: Try 'monitor version' command
-      const versionOutput = await this.gdbClient.sendMonitorCommand('version');
-      detectionMethod = 'monitor version';
+      const versionOutput = await this.gdbClient.sendMonitorCommand("version");
+      detectionMethod = "monitor version";
 
       // Parse version output for MCU info
-      const mcuMatch = MCU_PATTERNS.find(p => p.pattern.test(versionOutput));
+      const mcuMatch = MCU_PATTERNS.find((p) => p.pattern.test(versionOutput));
       if (mcuMatch) {
         family = mcuMatch.family;
         name = this.extractMcuName(versionOutput, family);
       }
 
       // Detect if it's a Nordic chip from version string
-      if (versionOutput.toLowerCase().includes('nordic')) {
-        if (versionOutput.toLowerCase().includes('52')) {
-          family = 'NRF52' as McuFamily;
-          name = 'nRF52840'; // Default, could be refined
-        } else if (versionOutput.toLowerCase().includes('51')) {
-          family = 'NRF51' as McuFamily;
-          name = 'nRF51822';
+      if (versionOutput.toLowerCase().includes("nordic")) {
+        if (versionOutput.toLowerCase().includes("52")) {
+          family = "NRF52" as McuFamily;
+          name = "nRF52840"; // Default, could be refined
+        } else if (versionOutput.toLowerCase().includes("51")) {
+          family = "NRF51" as McuFamily;
+          name = "nRF51822";
         }
       }
     } catch (error) {
-      console.warn('[MemoryDetector] monitor version failed:', error);
+      console.warn("[MemoryDetector] monitor version failed:", error);
     }
 
     // Method 2: Try reading from different base addresses to infer MCU
-    if (family === 'Unknown') {
-      detectionMethod = 'memory probing';
+    if (family === "Unknown") {
+      detectionMethod = "memory probing";
       family = await this.detectByMemoryProbe();
     }
 
@@ -148,7 +152,7 @@ export class MemoryDetector {
       name,
       flashBase: KNOWN_FLASH_BASES[family],
       regions,
-      detectionMethod
+      detectionMethod,
     };
   }
 
@@ -157,9 +161,9 @@ export class MemoryDetector {
    */
   private extractMcuName(versionOutput: string, family: McuFamily): string {
     // Try to extract specific model name
-    const lines = versionOutput.split('\n');
+    const lines = versionOutput.split("\n");
     for (const line of lines) {
-      if (line.toLowerCase().includes('target')) {
+      if (line.toLowerCase().includes("target")) {
         return line.trim();
       }
     }
@@ -173,10 +177,10 @@ export class MemoryDetector {
    */
   private async detectByMemoryProbe(): Promise<McuFamily> {
     const testAddresses = [
-      { addr: 0x00000000, family: 'NRF52' as McuFamily },
-      { addr: 0x08000000, family: 'STM32' as McuFamily },
-      { addr: 0x10000000, family: 'RP2040' as McuFamily },
-      { addr: 0x40000000, family: 'ESP32' as McuFamily }
+      { addr: 0x00000000, family: "NRF52" as McuFamily },
+      { addr: 0x08000000, family: "STM32" as McuFamily },
+      { addr: 0x10000000, family: "RP2040" as McuFamily },
+      { addr: 0x40000000, family: "ESP32" as McuFamily },
     ];
 
     for (const { addr, family } of testAddresses) {
@@ -191,7 +195,7 @@ export class MemoryDetector {
       }
     }
 
-    return 'Unknown' as McuFamily;
+    return "Unknown" as McuFamily;
   }
 
   /**
@@ -199,15 +203,15 @@ export class MemoryDetector {
    */
   private getArchitecture(family: McuFamily): Architecture {
     switch (family) {
-      case 'STM32':
-      case 'NRF52':
-      case 'NRF51':
-      case 'RP2040':
-        return 'ARM Thumb' as Architecture;
-      case 'ESP32':
-        return 'UNKNOWN' as Architecture; // ESP32 uses Xtensa, not ARM
+      case "STM32":
+      case "NRF52":
+      case "NRF51":
+      case "RP2040":
+        return "ARM Thumb" as Architecture;
+      case "ESP32":
+        return "UNKNOWN" as Architecture; // ESP32 uses Xtensa, not ARM
       default:
-        return 'ARM Thumb' as Architecture; // Most embedded chips are ARM
+        return "ARM Thumb" as Architecture; // Most embedded chips are ARM
     }
   }
 
@@ -226,84 +230,86 @@ export class MemoryDetector {
   /**
    * Detect memory regions using GDB commands
    */
-  private async detectMemoryRegions(family: McuFamily): Promise<MemoryRegion[]> {
+  private async detectMemoryRegions(
+    family: McuFamily,
+  ): Promise<MemoryRegion[]> {
     const regions: MemoryRegion[] = [];
 
     // Add known regions based on MCU family
     switch (family) {
-      case 'STM32':
+      case "STM32":
         regions.push({
-          name: 'Flash',
+          name: "Flash",
           start: 0x08000000,
           size: 0x10000, // 64KB default, varies by model
-          type: 'flash',
+          type: "flash",
           readable: true,
           writable: false,
-          executable: true
+          executable: true,
         });
         regions.push({
-          name: 'SRAM',
+          name: "SRAM",
           start: 0x20000000,
           size: 0x5000, // 20KB default
-          type: 'ram',
+          type: "ram",
           readable: true,
           writable: true,
-          executable: false
+          executable: false,
         });
         break;
 
-      case 'NRF52':
+      case "NRF52":
         regions.push({
-          name: 'Flash',
+          name: "Flash",
           start: 0x00000000,
           size: 0x100000, // 1MB for nRF52840
-          type: 'flash',
+          type: "flash",
           readable: true,
           writable: false,
-          executable: true
+          executable: true,
         });
         regions.push({
-          name: 'RAM',
+          name: "RAM",
           start: 0x20000000,
           size: 0x40000, // 256KB for nRF52840
-          type: 'ram',
+          type: "ram",
           readable: true,
           writable: true,
-          executable: false
+          executable: false,
         });
         break;
 
-      case 'RP2040':
+      case "RP2040":
         regions.push({
-          name: 'Flash',
+          name: "Flash",
           start: 0x10000000,
           size: 0x200000, // 2MB
-          type: 'flash',
+          type: "flash",
           readable: true,
           writable: false,
-          executable: true
+          executable: true,
         });
         regions.push({
-          name: 'SRAM',
+          name: "SRAM",
           start: 0x20000000,
           size: 0x42000, // 264KB
-          type: 'ram',
+          type: "ram",
           readable: true,
           writable: true,
-          executable: false
+          executable: false,
         });
         break;
 
       default:
         // Generic regions
         regions.push({
-          name: 'Flash',
+          name: "Flash",
           start: 0x08000000,
           size: 0x10000,
-          type: 'flash',
+          type: "flash",
           readable: true,
           writable: false,
-          executable: true
+          executable: true,
         });
     }
 
@@ -315,13 +321,13 @@ export class MemoryDetector {
    */
   private getRecommendedReadSize(family: McuFamily): number {
     switch (family) {
-      case 'STM32':
+      case "STM32":
         return 0x10000; // 64KB
-      case 'NRF52':
+      case "NRF52":
         return 0x1000; // 4KB (enough to include vector table + code)
-      case 'RP2040':
+      case "RP2040":
         return 0x10000; // 64KB (reduced for stability)
-      case 'ESP32':
+      case "ESP32":
         return 0x10000; // 64KB
       default:
         return 0x10000; // 64KB default
@@ -333,12 +339,12 @@ export class MemoryDetector {
    */
   private getFallbackMcuInfo(): McuInfo {
     return {
-      family: 'Unknown' as McuFamily,
-      architecture: 'ARM Thumb' as Architecture,
-      name: 'Unknown MCU',
+      family: "Unknown" as McuFamily,
+      architecture: "ARM Thumb" as Architecture,
+      name: "Unknown MCU",
       flashBase: 0x08000000,
       regions: [],
-      detectionMethod: 'fallback'
+      detectionMethod: "fallback",
     };
   }
 }

@@ -2,7 +2,7 @@
  * Library Registry
  *
  * Loads and manages the BattleForge curated library registry.
- * Libraries are defined in /public/libraries/ with JSON manifests.
+ * Libraries are defined in src/app/tools/battleforge/data/libraries/ with JSON manifests.
  */
 
 import type {
@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 // Base URL for library registry (relative to public folder)
-const REGISTRY_BASE = "/libraries";
+const REGISTRY_BASE = "/tools/battleforge/libraries";
 
 /**
  * In-memory cache for registry and manifests

@@ -5,13 +5,13 @@
  * to prevent memory leaks during long debugging sessions.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { CircularBuffer } from '../utils/CircularBuffer';
+import { useState, useCallback, useMemo } from "react";
+import { CircularBuffer } from "../utils/CircularBuffer";
 
 export interface OutputEntry {
   timestamp: Date;
   text: string;
-  type?: 'info' | 'error' | 'warning' | 'success';
+  type?: "info" | "error" | "warning" | "success";
 }
 
 interface UseOutputBufferOptions {
@@ -21,7 +21,7 @@ interface UseOutputBufferOptions {
 
 const DEFAULT_OPTIONS: Required<UseOutputBufferOptions> = {
   maxSize: 1000,
-  includeTimestamp: true
+  includeTimestamp: true,
 };
 
 /**
@@ -34,43 +34,51 @@ export function useOutputBuffer(options: UseOutputBufferOptions = {}) {
   const config = { ...DEFAULT_OPTIONS, ...options };
 
   // Use useState to trigger re-renders when buffer changes
-  const [buffer] = useState(() => new CircularBuffer<OutputEntry>(config.maxSize));
+  const [buffer] = useState(
+    () => new CircularBuffer<OutputEntry>(config.maxSize),
+  );
   const [version, setVersion] = useState(0); // Force re-render on buffer change
 
   /**
    * Add a single output entry
    */
-  const addOutput = useCallback((text: string, type?: OutputEntry['type']) => {
-    const entry: OutputEntry = {
-      timestamp: new Date(),
-      text,
-      type
-    };
+  const addOutput = useCallback(
+    (text: string, type?: OutputEntry["type"]) => {
+      const entry: OutputEntry = {
+        timestamp: new Date(),
+        text,
+        type,
+      };
 
-    buffer.push(entry);
-    setVersion(v => v + 1); // Trigger re-render
-  }, [buffer]);
+      buffer.push(entry);
+      setVersion((v) => v + 1); // Trigger re-render
+    },
+    [buffer],
+  );
 
   /**
    * Add multiple output entries
    */
-  const addOutputBatch = useCallback((entries: Array<{ text: string; type?: OutputEntry['type'] }>) => {
-    const outputEntries: OutputEntry[] = entries.map(e => ({
-      timestamp: new Date(),
-      text: e.text,
-      type: e.type
-    }));
+  const addOutputBatch = useCallback(
+    (entries: Array<{ text: string; type?: OutputEntry["type"] }>) => {
+      const outputEntries: OutputEntry[] = entries.map((e) => ({
+        timestamp: new Date(),
+        text: e.text,
+        type: e.type,
+      }));
 
-    buffer.pushMany(outputEntries);
-    setVersion(v => v + 1); // Trigger re-render
-  }, [buffer]);
+      buffer.pushMany(outputEntries);
+      setVersion((v) => v + 1); // Trigger re-render
+    },
+    [buffer],
+  );
 
   /**
    * Clear all output
    */
   const clearOutput = useCallback(() => {
     buffer.clear();
-    setVersion(v => v + 1); // Trigger re-render
+    setVersion((v) => v + 1); // Trigger re-render
   }, [buffer]);
 
   /**
@@ -80,14 +88,14 @@ export function useOutputBuffer(options: UseOutputBufferOptions = {}) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _ = version; // Depend on version to recalculate
 
-    return buffer.toArray().map(entry => {
+    return buffer.toArray().map((entry) => {
       if (config.includeTimestamp) {
-        const timeStr = entry.timestamp.toLocaleTimeString('en-US', {
+        const timeStr = entry.timestamp.toLocaleTimeString("en-US", {
           hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          fractionalSecondDigits: 3
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          fractionalSecondDigits: 3,
         });
         return `[${timeStr}] ${entry.text}`;
       }
@@ -111,6 +119,6 @@ export function useOutputBuffer(options: UseOutputBufferOptions = {}) {
     output: getFormattedOutput,
     entries: getOutputEntries,
     size: buffer.getSize(),
-    isFull: buffer.isFull()
+    isFull: buffer.isFull(),
   };
 }

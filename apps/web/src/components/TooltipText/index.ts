@@ -1,3 +1,3 @@
-import TooltipText from './TooltipText';
+import TooltipText from "./TooltipText";
 
 export default TooltipText;

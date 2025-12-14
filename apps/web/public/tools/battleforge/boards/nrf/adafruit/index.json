@@ -1,0 +1,30 @@
+{
+  "vendor": "adafruit",
+  "vendorName": "Adafruit",
+  "platform": "nrf",
+  "boards": [
+    {
+      "id": "feather_nrf52840_express",
+      "name": "Adafruit Feather nRF52840 Express",
+      "vendor": "adafruit",
+      "family": "nrf52",
+      "path": "nrf/adafruit/feather_nrf52840_express.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb",
+        "nfc",
+        "lipo-charger",
+        "qspi"
+      ],
+      "tags": [
+        "feather",
+        "bluetooth",
+        "nrf52840",
+        "ble",
+        "portable"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

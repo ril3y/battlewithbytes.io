@@ -13,8 +13,8 @@ import {
   DecoderOptions,
   DecoderState,
   SwoStatistics,
-  PacketType
-} from './types';
+  PacketType,
+} from "./types";
 
 /**
  * Packet Observer Interface
@@ -66,7 +66,9 @@ export abstract class BaseDecoder {
       autoSync: options.autoSync ?? true,
       maxBufferSize: options.maxBufferSize ?? 4096,
       collectStats: options.collectStats ?? true,
-      ...(options.portFilter !== undefined && { portFilter: options.portFilter })
+      ...(options.portFilter !== undefined && {
+        portFilter: options.portFilter,
+      }),
     } as Required<DecoderOptions>;
 
     this.buffer = new Uint8Array(this.options.maxBufferSize);
@@ -78,11 +80,11 @@ export abstract class BaseDecoder {
       overflowEvents: 0,
       bytesProcessed: 0,
       startTime: Date.now(),
-      lastPacketTime: Date.now()
+      lastPacketTime: Date.now(),
     };
 
     // Initialize packet type counters
-    Object.values(PacketType).forEach(type => {
+    Object.values(PacketType).forEach((type) => {
       this.stats.packetsByType.set(type as PacketType, 0);
     });
   }
@@ -180,15 +182,15 @@ export abstract class BaseDecoder {
     const event: PacketEvent = {
       packet,
       timestamp: packet.timestamp,
-      port: 'port' in packet ? packet.port : undefined
+      port: "port" in packet ? packet.port : undefined,
     };
 
     // Notify all observers
-    this.observers.forEach(observer => {
+    this.observers.forEach((observer) => {
       try {
         observer.onPacket(event);
       } catch (error) {
-        console.error('Observer error:', error);
+        console.error("Observer error:", error);
       }
     });
   }
@@ -200,20 +202,20 @@ export abstract class BaseDecoder {
   protected emitError(error: DecoderError): void {
     // Update statistics
     if (this.options.collectStats) {
-      if (error.type === 'sync') {
+      if (error.type === "sync") {
         this.stats.syncErrors++;
-      } else if (error.type === 'overflow') {
+      } else if (error.type === "overflow") {
         this.stats.overflowEvents++;
       }
     }
 
     // Notify observers with error handlers
-    this.observers.forEach(observer => {
+    this.observers.forEach((observer) => {
       if (observer.onError) {
         try {
           observer.onError(error);
         } catch (err) {
-          console.error('Observer error handler failed:', err);
+          console.error("Observer error handler failed:", err);
         }
       }
     });
@@ -267,10 +269,10 @@ export abstract class BaseDecoder {
   protected addToBuffer(byte: number): boolean {
     if (this.bufferPos >= this.options.maxBufferSize) {
       this.emitError({
-        type: 'overflow',
-        message: 'Buffer overflow',
+        type: "overflow",
+        message: "Buffer overflow",
         context: { bufferSize: this.bufferPos },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       this.resetBuffer();
       return false;

@@ -17,9 +17,9 @@ export const ITM_PORT_COUNT = 32;
  */
 export enum SwoEncoding {
   /** UART/NRZ encoding - most common, simpler */
-  UART_NRZ = 'uart',
+  UART_NRZ = "uart",
   /** Manchester encoding - more robust, requires 2x bandwidth */
-  MANCHESTER = 'manchester'
+  MANCHESTER = "manchester",
 }
 
 /**
@@ -28,19 +28,19 @@ export enum SwoEncoding {
  */
 export enum PacketType {
   /** Instrumentation packet - printf-style output */
-  INSTRUMENTATION = 'instrumentation',
+  INSTRUMENTATION = "instrumentation",
   /** Hardware source packet - DWT, ITM events */
-  HARDWARE = 'hardware',
+  HARDWARE = "hardware",
   /** Timestamp packet - relative or absolute timing */
-  TIMESTAMP = 'timestamp',
+  TIMESTAMP = "timestamp",
   /** Synchronization packet - protocol sync */
-  SYNC = 'sync',
+  SYNC = "sync",
   /** Extension packet - future use */
-  EXTENSION = 'extension',
+  EXTENSION = "extension",
   /** Overflow packet - data loss indicator */
-  OVERFLOW = 'overflow',
+  OVERFLOW = "overflow",
   /** Unknown/malformed packet */
-  UNKNOWN = 'unknown'
+  UNKNOWN = "unknown",
 }
 
 /**
@@ -197,7 +197,7 @@ export enum HardwareEventType {
   /** Data trace - address offset */
   DATA_TRACE_ADDR = 8,
   /** Data trace - data value */
-  DATA_TRACE_DATA = 10
+  DATA_TRACE_DATA = 10,
 }
 
 /**
@@ -225,7 +225,7 @@ export enum ExceptionType {
   /** PendSV */
   PENDSV = 14,
   /** SysTick */
-  SYSTICK = 15
+  SYSTICK = 15,
 }
 
 /**
@@ -233,13 +233,13 @@ export enum ExceptionType {
  */
 export enum DecoderState {
   /** Waiting for sync pattern */
-  SYNC_SEARCH = 'sync_search',
+  SYNC_SEARCH = "sync_search",
   /** Reading packet header */
-  HEADER = 'header',
+  HEADER = "header",
   /** Reading packet payload */
-  PAYLOAD = 'payload',
+  PAYLOAD = "payload",
   /** Error recovery */
-  ERROR = 'error'
+  ERROR = "error",
 }
 
 /**
@@ -285,7 +285,7 @@ export interface PacketEvent {
  */
 export interface DecoderError {
   /** Error type */
-  type: 'sync' | 'parse' | 'overflow' | 'unknown';
+  type: "sync" | "parse" | "overflow" | "unknown";
   /** Error message */
   message: string;
   /** Context data */

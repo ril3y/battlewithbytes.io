@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Xref Panel Component
@@ -7,9 +7,9 @@
  * Shows both incoming (TO) and outgoing (FROM) references with clickable navigation
  */
 
-import React, { useMemo } from 'react';
-import { useXref, type Xref } from '../lib/context/XrefContext';
-import { ArrowRight, ArrowLeft, Target, Activity } from 'lucide-react';
+import React, { useMemo } from "react";
+import { useXref, type Xref } from "../lib/context/XrefContext";
+import { ArrowRight, ArrowLeft, Target, Activity } from "lucide-react";
 
 interface XrefPanelProps {
   selectedAddress: number | null;
@@ -20,50 +20,53 @@ interface XrefPanelProps {
  * Format address as hex string
  */
 function formatAddress(address: number): string {
-  return `0x${address.toString(16).toUpperCase().padStart(8, '0')}`;
+  return `0x${address.toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
 /**
  * Get color for xref type
  */
-function getXrefTypeColor(type: Xref['xref_type']): string {
+function getXrefTypeColor(type: Xref["xref_type"]): string {
   switch (type) {
-    case 'Call':
-      return 'text-blue-400';
-    case 'Branch':
-      return 'text-green-400';
-    case 'ConditionalBranch':
-      return 'text-yellow-400';
-    case 'DataRead':
-      return 'text-purple-400';
-    case 'DataWrite':
-      return 'text-red-400';
+    case "Call":
+      return "text-blue-400";
+    case "Branch":
+      return "text-green-400";
+    case "ConditionalBranch":
+      return "text-yellow-400";
+    case "DataRead":
+      return "text-purple-400";
+    case "DataWrite":
+      return "text-red-400";
     default:
-      return 'text-gray-400';
+      return "text-gray-400";
   }
 }
 
 /**
  * Get label for xref type
  */
-function getXrefTypeLabel(type: Xref['xref_type']): string {
+function getXrefTypeLabel(type: Xref["xref_type"]): string {
   switch (type) {
-    case 'Call':
-      return 'CALL';
-    case 'Branch':
-      return 'BRANCH';
-    case 'ConditionalBranch':
-      return 'COND';
-    case 'DataRead':
-      return 'READ';
-    case 'DataWrite':
-      return 'WRITE';
+    case "Call":
+      return "CALL";
+    case "Branch":
+      return "BRANCH";
+    case "ConditionalBranch":
+      return "COND";
+    case "DataRead":
+      return "READ";
+    case "DataWrite":
+      return "WRITE";
     default:
-      return 'UNKNOWN';
+      return "UNKNOWN";
   }
 }
 
-export default function XrefPanel({ selectedAddress, onNavigateToAddress }: XrefPanelProps) {
+export default function XrefPanel({
+  selectedAddress,
+  onNavigateToAddress,
+}: XrefPanelProps) {
   const { getXrefsTo, getXrefsFrom, isAnalyzed } = useXref();
 
   // Get xrefs for selected address
@@ -72,7 +75,7 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
     try {
       return getXrefsTo(selectedAddress);
     } catch (error) {
-      console.error('[XrefPanel] Failed to get xrefs to:', error);
+      console.error("[XrefPanel] Failed to get xrefs to:", error);
       return [];
     }
   }, [selectedAddress, isAnalyzed, getXrefsTo]);
@@ -82,7 +85,7 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
     try {
       return getXrefsFrom(selectedAddress);
     } catch (error) {
-      console.error('[XrefPanel] Failed to get xrefs from:', error);
+      console.error("[XrefPanel] Failed to get xrefs from:", error);
       return [];
     }
   }, [selectedAddress, isAnalyzed, getXrefsFrom]);
@@ -97,7 +100,9 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
           <div className="text-center text-gray-400 text-sm">
             <Activity className="w-12 h-12 mx-auto mb-3 text-gray-600" />
             <p>No analysis data available</p>
-            <p className="text-xs mt-2">Run Auto Analyze in the Analysis Panel</p>
+            <p className="text-xs mt-2">
+              Run Auto Analyze in the Analysis Panel
+            </p>
           </div>
         </div>
       </div>
@@ -137,7 +142,9 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
         {!hasXrefs ? (
           <div className="text-center text-gray-400 text-sm mt-8">
             <p>No cross-references found</p>
-            <p className="text-xs mt-2">This instruction is not referenced by others</p>
+            <p className="text-xs mt-2">
+              This instruction is not referenced by others
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -161,7 +168,9 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
                         <span className="text-xs font-mono text-blue-400 hover:underline">
                           {formatAddress(xref.from_addr)}
                         </span>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getXrefTypeColor(xref.xref_type)}`}>
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded ${getXrefTypeColor(xref.xref_type)}`}
+                        >
                           {getXrefTypeLabel(xref.xref_type)}
                         </span>
                       </div>
@@ -194,7 +203,9 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
                         <span className="text-xs font-mono text-blue-400 hover:underline">
                           {formatAddress(xref.to_addr)}
                         </span>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getXrefTypeColor(xref.xref_type)}`}>
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded ${getXrefTypeColor(xref.xref_type)}`}
+                        >
                           {getXrefTypeLabel(xref.xref_type)}
                         </span>
                       </div>
@@ -216,8 +227,7 @@ export default function XrefPanel({ selectedAddress, onNavigateToAddress }: Xref
           <span>
             {hasXrefs
               ? `${xrefsTo.length} incoming, ${xrefsFrom.length} outgoing`
-              : 'No references'
-            }
+              : "No references"}
           </span>
           <span className="text-blue-400">Click to navigate</span>
         </div>

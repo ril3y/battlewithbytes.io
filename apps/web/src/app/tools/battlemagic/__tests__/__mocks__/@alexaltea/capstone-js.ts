@@ -6,4 +6,4 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-export default require('../../mocks/MockCapstone').default;
+export default require("../../mocks/MockCapstone").default;

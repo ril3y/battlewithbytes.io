@@ -19,13 +19,13 @@ export interface GdbPacket {
  * GDB response types
  */
 export type GdbResponse =
-  | { type: 'ok' }
-  | { type: 'error'; code?: string }
-  | { type: 'data'; data: string }
-  | { type: 'signal'; signal: number }
-  | { type: 'ack' }
-  | { type: 'nak' }
-  | { type: 'empty' };
+  | { type: "ok" }
+  | { type: "error"; code?: string }
+  | { type: "data"; data: string }
+  | { type: "signal"; signal: number }
+  | { type: "ack" }
+  | { type: "nak" }
+  | { type: "empty" };
 
 /**
  * Stop reply packet information
@@ -79,28 +79,28 @@ export interface BmpVersion {
  * Connection state
  */
 export enum ConnectionState {
-  DISCONNECTED = 'disconnected',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  ATTACHED = 'attached',
-  ERROR = 'error'
+  DISCONNECTED = "disconnected",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  ATTACHED = "attached",
+  ERROR = "error",
 }
 
 /**
  * Target power state
  */
 export enum PowerState {
-  ENABLED = 'enabled',
-  DISABLED = 'disabled',
-  UNKNOWN = 'unknown'
+  ENABLED = "enabled",
+  DISABLED = "disabled",
+  UNKNOWN = "unknown",
 }
 
 /**
  * Debug interface type
  */
 export enum DebugInterface {
-  SWD = 'swd',
-  JTAG = 'jtag'
+  SWD = "swd",
+  JTAG = "jtag",
 }
 
 /**
@@ -150,9 +150,9 @@ export interface SerialConfig {
   /** Stop bits */
   stopBits?: 1 | 2;
   /** Parity */
-  parity?: 'none' | 'even' | 'odd';
+  parity?: "none" | "even" | "odd";
   /** Flow control */
-  flowControl?: 'none' | 'hardware';
+  flowControl?: "none" | "hardware";
 }
 
 /**
@@ -191,7 +191,7 @@ export enum BreakpointType {
   HARDWARE = 1,
   WRITE_WATCHPOINT = 2,
   READ_WATCHPOINT = 3,
-  ACCESS_WATCHPOINT = 4
+  ACCESS_WATCHPOINT = 4,
 }
 
 /**
@@ -222,8 +222,8 @@ export interface ThreadInfo {
  * Execution state
  */
 export enum ExecutionState {
-  STOPPED = 'stopped',
-  RUNNING = 'running',
-  STEPPING = 'stepping',
-  UNKNOWN = 'unknown'
+  STOPPED = "stopped",
+  RUNNING = "running",
+  STEPPING = "stepping",
+  UNKNOWN = "unknown",
 }

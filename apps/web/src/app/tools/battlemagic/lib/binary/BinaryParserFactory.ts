@@ -5,17 +5,17 @@
  * and parser instantiation. Provides a single entry point for binary parsing.
  */
 
-import { BinaryParser } from './BinaryParser';
-import { ArmBinaryParser } from '../arch/arm/binary';
-import { MipsBinaryParser } from './parsers/MipsBinaryParser';
-import { RiscVBinaryParser } from './parsers/RiscVBinaryParser';
+import { BinaryParser } from "./BinaryParser";
+import { ArmBinaryParser } from "../arch/arm/binary";
+import { MipsBinaryParser } from "./parsers/MipsBinaryParser";
+import { RiscVBinaryParser } from "./parsers/RiscVBinaryParser";
 import {
   Architecture,
   BinaryFormat,
   BinaryParseOptions,
   ParseResult,
-  ElfMachine
-} from './types';
+  ElfMachine,
+} from "./types";
 
 /**
  * Architecture detection result
@@ -46,14 +46,14 @@ export class BinaryParserFactory {
    */
   static async createParser(
     data: Uint8Array,
-    options: BinaryParseOptions = {}
+    options: BinaryParseOptions = {},
   ): Promise<BinaryParser> {
     // If architecture is forced, use it
     if (options.forceArchitecture) {
       return this.createParserForArchitecture(
         options.forceArchitecture,
         data,
-        options
+        options,
       );
     }
 
@@ -61,17 +61,19 @@ export class BinaryParserFactory {
     const detection = await this.detectArchitecture(data, options);
 
     // Log detection result for debugging
-    console.log(`Detected architecture: ${detection.architecture} ` +
-                `(confidence: ${(detection.confidence * 100).toFixed(1)}%)`);
+    console.log(
+      `Detected architecture: ${detection.architecture} ` +
+        `(confidence: ${(detection.confidence * 100).toFixed(1)}%)`,
+    );
     if (detection.hints.length > 0) {
-      console.log('Detection hints:', detection.hints);
+      console.log("Detection hints:", detection.hints);
     }
 
     // Create appropriate parser
     return this.createParserForArchitecture(
       detection.architecture,
       data,
-      options
+      options,
     );
   }
 
@@ -84,7 +86,7 @@ export class BinaryParserFactory {
    */
   static async parse(
     data: Uint8Array,
-    options: BinaryParseOptions = {}
+    options: BinaryParseOptions = {},
   ): Promise<ParseResult> {
     const parser = await this.createParser(data, options);
     return parser.parse();
@@ -95,35 +97,35 @@ export class BinaryParserFactory {
    */
   private static async detectArchitecture(
     data: Uint8Array,
-    options: BinaryParseOptions
+    options: BinaryParseOptions,
   ): Promise<DetectionResult> {
     const hints: string[] = [];
-    let format: BinaryFormat = 'RAW';
+    let format: BinaryFormat = "RAW";
 
     // First check for ELF format which contains explicit architecture info
     if (this.isElf(data)) {
-      format = 'ELF';
+      format = "ELF";
       const elfArch = this.detectElfArchitecture(data);
-      if (elfArch !== 'UNKNOWN') {
+      if (elfArch !== "UNKNOWN") {
         hints.push(`ELF header indicates ${elfArch}`);
         return {
           architecture: elfArch,
           confidence: 0.95,
           format,
-          hints
+          hints,
         };
       }
     }
 
     // Check for other formats that might have architecture markers
     const peArch = this.detectPeArchitecture(data);
-    if (peArch !== 'UNKNOWN') {
+    if (peArch !== "UNKNOWN") {
       hints.push(`PE header indicates ${peArch}`);
       return {
         architecture: peArch,
         confidence: 0.95,
-        format: 'PE',
-        hints
+        format: "PE",
+        hints,
       };
     }
 
@@ -132,18 +134,18 @@ export class BinaryParserFactory {
 
     // Check for ARM patterns
     const armScore = await this.scoreArmPatterns(data, hints);
-    scores.set('ARM', armScore);
+    scores.set("ARM", armScore);
 
     // Check for MIPS patterns
     const mipsScore = await this.scoreMipsPatterns(data, hints);
-    scores.set('MIPS', mipsScore);
+    scores.set("MIPS", mipsScore);
 
     // Check for RISC-V patterns
     const riscvScore = await this.scoreRiscVPatterns(data, hints);
-    scores.set('RISCV', riscvScore);
+    scores.set("RISCV", riscvScore);
 
     // Find highest scoring architecture
-    let bestArch: Architecture = 'UNKNOWN';
+    let bestArch: Architecture = "UNKNOWN";
     let bestScore = 0;
 
     for (const [arch, score] of scores) {
@@ -155,16 +157,19 @@ export class BinaryParserFactory {
 
     // If we have a base address hint, use it to improve detection
     if (options.baseAddress) {
-      if (options.baseAddress >= 0x08000000 && options.baseAddress < 0x10000000) {
-        hints.push('Base address suggests ARM STM32 (0x08xxxxxx)');
-        if (bestArch === 'UNKNOWN' || bestScore < 0.3) {
-          bestArch = 'ARM';
+      if (
+        options.baseAddress >= 0x08000000 &&
+        options.baseAddress < 0x10000000
+      ) {
+        hints.push("Base address suggests ARM STM32 (0x08xxxxxx)");
+        if (bestArch === "UNKNOWN" || bestScore < 0.3) {
+          bestArch = "ARM";
           bestScore = Math.max(bestScore, 0.4);
         }
-      } else if (options.baseAddress >= 0xBFC00000) {
-        hints.push('Base address suggests MIPS boot ROM (0xBFCxxxxx)');
-        if (bestArch === 'UNKNOWN' || bestScore < 0.3) {
-          bestArch = 'MIPS';
+      } else if (options.baseAddress >= 0xbfc00000) {
+        hints.push("Base address suggests MIPS boot ROM (0xBFCxxxxx)");
+        if (bestArch === "UNKNOWN" || bestScore < 0.3) {
+          bestArch = "MIPS";
           bestScore = Math.max(bestScore, 0.4);
         }
       }
@@ -174,7 +179,7 @@ export class BinaryParserFactory {
       architecture: bestArch,
       confidence: bestScore,
       format,
-      hints
+      hints,
     };
   }
 
@@ -182,18 +187,20 @@ export class BinaryParserFactory {
    * Check if data is ELF format
    */
   private static isElf(data: Uint8Array): boolean {
-    return data.length >= 4 &&
-           data[0] === 0x7F &&
-           data[1] === 0x45 &&
-           data[2] === 0x4C &&
-           data[3] === 0x46;
+    return (
+      data.length >= 4 &&
+      data[0] === 0x7f &&
+      data[1] === 0x45 &&
+      data[2] === 0x4c &&
+      data[3] === 0x46
+    );
   }
 
   /**
    * Detect architecture from ELF header
    */
   private static detectElfArchitecture(data: Uint8Array): Architecture {
-    if (!this.isElf(data)) return 'UNKNOWN';
+    if (!this.isElf(data)) return "UNKNOWN";
 
     // Read e_machine field (offset 0x12, 2 bytes)
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -203,20 +210,20 @@ export class BinaryParserFactory {
     switch (machine) {
       case ElfMachine.EM_ARM:
       case ElfMachine.EM_AARCH64:
-        return 'ARM';
+        return "ARM";
       case ElfMachine.EM_MIPS:
-        return 'MIPS';
+        return "MIPS";
       case ElfMachine.EM_RISCV:
-        return 'RISCV';
+        return "RISCV";
       case ElfMachine.EM_386:
       case ElfMachine.EM_X86_64:
-        return 'X86';
+        return "X86";
       case ElfMachine.EM_AVR:
-        return 'AVR';
+        return "AVR";
       case ElfMachine.EM_PIC:
-        return 'PIC';
+        return "PIC";
       default:
-        return 'UNKNOWN';
+        return "UNKNOWN";
     }
   }
 
@@ -225,13 +232,13 @@ export class BinaryParserFactory {
    */
   private static detectPeArchitecture(data: Uint8Array): Architecture {
     // Check for MZ header
-    if (data.length < 2 || data[0] !== 0x4D || data[1] !== 0x5A) {
-      return 'UNKNOWN';
+    if (data.length < 2 || data[0] !== 0x4d || data[1] !== 0x5a) {
+      return "UNKNOWN";
     }
 
     // Would need to parse PE header to get machine type
     // Simplified for now
-    return 'UNKNOWN';
+    return "UNKNOWN";
   }
 
   /**
@@ -239,7 +246,7 @@ export class BinaryParserFactory {
    */
   private static async scoreArmPatterns(
     data: Uint8Array,
-    hints: string[]
+    hints: string[],
   ): Promise<number> {
     let score = 0;
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -252,20 +259,24 @@ export class BinaryParserFactory {
       // Check if first word looks like a stack pointer (RAM address)
       if (this.isLikelyStackPointer(stackPointer)) {
         score += 0.3;
-        hints.push('First word looks like ARM stack pointer');
+        hints.push("First word looks like ARM stack pointer");
       }
 
       // Check if second word has Thumb bit set
-      if ((resetHandler & 1) === 1 && resetHandler > 0x100 && resetHandler < 0x20000000) {
+      if (
+        (resetHandler & 1) === 1 &&
+        resetHandler > 0x100 &&
+        resetHandler < 0x20000000
+      ) {
         score += 0.3;
-        hints.push('Second word has Thumb bit set');
+        hints.push("Second word has Thumb bit set");
       }
 
       // Check for more vector entries
       let validVectors = 0;
       for (let i = 8; i < Math.min(64 * 4, data.length); i += 4) {
         const vector = view.getUint32(i, true);
-        if (vector !== 0 && vector !== 0xFFFFFFFF && (vector & 1) === 1) {
+        if (vector !== 0 && vector !== 0xffffffff && (vector & 1) === 1) {
           validVectors++;
         }
       }
@@ -282,13 +293,13 @@ export class BinaryParserFactory {
       const inst16 = view.getUint16(i, true);
 
       // Check for common Thumb instructions
-      if ((inst16 & 0xF800) === 0x4800) thumbPatterns++; // LDR (literal)
-      if ((inst16 & 0xFF00) === 0xB500) thumbPatterns++; // PUSH {lr}
-      if ((inst16 & 0xFF00) === 0xBD00) thumbPatterns++; // POP {pc}
-      if ((inst16 & 0xF800) === 0xF000) {
+      if ((inst16 & 0xf800) === 0x4800) thumbPatterns++; // LDR (literal)
+      if ((inst16 & 0xff00) === 0xb500) thumbPatterns++; // PUSH {lr}
+      if ((inst16 & 0xff00) === 0xbd00) thumbPatterns++; // POP {pc}
+      if ((inst16 & 0xf800) === 0xf000) {
         // 32-bit Thumb-2 instruction prefix
         const inst32 = view.getUint32(i, true);
-        if ((inst32 & 0xF800D000) === 0xF000D000) {
+        if ((inst32 & 0xf800d000) === 0xf000d000) {
           thumbPatterns++; // BL instruction
         }
       }
@@ -307,7 +318,7 @@ export class BinaryParserFactory {
    */
   private static async scoreMipsPatterns(
     data: Uint8Array,
-    hints: string[]
+    hints: string[],
   ): Promise<number> {
     let score = 0;
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -318,14 +329,14 @@ export class BinaryParserFactory {
 
       for (let i = 0; i < Math.min(10000, data.length - 4); i += 4) {
         const inst = view.getUint32(i, littleEndian);
-        const opcode = (inst >> 26) & 0x3F;
+        const opcode = (inst >> 26) & 0x3f;
 
         // Check for common MIPS opcodes
         if (opcode === 0x00) mipsPatterns++; // R-type
         if (opcode === 0x02 || opcode === 0x03) mipsPatterns++; // J, JAL
         if (opcode === 0x08 || opcode === 0x09) mipsPatterns++; // ADDI, ADDIU
-        if (opcode === 0x0F) mipsPatterns++; // LUI
-        if (opcode === 0x23 || opcode === 0x2B) mipsPatterns++; // LW, SW
+        if (opcode === 0x0f) mipsPatterns++; // LUI
+        if (opcode === 0x23 || opcode === 0x2b) mipsPatterns++; // LW, SW
         if (opcode === 0x24 || opcode === 0x25) mipsPatterns++; // LBU, LHU
 
         // NOP instruction (0x00000000)
@@ -334,7 +345,9 @@ export class BinaryParserFactory {
 
       if (mipsPatterns > 50) {
         score = Math.max(score, 0.5);
-        hints.push(`Found ${mipsPatterns} MIPS patterns (${littleEndian ? 'LE' : 'BE'})`);
+        hints.push(
+          `Found ${mipsPatterns} MIPS patterns (${littleEndian ? "LE" : "BE"})`,
+        );
       }
     }
 
@@ -342,10 +355,10 @@ export class BinaryParserFactory {
     if (data.length >= 16) {
       // Look for jump at beginning (common in MIPS boot code)
       const inst0 = view.getUint32(0, false);
-      const opcode0 = (inst0 >> 26) & 0x3F;
+      const opcode0 = (inst0 >> 26) & 0x3f;
       if (opcode0 === 0x02 || opcode0 === 0x03) {
         score += 0.2;
-        hints.push('First instruction is MIPS J/JAL');
+        hints.push("First instruction is MIPS J/JAL");
       }
     }
 
@@ -357,7 +370,7 @@ export class BinaryParserFactory {
    */
   private static async scoreRiscVPatterns(
     data: Uint8Array,
-    hints: string[]
+    hints: string[],
   ): Promise<number> {
     let score = 0;
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -376,12 +389,12 @@ export class BinaryParserFactory {
 
       if (i + 2 < data.length) {
         const inst32 = view.getUint32(i, true);
-        const opcode = inst32 & 0x7F;
+        const opcode = inst32 & 0x7f;
 
         // Check for common RISC-V opcodes
         if (opcode === 0x37) riscvPatterns++; // LUI
         if (opcode === 0x17) riscvPatterns++; // AUIPC
-        if (opcode === 0x6F) riscvPatterns++; // JAL
+        if (opcode === 0x6f) riscvPatterns++; // JAL
         if (opcode === 0x67) riscvPatterns++; // JALR
         if (opcode === 0x63) riscvPatterns++; // Branch
         if (opcode === 0x03) riscvPatterns++; // Load
@@ -404,10 +417,10 @@ export class BinaryParserFactory {
     // Check for RISC-V jump at start
     if (data.length >= 4) {
       const firstInst = view.getUint32(0, true);
-      const opcode = firstInst & 0x7F;
-      if (opcode === 0x6F) {
+      const opcode = firstInst & 0x7f;
+      if (opcode === 0x6f) {
         score += 0.2;
-        hints.push('First instruction is RISC-V JAL');
+        hints.push("First instruction is RISC-V JAL");
       }
     }
 
@@ -426,10 +439,10 @@ export class BinaryParserFactory {
     ];
 
     // Check if in RAM range and word-aligned
-    const inRam = ramRanges.some(r => value >= r.start && value <= r.end);
+    const inRam = ramRanges.some((r) => value >= r.start && value <= r.end);
     const aligned = (value & 0x3) === 0;
 
-    return inRam && aligned && value !== 0 && value !== 0xFFFFFFFF;
+    return inRam && aligned && value !== 0 && value !== 0xffffffff;
   }
 
   /**
@@ -438,18 +451,20 @@ export class BinaryParserFactory {
   private static createParserForArchitecture(
     architecture: Architecture,
     data: Uint8Array,
-    options: BinaryParseOptions
+    options: BinaryParseOptions,
   ): BinaryParser {
     switch (architecture) {
-      case 'ARM':
+      case "ARM":
         return new ArmBinaryParser(data, options);
-      case 'MIPS':
+      case "MIPS":
         return new MipsBinaryParser(data, options);
-      case 'RISCV':
+      case "RISCV":
         return new RiscVBinaryParser(data, options);
       default:
         // Default to ARM parser with warning
-        console.warn(`Unknown architecture '${architecture}', defaulting to ARM parser`);
+        console.warn(
+          `Unknown architecture '${architecture}', defaulting to ARM parser`,
+        );
         return new ArmBinaryParser(data, options);
     }
   }
@@ -458,7 +473,7 @@ export class BinaryParserFactory {
    * Get list of supported architectures
    */
   static getSupportedArchitectures(): Architecture[] {
-    return ['ARM', 'MIPS', 'RISCV'];
+    return ["ARM", "MIPS", "RISCV"];
   }
 
   /**
@@ -468,14 +483,18 @@ export class BinaryParserFactory {
     const lower = filename.toLowerCase();
 
     // Check for architecture hints in filename
-    if (lower.includes('arm') || lower.includes('cortex') || lower.includes('stm32')) {
-      return 'ARM';
+    if (
+      lower.includes("arm") ||
+      lower.includes("cortex") ||
+      lower.includes("stm32")
+    ) {
+      return "ARM";
     }
-    if (lower.includes('mips')) {
-      return 'MIPS';
+    if (lower.includes("mips")) {
+      return "MIPS";
     }
-    if (lower.includes('riscv') || lower.includes('risc-v')) {
-      return 'RISCV';
+    if (lower.includes("riscv") || lower.includes("risc-v")) {
+      return "RISCV";
     }
 
     return undefined;

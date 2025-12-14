@@ -5,7 +5,7 @@
  * Handles connection management, data transmission, and reception.
  */
 
-import type { SerialConfig } from './types';
+import type { SerialConfig } from "./types";
 
 // Web Serial API types are defined globally in src/types/web-serial.d.ts
 
@@ -26,8 +26,8 @@ const DEFAULT_SERIAL_CONFIG: Required<SerialConfig> = {
   baudRate: 115200, // Ignored for USB CDC but good default
   dataBits: 8,
   stopBits: 1,
-  parity: 'none',
-  flowControl: 'none'
+  parity: "none",
+  flowControl: "none",
 };
 
 /**
@@ -49,7 +49,7 @@ export class SerialTransport {
    * @returns True if Web Serial API is supported
    */
   static isSupported(): boolean {
-    return 'serial' in navigator;
+    return "serial" in navigator;
   }
 
   /**
@@ -64,12 +64,12 @@ export class SerialTransport {
       // Filter for Black Magic Probe (VID 0x1d50, PID 0x6018)
       const port = await navigator.serial.requestPort({
         filters: [
-          { usbVendorId: 0x1d50, usbProductId: 0x6018 } // Black Magic Probe
-        ]
+          { usbVendorId: 0x1d50, usbProductId: 0x6018 }, // Black Magic Probe
+        ],
       });
       return port;
     } catch (error) {
-      if ((error as Error).name === 'NotFoundError') {
+      if ((error as Error).name === "NotFoundError") {
         // User cancelled
         return null;
       }
@@ -94,7 +94,7 @@ export class SerialTransport {
    */
   async connect(port: SerialPort, config: SerialConfig = {}): Promise<void> {
     if (this.port) {
-      throw new Error('Already connected to a port');
+      throw new Error("Already connected to a port");
     }
 
     const fullConfig = { ...DEFAULT_SERIAL_CONFIG, ...config };
@@ -103,40 +103,48 @@ export class SerialTransport {
       // Check if port is already open and close it if needed
       // This can happen during hot-reload in development
       if (port.readable || port.writable) {
-        console.warn('[SerialTransport] Port already open, attempting to close...');
+        console.warn(
+          "[SerialTransport] Port already open, attempting to close...",
+        );
         try {
           await port.close();
-          console.log('[SerialTransport] Port closed successfully, waiting for stabilization...');
+          console.log(
+            "[SerialTransport] Port closed successfully, waiting for stabilization...",
+          );
           // Give it a moment to fully close
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
         } catch (closeError) {
-          console.warn('[SerialTransport] Error closing port:', closeError);
+          console.warn("[SerialTransport] Error closing port:", closeError);
           // Port might already be closing, wait longer
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
         // Check again after waiting
         if (port.readable || port.writable) {
-          console.error('[SerialTransport] Port still open after close attempt');
+          console.error(
+            "[SerialTransport] Port still open after close attempt",
+          );
           // One more attempt - try closing again
           try {
             await port.close();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
           } catch {
             // Final check
             if (port.readable || port.writable) {
-              throw new Error('Port is locked (may be in use by another connection). Click "Clear" button and try reconnecting.');
+              throw new Error(
+                'Port is locked (may be in use by another connection). Click "Clear" button and try reconnecting.',
+              );
             }
           }
         }
       }
 
-      console.log('[SerialTransport] Opening port with config:', {
+      console.log("[SerialTransport] Opening port with config:", {
         baudRate: fullConfig.baudRate,
         dataBits: fullConfig.dataBits,
         stopBits: fullConfig.stopBits,
         parity: fullConfig.parity,
-        flowControl: fullConfig.flowControl
+        flowControl: fullConfig.flowControl,
       });
 
       await port.open({
@@ -144,19 +152,25 @@ export class SerialTransport {
         dataBits: fullConfig.dataBits,
         stopBits: fullConfig.stopBits,
         parity: fullConfig.parity,
-        flowControl: fullConfig.flowControl
+        flowControl: fullConfig.flowControl,
       });
 
-      console.log('[SerialTransport] Port opened successfully');
+      console.log("[SerialTransport] Port opened successfully");
       this.port = port;
       this.startReading();
     } catch (error) {
       const errorMessage = (error as Error).message;
-      console.error('[SerialTransport] Connection failed:', errorMessage);
+      console.error("[SerialTransport] Connection failed:", errorMessage);
 
       // Provide helpful error message for common issues
-      if (errorMessage.includes('already open') || errorMessage.includes('locked') || errorMessage.includes('Failed to open')) {
-        throw new Error('Port is locked or unavailable. Click "Clear" button and try again, or disconnect/reconnect the hardware.');
+      if (
+        errorMessage.includes("already open") ||
+        errorMessage.includes("locked") ||
+        errorMessage.includes("Failed to open")
+      ) {
+        throw new Error(
+          'Port is locked or unavailable. Click "Clear" button and try again, or disconnect/reconnect the hardware.',
+        );
       }
 
       throw new Error(`Failed to open serial port: ${errorMessage}`);
@@ -167,22 +181,22 @@ export class SerialTransport {
    * Disconnect from the serial port
    */
   async disconnect(): Promise<void> {
-    console.log('[SerialTransport] Disconnecting...');
+    console.log("[SerialTransport] Disconnecting...");
     this.isReading = false;
 
     // Cancel reader first
     if (this.reader) {
       try {
         await this.reader.cancel();
-        console.log('[SerialTransport] Reader cancelled');
+        console.log("[SerialTransport] Reader cancelled");
       } catch (err) {
-        console.warn('[SerialTransport] Error cancelling reader:', err);
+        console.warn("[SerialTransport] Error cancelling reader:", err);
       }
       try {
         this.reader.releaseLock();
-        console.log('[SerialTransport] Reader lock released');
+        console.log("[SerialTransport] Reader lock released");
       } catch (err) {
-        console.warn('[SerialTransport] Error releasing reader lock:', err);
+        console.warn("[SerialTransport] Error releasing reader lock:", err);
       }
       this.reader = null;
     }
@@ -191,38 +205,38 @@ export class SerialTransport {
     if (this.writer) {
       try {
         await this.writer.close();
-        console.log('[SerialTransport] Writer closed');
+        console.log("[SerialTransport] Writer closed");
       } catch (err) {
-        console.warn('[SerialTransport] Error closing writer:', err);
+        console.warn("[SerialTransport] Error closing writer:", err);
       }
       try {
         this.writer.releaseLock();
-        console.log('[SerialTransport] Writer lock released');
+        console.log("[SerialTransport] Writer lock released");
       } catch (err) {
-        console.warn('[SerialTransport] Error releasing writer lock:', err);
+        console.warn("[SerialTransport] Error releasing writer lock:", err);
       }
       this.writer = null;
     }
 
     // Give readers/writers time to fully release
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Close port
     if (this.port) {
       try {
         await this.port.close();
-        console.log('[SerialTransport] Port closed successfully');
+        console.log("[SerialTransport] Port closed successfully");
         // Give port time to fully close
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       } catch (err) {
-        console.warn('[SerialTransport] Error closing port:', err);
+        console.warn("[SerialTransport] Error closing port:", err);
         // Even if close fails, wait before continuing
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
       this.port = null;
     }
 
-    console.log('[SerialTransport] Disconnect complete');
+    console.log("[SerialTransport] Disconnect complete");
   }
 
   /**
@@ -241,12 +255,12 @@ export class SerialTransport {
    */
   async send(data: string): Promise<void> {
     if (!this.port) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
 
     if (!this.writer) {
       if (!this.port.writable) {
-        throw new Error('Port is not writable');
+        throw new Error("Port is not writable");
       }
       this.writer = this.port.writable.getWriter();
     }
@@ -262,12 +276,12 @@ export class SerialTransport {
    */
   async sendBytes(data: Uint8Array): Promise<void> {
     if (!this.port) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
 
     if (!this.writer) {
       if (!this.port.writable) {
-        throw new Error('Port is not writable');
+        throw new Error("Port is not writable");
       }
       this.writer = this.port.writable.getWriter();
     }
@@ -290,7 +304,7 @@ export class SerialTransport {
    * @param handler - Handler to remove
    */
   offData(handler: DataHandler): void {
-    this.dataHandlers = this.dataHandlers.filter(h => h !== handler);
+    this.dataHandlers = this.dataHandlers.filter((h) => h !== handler);
   }
 
   /**
@@ -308,7 +322,7 @@ export class SerialTransport {
    * @param handler - Handler to remove
    */
   offError(handler: ErrorHandler): void {
-    this.errorHandlers = this.errorHandlers.filter(h => h !== handler);
+    this.errorHandlers = this.errorHandlers.filter((h) => h !== handler);
   }
 
   /**
@@ -360,7 +374,7 @@ export class SerialTransport {
       try {
         handler(data);
       } catch (error) {
-        console.error('Error in data handler:', error);
+        console.error("Error in data handler:", error);
       }
     }
   }
@@ -375,7 +389,7 @@ export class SerialTransport {
       try {
         handler(error);
       } catch (err) {
-        console.error('Error in error handler:', err);
+        console.error("Error in error handler:", err);
       }
     }
   }
@@ -396,7 +410,7 @@ export class SerialTransport {
    */
   async setSignals(signals: SerialOutputSignals): Promise<void> {
     if (!this.port) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
     await this.port.setSignals(signals);
   }
@@ -408,7 +422,7 @@ export class SerialTransport {
    */
   async getSignals(): Promise<SerialInputSignals> {
     if (!this.port) {
-      throw new Error('Not connected to a port');
+      throw new Error("Not connected to a port");
     }
     return await this.port.getSignals();
   }

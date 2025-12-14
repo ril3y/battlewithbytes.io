@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * UART Panel Component
@@ -7,7 +7,7 @@
  * Terminal-style interface for serial communication
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 interface UartPanelProps {
   isConnected: boolean;
@@ -17,9 +17,15 @@ interface UartPanelProps {
   onDisconnect?: () => void;
 }
 
-export default function UartPanel({ isConnected, output, onSendData, onConnect, onDisconnect }: UartPanelProps) {
+export default function UartPanel({
+  isConnected,
+  output,
+  onSendData,
+  onConnect,
+  onDisconnect,
+}: UartPanelProps) {
   const [autoscroll, setAutoscroll] = useState(true);
-  const [inputData, setInputData] = useState('');
+  const [inputData, setInputData] = useState("");
   const outputRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll output
@@ -32,11 +38,11 @@ export default function UartPanel({ isConnected, output, onSendData, onConnect, 
   const handleSend = () => {
     if (!inputData.trim()) return;
     onSendData(inputData);
-    setInputData('');
+    setInputData("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSend();
     }
   };
@@ -48,8 +54,10 @@ export default function UartPanel({ isConnected, output, onSendData, onConnect, 
         <div className="flex items-center gap-2">
           <span className="text-green-400 font-mono font-semibold">UART</span>
           <span className="text-gray-500">|</span>
-          <span className={`text-xs font-mono ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-            {isConnected ? 'Connected' : 'Disconnected'}
+          <span
+            className={`text-xs font-mono ${isConnected ? "text-green-400" : "text-red-400"}`}
+          >
+            {isConnected ? "Connected" : "Disconnected"}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -74,18 +82,21 @@ export default function UartPanel({ isConnected, output, onSendData, onConnect, 
             onClick={() => setAutoscroll(!autoscroll)}
             className={`px-3 py-1 text-xs rounded border transition-colors ${
               autoscroll
-                ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-                : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
+                : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
             }`}
-            title={autoscroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+            title={autoscroll ? "Disable auto-scroll" : "Enable auto-scroll"}
           >
-            {autoscroll ? 'Auto-scroll' : 'Locked'}
+            {autoscroll ? "Auto-scroll" : "Locked"}
           </button>
         </div>
       </div>
 
       {/* Terminal Output */}
-      <div ref={outputRef} className="flex-1 overflow-auto p-4 font-mono text-sm bg-black">
+      <div
+        ref={outputRef}
+        className="flex-1 overflow-auto p-4 font-mono text-sm bg-black"
+      >
         {output.length === 0 ? (
           <div className="text-gray-400">
             <div className="mb-4">
@@ -110,7 +121,10 @@ export default function UartPanel({ isConnected, output, onSendData, onConnect, 
         ) : (
           <div className="text-gray-300 space-y-0">
             {output.map((line, index) => (
-              <div key={index} className="whitespace-pre-wrap break-words font-mono">
+              <div
+                key={index}
+                className="whitespace-pre-wrap break-words font-mono"
+              >
                 {line}
               </div>
             ))}
@@ -139,9 +153,7 @@ export default function UartPanel({ isConnected, output, onSendData, onConnect, 
             Send
           </button>
         </div>
-        <div className="text-xs text-gray-500 mt-2">
-          Press Enter to send
-        </div>
+        <div className="text-xs text-gray-500 mt-2">Press Enter to send</div>
       </div>
     </div>
   );

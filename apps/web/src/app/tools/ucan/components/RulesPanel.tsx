@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Rules Panel Component
@@ -6,9 +6,9 @@
  * UI for managing CAN message action rules
  */
 
-import React, { useState } from 'react';
-import { ActionRule, CANMessage, ActionDefinition } from '../types';
-import DynamicRuleBuilder from './DynamicRuleBuilder';
+import React, { useState } from "react";
+import { ActionRule, CANMessage, ActionDefinition } from "../types";
+import DynamicRuleBuilder from "./DynamicRuleBuilder";
 
 interface RulesPanelProps {
   isConnected: boolean;
@@ -31,7 +31,7 @@ export default function RulesPanel({
   onToggleRule,
   onClearAllRules,
   onRefreshRules,
-  prefilledMessage
+  prefilledMessage,
 }: RulesPanelProps) {
   const [showBuilder, setShowBuilder] = useState(false);
 
@@ -51,7 +51,8 @@ export default function RulesPanel({
       {!showBuilder && (
         <div className="p-3 bg-purple-900/20 border border-purple-500/30 rounded text-sm text-purple-200">
           <p className="mb-2">
-            Action rules allow CAN messages to automatically trigger hardware responses on your board.
+            Action rules allow CAN messages to automatically trigger hardware
+            responses on your board.
           </p>
           <p className="text-xs text-purple-300/80">
             💡 Configure rules below or right-click a message in the log
@@ -66,8 +67,19 @@ export default function RulesPanel({
             Building rule from captured packet:
           </p>
           <div className="font-mono text-xs text-green-200">
-            <div>CAN ID: 0x{prefilledMessage.canId.toString(16).toUpperCase().padStart(3, '0')}</div>
-            <div>Data: {Array.from(prefilledMessage.data).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ')}</div>
+            <div>
+              CAN ID: 0x
+              {prefilledMessage.canId
+                .toString(16)
+                .toUpperCase()
+                .padStart(3, "0")}
+            </div>
+            <div>
+              Data:{" "}
+              {Array.from(prefilledMessage.data)
+                .map((b) => b.toString(16).toUpperCase().padStart(2, "0"))
+                .join(" ")}
+            </div>
             <div>Length: {prefilledMessage.length} bytes</div>
           </div>
         </div>
@@ -107,7 +119,9 @@ export default function RulesPanel({
       {!showBuilder && (
         <>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-purple-300">Active Rules ({rules.length})</h3>
+            <h3 className="text-sm font-semibold text-purple-300">
+              Active Rules ({rules.length})
+            </h3>
             <div className="flex gap-2">
               <button
                 onClick={onRefreshRules}
@@ -136,9 +150,8 @@ export default function RulesPanel({
                 <p className="text-sm">No rules configured</p>
                 <p className="text-xs mt-1 text-gray-600">
                   {actionDefinitions.length === 0
-                    ? 'Connect to a device to load available actions'
-                    : 'Click "Create New Rule" to get started'
-                  }
+                    ? "Connect to a device to load available actions"
+                    : 'Click "Create New Rule" to get started'}
                 </p>
               </div>
             ) : (
@@ -169,11 +182,13 @@ interface RuleCardProps {
 
 function RuleCard({ rule, onToggle, onDelete }: RuleCardProps) {
   return (
-    <div className={`p-3 border rounded transition-colors ${
-      rule.enabled
-        ? 'bg-purple-900/20 border-purple-500/30'
-        : 'bg-gray-900/30 border-gray-700'
-    }`}>
+    <div
+      className={`p-3 border rounded transition-colors ${
+        rule.enabled
+          ? "bg-purple-900/20 border-purple-500/30"
+          : "bg-gray-900/30 border-gray-700"
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           {/* Rule Name and Status */}
@@ -181,29 +196,35 @@ function RuleCard({ rule, onToggle, onDelete }: RuleCardProps) {
             <h3 className="font-semibold text-white text-sm truncate">
               {rule.name || `Rule ${rule.id}`}
             </h3>
-            <span className={`text-xs px-2 py-0.5 rounded ${
-              rule.enabled
-                ? 'bg-green-600/20 text-green-300 border border-green-500/30'
-                : 'bg-gray-700 text-gray-400 border border-gray-600'
-            }`}>
-              {rule.enabled ? 'Active' : 'Disabled'}
+            <span
+              className={`text-xs px-2 py-0.5 rounded ${
+                rule.enabled
+                  ? "bg-green-600/20 text-green-300 border border-green-500/30"
+                  : "bg-gray-700 text-gray-400 border border-gray-600"
+              }`}
+            >
+              {rule.enabled ? "Active" : "Disabled"}
             </span>
           </div>
 
           {/* Rule Details */}
           <div className="space-y-1 text-xs font-mono">
             <div className="text-gray-400">
-              <span className="text-gray-500">ID:</span>{' '}
-              <span className="text-purple-300">0x{rule.canId.toString(16).toUpperCase()}</span>
+              <span className="text-gray-500">ID:</span>{" "}
+              <span className="text-purple-300">
+                0x{rule.canId.toString(16).toUpperCase()}
+              </span>
             </div>
             <div className="text-gray-400">
-              <span className="text-gray-500">Action:</span>{' '}
+              <span className="text-gray-500">Action:</span>{" "}
               <span className="text-purple-300">{rule.actionType}</span>
             </div>
             {rule.params && rule.params.length > 0 && (
               <div className="text-gray-400">
-                <span className="text-gray-500">Params:</span>{' '}
-                <span className="text-purple-300">{rule.params.join(', ')}</span>
+                <span className="text-gray-500">Params:</span>{" "}
+                <span className="text-purple-300">
+                  {rule.params.join(", ")}
+                </span>
               </div>
             )}
           </div>
@@ -214,11 +235,9 @@ function RuleCard({ rule, onToggle, onDelete }: RuleCardProps) {
           <button
             onClick={onToggle}
             className="p-1.5 hover:bg-purple-800/40 rounded transition-colors"
-            title={rule.enabled ? 'Disable rule' : 'Enable rule'}
+            title={rule.enabled ? "Disable rule" : "Enable rule"}
           >
-            <span className="text-sm">
-              {rule.enabled ? '⏸️' : '▶️'}
-            </span>
+            <span className="text-sm">{rule.enabled ? "⏸️" : "▶️"}</span>
           </button>
           <button
             onClick={onDelete}

@@ -4,9 +4,9 @@
  * Displays a value over time as a line graph.
  */
 
-import React, { useEffect, useRef } from 'react';
-import type { GraphWidgetConfig } from '../types';
-import { BaseWidget } from './BaseWidget';
+import React, { useEffect, useRef } from "react";
+import type { GraphWidgetConfig } from "../types";
+import { BaseWidget } from "./BaseWidget";
 
 export interface GraphWidgetProps {
   config: GraphWidgetConfig;
@@ -14,7 +14,11 @@ export interface GraphWidgetProps {
   valid?: boolean;
 }
 
-export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid = true }) => {
+export const GraphWidget: React.FC<GraphWidgetProps> = ({
+  config,
+  value,
+  valid = true,
+}) => {
   const {
     label,
     showLabel = true,
@@ -22,7 +26,7 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
     min,
     max,
     autoScale = true,
-    lineColor = '#00ff00',
+    lineColor = "#00ff00",
     width = 300,
     height = 150,
   } = config;
@@ -31,7 +35,7 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
 
   // Add new value to history
   useEffect(() => {
-    if (valid && typeof value === 'number' && !isNaN(value)) {
+    if (valid && typeof value === "number" && !isNaN(value)) {
       historyRef.current.push({ timestamp: Date.now(), value });
 
       // Trim history to max length
@@ -60,28 +64,34 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
 
   // Generate SVG path
   const generatePath = (): string => {
-    if (history.length < 2) return '';
+    if (history.length < 2) return "";
 
     const points = history.map((h, i) => {
       const x = (i / (historyLength - 1)) * (width || 300);
       const y =
-        (height || 150) - ((h.value - scaleMin) / (scaleMax - scaleMin)) * (height || 150);
+        (height || 150) -
+        ((h.value - scaleMin) / (scaleMax - scaleMin)) * (height || 150);
       return `${x},${y}`;
     });
 
-    return `M ${points.join(' L ')}`;
+    return `M ${points.join(" L ")}`;
   };
 
   const svgStyle: React.CSSProperties = {
     width: `${width}px`,
     height: `${height}px`,
-    backgroundColor: '#111111',
-    border: '1px solid #333333',
-    borderRadius: '4px',
+    backgroundColor: "#111111",
+    border: "1px solid #333333",
+    borderRadius: "4px",
   };
 
   return (
-    <BaseWidget label={label} showLabel={showLabel} width={width} height={height}>
+    <BaseWidget
+      label={label}
+      showLabel={showLabel}
+      width={width}
+      height={height}
+    >
       <div>
         <svg style={svgStyle}>
           {/* Grid lines */}
@@ -105,7 +115,7 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
           {history.length > 1 && (
             <path
               d={generatePath()}
-              stroke={valid ? lineColor : '#666666'}
+              stroke={valid ? lineColor : "#666666"}
               strokeWidth={2}
               fill="none"
               strokeLinecap="round"
@@ -119,11 +129,12 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
               cx={(history.length - 1) * ((width || 300) / (historyLength - 1))}
               cy={
                 (height || 150) -
-                ((history[history.length - 1].value - scaleMin) / (scaleMax - scaleMin)) *
+                ((history[history.length - 1].value - scaleMin) /
+                  (scaleMax - scaleMin)) *
                   (height || 150)
               }
               r={4}
-              fill={valid ? lineColor : '#666666'}
+              fill={valid ? lineColor : "#666666"}
             />
           )}
         </svg>
@@ -131,16 +142,20 @@ export const GraphWidget: React.FC<GraphWidgetProps> = ({ config, value, valid =
         {/* Value display */}
         <div
           style={{
-            marginTop: '4px',
-            fontSize: '12px',
-            color: '#888888',
-            display: 'flex',
-            justifyContent: 'space-between',
+            marginTop: "4px",
+            fontSize: "12px",
+            color: "#888888",
+            display: "flex",
+            justifyContent: "space-between",
           }}
         >
           <span>Min: {scaleMin.toFixed(1)}</span>
-          <span style={{ color: valid ? lineColor : '#ff0000', fontWeight: 'bold' }}>
-            {history.length > 0 ? history[history.length - 1].value.toFixed(1) : '--'}
+          <span
+            style={{ color: valid ? lineColor : "#ff0000", fontWeight: "bold" }}
+          >
+            {history.length > 0
+              ? history[history.length - 1].value.toFixed(1)
+              : "--"}
           </span>
           <span>Max: {scaleMax.toFixed(1)}</span>
         </div>

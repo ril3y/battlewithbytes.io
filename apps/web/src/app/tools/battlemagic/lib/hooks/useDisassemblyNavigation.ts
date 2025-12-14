@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 
-export type ViewMode = 'linear' | 'graph';
+export type ViewMode = "linear" | "graph";
 
 interface NavigationEntry {
   address: number;
@@ -34,32 +34,37 @@ export interface UseDisassemblyNavigationReturn {
  */
 export function useDisassemblyNavigation({
   onNavigate,
-  onFollowPCChange
+  onFollowPCChange,
 }: UseDisassemblyNavigationProps): UseDisassemblyNavigationReturn {
-  const [navigationHistory, setNavigationHistory] = useState<NavigationEntry[]>([]);
+  const [navigationHistory, setNavigationHistory] = useState<NavigationEntry[]>(
+    [],
+  );
   const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Add to navigation history
-  const addToHistory = useCallback((address: number, viewMode: ViewMode) => {
-    setNavigationHistory(prev => {
-      // Remove any forward history if we're not at the end
-      const newHistory = prev.slice(0, historyIndex + 1);
-      // Add new entry
-      newHistory.push({ address, viewMode });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) {
-        newHistory.shift();
+  const addToHistory = useCallback(
+    (address: number, viewMode: ViewMode) => {
+      setNavigationHistory((prev) => {
+        // Remove any forward history if we're not at the end
+        const newHistory = prev.slice(0, historyIndex + 1);
+        // Add new entry
+        newHistory.push({ address, viewMode });
+        // Limit history to 50 entries
+        if (newHistory.length > 50) {
+          newHistory.shift();
+          return newHistory;
+        }
         return newHistory;
-      }
-      return newHistory;
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
+      });
+      setHistoryIndex((prev) => Math.min(prev + 1, 49));
 
-    // Disable Follow PC when manually navigating
-    if (onFollowPCChange) {
-      onFollowPCChange(false);
-    }
-  }, [historyIndex, onFollowPCChange]);
+      // Disable Follow PC when manually navigating
+      if (onFollowPCChange) {
+        onFollowPCChange(false);
+      }
+    },
+    [historyIndex, onFollowPCChange],
+  );
 
   // Navigate back in history
   const navigateBack = useCallback(() => {
@@ -68,7 +73,7 @@ export function useDisassemblyNavigation({
       const entry = navigationHistory[newIndex];
       setHistoryIndex(newIndex);
       onNavigate(entry.address, entry.viewMode);
-      console.log('[Navigation] Back to:', entry.address.toString(16));
+      console.log("[Navigation] Back to:", entry.address.toString(16));
 
       // Disable Follow PC when navigating through history
       if (onFollowPCChange) {
@@ -84,7 +89,7 @@ export function useDisassemblyNavigation({
       const entry = navigationHistory[newIndex];
       setHistoryIndex(newIndex);
       onNavigate(entry.address, entry.viewMode);
-      console.log('[Navigation] Forward to:', entry.address.toString(16));
+      console.log("[Navigation] Forward to:", entry.address.toString(16));
 
       // Disable Follow PC when navigating through history
       if (onFollowPCChange) {
@@ -97,21 +102,24 @@ export function useDisassemblyNavigation({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if not typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
-      if (e.key === 'Backspace' || e.key === 'ArrowLeft') {
+      if (e.key === "Backspace" || e.key === "ArrowLeft") {
         e.preventDefault();
         navigateBack();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
         navigateForward();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [navigateBack, navigateForward]);
 
   return {
@@ -121,6 +129,6 @@ export function useDisassemblyNavigation({
     navigateBack,
     navigateForward,
     canGoBack: historyIndex > 0,
-    canGoForward: historyIndex < navigationHistory.length - 1
+    canGoForward: historyIndex < navigationHistory.length - 1,
   };
 }

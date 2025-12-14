@@ -9,10 +9,10 @@
  */
 
 // Export all types
-export * from './types';
+export * from "./types";
 
 // Export all utility functions
-export * from './utils';
+export * from "./utils";
 
 // Re-export commonly used types for convenience
 export type {
@@ -31,7 +31,7 @@ export type {
   RegisterValue,
   RegisterSnapshot,
   CpuFeatures,
-} from './types';
+} from "./types";
 
 export {
   decodePsr,
@@ -51,4 +51,4 @@ export {
   formatRegisterValue,
   formatExceptionNumber,
   getRegisterMetadata,
-} from './utils';
+} from "./utils";

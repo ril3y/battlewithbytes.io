@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * DisassemblyHeader Component
@@ -13,9 +13,9 @@
  * - Bytes to Read dropdown
  */
 
-import React from 'react';
-import type { ViewMode } from '../types';
-import type { UseDisassemblyNavigationReturn } from '../../../lib/hooks/useDisassemblyNavigation';
+import React from "react";
+import type { ViewMode } from "../types";
+import type { UseDisassemblyNavigationReturn } from "../../../lib/hooks/useDisassemblyNavigation";
 
 export interface DisassemblyHeaderProps {
   viewMode: ViewMode;
@@ -54,7 +54,7 @@ export function DisassemblyHeader({
   setBytesToRead,
   isConnected,
   programCounter,
-  isLoading
+  isLoading,
 }: DisassemblyHeaderProps) {
   return (
     <div className="flex items-center gap-2 p-2 bg-gray-900 border-b border-gray-700">
@@ -86,7 +86,7 @@ export function DisassemblyHeader({
         </button>
         <button
           onClick={() => {
-            setAddressInput('0x0');
+            setAddressInput("0x0");
             handleGoTo();
           }}
           disabled={!isConnected || isLoading}
@@ -103,7 +103,7 @@ export function DisassemblyHeader({
           value={addressInput}
           onChange={(e) => setAddressInput(e.target.value)}
           onKeyPress={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               handleGoTo();
             }
           }}
@@ -130,21 +130,21 @@ export function DisassemblyHeader({
       {/* View Mode Tabs */}
       <div className="flex items-center gap-1 ml-4">
         <button
-          onClick={() => setViewMode('linear')}
+          onClick={() => setViewMode("linear")}
           className={`px-3 py-1 text-xs font-mono rounded ${
-            viewMode === 'linear'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            viewMode === "linear"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
           }`}
         >
           Linear
         </button>
         <button
-          onClick={() => setViewMode('graph')}
+          onClick={() => setViewMode("graph")}
           className={`px-3 py-1 text-xs font-mono rounded ${
-            viewMode === 'graph'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            viewMode === "graph"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
           }`}
         >
           Graph
@@ -152,7 +152,7 @@ export function DisassemblyHeader({
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {viewMode === 'linear' && (
+        {viewMode === "linear" && (
           <>
             <label className="flex items-center gap-1 text-xs text-gray-400">
               <input

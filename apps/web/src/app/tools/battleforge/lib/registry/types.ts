@@ -36,6 +36,14 @@ export interface BoardIndexEntry {
   platform: string;
   family: string;
   path: string;
+  /** Thumbnail image for grid view */
+  thumbnail?: string;
+  /** Key features for filtering */
+  features?: string[];
+  /** Tags for search */
+  tags?: string[];
+  /** Number of examples available */
+  exampleCount?: number;
 }
 
 export interface LibraryIndexEntry {
@@ -123,6 +131,12 @@ export interface BoardManifest {
   description?: string;
   image?: string;
 
+  // Enhanced assets for UI display
+  assets?: BoardAssets;
+
+  // Board-specific examples
+  examples?: BoardExample[];
+
   chip: {
     platform: string;
     family: string;
@@ -190,13 +204,10 @@ export interface BoardManifest {
     };
   };
 
-  documentation?: {
-    product?: string;
-    pinout?: string;
-    schematic?: string;
-    datasheet?: string;
-    guide?: string;
-  };
+  documentation?: BoardDocumentation;
+
+  /** Named pins with GPIO mappings (e.g., LED_BUILTIN, NEOPIXEL, I2C_SDA) */
+  namedPins?: NamedPinMap;
 
   features?: string[];
   tags?: string[];
@@ -204,8 +215,86 @@ export interface BoardManifest {
 
 export interface PinDefinition {
   pin: string;
+  gpio?: number;
   arduino?: number;
   activeLow?: boolean;
+  features?: string[];
+  notes?: string;
+}
+
+// ============================================================================
+// Board Assets Types
+// ============================================================================
+
+export interface BoardAssets {
+  /** URL to board product image */
+  image: string;
+  /** URL to pinout diagram */
+  pinout?: string;
+  /** Small image for grid view */
+  thumbnail?: string;
+}
+
+// ============================================================================
+// Board Example Types
+// ============================================================================
+
+export interface BoardExample {
+  /** Unique example identifier */
+  id: string;
+  /** Display name */
+  name: string;
+  /** Brief description */
+  description: string;
+  /** Category for grouping */
+  category?: "Getting Started" | "WiFi" | "BLE" | "Sensors" | "Display" | "Power" | "Communication" | string;
+  /** Difficulty level */
+  difficulty?: "beginner" | "intermediate" | "advanced";
+  /** Target framework */
+  framework?: "native" | "arduino" | "zephyr";
+  /** Template files with board-specific content */
+  files: BoardExampleFile[];
+  /** Required board features for this example */
+  features?: string[];
+  /** Required libraries */
+  libraries?: string[];
+}
+
+export interface BoardExampleFile {
+  /** File path in project (e.g., "/src/main.cpp") */
+  path: string;
+  /** File content with correct GPIO pins for the board */
+  content: string;
+}
+
+// ============================================================================
+// Named Pins Map
+// ============================================================================
+
+export interface NamedPinMap {
+  [name: string]: {
+    gpio: number;
+    arduino?: number;
+    features?: string[];
+    notes?: string;
+  };
+}
+
+// ============================================================================
+// Board Documentation Links
+// ============================================================================
+
+export interface BoardDocumentation {
+  /** Chip datasheet URL */
+  datasheet?: string;
+  /** Board schematic PDF URL */
+  schematic?: string;
+  /** Vendor product page */
+  productPage?: string;
+  /** Pinout diagram URL */
+  pinout?: string;
+  /** Additional guides/tutorials */
+  guides?: string[];
 }
 
 // ============================================================================
