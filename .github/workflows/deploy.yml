@@ -4,6 +4,22 @@ on:
   push:
     branches: ["master"]
   workflow_dispatch:
+    inputs:
+      app:
+        description: 'Deploy specific app only (leave empty for all)'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - web
+          - battleterm
+          - battleforge
+          - battlemagic
+          - ucan
+          - wirewizard
+          - mosfet-calculator
+          - ohms-law-calculator
 
 permissions:
   contents: read
@@ -20,6 +36,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -60,16 +78,68 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build web app with Turbo
-        run: pnpm run build:web
+      # Download WASM files for battleforge (if building all or battleforge)
+      - name: Download WASM files for BattleForge
+        if: github.event.inputs.app == 'all' || github.event.inputs.app == 'battleforge' || github.event.inputs.app == ''
+        run: |
+          cd apps/battleforge
+          node scripts/download-wasm.js || echo "WASM download skipped (no release yet)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build all apps or just the selected one
+      - name: Build apps with Turbo
+        run: |
+          if [ "${{ github.event.inputs.app }}" = "" ] || [ "${{ github.event.inputs.app }}" = "all" ]; then
+            echo "Building all apps..."
+            pnpm run build
+          else
+            echo "Building only ${{ github.event.inputs.app }}..."
+            pnpm turbo run build --filter=@battlewithbytes/${{ github.event.inputs.app }}
+          fi
         env:
           TURBO_CACHE_DIR: .turbo
           NEXT_TELEMETRY_DISABLED: 1
 
-      - name: Upload artifact for deployment
+      # Combine all apps into a single directory for GitHub Pages
+      # Structure: / = web, /battleterm = battleterm, etc.
+      - name: Prepare combined deployment
+        run: |
+          mkdir -p _site
+
+          # Copy web app to root (if built)
+          if [ -d "apps/web/out" ]; then
+            cp -r apps/web/out/* _site/
+            echo "✓ Added web to /"
+          fi
+
+          # Copy other apps to subdirectories (if built)
+          for app in battleterm battleforge battlemagic ucan wirewizard mosfet-calculator ohms-law-calculator; do
+            if [ -d "apps/$app/out" ]; then
+              mkdir -p "_site/$app"
+              cp -r "apps/$app/out/"* "_site/$app/"
+              echo "✓ Added $app to /$app/"
+            fi
+          done
+
+          # List final structure
+          echo ""
+          echo "=== Deployment Structure ==="
+          find _site -maxdepth 2 -type d | head -20
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./apps/web/out
+          path: ./_site
+
+      # Also upload individual artifacts for debugging/download
+      - name: Upload individual app artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-apps-out
+          path: |
+            apps/*/out
+          retention-days: 7
 
   deploy:
     needs: build
