@@ -264,7 +264,7 @@ export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
  * Loading progress for WASM/platform assets
  */
 export interface LoadingProgress {
-  stage: "idle" | "downloading" | "extracting" | "ready" | "error";
+  stage: "idle" | "downloading" | "extracting" | "ready" | "error" | "warning";
   current: number; // Bytes loaded
   total: number; // Total bytes
   message: string;
@@ -273,7 +273,7 @@ export interface LoadingProgress {
 /**
  * Component loading state
  */
-export type ComponentState = "idle" | "loading" | "ready" | "error";
+export type ComponentState = "idle" | "loading" | "ready" | "error" | "warning";
 
 /**
  * Toolchain state

@@ -5,12 +5,18 @@
  * Uses DecompressionStream API for gzip decompression.
  */
 
-import { HeaderCache } from './HeaderCache';
+import { HeaderCache } from "./HeaderCache";
 
 const cache = new HeaderCache();
 
 export interface LoadHeadersProgress {
-  stage: 'checking' | 'downloading' | 'extracting' | 'caching' | 'ready' | 'error';
+  stage:
+    | "checking"
+    | "downloading"
+    | "extracting"
+    | "caching"
+    | "ready"
+    | "error";
   message: string;
   current?: number;
   total?: number;
@@ -29,18 +35,18 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
     const header = data.slice(offset, offset + 512);
 
     // Check for empty block (end of archive)
-    if (header.every(b => b === 0)) {
+    if (header.every((b) => b === 0)) {
       break;
     }
 
     // Extract filename (bytes 0-99)
-    let filename = '';
+    let filename = "";
     for (let i = 0; i < 100 && header[i] !== 0; i++) {
       filename += String.fromCharCode(header[i]);
     }
 
     // Extract file size (bytes 124-135, octal string)
-    let sizeStr = '';
+    let sizeStr = "";
     for (let i = 124; i < 136 && header[i] !== 0 && header[i] !== 32; i++) {
       sizeStr += String.fromCharCode(header[i]);
     }
@@ -56,16 +62,16 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
     if ((typeflag === 48 || typeflag === 0) && fileSize > 0) {
       // Normalize path - remove leading ./
       let normalizedPath = filename;
-      if (normalizedPath.startsWith('./')) {
+      if (normalizedPath.startsWith("./")) {
         normalizedPath = normalizedPath.substring(2);
       }
-      if (normalizedPath.startsWith('/')) {
+      if (normalizedPath.startsWith("/")) {
         normalizedPath = normalizedPath.substring(1);
       }
 
       // Read file content
       const content = data.slice(offset, offset + fileSize);
-      files.set('/' + normalizedPath, content);
+      files.set("/" + normalizedPath, content);
     }
 
     // Advance to next header (512-byte aligned)
@@ -79,7 +85,7 @@ function parseTar(data: Uint8Array): Map<string, Uint8Array> {
  * Decompress gzip data using DecompressionStream API
  */
 async function decompressGzip(compressed: Uint8Array): Promise<Uint8Array> {
-  const ds = new DecompressionStream('gzip');
+  const ds = new DecompressionStream("gzip");
   const blob = new Blob([compressed as unknown as BlobPart]);
   const decompressedStream = blob.stream().pipeThrough(ds);
 
@@ -113,32 +119,50 @@ export async function loadHeaders(
   familyId: string,
   headerUrl: string,
   checksum: string,
-  onProgress?: (progress: LoadHeadersProgress) => void
+  onProgress?: (progress: LoadHeadersProgress) => void,
 ): Promise<Map<string, Uint8Array>> {
-  onProgress?.({ stage: 'checking', message: 'Checking cache...' });
+  onProgress?.({ stage: "checking", message: "Checking cache..." });
 
   // Check cache first
   const isValid = await cache.isValid(platformId, familyId, checksum);
   if (isValid) {
     const cached = await cache.getHeaders(platformId, familyId);
     if (cached) {
-      onProgress?.({ stage: 'ready', message: `Loaded ${cached.size} headers from cache` });
+      onProgress?.({
+        stage: "ready",
+        message: `Loaded ${cached.size} headers from cache`,
+      });
       return cached;
     }
   }
 
   // Download headers
-  onProgress?.({ stage: 'downloading', message: 'Downloading headers...' });
+  onProgress?.({ stage: "downloading", message: "Downloading headers..." });
 
   const response = await fetch(`/platforms/${headerUrl}`);
   if (!response.ok) {
+    // Handle missing headers gracefully - return empty set with warning
+    if (response.status === 404) {
+      console.warn(
+        `[HeaderLoader] Headers not available for this platform: ${headerUrl}`,
+      );
+      onProgress?.({
+        stage: "warning",
+        message: `Headers not available for this platform. You can still write code, but platform-specific includes won't work.`,
+      });
+      // Return empty map so IDE can continue without headers
+      return new Map<string, Uint8Array>();
+    }
     throw new Error(`Failed to download headers: ${response.status}`);
   }
 
-  const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+  const contentLength = parseInt(
+    response.headers.get("content-length") || "0",
+    10,
+  );
   const reader = response.body?.getReader();
   if (!reader) {
-    throw new Error('Failed to get response reader');
+    throw new Error("Failed to get response reader");
   }
 
   const chunks: Uint8Array[] = [];
@@ -153,10 +177,10 @@ export async function loadHeaders(
 
     if (contentLength > 0) {
       onProgress?.({
-        stage: 'downloading',
+        stage: "downloading",
         message: `Downloading headers... ${(receivedLength / 1024).toFixed(0)} KB`,
         current: receivedLength,
-        total: contentLength
+        total: contentLength,
       });
     }
   }
@@ -170,24 +194,27 @@ export async function loadHeaders(
   }
 
   // Decompress
-  onProgress?.({ stage: 'extracting', message: 'Extracting headers...' });
+  onProgress?.({ stage: "extracting", message: "Extracting headers..." });
   const tarData = await decompressGzip(compressed);
 
   // Parse tar
   const headers = parseTar(tarData);
 
   // Cache the results
-  onProgress?.({ stage: 'caching', message: 'Caching headers...' });
+  onProgress?.({ stage: "caching", message: "Caching headers..." });
   await cache.setHeaders(platformId, familyId, headers, checksum);
 
-  onProgress?.({ stage: 'ready', message: `Loaded ${headers.size} headers` });
+  onProgress?.({ stage: "ready", message: `Loaded ${headers.size} headers` });
   return headers;
 }
 
 /**
  * Clear cached headers for a family
  */
-export async function clearCachedHeaders(platformId: string, familyId: string): Promise<void> {
+export async function clearCachedHeaders(
+  platformId: string,
+  familyId: string,
+): Promise<void> {
   await cache.removeFamily(platformId, familyId);
 }
 
@@ -197,7 +224,7 @@ export async function clearCachedHeaders(platformId: string, familyId: string): 
 export async function hasCachedHeaders(
   platformId: string,
   familyId: string,
-  checksum: string
+  checksum: string,
 ): Promise<boolean> {
   return cache.isValid(platformId, familyId, checksum);
 }

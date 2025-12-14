@@ -1,26 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { EditorPanel } from './EditorPanel';
-import { TerminalPanel } from './TerminalPanel';
-import { ToolbarPanel } from './ToolbarPanel';
-import { ToolchainStatus } from './ToolchainStatus';
-import { PlatformSelectorModal } from './PlatformSelectorModal';
-import { FileExplorer } from './FileExplorer';
-import { FileTabs } from './FileTabs';
-import { VFSProvider, useVFS } from '../lib/vfs/VFSContext';
-import { useProject } from '../lib/project/ProjectContext';
-import { loadClangModule, executeClang, getClangVersion } from '../lib/compiler/EmscriptenClangLoader';
-import type { LoadProgress } from '../lib/compiler/EmscriptenClangLoader';
-import { executeLld } from '../lib/compiler/EmscriptenLldLoader';
-import type { SelectedPlatform, ToolchainState, LoadingProgress } from '../lib/platform/types';
-import { loadHeaders } from '../lib/platform/HeaderLoader';
-import { getPlatformManager } from '../lib/platform/PlatformManager';
-import { LibraryPanel } from './LibraryPanel';
-import { FirstTimeSetupModal } from './FirstTimeSetupModal';
-import { EditProjectModal } from './EditProjectModal';
-import { HexViewer, isBinaryContent } from './HexViewer';
-import { getLibraryManager } from '../lib/library';
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { EditorPanel } from "./EditorPanel";
+import { TerminalPanel } from "./TerminalPanel";
+import { ToolbarPanel } from "./ToolbarPanel";
+import { ToolchainStatus } from "./ToolchainStatus";
+import { PlatformSelectorModal } from "./PlatformSelectorModal";
+import { FileExplorer } from "./FileExplorer";
+import { FileTabs } from "./FileTabs";
+import { VFSProvider, useVFS } from "../lib/vfs/VFSContext";
+import { useProject } from "../lib/project/ProjectContext";
+import {
+  loadClangModule,
+  executeClang,
+  getClangVersion,
+} from "../lib/compiler/EmscriptenClangLoader";
+import type { LoadProgress } from "../lib/compiler/EmscriptenClangLoader";
+import { executeLld } from "../lib/compiler/EmscriptenLldLoader";
+import type {
+  SelectedPlatform,
+  ToolchainState,
+  LoadingProgress,
+} from "../lib/platform/types";
+import { loadHeaders } from "../lib/platform/HeaderLoader";
+import { getPlatformManager } from "../lib/platform/PlatformManager";
+import { LibraryPanel } from "./LibraryPanel";
+import { FirstTimeSetupModal } from "./FirstTimeSetupModal";
+import { EditProjectModal } from "./EditProjectModal";
+import { HexViewer, isBinaryContent } from "./HexViewer";
+import { getLibraryManager } from "../lib/library";
 
 const defaultSourceCode = `/**
  * STM32F103C8T6 (Blue Pill) LED Blink Example
@@ -154,29 +162,58 @@ int main(void) {
 `;
 
 function BattleForgeIDEContent() {
-  const { state, addFile, updateFile, markFileSaved, getFile, addFilesFromMap, getFilesForCompiler, openFile, hasUnsavedChanges, deleteDirectory, hasDirectory } = useVFS();
-  const { currentProject, saveProject: saveProjectToStorage, closeProject } = useProject();
+  const {
+    state,
+    addFile,
+    updateFile,
+    markFileSaved,
+    getFile,
+    addFilesFromMap,
+    getFilesForCompiler,
+    openFile,
+    hasUnsavedChanges,
+    deleteDirectory,
+    hasDirectory,
+  } = useVFS();
+  const {
+    currentProject,
+    saveProject: saveProjectToStorage,
+    closeProject,
+  } = useProject();
 
   // Editor state - empty until platform selected
-  const [editorContent, setEditorContent] = useState('');
+  const [editorContent, setEditorContent] = useState("");
 
-  const [output, setOutput] = useState<Array<{message: string, type: 'info' | 'success' | 'error' | 'warning', timestamp?: string}>>([
-    { message: 'BattleForge Ready - Compile firmware for embedded systems', type: 'info' },
+  const [output, setOutput] = useState<
+    Array<{
+      message: string;
+      type: "info" | "success" | "error" | "warning";
+      timestamp?: string;
+    }>
+  >([
+    {
+      message: "BattleForge Ready - Compile firmware for embedded systems",
+      type: "info",
+    },
   ]);
 
   const [isCompiling, setIsCompiling] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [compilerReady, setCompilerReady] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<SelectedPlatform | null>(null);
-  const [cachedHeaders, setCachedHeaders] = useState<Map<string, Uint8Array> | null>(null);
+  const [selectedPlatform, setSelectedPlatform] =
+    useState<SelectedPlatform | null>(null);
+  const [cachedHeaders, setCachedHeaders] = useState<Map<
+    string,
+    Uint8Array
+  > | null>(null);
   const [projectInitialized, setProjectInitialized] = useState(false);
 
   // Toolchain state for status display
   const [toolchainState, setToolchainState] = useState<ToolchainState>({
-    clang: { stage: 'idle', current: 0, total: 0, message: '' },
-    lld: { stage: 'idle', current: 0, total: 0, message: '' },
-    headers: { stage: 'idle', current: 0, total: 0, message: '' },
-    libs: { stage: 'idle', current: 0, total: 0, message: '' },
+    clang: { stage: "idle", current: 0, total: 0, message: "" },
+    lld: { stage: "idle", current: 0, total: 0, message: "" },
+    headers: { stage: "idle", current: 0, total: 0, message: "" },
+    libs: { stage: "idle", current: 0, total: 0, message: "" },
   });
 
   // Platform modal state - only open if no project platform
@@ -197,7 +234,10 @@ function BattleForgeIDEContent() {
       }
 
       // Load build artifacts if present
-      if (currentProject.buildArtifacts && currentProject.buildArtifacts.length > 0) {
+      if (
+        currentProject.buildArtifacts &&
+        currentProject.buildArtifacts.length > 0
+      ) {
         // Helper to convert base64 to Uint8Array
         const fromBase64 = (base64: string): Uint8Array => {
           const binary = atob(base64);
@@ -213,25 +253,31 @@ function BattleForgeIDEContent() {
           addFile(artifact.path, content, false);
         }
 
-        setOutput(prev => [...prev, {
-          message: `Loaded ${currentProject.buildArtifacts!.length} build artifact(s)`,
-          type: 'info',
-          timestamp: new Date().toLocaleTimeString()
-        }]);
+        setOutput((prev) => [
+          ...prev,
+          {
+            message: `Loaded ${currentProject.buildArtifacts!.length} build artifact(s)`,
+            type: "info",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
       }
 
       // Open the first editable file
-      const firstEditableFile = currentProject.files.find(f => f.editable);
+      const firstEditableFile = currentProject.files.find((f) => f.editable);
       if (firstEditableFile) {
         openFile(firstEditableFile.path);
       }
 
       // Log project loaded
-      setOutput(prev => [...prev, {
-        message: `Project "${currentProject.metadata.name}" loaded`,
-        type: 'success',
-        timestamp: new Date().toLocaleTimeString()
-      }]);
+      setOutput((prev) => [
+        ...prev,
+        {
+          message: `Project "${currentProject.metadata.name}" loaded`,
+          type: "success",
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
 
       // Trigger auto-load of compiler if project has platform
       if (currentProject.platform) {
@@ -244,17 +290,22 @@ function BattleForgeIDEContent() {
 
   // First-time setup modal state
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
-  const [pendingPlatform, setPendingPlatform] = useState<SelectedPlatform | null>(null);
+  const [pendingPlatform, setPendingPlatform] =
+    useState<SelectedPlatform | null>(null);
   const [headersReady, setHeadersReady] = useState(false);
 
   // Right sidebar tab state
-  const [rightSidebarTab, setRightSidebarTab] = useState<'platform' | 'libraries'>('platform');
+  const [rightSidebarTab, setRightSidebarTab] = useState<
+    "platform" | "libraries"
+  >("platform");
 
   // Resizable panel state
   const [terminalHeight, setTerminalHeight] = useState(200);
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(220);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(280);
-  const [isResizing, setIsResizing] = useState<'terminal' | 'left' | 'right' | null>(null);
+  const [isResizing, setIsResizing] = useState<
+    "terminal" | "left" | "right" | null
+  >(null);
   const resizeStartPos = useRef(0);
   const resizeStartSize = useRef(0);
 
@@ -263,36 +314,48 @@ function BattleForgeIDEContent() {
   const resizeStartHeight = useRef(0);
 
   // Panel resize handlers
-  const handleResizeStart = useCallback((type: 'terminal' | 'left' | 'right', e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(type);
-    if (type === 'terminal') {
-      resizeStartPos.current = e.clientY;
-      resizeStartSize.current = terminalHeight;
-    } else if (type === 'left') {
-      resizeStartPos.current = e.clientX;
-      resizeStartSize.current = leftSidebarWidth;
-    } else {
-      resizeStartPos.current = e.clientX;
-      resizeStartSize.current = rightSidebarWidth;
-    }
-  }, [terminalHeight, leftSidebarWidth, rightSidebarWidth]);
+  const handleResizeStart = useCallback(
+    (type: "terminal" | "left" | "right", e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(type);
+      if (type === "terminal") {
+        resizeStartPos.current = e.clientY;
+        resizeStartSize.current = terminalHeight;
+      } else if (type === "left") {
+        resizeStartPos.current = e.clientX;
+        resizeStartSize.current = leftSidebarWidth;
+      } else {
+        resizeStartPos.current = e.clientX;
+        resizeStartSize.current = rightSidebarWidth;
+      }
+    },
+    [terminalHeight, leftSidebarWidth, rightSidebarWidth],
+  );
 
   useEffect(() => {
     if (!isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing === 'terminal') {
+      if (isResizing === "terminal") {
         const deltaY = resizeStartPos.current - e.clientY;
-        const newHeight = Math.max(100, Math.min(600, resizeStartSize.current + deltaY));
+        const newHeight = Math.max(
+          100,
+          Math.min(600, resizeStartSize.current + deltaY),
+        );
         setTerminalHeight(newHeight);
-      } else if (isResizing === 'left') {
+      } else if (isResizing === "left") {
         const deltaX = e.clientX - resizeStartPos.current;
-        const newWidth = Math.max(150, Math.min(400, resizeStartSize.current + deltaX));
+        const newWidth = Math.max(
+          150,
+          Math.min(400, resizeStartSize.current + deltaX),
+        );
         setLeftSidebarWidth(newWidth);
-      } else if (isResizing === 'right') {
+      } else if (isResizing === "right") {
         const deltaX = resizeStartPos.current - e.clientX;
-        const newWidth = Math.max(200, Math.min(450, resizeStartSize.current + deltaX));
+        const newWidth = Math.max(
+          200,
+          Math.min(450, resizeStartSize.current + deltaX),
+        );
         setRightSidebarWidth(newWidth);
       }
     };
@@ -301,12 +364,12 @@ function BattleForgeIDEContent() {
       setIsResizing(null);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing]);
 
@@ -358,11 +421,11 @@ clean:
   useEffect(() => {
     if (selectedPlatform && !currentProject) {
       // Only add the default files if they don't exist yet
-      if (!getFile('/src/main.c')) {
-        addFile('/src/main.c', defaultSourceCode, true);
+      if (!getFile("/src/main.c")) {
+        addFile("/src/main.c", defaultSourceCode, true);
       }
-      if (!getFile('/Makefile')) {
-        addFile('/Makefile', defaultMakefile, true);
+      if (!getFile("/Makefile")) {
+        addFile("/Makefile", defaultMakefile, true);
       }
     }
   }, [selectedPlatform, currentProject, addFile, getFile]);
@@ -373,7 +436,7 @@ clean:
       const file = getFile(state.activeFile);
       if (file) {
         // Convert Uint8Array to string if needed (for header files)
-        if (typeof file.content === 'string') {
+        if (typeof file.content === "string") {
           setEditorContent(file.content);
         } else if (file.content instanceof Uint8Array) {
           const textContent = new TextDecoder().decode(file.content);
@@ -383,67 +446,91 @@ clean:
     }
   }, [state.activeFile, getFile]);
 
-  const updateToolchainComponent = useCallback((
-    component: keyof ToolchainState,
-    update: Partial<LoadingProgress>
-  ) => {
-    setToolchainState(prev => ({
-      ...prev,
-      [component]: { ...prev[component], ...update }
-    }));
-  }, []);
+  const updateToolchainComponent = useCallback(
+    (component: keyof ToolchainState, update: Partial<LoadingProgress>) => {
+      setToolchainState((prev) => ({
+        ...prev,
+        [component]: { ...prev[component], ...update },
+      }));
+    },
+    [],
+  );
 
-  const log = useCallback((message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
-    const timestamp = new Date().toLocaleTimeString();
-    setOutput(prev => [...prev, { message, type, timestamp }]);
-  }, []);
+  const log = useCallback(
+    (
+      message: string,
+      type: "info" | "success" | "error" | "warning" = "info",
+    ) => {
+      const timestamp = new Date().toLocaleTimeString();
+      setOutput((prev) => [...prev, { message, type, timestamp }]);
+    },
+    [],
+  );
 
   const handleLoadCompiler = async () => {
     if (compilerReady) {
-      log('Compiler already loaded', 'warning');
+      log("Compiler already loaded", "warning");
       return;
     }
 
     if (isLoading) {
-      log('Compiler load already in progress', 'warning');
+      log("Compiler load already in progress", "warning");
       return;
     }
 
     setIsLoading(true);
-    log('Starting compiler download...', 'info');
-    updateToolchainComponent('clang', { stage: 'downloading', message: 'Starting download...' });
+    log("Starting compiler download...", "info");
+    updateToolchainComponent("clang", {
+      stage: "downloading",
+      message: "Starting download...",
+    });
 
     try {
       await loadClangModule((progress: LoadProgress) => {
-        if (progress.stage === 'downloading') {
-          log(progress.message, 'info');
-          updateToolchainComponent('clang', {
-            stage: 'downloading',
+        if (progress.stage === "downloading") {
+          log(progress.message, "info");
+          updateToolchainComponent("clang", {
+            stage: "downloading",
             message: progress.message,
             current: progress.current || 0,
-            total: progress.total || 0
+            total: progress.total || 0,
           });
-        } else if (progress.stage === 'instantiating') {
-          log(progress.message, 'info');
-          updateToolchainComponent('clang', { stage: 'extracting', message: 'Instantiating WASM...' });
-        } else if (progress.stage === 'ready') {
-          log('ARM Clang compiler ready', 'success');
-          updateToolchainComponent('clang', { stage: 'ready', message: 'Ready' });
+        } else if (progress.stage === "instantiating") {
+          log(progress.message, "info");
+          updateToolchainComponent("clang", {
+            stage: "extracting",
+            message: "Instantiating WASM...",
+          });
+        } else if (progress.stage === "ready") {
+          log("ARM Clang compiler ready", "success");
+          updateToolchainComponent("clang", {
+            stage: "ready",
+            message: "Ready",
+          });
           setCompilerReady(true);
-        } else if (progress.stage === 'error') {
-          log(`Compiler load failed: ${progress.message}`, 'error');
-          updateToolchainComponent('clang', { stage: 'error', message: progress.message });
+        } else if (progress.stage === "error") {
+          log(`Compiler load failed: ${progress.message}`, "error");
+          updateToolchainComponent("clang", {
+            stage: "error",
+            message: progress.message,
+          });
         }
       });
 
       const version = await getClangVersion();
-      log(`Compiler version: ${version}`, 'info');
+      log(`Compiler version: ${version}`, "info");
 
       // Mark LLD as ready too (it's loaded with Clang)
-      updateToolchainComponent('lld', { stage: 'ready', message: 'Ready' });
+      updateToolchainComponent("lld", { stage: "ready", message: "Ready" });
     } catch (error) {
-      log(`Failed to load compiler: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      updateToolchainComponent('clang', { stage: 'error', message: 'Load failed' });
+      log(
+        `Failed to load compiler: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error",
+      );
+      updateToolchainComponent("clang", {
+        stage: "error",
+        message: "Load failed",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -461,7 +548,12 @@ clean:
   useEffect(() => {
     async function loadProjectPlatformHeaders() {
       // Only proceed if compiler is ready, project has platform, headers not loaded, and not already loading
-      if (!compilerReady || !currentProject?.platform || cachedHeaders || headersReady) {
+      if (
+        !compilerReady ||
+        !currentProject?.platform ||
+        cachedHeaders ||
+        headersReady
+      ) {
         return;
       }
 
@@ -473,30 +565,48 @@ clean:
       const { platformId, familyId, deviceId } = currentProject.platform;
 
       try {
-        log('Loading platform configuration...', 'info');
+        log("Loading platform configuration...", "info");
 
         // Use PlatformManager to get full platform data
         const platformManager = getPlatformManager();
-        const fullPlatform = await platformManager.selectPlatform(platformId, familyId, deviceId);
+        const fullPlatform = await platformManager.selectPlatform(
+          platformId,
+          familyId,
+          deviceId,
+        );
 
         // Set the platform and load headers
         setSelectedPlatform(fullPlatform);
         await loadPlatformHeaders(fullPlatform);
       } catch (err) {
-        log(`Failed to load platform: ${err}`, 'error');
+        log(`Failed to load platform: ${err}`, "error");
       }
     }
 
     loadProjectPlatformHeaders();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compilerReady, currentProject?.platform, cachedHeaders, headersReady, selectedPlatform]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    compilerReady,
+    currentProject?.platform,
+    cachedHeaders,
+    headersReady,
+    selectedPlatform,
+  ]);
 
-  // Load installed library files into VFS on mount
+  // Load project-specific library files into VFS
   useEffect(() => {
-    async function loadInstalledLibraries() {
+    async function loadProjectLibraries() {
+      // Only load libraries if project has them defined
+      const projectLibraries = currentProject?.libraries;
+      if (!projectLibraries || projectLibraries.length === 0) {
+        return;
+      }
+
       try {
         const libraryManager = getLibraryManager();
-        const libraryFiles = await libraryManager.getAllLibraryFiles();
+        // Only load libraries that are part of this project
+        const libraryFiles =
+          await libraryManager.getLibraryFilesFor(projectLibraries);
 
         if (libraryFiles.size > 0) {
           let configTemplatesCopied = 0;
@@ -508,89 +618,138 @@ clean:
             if (configMatch) {
               const configFileName = configMatch[1];
               const userConfigPath = `/src/${configFileName}`;
-              // Add as editable file in user's src directory
-              addFile(userConfigPath, content, true); // true = editable
-              configTemplatesCopied++;
+              // Only copy if file doesn't already exist in src
+              if (!files.get(userConfigPath)) {
+                addFile(userConfigPath, content, true); // true = editable
+                configTemplatesCopied++;
+              }
             }
           }
-          log(`Loaded ${libraryFiles.size} library files from cache`, 'info');
+          log(
+            `Loaded ${libraryFiles.size} files for ${projectLibraries.length} project libraries`,
+            "info",
+          );
           if (configTemplatesCopied > 0) {
-            log(`Copied ${configTemplatesCopied} config template(s) to /src`, 'info');
+            log(
+              `Copied ${configTemplatesCopied} config template(s) to /src`,
+              "info",
+            );
           }
         }
       } catch (err) {
-        console.error('[BattleForgeIDE] Failed to load library files:', err);
+        console.error("[BattleForgeIDE] Failed to load library files:", err);
       }
     }
 
-    loadInstalledLibraries();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount
+    loadProjectLibraries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProject?.libraries]); // Reload when project libraries change
 
-  const handlePlatformSelect = useCallback(async (platform: SelectedPlatform | null) => {
-    if (!platform) {
-      setSelectedPlatform(null);
-      setCachedHeaders(null);
-      setHeadersReady(false);
-      updateToolchainComponent('headers', { stage: 'idle', message: '' });
-      return;
-    }
+  const handlePlatformSelect = useCallback(
+    async (platform: SelectedPlatform | null) => {
+      if (!platform) {
+        setSelectedPlatform(null);
+        setCachedHeaders(null);
+        setHeadersReady(false);
+        updateToolchainComponent("headers", { stage: "idle", message: "" });
+        return;
+      }
 
-    log(`Platform selected: ${platform.device.name} (${platform.family.architecture})`, 'info');
+      log(
+        `Platform selected: ${platform.device.name} (${platform.family.architecture})`,
+        "info",
+      );
 
-    // If compiler isn't ready, show setup modal first
-    if (!compilerReady) {
-      setPendingPlatform(platform);
-      setIsSetupModalOpen(true);
-      return;
-    }
+      // If compiler isn't ready, show setup modal first
+      if (!compilerReady) {
+        setPendingPlatform(platform);
+        setIsSetupModalOpen(true);
+        return;
+      }
 
-    // Compiler is ready, proceed with headers loading
-    await loadPlatformHeaders(platform);
-  }, [compilerReady, log]);
+      // Compiler is ready, proceed with headers loading
+      await loadPlatformHeaders(platform);
+    },
+    [compilerReady, log],
+  );
 
   // Load headers for a platform (called after setup or directly if compiler ready)
-  const loadPlatformHeaders = useCallback(async (platform: SelectedPlatform) => {
-    setSelectedPlatform(platform);
-    setCachedHeaders(null);
-    setHeadersReady(false);
-    updateToolchainComponent('headers', { stage: 'idle', message: '' });
+  const loadPlatformHeaders = useCallback(
+    async (platform: SelectedPlatform) => {
+      setSelectedPlatform(platform);
+      setCachedHeaders(null);
+      setHeadersReady(false);
+      updateToolchainComponent("headers", { stage: "idle", message: "" });
 
-    log('Loading platform headers...', 'info');
-    updateToolchainComponent('headers', { stage: 'downloading', message: 'Loading headers...' });
+      log("Loading platform headers...", "info");
+      updateToolchainComponent("headers", {
+        stage: "downloading",
+        message: "Loading headers...",
+      });
 
-    try {
-      const headers = await loadHeaders(
-        platform.platformId,
-        platform.familyId,
-        platform.family.headers.url,
-        platform.family.headers.checksum,
-        (progress) => {
-          updateToolchainComponent('headers', {
-            stage: progress.stage === 'ready' ? 'ready' : progress.stage === 'error' ? 'error' : 'downloading',
-            message: progress.message,
-            current: progress.current || 0,
-            total: progress.total || 0
+      try {
+        const headers = await loadHeaders(
+          platform.platformId,
+          platform.familyId,
+          platform.family.headers.url,
+          platform.family.headers.checksum,
+          (progress) => {
+            // Map header loader stages to toolchain stages
+            let stage: "ready" | "error" | "downloading" | "warning" =
+              "downloading";
+            if (progress.stage === "ready") stage = "ready";
+            else if (progress.stage === "error") stage = "error";
+            else if (progress.stage === "warning") stage = "warning";
+
+            updateToolchainComponent("headers", {
+              stage,
+              message: progress.message,
+              current: progress.current || 0,
+              total: progress.total || 0,
+            });
+            if (progress.stage !== "ready") {
+              log(
+                progress.message,
+                progress.stage === "error"
+                  ? "error"
+                  : progress.stage === "warning"
+                    ? "warn"
+                    : "info",
+              );
+            }
+          },
+        );
+        setCachedHeaders(headers);
+        setHeadersReady(true);
+
+        // Handle case where headers weren't available (warning stage)
+        if (headers.size === 0) {
+          updateToolchainComponent("headers", {
+            stage: "warning",
+            message: "No headers available",
           });
-          if (progress.stage !== 'ready') {
-            log(progress.message, progress.stage === 'error' ? 'error' : 'info');
-          }
+        } else {
+          updateToolchainComponent("headers", {
+            stage: "ready",
+            message: `${headers.size} headers loaded`,
+          });
         }
-      );
-      setCachedHeaders(headers);
-      setHeadersReady(true);
-      updateToolchainComponent('headers', { stage: 'ready', message: `${headers.size} headers loaded` });
 
-      // Add headers to VFS for visibility in file explorer
-      for (const [headerPath, content] of headers) {
-        addFile(headerPath, content, false);
+        // Add headers to VFS for visibility in file explorer
+        for (const [headerPath, content] of headers) {
+          addFile(headerPath, content, false);
+        }
+        log(`Added ${headers.size} headers to filesystem`, "success");
+      } catch (err) {
+        log(`Failed to load headers: ${err}`, "error");
+        updateToolchainComponent("headers", {
+          stage: "error",
+          message: "Failed to load",
+        });
       }
-      log(`Added ${headers.size} headers to filesystem`, 'success');
-    } catch (err) {
-      log(`Failed to load headers: ${err}`, 'error');
-      updateToolchainComponent('headers', { stage: 'error', message: 'Failed to load' });
-    }
-  }, [updateToolchainComponent, log, addFile]);
+    },
+    [updateToolchainComponent, log, addFile],
+  );
 
   // Setup modal handlers
   const handleSetupComplete = useCallback(() => {
@@ -610,7 +769,10 @@ clean:
   const handleLoadHeadersFromSetup = useCallback(async () => {
     if (!pendingPlatform) return;
 
-    updateToolchainComponent('headers', { stage: 'downloading', message: 'Loading headers...' });
+    updateToolchainComponent("headers", {
+      stage: "downloading",
+      message: "Loading headers...",
+    });
 
     try {
       const headers = await loadHeaders(
@@ -619,24 +781,35 @@ clean:
         pendingPlatform.family.headers.url,
         pendingPlatform.family.headers.checksum,
         (progress) => {
-          updateToolchainComponent('headers', {
-            stage: progress.stage === 'ready' ? 'ready' : progress.stage === 'error' ? 'error' : 'downloading',
+          updateToolchainComponent("headers", {
+            stage:
+              progress.stage === "ready"
+                ? "ready"
+                : progress.stage === "error"
+                  ? "error"
+                  : "downloading",
             message: progress.message,
             current: progress.current || 0,
-            total: progress.total || 0
+            total: progress.total || 0,
           });
-        }
+        },
       );
       setCachedHeaders(headers);
       setHeadersReady(true);
-      updateToolchainComponent('headers', { stage: 'ready', message: `${headers.size} headers loaded` });
+      updateToolchainComponent("headers", {
+        stage: "ready",
+        message: `${headers.size} headers loaded`,
+      });
 
       // Add headers to VFS
       for (const [headerPath, content] of headers) {
         addFile(headerPath, content, false);
       }
     } catch (err) {
-      updateToolchainComponent('headers', { stage: 'error', message: 'Failed to load' });
+      updateToolchainComponent("headers", {
+        stage: "error",
+        message: "Failed to load",
+      });
       throw err;
     }
   }, [pendingPlatform, updateToolchainComponent, addFile]);
@@ -705,12 +878,15 @@ SECTIONS
       const linkerUrl = `/platforms/stm32/${family.id}/linker/${device.linkerScript}`;
       const response = await fetch(linkerUrl);
       if (!response.ok) {
-        log(`Warning: Could not load linker script from ${linkerUrl}, using default`, 'warning');
+        log(
+          `Warning: Could not load linker script from ${linkerUrl}, using default`,
+          "warning",
+        );
         return defaultLinkerScript;
       }
       return await response.text();
     } catch (err) {
-      log(`Warning: Failed to load linker script: ${err}`, 'warning');
+      log(`Warning: Failed to load linker script: ${err}`, "warning");
       return defaultLinkerScript;
     }
   };
@@ -722,15 +898,20 @@ SECTIONS
 
   // Get files for intellisense - traverses VFS and returns Map with content and readOnly
   const getFilesForIntellisense = useCallback(() => {
-    const files = new Map<string, { content: string | Uint8Array; readOnly?: boolean }>();
+    const files = new Map<
+      string,
+      { content: string | Uint8Array; readOnly?: boolean }
+    >();
 
-    function traverse(node: typeof state.root | typeof state.root.children[0]) {
-      if (node.type === 'file') {
+    function traverse(
+      node: typeof state.root | (typeof state.root.children)[0],
+    ) {
+      if (node.type === "file") {
         files.set(node.path, {
           content: node.content,
-          readOnly: !node.editable
+          readOnly: !node.editable,
         });
-      } else if (node.type === 'directory') {
+      } else if (node.type === "directory") {
         for (const child of node.children) {
           traverse(child);
         }
@@ -741,42 +922,46 @@ SECTIONS
     return files;
   }, [state.root]);
 
-  const handleFileSelect = useCallback((path: string, content: string | Uint8Array) => {
-    // Convert Uint8Array to string if needed (for header files)
-    if (typeof content === 'string') {
-      setEditorContent(content);
-    } else if (content instanceof Uint8Array) {
-      const textContent = new TextDecoder().decode(content);
-      setEditorContent(textContent);
-    }
-  }, []);
+  const handleFileSelect = useCallback(
+    (path: string, content: string | Uint8Array) => {
+      // Convert Uint8Array to string if needed (for header files)
+      if (typeof content === "string") {
+        setEditorContent(content);
+      } else if (content instanceof Uint8Array) {
+        const textContent = new TextDecoder().decode(content);
+        setEditorContent(textContent);
+      }
+    },
+    [],
+  );
 
   const handleCompile = async () => {
     if (!compilerReady) {
-      log('Compiler not ready yet. Please wait...', 'warning');
+      log("Compiler not ready yet. Please wait...", "warning");
       return;
     }
 
     if (isCompiling) {
-      log('Compilation already in progress', 'warning');
+      log("Compilation already in progress", "warning");
       return;
     }
 
     setIsCompiling(true);
-    log('Starting compilation...', 'info');
+    log("Starting compilation...", "info");
 
     try {
       // Get platform-specific compiler flags or use defaults
       const defaultFlags = [
-        '--target=thumbv7m-none-eabi',
-        '-mcpu=cortex-m3',
-        '-mthumb',
-        '-nostdlib',
-        '-ffreestanding',
+        "--target=thumbv7m-none-eabi",
+        "-mcpu=cortex-m3",
+        "-mthumb",
+        "-nostdlib",
+        "-ffreestanding",
       ];
 
-      const platformFlags = selectedPlatform?.family.compilerFlags || defaultFlags;
-      const archName = selectedPlatform?.family.architecture || 'cortex-m3';
+      const platformFlags =
+        selectedPlatform?.family.compilerFlags || defaultFlags;
+      const archName = selectedPlatform?.family.architecture || "cortex-m3";
 
       // Use cached headers (loaded when platform was selected)
       const headers = cachedHeaders;
@@ -786,7 +971,7 @@ SECTIONS
       const files: Record<string, string | Uint8Array> = { ...vfsFiles };
 
       // For now, use editor content for main.c
-      files['/main.c'] = editorContent;
+      files["/main.c"] = editorContent;
 
       // Add headers to files
       if (headers) {
@@ -800,7 +985,7 @@ SECTIONS
       if (headers) {
         const dirs = new Set<string>();
         for (const path of headers.keys()) {
-          const dir = path.substring(0, path.lastIndexOf('/'));
+          const dir = path.substring(0, path.lastIndexOf("/"));
           if (dir) dirs.add(dir);
         }
         for (const dir of dirs) {
@@ -810,12 +995,18 @@ SECTIONS
 
       // Add user source directories to include paths (for user headers)
       // Always include /src for user configuration files (like FreeRTOSConfig.h)
-      includePaths.push('-I/src');
+      includePaths.push("-I/src");
       const userDirs = new Set<string>();
       for (const path of Object.keys(vfsFiles)) {
-        if (path.endsWith('.h')) {
-          const dir = path.substring(0, path.lastIndexOf('/'));
-          if (dir && dir !== '/src' && !dir.startsWith('/cmsis') && !dir.startsWith('/device') && !dir.startsWith('/libc')) {
+        if (path.endsWith(".h")) {
+          const dir = path.substring(0, path.lastIndexOf("/"));
+          if (
+            dir &&
+            dir !== "/src" &&
+            !dir.startsWith("/cmsis") &&
+            !dir.startsWith("/device") &&
+            !dir.startsWith("/libc")
+          ) {
             userDirs.add(dir);
           }
         }
@@ -841,7 +1032,7 @@ SECTIONS
 
       // Log library info if any are installed
       if (libraryFiles.size > 0) {
-        log(`Including ${libraryFiles.size} library files`, 'info');
+        log(`Including ${libraryFiles.size} library files`, "info");
       }
 
       // Add device define if available
@@ -855,7 +1046,12 @@ SECTIONS
       // Find all user .c files to compile
       const userSourceFiles: string[] = [];
       for (const path of Object.keys(vfsFiles)) {
-        if (path.endsWith('.c') && !path.startsWith('/cmsis') && !path.startsWith('/device') && !path.startsWith('/libc')) {
+        if (
+          path.endsWith(".c") &&
+          !path.startsWith("/cmsis") &&
+          !path.startsWith("/device") &&
+          !path.startsWith("/libc")
+        ) {
           userSourceFiles.push(path);
         }
       }
@@ -863,7 +1059,11 @@ SECTIONS
       // Find library source files to compile
       const librarySourceFiles: string[] = [];
       for (const path of libraryFiles.keys()) {
-        if (path.endsWith('.c') || path.endsWith('.cpp') || path.endsWith('.cc')) {
+        if (
+          path.endsWith(".c") ||
+          path.endsWith(".cpp") ||
+          path.endsWith(".cc")
+        ) {
           librarySourceFiles.push(path);
         }
       }
@@ -871,12 +1071,15 @@ SECTIONS
       // Combine user and library sources
       const allSourceFiles = [...userSourceFiles, ...librarySourceFiles];
 
-      log(`Step 1: Compiling ${userSourceFiles.length} user + ${librarySourceFiles.length} library source file(s) for ARM ${archName}...`, 'info');
+      log(
+        `Step 1: Compiling ${userSourceFiles.length} user + ${librarySourceFiles.length} library source file(s) for ARM ${archName}...`,
+        "info",
+      );
       if (includePaths.length > 0) {
-        log(`Include paths: ${includePaths.join(' ')}`, 'info');
+        log(`Include paths: ${includePaths.join(" ")}`, "info");
       }
       if (defines.length > 0) {
-        log(`Defines: ${defines.join(' ')}`, 'info');
+        log(`Defines: ${defines.join(" ")}`, "info");
       }
 
       // Compile each source file to object file
@@ -884,16 +1087,16 @@ SECTIONS
 
       for (const srcPath of allSourceFiles) {
         // For the active file, use editor content
-        const srcFileName = srcPath.substring(srcPath.lastIndexOf('/') + 1);
-        const objFileName = srcFileName.replace(/\.(c|cpp|cc)$/, '.o');
+        const srcFileName = srcPath.substring(srcPath.lastIndexOf("/") + 1);
+        const objFileName = srcFileName.replace(/\.(c|cpp|cc)$/, ".o");
         // Use a unique path to avoid collisions between user and library files
-        const objPath = srcPath.startsWith('/libs/')
-          ? `/build/libs_${srcFileName.replace(/\.(c|cpp|cc)$/, '.o')}`
+        const objPath = srcPath.startsWith("/libs/")
+          ? `/build/libs_${srcFileName.replace(/\.(c|cpp|cc)$/, ".o")}`
           : `/build/${objFileName}`;
 
         // Use editor content for active file
         const compileFiles = { ...files };
-        if (srcPath === state.activeFile || srcPath === '/src/main.c') {
+        if (srcPath === state.activeFile || srcPath === "/src/main.c") {
           compileFiles[srcPath] = editorContent;
         }
 
@@ -901,25 +1104,33 @@ SECTIONS
           ...platformFlags,
           ...includePaths,
           ...defines,
-          '-c',
+          "-c",
           srcPath,
-          '-o', objPath
+          "-o",
+          objPath,
         ];
 
-        log(`Compiling ${srcPath}...`, 'info');
+        log(`Compiling ${srcPath}...`, "info");
 
         const compileResult = await executeClang(
           compileArgs,
           compileFiles,
-          (text) => { if (text.trim()) log(text.trim(), 'info'); },
-          (text) => { if (text.trim()) log(text.trim(), 'warning'); }
+          (text) => {
+            if (text.trim()) log(text.trim(), "info");
+          },
+          (text) => {
+            if (text.trim()) log(text.trim(), "warning");
+          },
         );
 
         if (!compileResult.success) {
-          log(`Compilation of ${srcPath} failed with exit code ${compileResult.exitCode}`, 'error');
+          log(
+            `Compilation of ${srcPath} failed with exit code ${compileResult.exitCode}`,
+            "error",
+          );
           if (compileResult.stderr) {
-            compileResult.stderr.split('\n').forEach(line => {
-              if (line.trim()) log(line, 'error');
+            compileResult.stderr.split("\n").forEach((line) => {
+              if (line.trim()) log(line, "error");
             });
           }
           return;
@@ -927,98 +1138,132 @@ SECTIONS
 
         const objFile = compileResult.outputFiles?.get(objPath);
         if (!objFile) {
-          log(`Compilation of ${srcPath} completed but no object file generated`, 'error');
-          log(`Available files: ${Array.from(compileResult.outputFiles?.keys() || []).join(', ') || 'none'}`, 'info');
+          log(
+            `Compilation of ${srcPath} completed but no object file generated`,
+            "error",
+          );
+          log(
+            `Available files: ${Array.from(compileResult.outputFiles?.keys() || []).join(", ") || "none"}`,
+            "info",
+          );
           return;
         }
 
         objectFiles.set(objPath, objFile);
-        log(`Compiled ${srcPath} -> ${objPath} (${objFile.length} bytes)`, 'success');
+        log(
+          `Compiled ${srcPath} -> ${objPath} (${objFile.length} bytes)`,
+          "success",
+        );
 
         // Add object file to VFS
         addFile(objPath, objFile, false);
       }
 
       if (objectFiles.size === 0) {
-        log('No source files compiled', 'error');
+        log("No source files compiled", "error");
         return;
       }
 
-      log(`Compilation successful! ${objectFiles.size} object file(s)`, 'success');
+      log(
+        `Compilation successful! ${objectFiles.size} object file(s)`,
+        "success",
+      );
 
       // Step 2: Link with LLD
-      log('Step 2: Linking with LLD...', 'info');
+      log("Step 2: Linking with LLD...", "info");
 
       // Load the platform-specific linker script
       const linkerScript = await loadPlatformLinkerScript();
       if (selectedPlatform) {
-        log(`Using linker script: ${selectedPlatform.device.linkerScript}`, 'info');
+        log(
+          `Using linker script: ${selectedPlatform.device.linkerScript}`,
+          "info",
+        );
       }
 
       // Build linker arguments with all object files
       const objPaths = Array.from(objectFiles.keys());
       const linkArgs = [
-        '-flavor', 'gnu',
-        '-nostdlib',
-        '--gc-sections',
-        '--script=/linker.ld',
+        "-flavor",
+        "gnu",
+        "-nostdlib",
+        "--gc-sections",
+        "--script=/linker.ld",
         ...objPaths,
-        '-o', '/firmware.elf'
+        "-o",
+        "/firmware.elf",
       ];
 
       // Build link files map with all object files
       const linkFiles: Record<string, string | Uint8Array> = {
-        '/linker.ld': linkerScript
+        "/linker.ld": linkerScript,
       };
       for (const [objPath, objData] of objectFiles) {
         linkFiles[objPath] = objData;
       }
 
-      log(`Linking ${objPaths.length} object file(s): ${objPaths.join(', ')}`, 'info');
+      log(
+        `Linking ${objPaths.length} object file(s): ${objPaths.join(", ")}`,
+        "info",
+      );
 
       const linkResult = await executeLld(
         linkArgs,
         linkFiles,
-        (text) => { if (text.trim()) log(text.trim(), 'info'); },
-        (text) => { if (text.trim()) log(text.trim(), 'warning'); }
+        (text) => {
+          if (text.trim()) log(text.trim(), "info");
+        },
+        (text) => {
+          if (text.trim()) log(text.trim(), "warning");
+        },
       );
 
       if (!linkResult.success) {
-        log(`Linking failed with exit code ${linkResult.exitCode}`, 'error');
+        log(`Linking failed with exit code ${linkResult.exitCode}`, "error");
         if (linkResult.stderr) {
-          linkResult.stderr.split('\n').forEach(line => {
-            if (line.trim()) log(line, 'error');
+          linkResult.stderr.split("\n").forEach((line) => {
+            if (line.trim()) log(line, "error");
           });
         }
         return;
       }
 
-      const elfFile = linkResult.outputFiles?.get('/firmware.elf');
+      const elfFile = linkResult.outputFiles?.get("/firmware.elf");
       if (!elfFile) {
-        log('Linking completed but no ELF file generated', 'error');
-        log(`Available files: ${Array.from(linkResult.outputFiles?.keys() || []).join(', ') || 'none'}`, 'info');
+        log("Linking completed but no ELF file generated", "error");
+        log(
+          `Available files: ${Array.from(linkResult.outputFiles?.keys() || []).join(", ") || "none"}`,
+          "info",
+        );
         return;
       }
 
-      log(`Linking successful! (${elfFile.length} bytes)`, 'success');
+      log(`Linking successful! (${elfFile.length} bytes)`, "success");
 
       // Add ELF file to VFS
-      addFile('/build/firmware.elf', elfFile, false);
+      addFile("/build/firmware.elf", elfFile, false);
 
       // Show ELF file info
-      const elfMagic = Array.from(elfFile.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-      log(`Firmware ELF: /firmware.elf (ELF magic: ${elfMagic})`, 'info');
-      log('Build complete! Ready for flashing.', 'success');
+      const elfMagic = Array.from(elfFile.slice(0, 4))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ");
+      log(`Firmware ELF: /firmware.elf (ELF magic: ${elfMagic})`, "info");
+      log("Build complete! Ready for flashing.", "success");
 
       // Save build artifacts to project storage
       if (currentProject) {
         try {
-          const buildArtifacts: Array<{ path: string; contentBase64: string; size: number; timestamp: number }> = [];
+          const buildArtifacts: Array<{
+            path: string;
+            contentBase64: string;
+            size: number;
+            timestamp: number;
+          }> = [];
           const timestamp = Date.now();
 
           // Helper to convert Uint8Array to base64
           const toBase64 = (data: Uint8Array): string => {
-            let binary = '';
+            let binary = "";
             for (let i = 0; i < data.length; i++) {
               binary += String.fromCharCode(data[i]);
             }
@@ -1037,28 +1282,31 @@ SECTIONS
 
           // Add ELF file
           buildArtifacts.push({
-            path: '/build/firmware.elf',
+            path: "/build/firmware.elf",
             contentBase64: toBase64(elfFile),
             size: elfFile.length,
             timestamp,
           });
 
           await saveProjectToStorage({ buildArtifacts });
-          log('Build artifacts saved to project', 'info');
+          log("Build artifacts saved to project", "info");
         } catch (error) {
-          console.error('Failed to save build artifacts:', error);
+          console.error("Failed to save build artifacts:", error);
         }
       }
     } catch (error) {
-      log(`Build error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      log(
+        `Build error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error",
+      );
     } finally {
       setIsCompiling(false);
     }
   };
 
   const handleFlash = async () => {
-    log('Flash operation not yet implemented', 'warning');
-    log('Will support UART bootloader protocols for various MCUs', 'info');
+    log("Flash operation not yet implemented", "warning");
+    log("Will support UART bootloader protocols for various MCUs", "info");
   };
 
   const handleSave = useCallback(async () => {
@@ -1071,7 +1319,7 @@ SECTIONS
         markFileSaved(state.activeFile);
 
         // Update the project files and persist to IndexedDB
-        const updatedFiles = currentProject.files.map(f => {
+        const updatedFiles = currentProject.files.map((f) => {
           if (f.path === state.activeFile) {
             return { ...f, content: editorContent };
           }
@@ -1079,28 +1327,38 @@ SECTIONS
         });
 
         // Check if this is a new file not in project yet
-        const fileExists = currentProject.files.some(f => f.path === state.activeFile);
+        const fileExists = currentProject.files.some(
+          (f) => f.path === state.activeFile,
+        );
         if (!fileExists && file.editable) {
           // Convert Uint8Array to string if needed
-          const content = typeof file.content === 'string'
-            ? editorContent
-            : editorContent;
+          const content =
+            typeof file.content === "string" ? editorContent : editorContent;
           updatedFiles.push({
             path: state.activeFile,
             content,
-            editable: true
+            editable: true,
           });
         }
 
         try {
           await saveProjectToStorage({ files: updatedFiles });
-          log(`Saved ${state.activeFile}`, 'success');
+          log(`Saved ${state.activeFile}`, "success");
         } catch (error) {
-          log(`Failed to save: ${error}`, 'error');
+          log(`Failed to save: ${error}`, "error");
         }
       }
     }
-  }, [state.activeFile, editorContent, getFile, updateFile, markFileSaved, log, currentProject, saveProjectToStorage]);
+  }, [
+    state.activeFile,
+    editorContent,
+    getFile,
+    updateFile,
+    markFileSaved,
+    log,
+    currentProject,
+    saveProjectToStorage,
+  ]);
 
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -1115,9 +1373,10 @@ SECTIONS
     if (!file || !file.editable) return false;
 
     // Compare current editor content with VFS content
-    const vfsContent = typeof file.content === 'string'
-      ? file.content
-      : new TextDecoder().decode(file.content);
+    const vfsContent =
+      typeof file.content === "string"
+        ? file.content
+        : new TextDecoder().decode(file.content);
 
     return editorContent !== vfsContent;
   }, [state.activeFile, editorContent, getFile]);
@@ -1132,29 +1391,35 @@ SECTIONS
 
   // Check if there are build artifacts
   const hasBuildArtifacts = useMemo(() => {
-    return hasDirectory('/build');
+    return hasDirectory("/build");
   }, [hasDirectory]);
 
   // Clean build artifacts
   const handleClean = useCallback(async () => {
-    if (!hasDirectory('/build')) {
-      log('No build artifacts to clean', 'info');
+    if (!hasDirectory("/build")) {
+      log("No build artifacts to clean", "info");
       return;
     }
 
-    deleteDirectory('/build');
+    deleteDirectory("/build");
 
     // Also clear build artifacts from project storage
     if (currentProject) {
       try {
         await saveProjectToStorage({ buildArtifacts: [] });
       } catch (error) {
-        console.error('Failed to clear build artifacts from storage:', error);
+        console.error("Failed to clear build artifacts from storage:", error);
       }
     }
 
-    log('Build cleaned', 'success');
-  }, [hasDirectory, deleteDirectory, currentProject, saveProjectToStorage, log]);
+    log("Build cleaned", "success");
+  }, [
+    hasDirectory,
+    deleteDirectory,
+    currentProject,
+    saveProjectToStorage,
+    log,
+  ]);
 
   // Get binary content for hex viewer
   const binaryContent = useMemo(() => {
@@ -1172,15 +1437,15 @@ SECTIONS
   // Handle Ctrl+S keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         if (canSave) {
           handleSave();
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canSave, handleSave]);
 
   // Warn when leaving page with unsaved changes
@@ -1190,13 +1455,14 @@ SECTIONS
       if (hasUnsavedChanges() || canSave) {
         e.preventDefault();
         // Modern browsers ignore custom messages but still show a generic warning
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
         return e.returnValue;
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges, canSave]);
 
   return (
@@ -1204,7 +1470,7 @@ SECTIONS
       <div
         className="ide-layout"
         style={{
-          gridTemplateColumns: `${leftSidebarWidth}px 1fr ${rightSidebarWidth}px`
+          gridTemplateColumns: `${leftSidebarWidth}px 1fr ${rightSidebarWidth}px`,
         }}
       >
         {/* Toolbar */}
@@ -1228,63 +1494,78 @@ SECTIONS
         <div className="sidebar-left" style={{ width: leftSidebarWidth }}>
           <FileExplorer onFileSelect={handleFileSelect} />
           <div
-            className={`resize-handle-h resize-handle-left ${isResizing === 'left' ? 'resizing' : ''}`}
-            onMouseDown={(e) => handleResizeStart('left', e)}
+            className={`resize-handle-h resize-handle-left ${isResizing === "left" ? "resizing" : ""}`}
+            onMouseDown={(e) => handleResizeStart("left", e)}
           />
         </div>
 
         {/* Right sidebar - Platform & Status / Libraries */}
         <div className="sidebar-right" style={{ width: rightSidebarWidth }}>
           <div
-            className={`resize-handle-h resize-handle-right ${isResizing === 'right' ? 'resizing' : ''}`}
-            onMouseDown={(e) => handleResizeStart('right', e)}
+            className={`resize-handle-h resize-handle-right ${isResizing === "right" ? "resizing" : ""}`}
+            onMouseDown={(e) => handleResizeStart("right", e)}
           />
           {/* Sidebar Tabs */}
           <div className="sidebar-tabs">
             <button
-              className={`sidebar-tab ${rightSidebarTab === 'platform' ? 'active' : ''}`}
-              onClick={() => setRightSidebarTab('platform')}
+              className={`sidebar-tab ${rightSidebarTab === "platform" ? "active" : ""}`}
+              onClick={() => setRightSidebarTab("platform")}
             >
               Platform
             </button>
             <button
-              className={`sidebar-tab ${rightSidebarTab === 'libraries' ? 'active' : ''}`}
-              onClick={() => setRightSidebarTab('libraries')}
+              className={`sidebar-tab ${rightSidebarTab === "libraries" ? "active" : ""}`}
+              onClick={() => setRightSidebarTab("libraries")}
             >
               Libraries
             </button>
           </div>
 
           {/* Platform Tab Content */}
-          {rightSidebarTab === 'platform' && (
+          {rightSidebarTab === "platform" && (
             <>
               {/* Platform Selection Button */}
-              <div className="platform-card" onClick={() => setIsPlatformModalOpen(true)}>
+              <div
+                className="platform-card"
+                onClick={() => setIsPlatformModalOpen(true)}
+              >
                 <div className="platform-card-header">
                   <span className="platform-label">Target Platform</span>
                   <button className="platform-change-btn">Change</button>
                 </div>
                 {selectedPlatform ? (
                   <div className="platform-selected">
-                    <div className="platform-name">{selectedPlatform.device.name}</div>
+                    <div className="platform-name">
+                      {selectedPlatform.device.name}
+                    </div>
                     <div className="platform-details">
                       <span>{selectedPlatform.family.architecture}</span>
-                      <span>{formatBytes(selectedPlatform.device.flash)} Flash</span>
-                      <span>{formatBytes(selectedPlatform.device.ram)} RAM</span>
+                      <span>
+                        {formatBytes(selectedPlatform.device.flash)} Flash
+                      </span>
+                      <span>
+                        {formatBytes(selectedPlatform.device.ram)} RAM
+                      </span>
                     </div>
                   </div>
                 ) : currentProject?.platform ? (
                   <div className="platform-selected platform-pending">
-                    <div className="platform-name">{currentProject.platform.deviceId.toUpperCase()}</div>
+                    <div className="platform-name">
+                      {currentProject.platform.deviceId.toUpperCase()}
+                    </div>
                     <div className="platform-details">
                       <span>{currentProject.platform.architecture}</span>
-                      <span className="platform-pending-text">Tap to configure headers</span>
+                      <span className="platform-pending-text">
+                        Tap to configure headers
+                      </span>
                     </div>
                   </div>
                 ) : (
                   <div className="platform-empty">
                     <span className="platform-empty-icon">+</span>
-                    <span className="platform-empty-text">Select a target platform to begin</span>
+                    <span className="platform-empty-text">
+                      Select a target platform to begin
+                    </span>
                   </div>
                 )}
               </div>
@@ -1293,11 +1574,28 @@ SECTIONS
           )}
 
           {/* Libraries Tab Content */}
-          {rightSidebarTab === 'libraries' && (
+          {rightSidebarTab === "libraries" && (
             <div className="library-panel-container">
               <LibraryPanel
-                platformId={selectedPlatform?.platformId as 'stm32' | 'esp32' | 'nrf' | 'rp2040' | undefined}
-                architecture={selectedPlatform?.family.architecture as 'cortex-m0' | 'cortex-m0+' | 'cortex-m3' | 'cortex-m4' | 'cortex-m4f' | 'cortex-m7' | 'cortex-m7f' | undefined}
+                platformId={
+                  selectedPlatform?.platformId as
+                    | "stm32"
+                    | "esp32"
+                    | "nrf"
+                    | "rp2040"
+                    | undefined
+                }
+                architecture={
+                  selectedPlatform?.family.architecture as
+                    | "cortex-m0"
+                    | "cortex-m0+"
+                    | "cortex-m3"
+                    | "cortex-m4"
+                    | "cortex-m4f"
+                    | "cortex-m7"
+                    | "cortex-m7f"
+                    | undefined
+                }
                 onLog={log}
                 onLibraryFilesChanged={(files) => {
                   // Add library files to VFS as read-only
@@ -1306,7 +1604,9 @@ SECTIONS
                     addFile(path, content, false); // false = read-only
 
                     // Check for config templates and copy them to /src/ for user customization
-                    const configMatch = path.match(/^\/libs\/[^/]+\/config\/(.+)$/);
+                    const configMatch = path.match(
+                      /^\/libs\/[^/]+\/config\/(.+)$/,
+                    );
                     if (configMatch) {
                       const configFileName = configMatch[1];
                       const userConfigPath = `/src/${configFileName}`;
@@ -1315,16 +1615,19 @@ SECTIONS
                       configTemplatesCopied++;
                     }
                   }
-                  log(`Added ${files.size} library files to /libs`, 'success');
+                  log(`Added ${files.size} library files to /libs`, "success");
                   if (configTemplatesCopied > 0) {
-                    log(`Copied ${configTemplatesCopied} config template(s) to /src - customize as needed`, 'info');
+                    log(
+                      `Copied ${configTemplatesCopied} config template(s) to /src - customize as needed`,
+                      "info",
+                    );
                   }
                 }}
                 onLibraryUninstalled={(name) => {
                   // Remove library folder from VFS
                   const libPath = `/libs/${name}`;
                   deleteDirectory(libPath);
-                  log(`Removed ${name} from /libs`, 'info');
+                  log(`Removed ${name} from /libs`, "info");
                 }}
               />
             </div>
@@ -1336,10 +1639,7 @@ SECTIONS
           <FileTabs />
           {state.activeFile ? (
             activeFileIsBinary && binaryContent ? (
-              <HexViewer
-                data={binaryContent}
-                filename={state.activeFile}
-              />
+              <HexViewer data={binaryContent} filename={state.activeFile} />
             ) : (
               <EditorPanel
                 sourceCode={editorContent}
@@ -1381,8 +1681,8 @@ SECTIONS
         {/* Terminal with resize handle */}
         <div className="terminal-area" style={{ height: terminalHeight }}>
           <div
-            className={`resize-handle resize-handle-terminal ${isResizing === 'terminal' ? 'resizing' : ''}`}
-            onMouseDown={(e) => handleResizeStart('terminal', e)}
+            className={`resize-handle resize-handle-terminal ${isResizing === "terminal" ? "resizing" : ""}`}
+            onMouseDown={(e) => handleResizeStart("terminal", e)}
           />
           <TerminalPanel output={output} />
         </div>
@@ -1745,7 +2045,7 @@ SECTIONS
         }
 
         .resize-handle::after {
-          content: '';
+          content: "";
           position: absolute;
           left: 50%;
           top: 50%;
