@@ -1,0 +1,107 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-14",
+  "baseUrl": "/tools/battleforge/wasm",
+  "compilers": [
+    {
+      "id": "clang-arm",
+      "name": "Clang ARM",
+      "description": "ARM Cortex-M compiler for STM32, nRF52, RP2040, and other ARM-based microcontrollers",
+      "version": "20.0.0",
+      "files": {
+        "wasm": "clang-arm.wasm.gz",
+        "js": "clang_arm/clang.js"
+      },
+      "size": 21633425,
+      "hash": "sha256:d2b0e022dbc62df5ba81c7501c542e3c9efff9aee6ea3135f4bfbb13d7d43c2f",
+      "architectures": [
+        "cortex-m0",
+        "cortex-m0+",
+        "cortex-m3",
+        "cortex-m4",
+        "cortex-m4f",
+        "cortex-m7",
+        "cortex-m7f",
+        "cortex-m33"
+      ]
+    },
+    {
+      "id": "clang-riscv",
+      "name": "Clang RISC-V",
+      "description": "RISC-V compiler for ESP32-C3, ESP32-C6, ESP32-H2, and other RISC-V microcontrollers",
+      "version": "19.0.0",
+      "files": {
+        "wasm": "clang_riscv/clang-riscv.wasm.gz",
+        "js": "clang_riscv/clang.js"
+      },
+      "size": 15868309,
+      "hash": "sha256:4a93f73c762a93554217e2c3253a8403ceee429267ecb4cd45d689c3d1dc5be0",
+      "architectures": [
+        "riscv32"
+      ]
+    },
+    {
+      "id": "clang-xtensa",
+      "name": "Clang Xtensa",
+      "description": "Xtensa compiler for ESP32, ESP32-S2, ESP32-S3 (built from Espressif LLVM fork)",
+      "version": "18.1.2-esp",
+      "files": {
+        "wasm": "clang-xtensa.wasm.gz",
+        "js": "clang_xtensa/clang.js"
+      },
+      "size": 13712953,
+      "hash": "sha256:e7384503789df9f85359aaa8a7c80ede07cd33772c917419b02d44a0690f42d0",
+      "architectures": [
+        "xtensa-lx6",
+        "xtensa-lx7"
+      ]
+    }
+  ],
+  "linkers": [
+    {
+      "id": "lld-universal",
+      "name": "LLD Universal",
+      "description": "Universal linker supporting ARM, RISC-V, and Xtensa targets",
+      "version": "18.1.2-esp",
+      "files": {
+        "wasm": "lld.wasm.gz",
+        "js": "lld.js"
+      },
+      "size": 10251176,
+      "hash": "sha256:13ac8338fc72052c2d7e68b35ebd37e3c280a4a733508100da42d20b99dbead4",
+      "architectures": [
+        "arm",
+        "riscv32",
+        "xtensa"
+      ]
+    }
+  ],
+  "disassemblers": [
+    {
+      "id": "capstone-arm",
+      "name": "Capstone ARM",
+      "description": "ARM/Thumb disassembler for code analysis and debugging",
+      "version": "5.0.3",
+      "files": {
+        "wasm": "capstone/capstone-arm.wasm",
+        "wasmGz": "capstone/capstone-arm.wasm.gz",
+        "js": "capstone/capstone-arm.js",
+        "api": "capstone/capstone-api.js"
+      },
+      "size": 369468,
+      "sizeCompressed": 120284,
+      "hash": "sha256:pending",
+      "architectures": [
+        "arm",
+        "thumb",
+        "thumb2"
+      ],
+      "features": [
+        "instruction-decode",
+        "operand-details",
+        "register-names",
+        "cortex-m-support"
+      ]
+    }
+  ]
+}
