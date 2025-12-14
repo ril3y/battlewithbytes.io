@@ -3,11 +3,11 @@
  * Modal dialog for serial port configuration
  */
 
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import ConfigurationPanel from './ConfigurationPanel';
-import type { SerialConfig, SendOptions } from './serialTerminal.types';
+import React, { useEffect } from "react";
+import ConfigurationPanel from "./ConfigurationPanel";
+import type { SerialConfig, SendOptions } from "./serialTerminal.types";
 
 interface ConfigurationModalProps {
   isOpen: boolean;
@@ -34,29 +34,29 @@ export default function ConfigurationModal({
   showTimestamps,
   onToggleTimestamps,
   showLineNumbers,
-  onToggleLineNumbers
+  onToggleLineNumbers,
 }: ConfigurationModalProps) {
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -80,7 +80,8 @@ export default function ConfigurationModal({
             id="config-modal-title"
             className="text-2xl font-bold font-mono text-green-400"
           >
-            <span className="text-green-500">&lt;</span> Configuration <span className="text-green-500">/&gt;</span>
+            <span className="text-green-500">&lt;</span> Configuration{" "}
+            <span className="text-green-500">/&gt;</span>
           </h2>
           <button
             onClick={onClose}
@@ -121,7 +122,10 @@ export default function ConfigurationModal({
             <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-600/50 rounded-lg">
               <div className="flex items-center gap-2 text-yellow-400 font-mono text-sm">
                 <span>⚠</span>
-                <span>Disconnect from the serial port to change configuration settings</span>
+                <span>
+                  Disconnect from the serial port to change configuration
+                  settings
+                </span>
               </div>
             </div>
           )}

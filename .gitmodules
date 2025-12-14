@@ -1,3 +1,7 @@
 [submodule "apps/web/src/app/tools/battleforge/data/boards"]
 	path = apps/web/src/app/tools/battleforge/data/boards
 	url = https://github.com/battlewithbytes/battleforge_boards.git
+
+[submodule "apps/battleforge/src/data/boards"]
+	path = apps/battleforge/src/data/boards
+	url = https://github.com/battlewithbytes/battleforge_boards.git
