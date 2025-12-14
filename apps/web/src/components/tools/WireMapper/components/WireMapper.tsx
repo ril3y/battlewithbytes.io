@@ -1,35 +1,37 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { ReactFlowProvider } from 'reactflow';
-import { useWireMapperStore } from '../store/useWireMapperStore';
-import { WireMapperProject, Connector } from '../types';
+import React, { useEffect, useState, useMemo } from "react";
+import { ReactFlowProvider } from "reactflow";
+import { useWireMapperStore } from "../store/useWireMapperStore";
+import { WireMapperProject, Connector } from "../types";
 
 // Import components directly - these will be properly resolved
 // since they're co-located in the same directory
-import ConnectorCanvas from './ConnectorCanvas';
-import { ConnectorBuilder } from './ConnectorBuilder';
-import { ConnectorDetail } from './ConnectorDetail';
-import { MappingList } from './MappingList';
-import { ProjectControls } from './ProjectControls';
-import { PinDetail } from './PinDetail';
-import { Modal } from './Modal';
-import { WiringDiagramPreview } from './WiringDiagramPreview';
-import { TableView } from './TableView';
-import { demoProject } from '../utils/demoProject';
+import ConnectorCanvas from "./ConnectorCanvas";
+import { ConnectorBuilder } from "./ConnectorBuilder";
+import { ConnectorDetail } from "./ConnectorDetail";
+import { MappingList } from "./MappingList";
+import { ProjectControls } from "./ProjectControls";
+import { PinDetail } from "./PinDetail";
+import { Modal } from "./Modal";
+import { WiringDiagramPreview } from "./WiringDiagramPreview";
+import { TableView } from "./TableView";
+import { demoProject } from "../utils/demoProject";
 
 // View mode types
-type ViewMode = 'canvas' | 'diagram' | 'table';
+type ViewMode = "canvas" | "diagram" | "table";
 
 export const WireMapper: React.FC = () => {
   const [showBuilder, setShowBuilder] = useState(false);
-  const [editingConnector, setEditingConnector] = useState<Connector | null>(null); // State for connector being edited
-  const [viewMode, setViewMode] = useState<ViewMode>('canvas'); // Default to canvas view
+  const [editingConnector, setEditingConnector] = useState<Connector | null>(
+    null,
+  ); // State for connector being edited
+  const [viewMode, setViewMode] = useState<ViewMode>("canvas"); // Default to canvas view
 
-  const { 
-    projectName, 
-    connectors, 
-    mappings, 
+  const {
+    projectName,
+    connectors,
+    mappings,
     selectedPin,
     selectedConnectorId,
     settings,
@@ -37,21 +39,31 @@ export const WireMapper: React.FC = () => {
     updateSettings,
   } = useWireMapperStore();
 
-  const selectedConnector = useMemo(() => 
-    connectors.find(c => c.id === selectedConnectorId), 
-    [connectors, selectedConnectorId]
+  const selectedConnector = useMemo(
+    () => connectors.find((c) => c.id === selectedConnectorId),
+    [connectors, selectedConnectorId],
   );
 
   // Log state values on re-render
-  console.log('[WireMapper] Rendering. selectedConnectorId:', selectedConnectorId);
-  console.log('[WireMapper] Rendering. selectedPin (object):', JSON.stringify(selectedPin));
-  console.log('[WireMapper] Rendering. derived selectedConnector (object):', selectedConnector ? selectedConnector.id : null, selectedConnector);
+  console.log(
+    "[WireMapper] Rendering. selectedConnectorId:",
+    selectedConnectorId,
+  );
+  console.log(
+    "[WireMapper] Rendering. selectedPin (object):",
+    JSON.stringify(selectedPin),
+  );
+  console.log(
+    "[WireMapper] Rendering. derived selectedConnector (object):",
+    selectedConnector ? selectedConnector.id : null,
+    selectedConnector,
+  );
 
   // Load from localStorage on mount if available, otherwise load demo
   useEffect(() => {
     try {
       // Load project data
-      const savedProject = localStorage.getItem('wireMapperProject');
+      const savedProject = localStorage.getItem("wireMapperProject");
       if (savedProject) {
         const parsed = JSON.parse(savedProject);
         // Only load if it has actual content (not an empty project)
@@ -59,22 +71,22 @@ export const WireMapper: React.FC = () => {
           loadProject(parsed);
         } else {
           // Load demo project if saved project is empty
-          console.log('Loading demo project');
+          console.log("Loading demo project");
           loadProject(demoProject);
         }
       } else {
         // No saved project, load demo
-        console.log('No saved project found, loading demo');
+        console.log("No saved project found, loading demo");
         loadProject(demoProject);
       }
 
       // Load settings data
-      const savedSettings = localStorage.getItem('wireMapperSettings');
+      const savedSettings = localStorage.getItem("wireMapperSettings");
       if (savedSettings) {
         updateSettings(JSON.parse(savedSettings));
       }
     } catch (error) {
-      console.error('Failed to load data from localStorage:', error);
+      console.error("Failed to load data from localStorage:", error);
       // On error, try loading demo as fallback
       loadProject(demoProject);
     }
@@ -87,20 +99,20 @@ export const WireMapper: React.FC = () => {
       const project: WireMapperProject = {
         projectName,
         connectors,
-        mappings
+        mappings,
       };
-      localStorage.setItem('wireMapperProject', JSON.stringify(project));
+      localStorage.setItem("wireMapperProject", JSON.stringify(project));
     } catch (error) {
-      console.error('Failed to save project to localStorage:', error);
+      console.error("Failed to save project to localStorage:", error);
     }
   }, [projectName, connectors, mappings]);
-  
+
   // Save settings separately
   useEffect(() => {
     try {
-      localStorage.setItem('wireMapperSettings', JSON.stringify(settings));
+      localStorage.setItem("wireMapperSettings", JSON.stringify(settings));
     } catch (error) {
-      console.error('Failed to save settings to localStorage:', error);
+      console.error("Failed to save settings to localStorage:", error);
     }
   }, [settings]);
 
@@ -126,9 +138,9 @@ export const WireMapper: React.FC = () => {
     <div className="flex flex-col gap-6 text-gray-200">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
         <h2 className="text-xl font-mono text-green-400">
-          {projectName || 'New Harness'}
+          {projectName || "New Harness"}
         </h2>
-        <ProjectControls 
+        <ProjectControls
           onNewConnector={handleNewConnector} // Use updated handler
         />
       </div>
@@ -142,71 +154,91 @@ export const WireMapper: React.FC = () => {
               {/* View Mode Toggles - Always show first */}
               <div className="flex w-full sm:w-auto sm:mr-4 sm:border-r sm:border-gray-700 sm:pr-3 mb-2 sm:mb-0">
                 <button
-                  onClick={() => setViewMode('canvas')}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-l text-xs sm:text-sm ${viewMode === 'canvas' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  onClick={() => setViewMode("canvas")}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-l text-xs sm:text-sm ${viewMode === "canvas" ? "bg-cyan-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"}`}
                   title="Interactive Canvas View"
                 >
                   <span className="hidden sm:inline">Canvas View</span>
                   <span className="sm:hidden">Canvas</span>
                 </button>
                 <button
-                  onClick={() => setViewMode('diagram')}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs sm:text-sm ${viewMode === 'diagram' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  onClick={() => setViewMode("diagram")}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs sm:text-sm ${viewMode === "diagram" ? "bg-cyan-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"}`}
                   title="Documentation-style Wiring Diagram"
                 >
                   <span className="hidden sm:inline">Wiring Diagram</span>
                   <span className="sm:hidden">Diagram</span>
                 </button>
                 <button
-                  onClick={() => setViewMode('table')}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-r text-xs sm:text-sm ${viewMode === 'table' ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                  onClick={() => setViewMode("table")}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1 rounded-r text-xs sm:text-sm ${viewMode === "table" ? "bg-cyan-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"}`}
                   title="Table View of Connections"
                 >
                   <span className="hidden sm:inline">Table View</span>
                   <span className="sm:hidden">Table</span>
                 </button>
               </div>
-              
+
               {/* Only show these controls in canvas view */}
-              {viewMode === 'canvas' && (
+              {viewMode === "canvas" && (
                 <>
                   {/* Wire Visibility Toggle */}
                   <button
-                    onClick={() => updateSettings({ showWires: !settings.showWires })}
-                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showWires ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
+                    onClick={() =>
+                      updateSettings({ showWires: !settings.showWires })
+                    }
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showWires ? "bg-green-600 hover:bg-green-700" : "bg-gray-700 hover:bg-gray-600"} text-white whitespace-nowrap`}
                     title="Toggle wire visibility"
                   >
-                    {settings.showWires ? 'Hide Wires' : 'Show Wires'}
+                    {settings.showWires ? "Hide Wires" : "Show Wires"}
                   </button>
 
                   {/* Grid Toggle */}
                   <button
-                    onClick={() => updateSettings({ showGrid: !settings.showGrid })}
-                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showGrid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
+                    onClick={() =>
+                      updateSettings({ showGrid: !settings.showGrid })
+                    }
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.showGrid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"} text-white whitespace-nowrap`}
                     title="Toggle grid visibility"
                   >
-                    <span className="hidden sm:inline">{settings.showGrid ? 'Hide Grid' : 'Show Grid'}</span>
+                    <span className="hidden sm:inline">
+                      {settings.showGrid ? "Hide Grid" : "Show Grid"}
+                    </span>
                     <span className="sm:hidden">Grid</span>
                   </button>
 
                   {/* Snap to Grid Toggle */}
                   <button
-                    onClick={() => updateSettings({ snapToGrid: !settings.snapToGrid })}
-                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.snapToGrid ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
+                    onClick={() =>
+                      updateSettings({ snapToGrid: !settings.snapToGrid })
+                    }
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.snapToGrid ? "bg-purple-600 hover:bg-purple-700" : "bg-gray-700 hover:bg-gray-600"} text-white whitespace-nowrap`}
                     title="Toggle snap to grid"
                   >
-                    <span className="hidden sm:inline">{settings.snapToGrid ? 'Snap: On' : 'Snap: Off'}</span>
+                    <span className="hidden sm:inline">
+                      {settings.snapToGrid ? "Snap: On" : "Snap: Off"}
+                    </span>
                     <span className="sm:hidden">Snap</span>
                   </button>
 
                   {/* Simplify Connections Toggle */}
                   <button
-                    onClick={() => updateSettings({ simplifyConnections: !settings.simplifyConnections })}
-                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.simplifyConnections ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'} text-white whitespace-nowrap`}
+                    onClick={() =>
+                      updateSettings({
+                        simplifyConnections: !settings.simplifyConnections,
+                      })
+                    }
+                    className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${settings.simplifyConnections ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-700 hover:bg-gray-600"} text-white whitespace-nowrap`}
                     title="Toggle animated connections"
                   >
-                    <span className="hidden sm:inline">{settings.simplifyConnections ? 'Simple Wires' : 'Animated Wires'}</span>
-                    <span className="sm:hidden">{settings.simplifyConnections ? 'Simple' : 'Animated'}</span>
+                    <span className="hidden sm:inline">
+                      {settings.simplifyConnections
+                        ? "Simple Wires"
+                        : "Animated Wires"}
+                    </span>
+                    <span className="sm:hidden">
+                      {settings.simplifyConnections ? "Simple" : "Animated"}
+                    </span>
                   </button>
                 </>
               )}
@@ -222,45 +254,61 @@ export const WireMapper: React.FC = () => {
                 Add Connector
               </button>
             </div>
-          ) : viewMode === 'canvas' ? (
+          ) : viewMode === "canvas" ? (
             <div className="flex-grow min-h-0">
               <ReactFlowProvider>
                 <ConnectorCanvas />
               </ReactFlowProvider>
             </div>
-          ) : viewMode === 'diagram' ? (
-            <div className="flex-grow min-h-0"> 
-              <WiringDiagramPreview /> 
+          ) : viewMode === "diagram" ? (
+            <div className="flex-grow min-h-0">
+              <WiringDiagramPreview />
             </div>
-          ) : viewMode === 'table' ? (
-            <div className="flex-grow min-h-0"> 
-              <TableView /> 
+          ) : viewMode === "table" ? (
+            <div className="flex-grow min-h-0">
+              <TableView />
             </div>
           ) : null}
         </div>
 
         {/* Right sidebar - Details and Mappings */}
-        <div className="md:col-span-1 bg-gray-950 border border-gray-800 rounded-lg flex flex-col overflow-hidden min-h-[600px] h-[calc(100vh-12rem)]"> {/* Ensure this is a flex column and manages overflow, matches canvas height */}
+        <div className="md:col-span-1 bg-gray-950 border border-gray-800 rounded-lg flex flex-col overflow-hidden min-h-[600px] h-[calc(100vh-12rem)]">
+          {" "}
+          {/* Ensure this is a flex column and manages overflow, matches canvas height */}
           {/* Details Section */}
-          <div className="p-4"> {/* Add padding here for Details content */}
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Details</h3>
+          <div className="p-4">
+            {" "}
+            {/* Add padding here for Details content */}
+            <h3 className="text-lg font-semibold text-green-400 mb-3">
+              Details
+            </h3>
             {selectedPin ? (
               <PinDetail /> // Reverted: PinDetail likely gets selectedPin from store
             ) : selectedConnector ? (
-              <ConnectorDetail connector={selectedConnector} onEdit={() => handleEditConnector(selectedConnector!)} /> // Pass callback correctly
+              <ConnectorDetail
+                connector={selectedConnector}
+                onEdit={() => handleEditConnector(selectedConnector!)}
+              /> // Pass callback correctly
             ) : (
-              <p className="text-gray-500 text-sm">Select a connector or pin to view details</p>
+              <p className="text-gray-500 text-sm">
+                Select a connector or pin to view details
+              </p>
             )}
           </div>
-
           {/* Separator Line - Optional visual cue */}
           <hr className="border-gray-700 mx-4" />
-
           {/* Wire Mappings Section - Takes remaining space and handles its own scrolling via MappingList */}
-          <div className="flex flex-col flex-grow min-h-0"> {/* This container will grow */}
-            <h3 className="text-lg font-semibold text-green-400 pt-4 px-4 mb-3">Wire Mappings</h3> {/* Padding for title */}
-            <div className="flex-grow min-h-0 px-4 pb-4"> {/* This div contains MappingList and allows it to take full height and scroll */}
-              <MappingList filterConnectorId={selectedConnectorId} /> 
+          <div className="flex flex-col flex-grow min-h-0">
+            {" "}
+            {/* This container will grow */}
+            <h3 className="text-lg font-semibold text-green-400 pt-4 px-4 mb-3">
+              Wire Mappings
+            </h3>{" "}
+            {/* Padding for title */}
+            <div className="flex-grow min-h-0 px-4 pb-4">
+              {" "}
+              {/* This div contains MappingList and allows it to take full height and scroll */}
+              <MappingList filterConnectorId={selectedConnectorId} />
             </div>
           </div>
         </div>
@@ -268,17 +316,16 @@ export const WireMapper: React.FC = () => {
 
       {/* Modal for Connector Builder - Render conditionally */}
       {showBuilder && (
-        <Modal 
+        <Modal
           onClose={handleCloseBuilder} // Use updated close handler
-          title={editingConnector ? 'Edit Connector' : 'Connector Builder'} // Dynamic title
+          title={editingConnector ? "Edit Connector" : "Connector Builder"} // Dynamic title
         >
-          <ConnectorBuilder 
+          <ConnectorBuilder
             connectorToEdit={editingConnector} // Pass connector data for editing
             onComplete={handleCloseBuilder} // Use updated close handler
           />
         </Modal>
       )}
-
     </div>
   );
 };

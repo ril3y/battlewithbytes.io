@@ -2,6 +2,27 @@
 
 The ARM-enabled Clang WASM binary used in BattleForge is built from a custom fork of YoWASP's Clang project with ARM backend support enabled.
 
+## Supported Targets
+
+Our `clang-arm.wasm` binary supports all ARM Cortex-M architectures:
+
+| Architecture | Target Triple           | Platforms               |
+| ------------ | ----------------------- | ----------------------- |
+| Cortex-M0    | `thumbv6m-none-eabi`    | RP2040                  |
+| Cortex-M0+   | `thumbv6m-none-eabi`    | RP2040                  |
+| Cortex-M3    | `thumbv7m-none-eabi`    | STM32F1, STM32L1        |
+| Cortex-M4    | `thumbv7em-none-eabi`   | STM32F4, nRF52832       |
+| Cortex-M4F   | `thumbv7em-none-eabihf` | STM32F4 w/FPU, nRF52840 |
+| Cortex-M7    | `thumbv7em-none-eabi`   | STM32F7, STM32H7        |
+| Cortex-M7F   | `thumbv7em-none-eabihf` | STM32F7/H7 w/FPU        |
+
+**Not supported (requires separate builds):**
+
+- Xtensa (ESP32, ESP32-S2/S3) - needs `clang-xtensa.wasm`
+- RISC-V (ESP32-C3/C6) - needs `clang-riscv.wasm`
+
+**Current version:** Clang 19.0.0git from `ril3y/llvm-project`
+
 ## Source Repository
 
 **Fork:** https://github.com/ril3y/clang-arm (branch: `develop`)
@@ -18,7 +39,35 @@ The fork includes modifications to enable ARM Cortex-M targets (thumbv6m, thumbv
 
 ## Build Process
 
-### Option 1: Local Build (Linux/WSL Required)
+### Option 1: Build Box (Fastest - Recommended)
+
+A dedicated high-performance build server is available for fast Clang builds:
+
+```bash
+# Connect to the build box
+ssh -i "$USERPROFILE/.ssh/buildbox_key" builder@192.168.1.62
+# Or if you have the alias configured:
+ssh buildbox
+
+# Clone and build
+git clone -b develop https://github.com/ril3y/clang-arm.git
+cd clang-arm
+./build.sh
+
+# Copy result back to your machine (from Windows)
+scp -i "%USERPROFILE%\.ssh\buildbox_key" builder@192.168.1.62:~/clang-arm/clang-arm.wasm .
+```
+
+**Build Box Specs:**
+
+- **Host:** 192.168.1.62 (Proxmox container)
+- **CPU:** 128 threads available
+- **User:** builder
+- **SSH Key:** `%USERPROFILE%\.ssh\buildbox_key` (Windows) or `~/.ssh/buildbox_key` (Linux/Mac)
+
+**Build time:** ~10-15 minutes (vs 30+ minutes on typical hardware)
+
+### Option 2: Local Build (Linux/WSL Required)
 
 ```bash
 # Clone the repository
@@ -33,6 +82,7 @@ cd experiments/yowasp-clang
 ```
 
 **Requirements:**
+
 - Linux or WSL2
 - 16GB+ RAM recommended
 - ~10GB disk space
@@ -40,7 +90,7 @@ cd experiments/yowasp-clang
 - Python 3.8+
 - Build essentials (gcc, make, cmake)
 
-### Option 2: Docker Build (Recommended)
+### Option 3: Docker Build
 
 ```bash
 # Clone the repository
@@ -56,12 +106,13 @@ cp output/clang-arm.wasm ../apps/web/public/wasm/clang_arm/
 ```
 
 **Advantages:**
+
 - ✅ Reproducible builds
 - ✅ No local dependencies needed
 - ✅ Same environment for all developers
 - ✅ CI/CD compatible
 
-### Option 3: GitHub Actions (Automated)
+### Option 4: GitHub Actions (Automated)
 
 A GitHub Actions workflow can be set up to automatically build the WASM on demand.
 
@@ -81,6 +132,7 @@ cp clang-arm.wasm ../../apps/web/public/wasm/clang_arm/
 ```
 
 **What gets committed:**
+
 - ✅ `apps/web/public/wasm/clang_arm/clang-arm.wasm.gz` (compressed, ~19MB)
 - ❌ `apps/web/public/wasm/clang_arm/clang-arm.wasm` (uncompressed, ignored by .gitignore)
 - ❌ `experiments/yowasp-clang/` (build tooling, ignored by .gitignore)
@@ -151,6 +203,7 @@ Increase Docker memory allocation or build on a machine with 16GB+ RAM.
 ### WASM File Too Large
 
 Check that optimizations are enabled in `build.sh`:
+
 ```bash
 -DCMAKE_BUILD_TYPE=Release
 -DLLVM_OPTIMIZED_TABLEGEN=ON
@@ -159,6 +212,7 @@ Check that optimizations are enabled in `build.sh`:
 ### Runtime Errors in Browser
 
 Verify the WASM imports match `wasiBindings.ts`:
+
 ```bash
 node experiments/yowasp-clang/inspect-wasm-imports.js clang-arm.wasm
 ```

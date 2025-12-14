@@ -9,16 +9,19 @@ To build the BattleMagic WASM core, you need:
 **Windows (recommended):**
 Download and run: https://rustup.rs/
 Or use winget:
+
 ```powershell
 winget install Rustlang.Rustup
 ```
 
 **Linux/macOS:**
+
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 **Verify installation:**
+
 ```bash
 rustc --version
 cargo --version
@@ -27,6 +30,7 @@ cargo --version
 ### 2. WASM Target
 
 Add the WASM compilation target:
+
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
@@ -34,11 +38,13 @@ rustup target add wasm32-unknown-unknown
 ### 3. wasm-pack
 
 Install the WASM build tool:
+
 ```bash
 cargo install wasm-pack
 ```
 
 **Verify:**
+
 ```bash
 wasm-pack --version
 ```
@@ -59,6 +65,7 @@ pnpm build
 ```
 
 **Expected output:**
+
 ```
 packages/battlemagic-core/pkg/
 ├── battlemagic_core.js        # JavaScript wrapper
@@ -85,22 +92,26 @@ pnpm turbo dev
 ## Troubleshooting
 
 ### "rustc: command not found"
+
 - Restart your terminal after installing Rust
 - Ensure `~/.cargo/bin` is in your PATH
 - On Windows, may need to restart VS Code
 
 ### "wasm32-unknown-unknown target not found"
+
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
 
 ### "wasm-pack not found"
+
 ```bash
 cargo install wasm-pack
 # Wait for installation, then restart terminal
 ```
 
 ### Build errors in Rust code
+
 ```bash
 # Update Rust to latest stable
 rustup update stable
@@ -113,6 +124,7 @@ cargo build --verbose
 ```
 
 ### WASM doesn't load in Next.js
+
 - Ensure you ran `pnpm install` from root after building WASM
 - Check that `packages/battlemagic-core/pkg/` directory exists
 - Clear Next.js cache: `rm -rf apps/web/.next`
@@ -148,6 +160,7 @@ pnpm turbo dev
 ## Development Tips
 
 **Fast iterations:**
+
 ```bash
 # In one terminal: watch Rust files and rebuild
 cd packages/battlemagic-core
@@ -159,6 +172,7 @@ pnpm dev
 ```
 
 **Check WASM size:**
+
 ```bash
 cd packages/battlemagic-core
 pnpm build
@@ -166,6 +180,7 @@ ls -lh pkg/*.wasm
 ```
 
 **Rust linting:**
+
 ```bash
 cargo clippy      # Linter
 cargo fmt         # Formatter

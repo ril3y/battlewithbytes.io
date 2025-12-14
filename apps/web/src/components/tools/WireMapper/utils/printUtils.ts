@@ -1,8 +1,8 @@
-import { Connector, Mapping } from '../types';
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { ConnectorPreview } from '../components/ConnectorPreview';
-import { cleanPinName } from './formatPinName';
+import { Connector, Mapping } from "../types";
+import React from "react";
+import ReactDOMServer from "react-dom/server";
+import { ConnectorPreview } from "../components/ConnectorPreview";
+import { cleanPinName } from "./formatPinName";
 
 /**
  * Opens a print-friendly view in a new window and triggers print dialog
@@ -19,100 +19,108 @@ const getConnectorName = (connector: Connector): string => {
 /**
  * Gets a pin's label with position
  */
-const getPinLabel = (pin: { name?: string } | undefined, pinPos: number): string => {
+const getPinLabel = (
+  pin: { name?: string } | undefined,
+  pinPos: number,
+): string => {
   if (!pin) return `Pin ${pinPos}`;
   const cleanedName = cleanPinName(pin.name || `Pin ${pinPos}`);
   return pin.name ? `${cleanedName} (Pos: ${pinPos})` : `Pin ${pinPos}`;
 };
 
-
-
 /**
  * Creates an HTML-based print view of the wire harness
  */
-export const openPrintView = (connectors: Connector[], mappings: Mapping[], diagramHTML?: string) => {
+export const openPrintView = (
+  connectors: Connector[],
+  mappings: Mapping[],
+  diagramHTML?: string,
+) => {
   // Open a new window
-  const printWindow = window.open('', '_blank', 'width=1000,height=800');
-  
+  const printWindow = window.open("", "_blank", "width=1000,height=800");
+
   if (!printWindow) {
-    alert('Please allow pop-ups to use the print feature');
+    alert("Please allow pop-ups to use the print feature");
     return;
   }
-  
+
   // Generate connector diagrams HTML using ConnectorPreview component
-  let connectorsHTML = '';
-  connectors.forEach(connector => {
+  let connectorsHTML = "";
+  connectors.forEach((connector) => {
     // Prepare the connector for rendering with ConnectorPreview
     // Assign pin numbers for display (pos value is used for number display)
     const sortedPins = [...connector.pins]
       .sort((a, b) => a.pos - b.pos)
-      .map(pin => ({
+      .map((pin) => ({
         ...pin,
         number: pin.pos, // Ensure pin.number is set for ConnectorPreview
-        x: pin.x || 0,   // Ensure x/y are set
-        y: pin.y || 0
+        x: pin.x || 0, // Ensure x/y are set
+        y: pin.y || 0,
       }));
-    
+
     // Create the preview element - scale up slightly for print
     const previewElement = React.createElement(ConnectorPreview, {
       connector: {
         ...connector,
         pins: sortedPins,
-        shape: connector.shape || 'Rectangle',
-        config: connector.config || {}
+        shape: connector.shape || "Rectangle",
+        config: connector.config || {},
       },
-      scale: 2.0 // Scale up for printing clarity
+      scale: 2.0, // Scale up for printing clarity
     });
-    
+
     // Render the component to static HTML
     const connectorSvg = ReactDOMServer.renderToStaticMarkup(previewElement);
-    
+
     // Extract just the SVG part (we'll handle the labels separately)
     const svgMatch = connectorSvg.match(/<svg[\s\S]*?<\/svg>/i);
-    const svgContent = svgMatch ? svgMatch[0] : '';
-    
+    const svgContent = svgMatch ? svgMatch[0] : "";
+
     // Clean up the SVG by replacing template literals with printer-friendly colors
     let processedSvg = svgContent
-      .replace(/className="[^"]*"/g, '')
-      .replace(/\$\{[^}]*\}/g, function(match) {
+      .replace(/className="[^"]*"/g, "")
+      .replace(/\$\{[^}]*\}/g, function (match) {
         // Replace template literals with printer-friendly colors
-        if (match.includes('THEME_COLORS.accent')) return '#333333';
-        if (match.includes('THEME_COLORS.background')) return '#ffffff';
-        if (match.includes('THEME_COLORS.pinFill')) return '#f0f0f0';
-        if (match.includes('THEME_COLORS.textLight')) return '#333333';
-        if (match.includes('THEME_COLORS.border')) return '#cccccc';
-        return '';
+        if (match.includes("THEME_COLORS.accent")) return "#333333";
+        if (match.includes("THEME_COLORS.background")) return "#ffffff";
+        if (match.includes("THEME_COLORS.pinFill")) return "#f0f0f0";
+        if (match.includes("THEME_COLORS.textLight")) return "#333333";
+        if (match.includes("THEME_COLORS.border")) return "#cccccc";
+        return "";
       });
-    
+
     // Direct approach: Replace the fill colors in the SVG with the actual pin colors
     // Find all circles in the SVG (these represent pins)
-    const circleRegex = /<circle[^>]*?cx="(\d+)"[^>]*?cy="(\d+)"[^>]*?<\/circle>/g;
+    const circleRegex =
+      /<circle[^>]*?cx="(\d+)"[^>]*?cy="(\d+)"[^>]*?<\/circle>/g;
     const circles = [...processedSvg.matchAll(circleRegex)];
-    
+
     // For each pin in the connector
     sortedPins.forEach((pin, index) => {
       if (index < circles.length) {
         // Get the pin's color from config (use lighter default for printing)
-        const pinColor = pin.config?.color || '#e0e0e0';
-        
+        const pinColor = pin.config?.color || "#e0e0e0";
+
         // Get the complete circle tag for this pin
         const circleMatch = circles[index][0];
-        
+
         // Replace the fill color in the circle tag
-        const updatedCircle = circleMatch.replace(/fill="[^"]*"/, `fill="${pinColor}"`);
-        
+        const updatedCircle = circleMatch.replace(
+          /fill="[^"]*"/,
+          `fill="${pinColor}"`,
+        );
+
         // Update the SVG with the modified circle tag
         processedSvg = processedSvg.replace(circleMatch, updatedCircle);
       }
     });
-    
-    
+
     // Create the connector HTML with SVG and pin legend
     connectorsHTML += `
       <div class="connector-box" style="margin: 20px; display: inline-block; vertical-align: top;">
         <div style="position: relative; border: 2px solid #333; border-radius: 8px; padding: 20px; background-color: #ffffff; max-width: 550px;">
           <div style="font-weight: bold; font-size: 16px; color: #333; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: #ffffff; padding: 5px 15px; border: 2px solid #333; border-radius: 15px;">
-            ${connector.name || 'Unnamed Connector'}
+            ${connector.name || "Unnamed Connector"}
           </div>
           <div style="color: #666; margin-bottom: 15px; text-align: center; font-size: 12px;">
             ${connector.type || `${connector.pins.length}-pin connector`}
@@ -126,13 +134,16 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
         <!-- Pin Legend/List -->
         <div style="margin-top: 15px; font-size: 12px; padding-left: 0;">
           <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          ${sortedPins.map(pin => {
-            const pinColor = pin.config?.color || '#cccccc';
-            const pinFunction = pin.netName || pin.desc || '';
-            const pinName = cleanPinName(pin.name || `Pin ${pin.pos}`);
-            const displayText = [pinName, pinFunction].filter(Boolean).join(' (') + (pinFunction ? ')' : '');
-            
-            return `
+          ${sortedPins
+            .map((pin) => {
+              const pinColor = pin.config?.color || "#cccccc";
+              const pinFunction = pin.netName || pin.desc || "";
+              const pinName = cleanPinName(pin.name || `Pin ${pin.pos}`);
+              const displayText =
+                [pinName, pinFunction].filter(Boolean).join(" (") +
+                (pinFunction ? ")" : "");
+
+              return `
               <div style="display: flex; align-items: center; margin-bottom: 6px; min-width: 120px; flex: 0 0 30%;">
                 <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${pinColor}; margin-right: 6px; flex-shrink: 0;"></div>
                 <div style="color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -140,22 +151,25 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
                 </div>
               </div>
             `;
-          }).join('')}
+            })
+            .join("")}
           </div>
         </div>
       </div>
     `;
   });
-  
+
   // Generate connection tables HTML
-  let tablesHTML = '';
-  connectors.forEach(connector => {
+  let tablesHTML = "";
+  connectors.forEach((connector) => {
     const relevantMappings = mappings.filter(
-      m => m.source.connectorId === connector.id || m.target.connectorId === connector.id
+      (m) =>
+        m.source.connectorId === connector.id ||
+        m.target.connectorId === connector.id,
     );
-    
+
     if (relevantMappings.length === 0) return;
-    
+
     tablesHTML += `
       <div style="margin-top: 30px; margin-bottom: 20px;">
         <h3 style="font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
@@ -171,20 +185,34 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
             </tr>
           </thead>
           <tbody>
-            ${relevantMappings.map(mapping => {
-              const isSourceLocal = mapping.source.connectorId === connector.id;
-              const localPinPos = isSourceLocal ? mapping.source.pinPos : mapping.target.pinPos;
-              const remoteConnectorId = isSourceLocal ? mapping.target.connectorId : mapping.source.connectorId;
-              const remotePinPos = isSourceLocal ? mapping.target.pinPos : mapping.source.pinPos;
-              
-              // Get pin details
-              const localPin = connector.pins.find(p => p.pos === localPinPos);
-              const remoteConnector = connectors.find(c => c.id === remoteConnectorId);
-              const remotePin = remoteConnector?.pins.find(p => p.pos === remotePinPos);
+            ${relevantMappings
+              .map((mapping) => {
+                const isSourceLocal =
+                  mapping.source.connectorId === connector.id;
+                const localPinPos = isSourceLocal
+                  ? mapping.source.pinPos
+                  : mapping.target.pinPos;
+                const remoteConnectorId = isSourceLocal
+                  ? mapping.target.connectorId
+                  : mapping.source.connectorId;
+                const remotePinPos = isSourceLocal
+                  ? mapping.target.pinPos
+                  : mapping.source.pinPos;
 
-              const pinColor = localPin?.config?.color || '#cccccc';
-              
-              return `
+                // Get pin details
+                const localPin = connector.pins.find(
+                  (p) => p.pos === localPinPos,
+                );
+                const remoteConnector = connectors.find(
+                  (c) => c.id === remoteConnectorId,
+                );
+                const remotePin = remoteConnector?.pins.find(
+                  (p) => p.pos === remotePinPos,
+                );
+
+                const pinColor = localPin?.config?.color || "#cccccc";
+
+                return `
                 <tr>
                   <td style="border: 1px solid #ccc; padding: 8px;">
                     <div style="display: flex; align-items: center;">
@@ -193,23 +221,24 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
                     </div>
                   </td>
                   <td style="border: 1px solid #ccc; padding: 8px;">
-                    ${remoteConnector ? getConnectorName(remoteConnector) : 'Unknown Connector'}
+                    ${remoteConnector ? getConnectorName(remoteConnector) : "Unknown Connector"}
                   </td>
                   <td style="border: 1px solid #ccc; padding: 8px;">
                     ${getPinLabel(remotePin, remotePinPos)}
                   </td>
                   <td style="border: 1px solid #ccc; padding: 8px;">
-                    ${mapping.netName || '--'}
+                    ${mapping.netName || "--"}
                   </td>
                 </tr>
               `;
-            }).join('')}
+              })
+              .join("")}
           </tbody>
         </table>
       </div>
     `;
   });
-  
+
   // Set up the complete HTML structure
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -280,13 +309,17 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
           ${connectorsHTML}
         </div>
 
-        ${diagramHTML ? `
+        ${
+          diagramHTML
+            ? `
           <div style="page-break-before: always;"></div>
           <h2 style="margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Wiring Diagram</h2>
           <div style="background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: auto;">
             ${diagramHTML}
           </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <h2 style="margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Connection Tables</h2>
         ${tablesHTML || '<p style="color: #666;">No connections to display.</p>'}
@@ -296,7 +329,7 @@ export const openPrintView = (connectors: Connector[], mappings: Mapping[], diag
 
   // Add automatic print trigger after content is loaded
   printWindow.document.close();
-  printWindow.addEventListener('load', () => {
+  printWindow.addEventListener("load", () => {
     // Wait a brief moment to ensure all styles are applied
     setTimeout(() => {
       printWindow.focus();

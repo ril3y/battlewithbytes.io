@@ -14,5 +14,5 @@ export function cleanPinName(pinName: string): string {
   if (!pinName) return pinName;
 
   // Remove patterns like (r0c0), (r2c5), etc.
-  return pinName.replace(/\s*\(r\d+c\d+\)\s*$/i, '').trim();
+  return pinName.replace(/\s*\(r\d+c\d+\)\s*$/i, "").trim();
 }

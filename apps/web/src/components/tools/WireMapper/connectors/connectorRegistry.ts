@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { IConnectorRenderer } from './base/IConnectorRenderer';
-import { RectangleRenderer } from './RectangleRenderer';
-import { CircleRenderer } from './CircleRenderer';
-import { ConnectorShape } from '../types'; // Import ConnectorShape
+import { IConnectorRenderer } from "./base/IConnectorRenderer";
+import { RectangleRenderer } from "./RectangleRenderer";
+import { CircleRenderer } from "./CircleRenderer";
+import { ConnectorShape } from "../types"; // Import ConnectorShape
 
 // Create instances of all available renderers
 const rectangleRenderer = new RectangleRenderer();
@@ -18,11 +18,13 @@ rendererRegistry.set(circleRenderer.shape, circleRenderer); // Use .shape
 
 /**
  * Retrieves a specific connector renderer instance by its shape enum value.
- * 
+ *
  * @param shape The ConnectorShape enum value.
  * @returns The corresponding IConnectorRenderer instance, or the default (Rectangle) if not found or shape is undefined.
  */
-export const getRenderer = (shape: ConnectorShape | undefined): IConnectorRenderer => {
+export const getRenderer = (
+  shape: ConnectorShape | undefined,
+): IConnectorRenderer => {
   // Default to rectangle if no shape is specified or if shape is not in registry
   const renderer = shape ? rendererRegistry.get(shape) : undefined;
   return renderer ?? rectangleRenderer;
@@ -42,11 +44,15 @@ export const getDefaultRenderer = (): IConnectorRenderer => {
  * Each item contains the shape enum value and a temporary display name.
  * TODO: Update to use a static displayName property from each renderer class.
  */
-export const getAvailableShapes = (): { shape: ConnectorShape; displayName: string }[] => {
-  return Array.from(rendererRegistry.values()).map(renderer => ({
+export const getAvailableShapes = (): {
+  shape: ConnectorShape;
+  displayName: string;
+}[] => {
+  return Array.from(rendererRegistry.values()).map((renderer) => ({
     shape: renderer.shape,
     // Temporary display name - capitalize the enum key
-    displayName: renderer.shape.charAt(0).toUpperCase() + renderer.shape.slice(1),
+    displayName:
+      renderer.shape.charAt(0).toUpperCase() + renderer.shape.slice(1),
     // TODO: Replace above with: displayName: (renderer.constructor as any).displayName || renderer.shape
   }));
 };

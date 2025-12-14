@@ -9,7 +9,7 @@ export interface SEOProps {
   keywords?: string[];
   ogImage?: string;
   canonical?: string;
-  type?: 'website' | 'article' | 'tool';
+  type?: "website" | "article" | "tool";
   publishedAt?: string;
   updatedAt?: string;
 }
@@ -18,20 +18,21 @@ export interface SEOProps {
  * Default SEO values
  */
 export const defaultSEO: SEOProps = {
-  title: 'Battle With Bytes | Cybersecurity, Hardware & Software Engineering',
-  description: 'Explore cybersecurity concepts, hardware projects, and software engineering tools with interactive calculators and in-depth tutorials.',
+  title: "Battle With Bytes | Cybersecurity, Hardware & Software Engineering",
+  description:
+    "Explore cybersecurity concepts, hardware projects, and software engineering tools with interactive calculators and in-depth tutorials.",
   keywords: [
-    'cybersecurity', 
-    'embedded hardware', 
-    'software engineering', 
-    'electronics', 
-    'programming', 
-    'engineering tools', 
-    'MOSFET calculator', 
-    'Ohm\'s Law calculator'
+    "cybersecurity",
+    "embedded hardware",
+    "software engineering",
+    "electronics",
+    "programming",
+    "engineering tools",
+    "MOSFET calculator",
+    "Ohm's Law calculator",
   ],
-  ogImage: '/images/og-image.png',
-  type: 'website'
+  ogImage: "/images/og-image.png",
+  type: "website",
 };
 
 /**
@@ -44,16 +45,13 @@ export function generateSEO(props: Partial<SEOProps> = {}): SEOProps {
     ...defaultSEO,
     ...props,
     // Ensure title has site name if not already included
-    title: props.title 
-      ? (props.title.includes('Battle With Bytes') 
-          ? props.title 
-          : `${props.title} | Battle With Bytes`)
+    title: props.title
+      ? props.title.includes("Battle With Bytes")
+        ? props.title
+        : `${props.title} | Battle With Bytes`
       : defaultSEO.title,
     // Combine keywords
-    keywords: [
-      ...(defaultSEO.keywords || []),
-      ...(props.keywords || [])
-    ]
+    keywords: [...(defaultSEO.keywords || []), ...(props.keywords || [])],
   };
 }
 
@@ -64,19 +62,23 @@ export function generateSEO(props: Partial<SEOProps> = {}): SEOProps {
  * @param url Tool URL
  * @returns JSON-LD structured data
  */
-export function generateToolSchema(name: string, description: string, url: string) {
+export function generateToolSchema(
+  name: string,
+  description: string,
+  url: string,
+) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    'name': name,
-    'description': description,
-    'applicationCategory': 'EngineeringApplication',
-    'offers': {
-      '@type': 'Offer',
-      'price': '0',
-      'priceCurrency': 'USD'
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: name,
+    description: description,
+    applicationCategory: "EngineeringApplication",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
     },
-    'url': `https://battlewithbytes.io${url}`
+    url: `https://battlewithbytes.io${url}`,
   };
 }
 
@@ -91,37 +93,37 @@ export function generateToolSchema(name: string, description: string, url: strin
  * @returns JSON-LD structured data
  */
 export function generateArticleSchema(
-  title: string, 
-  description: string, 
+  title: string,
+  description: string,
   url: string,
   publishedAt: string,
   updatedAt?: string,
-  imageUrl?: string
+  imageUrl?: string,
 ) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    'headline': title,
-    'description': description,
-    'datePublished': publishedAt,
-    'dateModified': updatedAt || publishedAt,
-    'image': imageUrl ? `https://battlewithbytes.io${imageUrl}` : undefined,
-    'url': `https://battlewithbytes.io${url}`,
-    'author': {
-      '@type': 'Person',
-      'name': 'Battle With Bytes'
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: title,
+    description: description,
+    datePublished: publishedAt,
+    dateModified: updatedAt || publishedAt,
+    image: imageUrl ? `https://battlewithbytes.io${imageUrl}` : undefined,
+    url: `https://battlewithbytes.io${url}`,
+    author: {
+      "@type": "Person",
+      name: "Battle With Bytes",
     },
-    'publisher': {
-      '@type': 'Organization',
-      'name': 'Battle With Bytes',
-      'logo': {
-        '@type': 'ImageObject',
-        'url': 'https://battlewithbytes.io/images/logo.png'
-      }
+    publisher: {
+      "@type": "Organization",
+      name: "Battle With Bytes",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://battlewithbytes.io/images/logo.png",
+      },
     },
-    'mainEntityOfPage': {
-      '@type': 'WebPage',
-      '@id': `https://battlewithbytes.io${url}`
-    }
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://battlewithbytes.io${url}`,
+    },
   };
 }

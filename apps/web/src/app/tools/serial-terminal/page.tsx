@@ -1,20 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import Script from 'next/script';
-import { generateToolSchema } from '@/lib/utils/seo';
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import Script from "next/script";
+import { generateToolSchema } from "@/lib/utils/seo";
 
-const SerialTerminal = dynamic(() => import('@battlewithbytes/battleterm'), {
+const SerialTerminal = dynamic(() => import("@battlewithbytes/battleterm"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center p-12 bg-black/50 border border-gray-800 rounded-lg">
       <div className="text-center">
-        <div className="text-green-400 font-mono text-lg mb-2">Loading Terminal...</div>
+        <div className="text-green-400 font-mono text-lg mb-2">
+          Loading Terminal...
+        </div>
         <div className="text-gray-500 text-sm">Initializing xterm.js</div>
       </div>
     </div>
-  )
+  ),
 });
 
 export default function SerialTerminalPage() {
@@ -24,9 +26,13 @@ export default function SerialTerminalPage() {
 
   useEffect(() => {
     // Detect if running in PWA/standalone mode
-    const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = 'standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true;
-    const isAndroidApp = document.referrer.includes('android-app://');
+    const isDisplayStandalone = window.matchMedia(
+      "(display-mode: standalone)",
+    ).matches;
+    const isIOSStandalone =
+      "standalone" in window.navigator &&
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    const isAndroidApp = document.referrer.includes("android-app://");
 
     setIsStandalone(isDisplayStandalone || isIOSStandalone || isAndroidApp);
   }, []);
@@ -34,7 +40,7 @@ export default function SerialTerminalPage() {
   // Handle ESC key to exit fullscreen (use capture to intercept before xterm)
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
+      if (e.key === "Escape" && isFullscreen) {
         e.preventDefault();
         e.stopPropagation();
         setIsFullscreen(false);
@@ -43,8 +49,9 @@ export default function SerialTerminalPage() {
     };
 
     // Use capture phase to intercept ESC before xterm.js terminal gets it
-    window.addEventListener('keydown', handleEscape, { capture: true });
-    return () => window.removeEventListener('keydown', handleEscape, { capture: true });
+    window.addEventListener("keydown", handleEscape, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handleEscape, { capture: true });
   }, [isFullscreen]);
 
   // Show exit hint briefly when entering fullscreen
@@ -57,26 +64,29 @@ export default function SerialTerminalPage() {
   }, [isFullscreen, isStandalone]);
 
   const toolSchema = generateToolSchema(
-    'BattleTerm - Browser Serial Terminal',
-    'Free browser-based serial terminal for Arduino, ESP32, Raspberry Pi & embedded devices. Professional serial communication tool with ANSI colors, hex view, macros, and command history. No installation required.',
-    '/tools/serial-terminal'
+    "BattleTerm - Browser Serial Terminal",
+    "Free browser-based serial terminal for Arduino, ESP32, Raspberry Pi & embedded devices. Professional serial communication tool with ANSI colors, hex view, macros, and command history. No installation required.",
+    "/tools/serial-terminal",
   );
 
   // Hide header if PWA mode OR user toggled fullscreen
   const hideHeader = isStandalone || isFullscreen;
 
   return (
-    <main className={hideHeader ? 'h-screen' : 'min-h-screen py-16 px-4'}>
+    <main className={hideHeader ? "h-screen" : "min-h-screen py-16 px-4"}>
       <Script id="serial-terminal-schema" type="application/ld+json">
         {JSON.stringify(toolSchema)}
       </Script>
 
-      <div className={hideHeader ? 'h-full flex flex-col' : 'max-w-7xl mx-auto'}>
+      <div
+        className={hideHeader ? "h-full flex flex-col" : "max-w-7xl mx-auto"}
+      >
         {/* Header - show only in browser mode when not fullscreen */}
         {!hideHeader && (
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-4xl md:text-5xl font-bold font-mono glow-text">
-              <span className="text-green-400">&lt;</span> BattleTerm <span className="text-green-400">/&gt;</span>
+              <span className="text-green-400">&lt;</span> BattleTerm{" "}
+              <span className="text-green-400">/&gt;</span>
             </h1>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
@@ -92,7 +102,11 @@ export default function SerialTerminalPage() {
         {showExitHint && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
             <div className="px-4 py-2 bg-gray-900/95 text-gray-300 rounded-lg border border-green-500/30 shadow-lg font-mono text-sm">
-              Press <kbd className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-green-400">ESC</kbd> to exit fullscreen
+              Press{" "}
+              <kbd className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-green-400">
+                ESC
+              </kbd>{" "}
+              to exit fullscreen
             </div>
           </div>
         )}

@@ -1,21 +1,21 @@
 // Represents a single pin on a connector
 export interface Pin {
-  id: string;         // Unique identifier for the pin within the connector
-  index: number;      // 0-based numerical index, primarily for calculation logic
+  id: string; // Unique identifier for the pin within the connector
+  index: number; // 0-based numerical index, primarily for calculation logic
   number?: number | string; // User-facing pin number (optional, could be 'A1', 1, etc.)
   pos: number; // The logical position (1-based) used for mapping/display
-  name: string;       // User-defined name (e.g., 'VCC', 'GND', 'Data0')
-  x: number;          // X coordinate relative to connector origin
-  y: number;          // Y coordinate relative to connector origin
+  name: string; // User-defined name (e.g., 'VCC', 'GND', 'Data0')
+  x: number; // X coordinate relative to connector origin
+  y: number; // Y coordinate relative to connector origin
   connectedWireIds: string[]; // Array of wire IDs connected to this pin
   config: PinConfig; // Specific configuration for the pin (e.g., color, type)
-  active: boolean;    // Whether the pin is currently enabled/used
-  visible?: boolean;   // Optional: whether the pin should be rendered (defaults to true)
-  row?: number;       // Row index (0-based) within the connector grid (optional)
-  col?: number;       // Column index (0-based) within the connector grid (optional)
-  netName?: string;    // Optional: Name of the electrical net this pin belongs to
-  netColor?: string;   // Optional: Color associated with the net
-  desc?: string;       // Optional: User-defined description for the pin
+  active: boolean; // Whether the pin is currently enabled/used
+  visible?: boolean; // Optional: whether the pin should be rendered (defaults to true)
+  row?: number; // Row index (0-based) within the connector grid (optional)
+  col?: number; // Column index (0-based) within the connector grid (optional)
+  netName?: string; // Optional: Name of the electrical net this pin belongs to
+  netColor?: string; // Optional: Color associated with the net
+  desc?: string; // Optional: User-defined description for the pin
   voltage?: string | number; // Optional: Voltage level (e.g., 5, 3.3, '5V')
   signalType?: string; // Optional: Type of signal (e.g., 'Analog', 'Digital', 'PWM')
 }
@@ -23,14 +23,14 @@ export interface Pin {
 // Configuration for a single pin (can be expanded)
 export interface PinConfig {
   color?: string;
-  type?: 'power' | 'ground' | 'signal' | 'data' | 'nc'; // Example types
+  type?: "power" | "ground" | "signal" | "data" | "nc"; // Example types
 }
 
 // Shape identifiers for connectors
-export type ConnectorShape = 'Rectangle' | 'Circle';
+export type ConnectorShape = "Rectangle" | "Circle";
 
 // Add this export
-export type ConnectorGender = 'Male' | 'Female' | 'Unknown';
+export type ConnectorGender = "Male" | "Female" | "Unknown";
 
 // Configuration specific to a connector instance
 export interface ConnectorConfig {
@@ -41,18 +41,18 @@ export interface ConnectorConfig {
   centerPinsHorizontal?: boolean;
   pinNumberingMode?: PinNumberingMode; // Use the enum/type
   numPins?: number;
-  pinNumberingStart?: 'top' | 'right' | 'bottom' | 'left';
+  pinNumberingStart?: "top" | "right" | "bottom" | "left";
 }
 
 // Defines how pins are numbered visually and logically
 export type PinNumberingMode =
-  | 'sequential' // Simple 1, 2, 3...
-  | 'row-col'    // Number across rows, then down columns
-  | 'col-row'    // Number down columns, then across rows
-  | 'top'        // Circle specific start
-  | 'right'
-  | 'bottom'
-  | 'left';
+  | "sequential" // Simple 1, 2, 3...
+  | "row-col" // Number across rows, then down columns
+  | "col-row" // Number down columns, then across rows
+  | "top" // Circle specific start
+  | "right"
+  | "bottom"
+  | "left";
 
 // --- Dynamic Configuration Schema Types --- //
 interface BaseConfigOption<TValue, TType extends string> {
@@ -63,36 +63,45 @@ interface BaseConfigOption<TValue, TType extends string> {
   required?: boolean; // Optional required flag
   description?: string; // Optional description for the field
   placeholder?: string; // Optional placeholder text for input fields
-  disabledCondition?: ((state: Partial<ConnectorConfig>) => boolean) | ((value: TValue) => boolean); // Optional conditional disabling
+  disabledCondition?:
+    | ((state: Partial<ConnectorConfig>) => boolean)
+    | ((value: TValue) => boolean); // Optional conditional disabling
   visibleCondition?: (state: Partial<ConnectorConfig>) => boolean; // Optional conditional visibility
 }
 
-export interface ConfigOptionNumber extends BaseConfigOption<number, 'number'> {
+export interface ConfigOptionNumber extends BaseConfigOption<number, "number"> {
   min?: number;
   max?: number;
   step?: number;
 }
 
-export type ConfigOptionBoolean = BaseConfigOption<boolean, 'boolean'>;
+export type ConfigOptionBoolean = BaseConfigOption<boolean, "boolean">;
 
 export interface ConfigOptionSelectOption<T> {
   label: string;
   value: T;
 }
 
-export interface ConfigOptionRadio<T = string | number> extends BaseConfigOption<T, 'radio'> {
+export interface ConfigOptionRadio<T = string | number>
+  extends BaseConfigOption<T, "radio"> {
   options: ConfigOptionSelectOption<T>[];
 }
 
-export interface ConfigOptionSelect<T = string | number> extends BaseConfigOption<T, 'select'> {
+export interface ConfigOptionSelect<T = string | number>
+  extends BaseConfigOption<T, "select"> {
   options: ConfigOptionSelectOption<T>[];
 }
 
-export type ConfigOptionText = BaseConfigOption<string, 'text'>;
+export type ConfigOptionText = BaseConfigOption<string, "text">;
 // Future: extend with minLength, maxLength, pattern (regex) etc.
 
 // Union type for any config option
-export type ConfigOption = ConfigOptionNumber | ConfigOptionBoolean | ConfigOptionRadio | ConfigOptionSelect | ConfigOptionText;
+export type ConfigOption =
+  | ConfigOptionNumber
+  | ConfigOptionBoolean
+  | ConfigOptionRadio
+  | ConfigOptionSelect
+  | ConfigOptionText;
 
 // Defines the structure for dynamic configuration UI generation
 export type DynamicConfigSchema = {
@@ -164,7 +173,7 @@ export interface WireMapperProject {
   mappings: Mapping[];
 }
 
-export type ConnectorTemplate = Omit<Connector, 'id' | 'position' | 'pins'> & {
+export type ConnectorTemplate = Omit<Connector, "id" | "position" | "pins"> & {
   pinCount: number;
   defaultPins?: Pin[];
 };
@@ -174,14 +183,14 @@ export interface PinSelectionState {
   pinPos: number | null;
 }
 
-export type AppMode = 'normal' | 'connectionMode';
+export type AppMode = "normal" | "connectionMode";
 
 export interface WireMapperSettings {
   snapToGrid: boolean;
   showGrid: boolean;
   gridSize: number;
   connectionMode: AppMode; // Renamed from 'mode' for clarity
-  namePosition: 'inside' | 'above'; // Add back for compatibility
+  namePosition: "inside" | "above"; // Add back for compatibility
   simplifyConnections: boolean;
   darkMode: boolean;
   defaultWireColor?: string; // Added default color setting

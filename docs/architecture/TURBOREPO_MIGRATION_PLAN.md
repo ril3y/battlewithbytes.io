@@ -55,6 +55,7 @@ battlewithbytes.io/
 ### Key Dependencies
 
 **Critical for Tools:**
+
 - `@xterm/xterm` + addons (BattleTerm)
 - `@alexaltea/capstone-js` (BattleMagic disassembler)
 - `reactflow` (BattleMagic CFG view)
@@ -62,11 +63,13 @@ battlewithbytes.io/
 - `classnames`, `clsx`, `tailwind-merge` (styling)
 
 **Build/Deploy:**
+
 - Next.js 15.3.0 with static export (`output: 'export'`)
 - pnpm 9.14.4 (already using pnpm!)
 - GitHub Actions deployment to GitHub Pages
 
 **Special Considerations:**
+
 - Custom domain: `battlewithbytes.io`
 - Blog system with MDX (`scripts/generate-blog-data.js` runs pre-build)
 - RSS feed generation (`scripts/generate-rss.js`)
@@ -185,6 +188,7 @@ time pnpm run build
 ```
 
 **Record these metrics:**
+
 - Total build time: `_______`
 - Number of pages generated: `_______` (check `out/` directory)
 - Build artifact size: `_______` (run `du -sh out/`)
@@ -475,6 +479,7 @@ pnpm turbo build
 ```
 
 **Rollback**:
+
 ```bash
 git restore pnpm-workspace.yaml turbo.json tsconfig.base.json .gitignore package.json
 pnpm remove -D -w turbo
@@ -482,6 +487,7 @@ rm -rf apps packages
 ```
 
 **Commit Point**:
+
 ```bash
 git add .
 git commit -m "feat: add Turborepo foundation configuration
@@ -828,6 +834,7 @@ ls -la
 **Solution**: Verify `tailwind.config.js` content paths are correct for new structure
 
 **Rollback**:
+
 ```bash
 cd X:\battlewithbytes.io
 git restore .
@@ -836,6 +843,7 @@ pnpm install
 ```
 
 **Commit Point**:
+
 ```bash
 git add .
 git commit -m "feat: migrate Next.js app to apps/web monorepo structure
@@ -1270,6 +1278,7 @@ rm -rf test-harness
 **Solution**: Verify `tsup` is generating `.d.ts` files in build output
 
 **Rollback**:
+
 ```bash
 git restore apps/web/src/app/tools/serial-terminal/page.tsx
 git restore apps/web/package.json
@@ -1279,6 +1288,7 @@ pnpm install
 ```
 
 **Commit Point**:
+
 ```bash
 git add .
 git commit -m "feat: extract BattleTerm into standalone package
@@ -1638,7 +1648,7 @@ Update `packages/battleterm/package.json` to add shared dependencies:
   "dependencies": {
     "@battlewithbytes/shared-types": "workspace:*",
     "@battlewithbytes/shared-ui": "workspace:*",
-    "@battlewithbytes/shared-utils": "workspace:*",
+    "@battlewithbytes/shared-utils": "workspace:*"
     // ... existing dependencies
   }
 }
@@ -1655,7 +1665,7 @@ Add to `apps/web/package.json`:
   "dependencies": {
     "@battlewithbytes/shared-types": "workspace:*",
     "@battlewithbytes/shared-ui": "workspace:*",
-    "@battlewithbytes/shared-utils": "workspace:*",
+    "@battlewithbytes/shared-utils": "workspace:*"
     // ... existing dependencies
   }
 }
@@ -1704,6 +1714,7 @@ cd ../..
 - [ ] No duplicate code between packages
 
 **Commit Point**:
+
 ```bash
 git add .
 git commit -m "feat: create shared packages for common code
@@ -1854,6 +1865,7 @@ EOF
 ```
 
 To enable remote caching:
+
 1. Sign up at https://vercel.com/docs/concepts/monorepos/remote-caching
 2. Get `TURBO_TOKEN` and `TURBO_TEAM`
 3. Add as GitHub repository secrets
@@ -1998,6 +2010,7 @@ git push
 ```
 
 **Commit Point** (after successful test):
+
 ```bash
 git add .
 git commit -m "feat: update CI/CD pipeline for Turborepo monorepo
@@ -2115,6 +2128,7 @@ cd ../..
 ```
 
 **Manual Steps for BattleMagic:**
+
 1. Update all `@/` imports to relative imports
 2. Move test files to `__tests__` directory
 3. Update web app to import from package
@@ -2249,7 +2263,7 @@ Update `apps/web/package.json` dependencies:
     "@battlewithbytes/calculators": "workspace:*",
     "@battlewithbytes/shared-types": "workspace:*",
     "@battlewithbytes/shared-ui": "workspace:*",
-    "@battlewithbytes/shared-utils": "workspace:*",
+    "@battlewithbytes/shared-utils": "workspace:*"
     // ... other dependencies
   }
 }
@@ -2278,16 +2292,16 @@ Update each tool page in `apps/web/src/app/tools/*/page.tsx` to import from pack
 // After:  import Component from '@battlewithbytes/battleterm'
 
 // apps/web/src/app/tools/battlemagic/page.tsx
-import { BattleMagicMonitor } from '@battlewithbytes/battlemagic';
+import { BattleMagicMonitor } from "@battlewithbytes/battlemagic";
 
 // apps/web/src/app/tools/ucan/page.tsx
-import { UCANAnalyzer } from '@battlewithbytes/ucan';
+import { UCANAnalyzer } from "@battlewithbytes/ucan";
 
 // apps/web/src/app/tools/mosfet-calculator/page.tsx
-import { MosfetCalculator } from '@battlewithbytes/calculators/mosfet';
+import { MosfetCalculator } from "@battlewithbytes/calculators/mosfet";
 
 // apps/web/src/app/tools/ohms-law-calculator/page.tsx
-import { OhmsLawCalculator } from '@battlewithbytes/calculators/ohms-law';
+import { OhmsLawCalculator } from "@battlewithbytes/calculators/ohms-law";
 ```
 
 ### Step 6.6: Remove Old Component Files
@@ -2360,6 +2374,7 @@ time pnpm turbo build
 ```
 
 **Commit Point**:
+
 ```bash
 git add .
 git commit -m "feat: extract all tools into standalone packages
@@ -2386,6 +2401,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 #### Remote Caching Setup
 
 1. **Sign up for Vercel (free for open source)**:
+
    ```bash
    pnpm dlx turbo login
    pnpm dlx turbo link
@@ -2529,12 +2545,12 @@ The Electron app can now import `@battlewithbytes/battleterm` directly!
 
 **Expected Build Time Improvements:**
 
-| Scenario | Before (Monolith) | After (Turborepo) | Improvement |
-|----------|-------------------|-------------------|-------------|
-| Full clean build | ~2m 15s | ~2m 30s | -10% (initial overhead) |
-| Rebuild with no changes | ~2m 15s | ~5s | 96% faster (full cache hit) |
-| Change one package | ~2m 15s | ~30s | 77% faster (partial cache) |
-| Change shared package | ~2m 15s | ~1m 20s | 40% faster (affected packages) |
+| Scenario                | Before (Monolith) | After (Turborepo) | Improvement                    |
+| ----------------------- | ----------------- | ----------------- | ------------------------------ |
+| Full clean build        | ~2m 15s           | ~2m 30s           | -10% (initial overhead)        |
+| Rebuild with no changes | ~2m 15s           | ~5s               | 96% faster (full cache hit)    |
+| Change one package      | ~2m 15s           | ~30s              | 77% faster (partial cache)     |
+| Change shared package   | ~2m 15s           | ~1m 20s           | 40% faster (affected packages) |
 
 **Cache Hit Rate Monitoring:**
 
@@ -2671,13 +2687,13 @@ pnpm turbo build
 
 ### Rollback Decision Matrix
 
-| Issue | Rollback Strategy | Recovery Time |
-|-------|------------------|---------------|
-| Single tool broken | Restore old component, fix package later | 10-15 min |
-| Build fails | Clear caches, fresh install | 5-10 min |
-| CI/CD broken | Revert workflow, fix locally first | 15-30 min |
-| Multiple packages broken | Rollback Phase 6, fix systematically | 1-2 hours |
-| Entire migration broken | Full rollback to tag | 5-10 min |
+| Issue                    | Rollback Strategy                        | Recovery Time |
+| ------------------------ | ---------------------------------------- | ------------- |
+| Single tool broken       | Restore old component, fix package later | 10-15 min     |
+| Build fails              | Clear caches, fresh install              | 5-10 min      |
+| CI/CD broken             | Revert workflow, fix locally first       | 15-30 min     |
+| Multiple packages broken | Rollback Phase 6, fix systematically     | 1-2 hours     |
+| Entire migration broken  | Full rollback to tag                     | 5-10 min      |
 
 ---
 
@@ -2688,24 +2704,27 @@ pnpm turbo build
 **Issue**: TypeScript errors about `@/` imports in packages
 
 **Symptoms**:
+
 ```
 Cannot find module '@/components/Button'
 Module not found: Can't resolve '@/lib/utils'
 ```
 
 **Solution**:
+
 ```typescript
 // ❌ Wrong (works in Next.js app but not in package)
-import { Button } from '@/components/Button';
+import { Button } from "@/components/Button";
 
 // ✅ Correct (relative import in package)
-import { Button } from './components/Button';
+import { Button } from "./components/Button";
 
 // ✅ Correct (import from another package)
-import { Button } from '@battlewithbytes/shared-ui';
+import { Button } from "@battlewithbytes/shared-ui";
 ```
 
 **Prevention**:
+
 - Use `eslint-plugin-import` to enforce relative imports in packages
 - Create a script to validate imports before extraction
 
@@ -2714,12 +2733,14 @@ import { Button } from '@battlewithbytes/shared-ui';
 **Issue**: Packages depend on each other creating a cycle
 
 **Symptoms**:
+
 ```
 pnpm ERR! Circular dependency detected:
   @battlewithbytes/shared-ui -> @battlewithbytes/shared-types -> @battlewithbytes/shared-ui
 ```
 
 **Solution**:
+
 ```bash
 # Identify cycles
 pnpm turbo build --graph=graph.html
@@ -2732,6 +2753,7 @@ pnpm turbo build --graph=graph.html
 ```
 
 **Prevention**:
+
 - Keep dependency direction: shared → tools → apps
 - Never import from apps/ in packages/
 - Document package dependency rules
@@ -2741,26 +2763,29 @@ pnpm turbo build --graph=graph.html
 **Issue**: Package not being transpiled, causing browser errors
 
 **Symptoms**:
+
 ```
 Unexpected token 'export'
 Module parse failed: Unexpected token
 ```
 
 **Solution**:
+
 ```javascript
 // apps/web/next.config.js
 const nextConfig = {
   transpilePackages: [
     // ✅ Include all workspace packages
-    '@battlewithbytes/battleterm',
-    '@battlewithbytes/shared-ui',
+    "@battlewithbytes/battleterm",
+    "@battlewithbytes/shared-ui",
     // ✅ Include transitive dependencies if needed
-    'some-esm-only-dep',
+    "some-esm-only-dep",
   ],
 };
 ```
 
 **Alternative**: Configure packages to output both CJS and ESM:
+
 ```javascript
 // packages/*/package.json
 {
@@ -2780,12 +2805,14 @@ const nextConfig = {
 **Issue**: TypeScript complains about project references
 
 **Symptoms**:
+
 ```
 Project references may not form a cycle
 Cannot find type definitions for module
 ```
 
 **Solution**:
+
 ```json
 // tsconfig.json (root)
 {
@@ -2816,12 +2843,14 @@ Cannot find type definitions for module
 **Issue**: Build always runs even with no changes
 
 **Symptoms**:
+
 ```
 pnpm turbo build
 # Always shows "cache miss" even for unchanged packages
 ```
 
 **Solution**:
+
 ```json
 // turbo.json
 {
@@ -2829,13 +2858,13 @@ pnpm turbo build
     "build": {
       "outputs": [
         ".next/**",
-        "!.next/cache/**",  // ✅ Exclude volatile cache dir
+        "!.next/cache/**", // ✅ Exclude volatile cache dir
         "dist/**"
       ],
       "inputs": [
-        "$TURBO_DEFAULT$",  // ✅ Include default inputs
-        "!**/*.test.ts",    // ✅ Exclude test files
-        "!**/*.md"          // ✅ Exclude docs
+        "$TURBO_DEFAULT$", // ✅ Include default inputs
+        "!**/*.test.ts", // ✅ Exclude test files
+        "!**/*.md" // ✅ Exclude docs
       ]
     }
   }
@@ -2843,6 +2872,7 @@ pnpm turbo build
 ```
 
 **Debug cache issues**:
+
 ```bash
 # See why cache missed
 pnpm turbo build --dry-run=json | jq '.tasks[] | select(.cache.status == "MISS")'
@@ -2859,19 +2889,21 @@ rm -rf .turbo && pnpm turbo build
 **Issue**: Static export missing files or broken paths
 
 **Symptoms**:
+
 - `/tools/serial-terminal` returns 404
 - Assets have wrong path
 - `out/` directory incomplete
 
 **Solution**:
+
 ```javascript
 // apps/web/next.config.js
 const nextConfig = {
-  output: 'export',
+  output: "export",
 
   // ✅ Verify these match your deployment
-  basePath: '',
-  assetPrefix: '',
+  basePath: "",
+  assetPrefix: "",
 
   // ✅ Ensure trailing slash handling
   trailingSlash: true,
@@ -2879,6 +2911,7 @@ const nextConfig = {
 ```
 
 **Verify export**:
+
 ```bash
 cd apps/web
 pnpm run build
@@ -2903,10 +2936,12 @@ npx http-server out -p 8080
 **Issue**: Changes to package not reflected in app
 
 **Symptoms**:
+
 - Edit package code, but app still uses old version
 - "Module not found" for newly exported symbols
 
 **Solution**:
+
 ```bash
 # Re-link workspace packages
 pnpm install
@@ -2924,11 +2959,13 @@ pnpm turbo build --force
 **Issue**: Workflow succeeds but site doesn't update
 
 **Symptoms**:
+
 - Workflow shows green checkmark
 - Site still shows old version
 - `apps/web/out` is empty or missing
 
 **Solution**:
+
 ```yaml
 # .github/workflows/deploy.yml
 
@@ -2945,7 +2982,7 @@ pnpm turbo build --force
 - name: Upload artifact
   uses: actions/upload-pages-artifact@v3
   with:
-    path: ./apps/web/out  # Not ./out !
+    path: ./apps/web/out # Not ./out !
 ```
 
 ---
@@ -2955,12 +2992,14 @@ pnpm turbo build --force
 ### Build Performance
 
 **Before Turborepo (Monolith)**:
+
 - Every change rebuilds entire app (~2m 15s)
 - No build cache between runs
 - No parallelization
 - CI rebuilds everything every time
 
 **After Turborepo (Monorepo)**:
+
 - Only changed packages rebuild
 - Intelligent cache reuse (96% faster on cache hit)
 - Parallel package builds
@@ -2968,6 +3007,7 @@ pnpm turbo build --force
 - Incremental builds by default
 
 **Real-World Example**:
+
 ```bash
 # Change one line in BattleTerm component
 # Before: 2m 15s full rebuild
@@ -2985,12 +3025,14 @@ pnpm turbo build --force
 ### Developer Experience
 
 **Package Isolation**:
+
 - Each tool is independently testable
 - Clear dependency boundaries
 - Easier to reason about code
 - Faster unit tests (only test changed package)
 
 **Parallel Development**:
+
 ```bash
 # Run multiple dev servers simultaneously
 pnpm turbo dev --parallel
@@ -3001,6 +3043,7 @@ pnpm turbo build --filter=battlemagic
 ```
 
 **Easier Onboarding**:
+
 - New contributors can work on single package
 - Clear package boundaries
 - Self-documenting structure
@@ -3008,6 +3051,7 @@ pnpm turbo build --filter=battlemagic
 ### Tool Reusability
 
 **Electron Apps**:
+
 ```bash
 # Create desktop app from any tool package
 mkdir apps/electron-battleterm
@@ -3018,6 +3062,7 @@ import SerialTerminal from '@battlewithbytes/battleterm';
 ```
 
 **Standalone NPM Packages**:
+
 ```bash
 # Publish individual tools to npm
 cd packages/battleterm
@@ -3028,6 +3073,7 @@ npm install @battlewithbytes/battleterm
 ```
 
 **Embed in Other Projects**:
+
 ```bash
 # Use in another Next.js project
 pnpm add @battlewithbytes/battleterm
@@ -3039,12 +3085,14 @@ import { SerialTerminal } from '@battlewithbytes/battleterm';
 ### Maintenance & Scalability
 
 **Dependency Management**:
+
 - Shared dependencies in shared packages
 - Tool-specific deps in tool packages
 - Clear dependency graph
 - Easier to update dependencies incrementally
 
 **Testing**:
+
 ```bash
 # Test only changed packages
 pnpm turbo test --filter=...[HEAD^]
@@ -3057,6 +3105,7 @@ pnpm turbo test
 ```
 
 **Code Sharing**:
+
 - Extract common patterns to shared packages
 - Enforce consistent patterns through shared-ui
 - Share types through shared-types
@@ -3067,6 +3116,7 @@ pnpm turbo test
 ## Migration Checklist
 
 ### Pre-Migration (Phase 0)
+
 - [ ] Create `turborepo-migration` branch
 - [ ] Create backup tag: `pre-turborepo-migration`
 - [ ] Clean build succeeds
@@ -3074,6 +3124,7 @@ pnpm turbo test
 - [ ] All tests pass
 
 ### Foundation (Phase 1)
+
 - [ ] Install `turbo` package
 - [ ] Create `pnpm-workspace.yaml`
 - [ ] Create root `package.json`
@@ -3084,6 +3135,7 @@ pnpm turbo test
 - [ ] Commit: "feat: add Turborepo foundation configuration"
 
 ### Move to apps/web (Phase 2)
+
 - [ ] Create `apps/web/package.json`
 - [ ] Move `src/`, `public/`, `scripts/` to `apps/web/`
 - [ ] Move config files to `apps/web/`
@@ -3096,6 +3148,7 @@ pnpm turbo test
 - [ ] Commit: "feat: migrate Next.js app to apps/web monorepo structure"
 
 ### Extract BattleTerm (Phase 3)
+
 - [ ] Create `packages/battleterm/` structure
 - [ ] Create package.json with tsup
 - [ ] Move SerialTerminal components
@@ -3110,6 +3163,7 @@ pnpm turbo test
 - [ ] Commit: "feat: extract BattleTerm into standalone package"
 
 ### Create Shared Packages (Phase 4)
+
 - [ ] Create `packages/shared-types/`
 - [ ] Create `packages/shared-ui/`
 - [ ] Create `packages/shared-utils/`
@@ -3121,6 +3175,7 @@ pnpm turbo test
 - [ ] Commit: "feat: create shared packages for common code"
 
 ### Update CI/CD (Phase 5)
+
 - [ ] Update `.github/workflows/deploy.yml` for monorepo
 - [ ] Add Turborepo cache to workflow
 - [ ] Update artifact path to `apps/web/out`
@@ -3130,6 +3185,7 @@ pnpm turbo test
 - [ ] Commit: "feat: update CI/CD pipeline for Turborepo monorepo"
 
 ### Extract Remaining Tools (Phase 6)
+
 - [ ] Extract BattleMagic (`packages/battlemagic/`)
 - [ ] Extract uCAN (`packages/ucan/`)
 - [ ] Extract calculators (`packages/calculators/`)
@@ -3141,6 +3197,7 @@ pnpm turbo test
 - [ ] Commit: "feat: extract all tools into standalone packages"
 
 ### Final Validation
+
 - [ ] Clean build from scratch: `pnpm turbo clean && pnpm install && pnpm turbo build`
 - [ ] All tools work in dev mode
 - [ ] Production build succeeds
@@ -3153,6 +3210,7 @@ pnpm turbo test
 - [ ] Site loads correctly on production URL
 
 ### Merge to Master
+
 - [ ] Create pull request: `turborepo-migration` → `master`
 - [ ] Request code review
 - [ ] Address feedback
@@ -3167,36 +3225,42 @@ pnpm turbo test
 ## Next Steps After Migration
 
 ### 1. Optimize Turborepo Configuration
+
 - [ ] Set up remote caching (Vercel)
 - [ ] Fine-tune cache inputs/outputs
 - [ ] Add more granular tasks
 - [ ] Create task dependencies
 
 ### 2. Create Electron Apps
+
 - [ ] Create `apps/electron-battleterm/`
 - [ ] Configure electron-builder
 - [ ] Set up code signing
 - [ ] Create installers for Windows/Mac/Linux
 
 ### 3. Publish Packages to NPM
+
 - [ ] Set up npm organization: `@battlewithbytes`
 - [ ] Add npm publish scripts
 - [ ] Create README for each package
 - [ ] Publish initial versions
 
 ### 4. Improve Developer Experience
+
 - [ ] Add VS Code workspace configuration
 - [ ] Create debug configurations
 - [ ] Add pre-commit hooks (lint-staged + husky)
 - [ ] Set up Changesets for versioning
 
 ### 5. Documentation
+
 - [ ] Create CONTRIBUTING.md
 - [ ] Document package architecture
 - [ ] Add examples for each package
 - [ ] Create API documentation
 
 ### 6. Advanced Features
+
 - [ ] Set up Storybook for component development
 - [ ] Add visual regression testing
 - [ ] Implement E2E tests with Playwright
@@ -3207,21 +3271,25 @@ pnpm turbo test
 ## Resources & References
 
 ### Official Documentation
+
 - **Turborepo**: https://turbo.build/repo/docs
 - **pnpm Workspaces**: https://pnpm.io/workspaces
 - **Next.js + Turborepo**: https://turbo.build/repo/docs/getting-started/existing-monorepo
 - **TypeScript Project References**: https://www.typescriptlang.org/docs/handbook/project-references.html
 
 ### Example Repositories
+
 - **Vercel Turborepo Examples**: https://github.com/vercel/turbo/tree/main/examples
 - **Next.js Monorepo**: https://github.com/vercel/next.js/tree/canary/packages
 - **tRPC Monorepo**: https://github.com/trpc/trpc
 
 ### Community Resources
+
 - **Turborepo Discord**: https://turbore.build/discord
 - **Turborepo GitHub Discussions**: https://github.com/vercel/turbo/discussions
 
 ### Migration Tools
+
 - **codemod**: Automate import path changes
 - **jscodeshift**: Write custom transforms
 - **turborepo-migrate**: Official migration tool (if available)
@@ -3239,6 +3307,7 @@ If you encounter issues during migration:
 5. **Clear caches**: `pnpm turbo clean && rm -rf .turbo node_modules`
 
 For persistent issues:
+
 - Check GitHub Issues for similar problems
 - Ask in Turborepo Discord
 - Review package build outputs
@@ -3256,6 +3325,7 @@ This migration plan transforms your Next.js monolith into a well-structured, per
 - ✅ Maintain zero downtime for GitHub Pages deployment
 
 **Expected Timeline**:
+
 - Phase 0-1: 1 hour (foundation)
 - Phase 2: 2 hours (move to apps/web)
 - Phase 3: 3 hours (extract BattleTerm)
@@ -3266,6 +3336,7 @@ This migration plan transforms your Next.js monolith into a well-structured, per
 **Total**: ~15 hours spread across multiple sessions
 
 **Post-Migration Benefits**:
+
 - 96% faster cached builds
 - 77% faster incremental builds
 - Isolated, reusable packages

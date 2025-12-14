@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { ContextMenuOption } from '../types';
-import './context-menu.css';
+import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { ContextMenuOption } from "../types";
+import "./context-menu.css";
 
 interface ContextMenuProps {
   x: number;
@@ -12,10 +12,16 @@ interface ContextMenuProps {
   onClose: () => void;
   // Optional: To adjust menu position if it overflows viewport
   // We can add more sophisticated viewport collision detection later if needed
-  containerRef?: React.RefObject<HTMLElement | null>; 
+  containerRef?: React.RefObject<HTMLElement | null>;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose, containerRef }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({
+  x,
+  y,
+  options,
+  onClose,
+  containerRef,
+}) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,9 +31,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
 
@@ -68,7 +74,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose
         left: `${adjustedX}px`,
       }}
       // Prevent context menu from triggering another context menu if right-clicked on itself
-      onContextMenu={(e) => e.preventDefault()} 
+      onContextMenu={(e) => e.preventDefault()}
     >
       <ul className="context-menu-list">
         {options.map((option, index) => (
@@ -76,8 +82,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose
             <button
               type="button"
               className={`context-menu-option ${
-                option.danger ? 'danger' : ''
-              } ${option.disabled ? 'disabled' : ''}`}
+                option.danger ? "danger" : ""
+              } ${option.disabled ? "disabled" : ""}`}
               onClick={() => {
                 if (!option.disabled) {
                   option.action();
@@ -93,7 +99,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose
       </ul>
     </div>
   );
-  
+
   // Use createPortal to render the menu directly to document.body
   // This prevents any positioning or z-index issues within the React Flow canvas
   return createPortal(menuContent, document.body);

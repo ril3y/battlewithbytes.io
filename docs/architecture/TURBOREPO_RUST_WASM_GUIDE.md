@@ -54,18 +54,19 @@ battlewithbytes.io/
 **Purpose**: Compiles Rust code to WebAssembly using wasm-pack
 
 **Configuration**:
+
 ```json
 {
   "build:wasm": {
     "cache": true,
     "inputs": [
-      "src/**/*.rs",      // All Rust source files
-      "Cargo.toml",       // Dependencies and metadata
-      "Cargo.lock",       // Locked dependency versions
-      ".cargo/**"         // Cargo configuration
+      "src/**/*.rs", // All Rust source files
+      "Cargo.toml", // Dependencies and metadata
+      "Cargo.lock", // Locked dependency versions
+      ".cargo/**" // Cargo configuration
     ],
     "outputs": [
-      "pkg/**",           // wasm-pack output directory
+      "pkg/**", // wasm-pack output directory
       "target/wasm32-unknown-unknown/release/*.wasm"
     ],
     "env": [
@@ -76,6 +77,7 @@ battlewithbytes.io/
 ```
 
 **Why This Works**:
+
 - **Inputs**: Turborepo only rebuilds when Rust files or dependencies change
 - **Outputs**: Cached artifacts include both the pkg directory and compiled WASM
 - **Cache Key**: Generated from input file hashes + environment variables
@@ -84,6 +86,7 @@ battlewithbytes.io/
 #### 2. `build` - TypeScript/Next.js Build
 
 **Updated Configuration**:
+
 ```json
 {
   "build": {
@@ -95,6 +98,7 @@ battlewithbytes.io/
 ```
 
 **Key Change**: Added `^build:wasm` to `dependsOn`
+
 - `^build`: Depends on `build` task in dependencies
 - `^build:wasm`: Depends on `build:wasm` task in dependencies
 - Ensures WASM is built before TypeScript packages that import it
@@ -102,6 +106,7 @@ battlewithbytes.io/
 #### 3. `dev:wasm` - Watch Mode for Rust
 
 **Configuration**:
+
 ```json
 {
   "dev:wasm": {
@@ -112,6 +117,7 @@ battlewithbytes.io/
 ```
 
 **Behavior**:
+
 - Runs continuously in watch mode
 - Monitors .rs files for changes
 - Triggers incremental rebuilds
@@ -120,6 +126,7 @@ battlewithbytes.io/
 #### 4. `dev` - Development Mode
 
 **Updated Configuration**:
+
 ```json
 {
   "dev": {
@@ -131,6 +138,7 @@ battlewithbytes.io/
 ```
 
 **Workflow**:
+
 1. Initial build of WASM (or restore from cache)
 2. Start TypeScript/Next.js dev servers
 3. WASM changes trigger rebuilds via dev:wasm task
@@ -140,6 +148,7 @@ battlewithbytes.io/
 ### What Gets Cached
 
 #### WASM Builds (battlemagic-core)
+
 ```
 Cache Key: hash(
   src/**/*.rs,
@@ -157,11 +166,13 @@ Cached Outputs:
 ```
 
 **Size Optimization**:
+
 - Release builds: ~100-500KB WASM (optimized with wasm-opt)
 - Dev builds: Larger but faster to compile
 - Cache stores compressed artifacts
 
 #### TypeScript Builds
+
 ```
 Cache Key: hash(
   src/**/*.ts,
@@ -178,6 +189,7 @@ Cached Outputs:
 ### Cache Performance
 
 **Without Cache (Cold Build)**:
+
 ```
 battlemagic-core build:wasm  120s  (Rust compilation)
 battlemagic-ui build          10s  (TypeScript)
@@ -187,6 +199,7 @@ Total:                       175s
 ```
 
 **With Cache (Warm Build)**:
+
 ```
 battlemagic-core build:wasm   2s  (Cache restore)
 battlemagic-ui build          1s  (Cache restore)
@@ -200,11 +213,13 @@ Total:                        6s
 ### Local vs Remote Caching
 
 #### Local Cache
+
 - Stored in `.turbo/cache/`
 - Shared across branches on same machine
 - Automatically managed by Turborepo
 
 #### Remote Cache (Vercel)
+
 ```bash
 # Enable remote caching
 turbo login
@@ -217,11 +232,12 @@ turbo link
 ```
 
 **Setup**:
+
 ```json
 // turbo.json
 {
   "remoteCache": {
-    "signature": true  // Verify cache integrity
+    "signature": true // Verify cache integrity
   }
 }
 ```
@@ -280,12 +296,14 @@ pnpm run dev:wasm
 ```
 
 **What Happens**:
+
 1. Turborepo starts all `dev` tasks in dependency order
 2. `battlemagic-core`: Enters watch mode, monitors .rs files
 3. `battlemagic-ui`: TypeScript watch mode, hot reload
 4. `apps/web`: Next.js dev server with fast refresh
 
 **On Rust File Change**:
+
 1. Chokidar detects .rs file modification
 2. Debounced rebuild triggers (500ms delay)
 3. wasm-pack compiles (dev profile, ~5-15s)
@@ -331,18 +349,21 @@ pnpm run format:rust
 ### Optimization Levels
 
 #### Development (`WASM_PACK_PROFILE=dev`)
+
 - Fast compilation (~5-10s)
 - Larger bundle size (~2-5x)
 - Debug symbols included
 - No wasm-opt
 
 #### Profiling (`WASM_PACK_PROFILE=profiling`)
+
 - Medium compilation (~30-60s)
 - Optimized but debuggable
 - Some debug info included
 - Basic wasm-opt
 
 #### Release (`WASM_PACK_PROFILE=release`, default)
+
 - Slow compilation (~60-120s)
 - Minimal bundle size
 - No debug symbols
@@ -369,6 +390,7 @@ pnpm run build --filter=@battlewithbytes/web
 From `packages/battlemagic-core/scripts/analyze-size.mjs`:
 
 1. **Use release profile** (Cargo.toml):
+
 ```toml
 [profile.release]
 opt-level = "z"     # Optimize for size
@@ -379,25 +401,28 @@ strip = true        # Remove symbols
 ```
 
 2. **Run wasm-opt**:
+
 ```bash
 wasm-opt pkg/battlemagic_core_bg.wasm -O4 -o pkg/battlemagic_core_bg.wasm
 ```
 
 3. **Enable compression** (Next.js config):
+
 ```javascript
 // next.config.js
 module.exports = {
-  compress: true,  // gzip
+  compress: true, // gzip
   // Or use Brotli in production
-}
+};
 ```
 
 4. **Lazy load WASM**:
+
 ```typescript
 // Don't import at top level
 // Instead:
 const loadWasm = async () => {
-  const module = await import('@battlewithbytes/battlemagic-core');
+  const module = await import("@battlewithbytes/battlemagic-core");
   return new module.BattleMagicCore();
 };
 ```
@@ -450,12 +475,14 @@ jobs:
 ### Cache Effectiveness in CI
 
 **First Run (No Cache)**:
+
 - Downloads dependencies
 - Compiles Rust from scratch
 - Builds all packages
 - ~10-15 minutes
 
 **Subsequent Runs (With Cache)**:
+
 - Restores Turbo cache
 - Restores Cargo cache
 - Only rebuilds changed packages
@@ -466,18 +493,21 @@ jobs:
 ### WASM Build Fails
 
 **Problem**: `wasm-pack not found`
+
 ```bash
 # Install wasm-pack
 cargo install wasm-pack
 ```
 
 **Problem**: `target not found: wasm32-unknown-unknown`
+
 ```bash
 # Add WASM target
 rustup target add wasm32-unknown-unknown
 ```
 
 **Problem**: Out of memory during build
+
 ```bash
 # Reduce parallel jobs
 CARGO_BUILD_JOBS=2 pnpm run build:wasm
@@ -486,6 +516,7 @@ CARGO_BUILD_JOBS=2 pnpm run build:wasm
 ### Cache Issues
 
 **Problem**: Stale cache causing issues
+
 ```bash
 # Clear Turborepo cache
 rm -rf .turbo
@@ -496,6 +527,7 @@ cargo clean
 ```
 
 **Problem**: Cache not being used
+
 ```bash
 # Check Turbo cache hits
 turbo run build --summarize
@@ -507,6 +539,7 @@ turbo run build --output-logs=hash-only
 ### Development Issues
 
 **Problem**: Changes not triggering rebuild
+
 ```bash
 # Restart watch mode
 # Ctrl+C, then:
@@ -514,6 +547,7 @@ pnpm run dev:wasm
 ```
 
 **Problem**: TypeScript can't find WASM types
+
 ```bash
 # Rebuild WASM package
 cd packages/battlemagic-core
@@ -527,29 +561,36 @@ pnpm run type-check
 ## Performance Tips
 
 ### 1. Use Dev Profile in Development
+
 ```bash
 # Faster builds, larger bundles (OK for dev)
 WASM_PACK_PROFILE=dev pnpm run dev:wasm
 ```
 
 ### 2. Incremental Builds
+
 Cargo's incremental compilation is enabled by default for dev builds.
 
 ### 3. Parallel Builds
+
 Turborepo runs independent tasks in parallel:
+
 ```bash
 # Build multiple packages simultaneously
 pnpm run build  # Automatically parallelized
 ```
 
 ### 4. Selective Rebuilds
+
 ```bash
 # Only rebuild affected packages
 turbo run build --filter=...[origin/main]
 ```
 
 ### 5. Remote Cache
+
 Enable team-wide cache sharing:
+
 ```bash
 turbo login
 turbo link
@@ -567,6 +608,7 @@ WASM_FEATURES="simd,threads" pnpm run build:wasm
 ```
 
 In `Cargo.toml`:
+
 ```toml
 [features]
 default = []
@@ -599,6 +641,7 @@ For different environments:
 ### Debugging WASM
 
 Enable debug info in release builds:
+
 ```toml
 [profile.profiling]
 inherits = "release"
@@ -607,6 +650,7 @@ strip = false
 ```
 
 Use browser DevTools:
+
 1. Enable WASM debugging in Chrome/Firefox
 2. Source maps are generated automatically
 3. Set breakpoints in Rust code

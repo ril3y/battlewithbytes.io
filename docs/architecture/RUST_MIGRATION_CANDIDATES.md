@@ -10,6 +10,7 @@ Analysis of performance-critical TypeScript code that should be migrated to Rust
 **Why Migrate:** Heavy hex string parsing, memory parsing, register decoding
 
 **Operations:**
+
 - Hex string → binary conversion (happens frequently)
 - Register dump parsing (16+ registers × 8 hex chars each)
 - Memory dump parsing (large hex strings)
@@ -19,11 +20,13 @@ Analysis of performance-critical TypeScript code that should be migrated to Rust
 **Performance Impact:** HIGH - Called on every GDB response
 
 **Rust Benefits:**
+
 - Zero-copy parsing
 - SIMD-optimized hex decoding
 - No GC pauses during parsing
 
 **Migration Strategy:**
+
 ```rust
 // Rust WASM module
 pub fn parse_register_dump(hex: &str) -> RegisterSet { ... }
@@ -39,6 +42,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Why Migrate:** Scans thousands of bytes looking for instruction patterns
 
 **Operations:**
+
 - ARM pattern scoring (loops through 10,000 bytes)
 - MIPS pattern scoring
 - RISC-V pattern scoring
@@ -48,6 +52,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Performance Impact:** HIGH - Runs on every firmware file load
 
 **Rust Benefits:**
+
 - Parallel pattern matching
 - Efficient byte slice operations
 - SIMD pattern matching
@@ -63,6 +68,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Why Migrate:** Real-time stream processing of binary data
 
 **Operations:**
+
 - ITM packet decoding
 - DWT packet decoding
 - Timestamp synchronization
@@ -71,6 +77,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Performance Impact:** MEDIUM-HIGH - Real-time streaming
 
 **Rust Benefits:**
+
 - Zero-copy stream processing
 - Efficient buffering
 - Lower latency
@@ -83,6 +90,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Why Migrate:** Pattern matching on large binary files
 
 **Files:**
+
 - `ArmBinaryParser.ts` - ARM-specific binary parsing
 - `MipsBinaryParser.ts` - MIPS pattern detection
 - `RiscVBinaryParser.ts` - 751 lines of RISC-V patterns
@@ -90,6 +98,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 **Performance Impact:** MEDIUM - Load time operation
 
 **Rust Benefits:**
+
 - Memory-mapped file access
 - Parallel section parsing
 - Zero-copy slicing
@@ -102,10 +111,12 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 
 **Current:** TypeScript graph algorithms
 **Files:**
+
 - `BasicBlockAnalyzer.ts` - Basic block identification
 - `ControlFlowAnalyzer.ts` - CFG construction
 
 **Operations:**
+
 - Graph traversal
 - Dominator tree calculation
 - Loop detection
@@ -121,11 +132,13 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 
 **Current:** Mix of WASM (good!) and TypeScript
 **Files:**
+
 - `WasmDisassembler.ts` - ✅ Already uses Rust WASM
 - `ArmDisassembler.ts` - ⚠️ TypeScript fallback (should remove?)
 - `CapstoneDisassembler.ts` - ⚠️ JavaScript Capstone binding
 
 **Action:**
+
 - Remove TypeScript fallbacks if WASM is always available
 - Ensure all disassembly goes through Rust
 
@@ -134,11 +147,13 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 ## Low Priority (Probably Keep in TypeScript)
 
 ### 7. **UI State Management**
+
 - React hooks (must stay in TS)
 - Component logic (must stay in TS)
 - IndexedDB operations (async, fine in TS)
 
 ### 8. **GDB Client Communication**
+
 - `GdbClient.ts` - Connection management, callbacks
 - `SerialTransport.ts` - Web Serial API (browser-only)
 
@@ -149,6 +164,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 ## Migration Roadmap
 
 ### Phase 1: High-Impact Parsers (Immediate)
+
 1. ✅ Disassembly (already done!)
 2. ✅ Vector table detection (already done!)
 3. ✅ Function analysis (already done!)
@@ -156,10 +172,12 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 5. 🔲 **Architecture detection** → Move to Rust
 
 ### Phase 2: Streaming/Real-time (Next)
+
 6. 🔲 **SWO decoder** → Move to Rust
 7. 🔲 **Binary parsers** → Move to Rust
 
 ### Phase 3: Analysis (Future)
+
 8. 🔲 Complete CFG analysis migration
 9. 🔲 Remove TypeScript disassembly fallbacks
 
@@ -168,12 +186,14 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 ## Performance Wins Expected
 
 **Current Bottlenecks (from testing):**
+
 - Firmware analysis: 5.5s (mostly in Rust ✅)
 - GDB response parsing: ~10-50ms per response ⚠️
 - Architecture detection: ~100-500ms ⚠️
 - SWO decoding: Varies with data rate ⚠️
 
 **Expected Improvements:**
+
 - RSP parsing: **10x faster** (50ms → 5ms)
 - Arch detection: **5-10x faster** (500ms → 50-100ms)
 - SWO decoding: **2-3x faster** + lower latency
@@ -183,6 +203,7 @@ pub fn parse_stop_reply(packet: &str) -> StopReply { ... }
 ## Implementation Notes
 
 ### Rust Module Structure
+
 ```
 packages/battlemagic-analyzer/src/
 ├── arch/arm/          # ✅ Already organized!
@@ -201,6 +222,7 @@ packages/battlemagic-analyzer/src/
 ```
 
 ### WASM Export Pattern
+
 ```rust
 #[wasm_bindgen]
 pub fn parse_gdb_registers(hex: &str) -> JsValue {
@@ -210,8 +232,9 @@ pub fn parse_gdb_registers(hex: &str) -> JsValue {
 ```
 
 ### TypeScript Integration
+
 ```typescript
-import { parse_gdb_registers } from '../lib/battlemagic_analyzer';
+import { parse_gdb_registers } from "../lib/battlemagic_analyzer";
 
 // Before (slow):
 const regs = RegisterParser.parseGPacket(hex);
@@ -225,6 +248,7 @@ const regs = parse_gdb_registers(hex);
 ## Metrics to Track
 
 After migration, measure:
+
 - [ ] GDB response parsing time (per response)
 - [ ] Firmware load time (total)
 - [ ] Architecture detection time
@@ -236,6 +260,7 @@ After migration, measure:
 ## Conclusion
 
 **Top 3 Migrations for Maximum Impact:**
+
 1. 🔥 **RspParser.ts** → Rust (high frequency operation)
 2. 🔥 **BinaryParserFactory.ts** → Rust (user-facing load time)
 3. 🔥 **SwoDecoder.ts** → Rust (real-time performance)

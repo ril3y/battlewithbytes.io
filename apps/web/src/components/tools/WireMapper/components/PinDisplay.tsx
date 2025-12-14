@@ -1,7 +1,7 @@
-import React from 'react';
-import classNames from 'classnames';
-import { Pin } from '../types';
-import { PIN_SIZE } from '../constants'; // Assuming PIN_SIZE might be needed
+import React from "react";
+import classNames from "classnames";
+import { Pin } from "../types";
+import { PIN_SIZE } from "../constants"; // Assuming PIN_SIZE might be needed
 
 // --- PinDisplay Component ---
 export interface PinDisplayProps {
@@ -11,7 +11,7 @@ export interface PinDisplayProps {
   isConnected: boolean;
   darkMode: boolean;
   size?: number;
-  gender: 'male' | 'female';
+  gender: "male" | "female";
   onClick?: (pinPos: number) => void;
   onContextMenu?: (e: React.MouseEvent, pinPos: number) => void;
   onMouseEnter?: (pinPos: number) => void;
@@ -34,16 +34,13 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
   children,
 }) => {
   // --- Dynamic Class Calculation ---
-  const pinClasses = classNames(
-    'connector-pin-display',
-    {
-      'female': gender === 'female',
-      'selected': isSelected,
-      'connected': isConnected,
-      'hovered': isHovered, // Add hovered class
-      'dark-theme': darkMode, // Add dark-theme class when darkMode is true
-    }
-  );
+  const pinClasses = classNames("connector-pin-display", {
+    female: gender === "female",
+    selected: isSelected,
+    connected: isConnected,
+    hovered: isHovered, // Add hovered class
+    "dark-theme": darkMode, // Add dark-theme class when darkMode is true
+  });
 
   // --- Inline Styles (Only for dynamic values or overrides) ---
   const inlineStyle: React.CSSProperties = {
@@ -54,10 +51,10 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
 
   // Apply pin-specific color override *only* if it exists
   // Restore original check: Apply config color if it exists
-  if (pin.config?.color) { 
+  if (pin.config?.color) {
     inlineStyle.backgroundColor = pin.config.color;
   }
-  
+
   // If this pin has a netName, show that as the background
   if (pin.netName && pin.netColor) {
     inlineStyle.backgroundColor = pin.netColor;
@@ -68,10 +65,16 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
     e.stopPropagation();
     onClick?.(pin.pos);
   };
-  
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('PinDisplay context menu triggered:', pin.pos, 'Event:', e.clientX, e.clientY);
+    console.log(
+      "PinDisplay context menu triggered:",
+      pin.pos,
+      "Event:",
+      e.clientX,
+      e.clientY,
+    );
     if (onContextMenu) {
       onContextMenu(e, pin.pos);
     }
@@ -93,7 +96,7 @@ export const PinDisplay: React.FC<PinDisplayProps> = ({
       onContextMenu={onContextMenu ? handleContextMenu : undefined}
       onMouseEnter={onMouseEnter ? handleMouseEnter : undefined}
       onMouseLeave={onMouseLeave ? handleMouseLeave : undefined}
-      title={`Pin ${pin.pos}${pin.name ? ': ' + pin.name : ''}${pin.netName ? ' | Net: ' + pin.netName : ''}`}
+      title={`Pin ${pin.pos}${pin.name ? ": " + pin.name : ""}${pin.netName ? " | Net: " + pin.netName : ""}`}
       data-pin-pos={pin.pos} // Add data attribute for the global context menu handler
     >
       {pin.pos} {/* Display pin number/position */}

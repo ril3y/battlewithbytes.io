@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useWireMapperStore } from '../store/useWireMapperStore';
-import { Connector } from '../types';
+import React from "react";
+import { useWireMapperStore } from "../store/useWireMapperStore";
+import { Connector } from "../types";
 
 // Connector layout constants - matching those in WiringDiagramPreview but adjusted for print
 const CONNECTOR_WIDTH = 120;
@@ -17,20 +17,20 @@ export const PrintView: React.FC = () => {
 
   // Helper function to get connector name
   const getConnectorName = (connectorId: string) => {
-    const connector = connectors.find(c => c.id === connectorId);
-    return connector ? connector.name : 'Unknown Connector';
+    const connector = connectors.find((c) => c.id === connectorId);
+    return connector ? connector.name : "Unknown Connector";
   };
 
   // Helper function to get pin label with position
   const getPinLabel = (connectorId: string, pinPos: number): string => {
-    if (typeof pinPos !== 'number' || isNaN(pinPos)) {
-      return 'Invalid Pin';
+    if (typeof pinPos !== "number" || isNaN(pinPos)) {
+      return "Invalid Pin";
     }
-    const connector = connectors.find(c => c.id === connectorId);
+    const connector = connectors.find((c) => c.id === connectorId);
     if (!connector) {
       return `Pin ${pinPos}`;
     }
-    const pin = connector.pins.find(p => p.pos === pinPos);
+    const pin = connector.pins.find((p) => p.pos === pinPos);
     if (!pin) {
       return `Pin ${pinPos}`;
     }
@@ -44,15 +44,14 @@ export const PrintView: React.FC = () => {
   const calculatePrintLayout = () => {
     let maxWidth = 0;
     let totalHeight = 0;
-    
+
     // Calculate space needed for connectors
     const connectorRows: Connector[][] = [];
     let currentRow: Connector[] = [];
     let currentRowWidth = 0;
-    
+
     // First arrange connectors in rows
-    connectors.forEach(connector => {
-      
+    connectors.forEach((connector) => {
       if (currentRowWidth + CONNECTOR_WIDTH > 800) {
         // Start a new row if this one would be too wide
         connectorRows.push([...currentRow]);
@@ -63,30 +62,35 @@ export const PrintView: React.FC = () => {
         currentRow.push(connector);
         currentRowWidth += CONNECTOR_WIDTH + HORIZONTAL_GAP;
       }
-      
+
       maxWidth = Math.max(maxWidth, currentRowWidth);
     });
-    
+
     // Add last row if not empty
     if (currentRow.length > 0) {
       connectorRows.push(currentRow);
     }
-    
+
     // Calculate height based on rows
-    connectorRows.forEach(row => {
-      const maxRowHeight = Math.max(...row.map(connector => 
-        CONNECTOR_HEADER_HEIGHT + CONNECTOR_TYPE_HEADER_HEIGHT + (connector.pins.length * PIN_ROW_HEIGHT)
-      ));
+    connectorRows.forEach((row) => {
+      const maxRowHeight = Math.max(
+        ...row.map(
+          (connector) =>
+            CONNECTOR_HEADER_HEIGHT +
+            CONNECTOR_TYPE_HEADER_HEIGHT +
+            connector.pins.length * PIN_ROW_HEIGHT,
+        ),
+      );
       totalHeight += maxRowHeight + VERTICAL_GAP;
     });
 
     // Add space for connection tables (rough estimate)
     totalHeight += connectors.length * 200; // ~200px per connector table
-    
+
     return {
       width: Math.max(maxWidth, 900), // Minimum 900px width
       height: totalHeight,
-      connectorRows
+      connectorRows,
     };
   };
 
@@ -94,16 +98,18 @@ export const PrintView: React.FC = () => {
 
   // Render the connector visual with pins
   const renderConnector = (connector: Connector, x: number, y: number) => {
-    const connectorHeight = CONNECTOR_HEADER_HEIGHT + CONNECTOR_TYPE_HEADER_HEIGHT + 
-                          (connector.pins.length * PIN_ROW_HEIGHT);
-    
+    const connectorHeight =
+      CONNECTOR_HEADER_HEIGHT +
+      CONNECTOR_TYPE_HEADER_HEIGHT +
+      connector.pins.length * PIN_ROW_HEIGHT;
+
     return (
       <g key={connector.id} transform={`translate(${x}, ${y})`}>
         {/* Connector outline */}
-        <rect 
-          x="0" 
-          y="0" 
-          width={CONNECTOR_WIDTH} 
+        <rect
+          x="0"
+          y="0"
+          width={CONNECTOR_WIDTH}
           height={connectorHeight}
           stroke="#333"
           strokeWidth="1"
@@ -111,12 +117,12 @@ export const PrintView: React.FC = () => {
           rx="4"
           ry="4"
         />
-        
+
         {/* Connector name */}
-        <text 
-          x={CONNECTOR_WIDTH / 2} 
+        <text
+          x={CONNECTOR_WIDTH / 2}
           y={CONNECTOR_HEADER_HEIGHT / 2}
-          textAnchor="middle" 
+          textAnchor="middle"
           dominantBaseline="central"
           fontWeight="bold"
           fontSize="14px"
@@ -124,41 +130,44 @@ export const PrintView: React.FC = () => {
         >
           {connector.name}
         </text>
-        
+
         {/* Connector type/info */}
-        <text 
-          x={CONNECTOR_WIDTH / 2} 
-          y={CONNECTOR_HEADER_HEIGHT + (CONNECTOR_TYPE_HEADER_HEIGHT / 2)}
-          textAnchor="middle" 
+        <text
+          x={CONNECTOR_WIDTH / 2}
+          y={CONNECTOR_HEADER_HEIGHT + CONNECTOR_TYPE_HEADER_HEIGHT / 2}
+          textAnchor="middle"
           dominantBaseline="central"
           fontSize="12px"
           fill="#555"
         >
           {connector.type || `${connector.pins.length}-pin`}
         </text>
-        
+
         {/* Pin Rows */}
         {connector.pins.map((pin, index) => {
-          const pinY = CONNECTOR_HEADER_HEIGHT + CONNECTOR_TYPE_HEADER_HEIGHT + (index * PIN_ROW_HEIGHT);
-          const pinColor = pin.config?.color || '#888';
-          
+          const pinY =
+            CONNECTOR_HEADER_HEIGHT +
+            CONNECTOR_TYPE_HEADER_HEIGHT +
+            index * PIN_ROW_HEIGHT;
+          const pinColor = pin.config?.color || "#888";
+
           return (
             <g key={`pin-${pin.pos}`}>
               {/* Pin circle */}
-              <circle 
-                cx="15" 
-                cy={pinY + (PIN_ROW_HEIGHT / 2)}
+              <circle
+                cx="15"
+                cy={pinY + PIN_ROW_HEIGHT / 2}
                 r="10"
                 fill={pinColor}
                 stroke="#333"
                 strokeWidth="1"
               />
-              
+
               {/* Pin position */}
-              <text 
-                x="15" 
-                y={pinY + (PIN_ROW_HEIGHT / 2)}
-                textAnchor="middle" 
+              <text
+                x="15"
+                y={pinY + PIN_ROW_HEIGHT / 2}
+                textAnchor="middle"
                 dominantBaseline="central"
                 fontSize="10px"
                 fontWeight="bold"
@@ -166,11 +175,11 @@ export const PrintView: React.FC = () => {
               >
                 {pin.pos}
               </text>
-              
+
               {/* Pin name/label */}
-              <text 
-                x="35" 
-                y={pinY + (PIN_ROW_HEIGHT / 2)}
+              <text
+                x="35"
+                y={pinY + PIN_ROW_HEIGHT / 2}
                 dominantBaseline="central"
                 fontSize="12px"
                 fill="#333"
@@ -188,7 +197,9 @@ export const PrintView: React.FC = () => {
   const renderConnectionTables = () => {
     return connectors.map((connector) => {
       const relevantMappings = mappings.filter(
-        m => m.source.connectorId === connector.id || m.target.connectorId === connector.id
+        (m) =>
+          m.source.connectorId === connector.id ||
+          m.target.connectorId === connector.id,
       );
 
       if (relevantMappings.length === 0) return null;
@@ -206,27 +217,39 @@ export const PrintView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {relevantMappings.map(mapping => {
-                const isSourceLocal = mapping.source.connectorId === connector.id;
-                const localPinPos = isSourceLocal ? mapping.source.pinPos : mapping.target.pinPos;
-                const remoteConnectorId = isSourceLocal ? mapping.target.connectorId : mapping.source.connectorId;
-                const remotePinPos = isSourceLocal ? mapping.target.pinPos : mapping.source.pinPos;
-                
+              {relevantMappings.map((mapping) => {
+                const isSourceLocal =
+                  mapping.source.connectorId === connector.id;
+                const localPinPos = isSourceLocal
+                  ? mapping.source.pinPos
+                  : mapping.target.pinPos;
+                const remoteConnectorId = isSourceLocal
+                  ? mapping.target.connectorId
+                  : mapping.source.connectorId;
+                const remotePinPos = isSourceLocal
+                  ? mapping.target.pinPos
+                  : mapping.source.pinPos;
+
                 // Get the pin for color indicator
-                const localPin = connector.pins.find(p => p.pos === localPinPos);
-                const pinColor = localPin?.config?.color || '#888';
+                const localPin = connector.pins.find(
+                  (p) => p.pos === localPinPos,
+                );
+                const pinColor = localPin?.config?.color || "#888";
 
                 return (
                   <tr key={mapping.id}>
                     <td>
                       <div className="print-pin-cell">
-                        <div className="print-pin-color" style={{ backgroundColor: pinColor }}></div>
+                        <div
+                          className="print-pin-color"
+                          style={{ backgroundColor: pinColor }}
+                        ></div>
                         <span>{getPinLabel(connector.id, localPinPos)}</span>
                       </div>
                     </td>
                     <td>{getConnectorName(remoteConnectorId)}</td>
                     <td>{getPinLabel(remoteConnectorId, remotePinPos)}</td>
-                    <td>{mapping.netName || '--'}</td>
+                    <td>{mapping.netName || "--"}</td>
                   </tr>
                 );
               })}
@@ -250,16 +273,20 @@ export const PrintView: React.FC = () => {
   return (
     <div className="print-view">
       <h1 className="print-title">Wire Harness Documentation</h1>
-      
+
       {/* SVG for connector visuals */}
       <div className="print-visual-section">
         <h2 className="print-section-header">Connector Diagrams</h2>
-        <svg width={width} height={height * 0.4} className="print-connectors-svg">
+        <svg
+          width={width}
+          height={height * 0.4}
+          className="print-connectors-svg"
+        >
           {connectorRows.map((row, rowIndex) => {
             let currentX = 10;
             const rowY = rowIndex * (PIN_ROW_HEIGHT * 10 + VERTICAL_GAP) + 10;
-            
-            return row.map(connector => {
+
+            return row.map((connector) => {
               const connectorX = currentX;
               currentX += CONNECTOR_WIDTH + HORIZONTAL_GAP;
               return renderConnector(connector, connectorX, rowY);
@@ -267,13 +294,13 @@ export const PrintView: React.FC = () => {
           })}
         </svg>
       </div>
-      
+
       {/* Tables for connections */}
       <div className="print-tables-section">
         <h2 className="print-section-header">Connection Tables</h2>
         {renderConnectionTables()}
       </div>
-      
+
       {/* Print-specific styles */}
       <style>{`
         /* Print view styles */

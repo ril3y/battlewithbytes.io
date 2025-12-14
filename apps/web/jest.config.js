@@ -22,7 +22,7 @@ module.exports = {
       }
     }],
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

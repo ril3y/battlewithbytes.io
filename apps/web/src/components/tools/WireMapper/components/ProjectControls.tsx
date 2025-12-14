@@ -1,29 +1,39 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useWireMapperStore } from '../store/useWireMapperStore';
-import { WireMapperProject } from '../types';
-import { openPrintView } from '../utils/printUtils';
+import React from "react";
+import { useWireMapperStore } from "../store/useWireMapperStore";
+import { WireMapperProject } from "../types";
+import { openPrintView } from "../utils/printUtils";
 
 interface ProjectControlsProps {
   onNewConnector: () => void;
 }
 
-export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector }) => {
-  const { projectName, setProjectName, saveProject, loadProject, clearProject, connectors, mappings } = useWireMapperStore();
+export const ProjectControls: React.FC<ProjectControlsProps> = ({
+  onNewConnector,
+}) => {
+  const {
+    projectName,
+    setProjectName,
+    saveProject,
+    loadProject,
+    clearProject,
+    connectors,
+    mappings,
+  } = useWireMapperStore();
 
   const handleExport = () => {
     const projectData = saveProject();
     const jsonString = JSON.stringify(projectData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
+
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${projectName.replace(/\s+/g, '_')}_wiremapper.json`;
+    a.download = `${projectName.replace(/\s+/g, "_")}_wiremapper.json`;
     document.body.appendChild(a);
     a.click();
-    
+
     // Cleanup
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -40,14 +50,14 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
         const projectData = JSON.parse(content) as WireMapperProject;
         loadProject(projectData);
       } catch (error) {
-        console.error('Failed to parse JSON file:', error);
-        alert('Invalid project file format');
+        console.error("Failed to parse JSON file:", error);
+        alert("Invalid project file format");
       }
     };
     reader.readAsText(file);
-    
+
     // Reset the file input
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleProjectNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +65,11 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
   };
 
   const handleClearProject = () => {
-    if (confirm('Are you sure you want to clear the current project? This action cannot be undone.')) {
+    if (
+      confirm(
+        "Are you sure you want to clear the current project? This action cannot be undone.",
+      )
+    ) {
       clearProject();
     }
   };
@@ -71,7 +85,7 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
           className="w-full bg-gray-800 border border-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-400"
         />
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
         <button
           onClick={onNewConnector}
@@ -101,7 +115,9 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
         <button
           onClick={() => {
             // Try to capture the wiring diagram if it's currently displayed
-            const diagramElement = document.querySelector('[data-wiring-diagram]');
+            const diagramElement = document.querySelector(
+              "[data-wiring-diagram]",
+            );
             let diagramHTML: string | undefined;
 
             if (diagramElement) {
@@ -109,23 +125,25 @@ export const ProjectControls: React.FC<ProjectControlsProps> = ({ onNewConnector
               const clone = diagramElement.cloneNode(true) as HTMLElement;
 
               // Convert dark theme to printer-friendly colors
-              clone.style.background = 'white';
-              clone.style.color = '#333';
+              clone.style.background = "white";
+              clone.style.color = "#333";
 
               // Update all text elements to dark color
-              clone.querySelectorAll('text, span, div').forEach(el => {
-                (el as HTMLElement).style.color = '#333';
+              clone.querySelectorAll("text, span, div").forEach((el) => {
+                (el as HTMLElement).style.color = "#333";
               });
 
               // Update connector boxes to white background
-              clone.querySelectorAll('[style*="background"]').forEach(el => {
+              clone.querySelectorAll('[style*="background"]').forEach((el) => {
                 const element = el as HTMLElement;
-                if (element.style.backgroundColor &&
-                    (element.style.backgroundColor.includes('rgb(15') ||
-                     element.style.backgroundColor.includes('#0F') ||
-                     element.style.backgroundColor.includes('#1'))) {
-                  element.style.backgroundColor = 'white';
-                  element.style.border = '1px solid #ccc';
+                if (
+                  element.style.backgroundColor &&
+                  (element.style.backgroundColor.includes("rgb(15") ||
+                    element.style.backgroundColor.includes("#0F") ||
+                    element.style.backgroundColor.includes("#1"))
+                ) {
+                  element.style.backgroundColor = "white";
+                  element.style.border = "1px solid #ccc";
                 }
               });
 

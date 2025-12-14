@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 // SI Prefix parsing function
 export const parseSiPrefixedValue = (value: string): number => {
-  if (!value || typeof value !== 'string') {
+  if (!value || typeof value !== "string") {
     return NaN;
   }
 
@@ -27,9 +27,10 @@ export const parseSiPrefixedValue = (value: string): number => {
   if (siPrefixes[lastChar.toLowerCase()]) {
     multiplier = siPrefixes[lastChar.toLowerCase()];
     numericStrToParse = numericPartStr;
-  } else if (siPrefixes[lastChar]) { // Handle case-sensitive if needed (e.g., 'm' vs 'M') - though typically we treat k/M/G case-insensitively
-      multiplier = siPrefixes[lastChar]; 
-      numericStrToParse = numericPartStr;
+  } else if (siPrefixes[lastChar]) {
+    // Handle case-sensitive if needed (e.g., 'm' vs 'M') - though typically we treat k/M/G case-insensitively
+    multiplier = siPrefixes[lastChar];
+    numericStrToParse = numericPartStr;
   }
 
   const numericValue = parseFloat(numericStrToParse);
@@ -41,7 +42,6 @@ export const parseSiPrefixedValue = (value: string): number => {
   return numericValue * multiplier;
 };
 
-
 // N-Channel MOSFET calculations
 export const calculateNChannelConduction = (
   vth: number,
@@ -49,7 +49,7 @@ export const calculateNChannelConduction = (
   vs: number, // Source terminal voltage (often 0V / Ground)
   vcc: number, // Supply voltage connected *before* the load resistor
   loadResistance: number,
-  rds_on: number
+  rds_on: number,
 ) => {
   // Assumes a standard N-Channel low-side switch configuration:
   // Vcc -> Load Resistor -> Drain, Source -> Vs (often Ground = 0V)
@@ -62,7 +62,7 @@ export const calculateNChannelConduction = (
   let voltageAcrossLoad = 0;
   let currentThroughLoad = 0;
   let powerDissipated = 0; // Power dissipated *in the MOSFET*
-  let description = '';
+  let description = "";
 
   if (vgs > vth) {
     conducting = true;
@@ -75,10 +75,10 @@ export const calculateNChannelConduction = (
 
     // Prevent division by zero if totalResistance is somehow zero
     if (totalResistance <= 0) {
-        id = 0; // Or handle as an error state
+      id = 0; // Or handle as an error state
     } else {
-       // Current flowing through the series path
-       id = drivingVoltage / totalResistance;
+      // Current flowing through the series path
+      id = drivingVoltage / totalResistance;
     }
 
     // Calculate Drain voltage relative to ground/common (Vs is the reference for Source)
@@ -91,7 +91,6 @@ export const calculateNChannelConduction = (
     description = `The N-Channel MOSFET is conducting because Vgs (${vgs.toFixed(2)}V) is greater than Vth (${vth}V).\n\n`;
     description += `The MOSFET is in the ohmic region, acting as a low-value resistor (${rds_on}Ω).\n`;
     description += `Current flows from drain to source, allowing current through the load.`;
-
   } else {
     // Cutoff state
     conducting = false;
@@ -111,10 +110,10 @@ export const calculateNChannelConduction = (
 
   // Format the power with higher precision to show small values
   let formattedPower = powerDissipated.toFixed(6);
-  let powerUnit = 'W';
+  let powerUnit = "W";
   if (powerDissipated < 0.001 && powerDissipated > 0) {
     formattedPower = (powerDissipated * 1000).toFixed(2);
-    powerUnit = 'mW';
+    powerUnit = "mW";
   }
 
   return {
@@ -125,12 +124,11 @@ export const calculateNChannelConduction = (
     voltageAcrossLoad: voltageAcrossLoad.toFixed(4),
     currentThroughLoad: currentThroughLoad.toFixed(4),
     powerDissipated: formattedPower, // Now just the number part
-    powerUnit: powerUnit,           // Unit separate
+    powerUnit: powerUnit, // Unit separate
     rawPowerDissipated: powerDissipated,
-    description
+    description,
   };
 };
-
 
 // P-Channel MOSFET calculations
 export const calculatePChannelConduction = (
@@ -138,7 +136,7 @@ export const calculatePChannelConduction = (
   vg: number,
   vs: number, // Source terminal voltage (often Vcc for high-side)
   loadResistance: number,
-  rds_on: number
+  rds_on: number,
 ) => {
   // Assumes a standard P-Channel high-side switch configuration:
   // Vs (typically connected to Vcc) -> Source, Drain -> Load Resistor -> Ground (0V)
@@ -151,7 +149,7 @@ export const calculatePChannelConduction = (
   let voltageAcrossLoad = 0;
   let currentThroughLoad = 0;
   let powerDissipated = 0; // Power dissipated *in the MOSFET*
-  let description = '';
+  let description = "";
 
   // For P-Channel, vth is negative and conduction occurs when vgs < vth
   if (vgs < vth) {
@@ -162,12 +160,12 @@ export const calculatePChannelConduction = (
     const drivingVoltage = vs; // Voltage across the Vs -> MOSFET -> Load -> Ground path
     const totalResistance = rds_on + loadResistance;
 
-     // Prevent division by zero
+    // Prevent division by zero
     if (totalResistance <= 0) {
-        id = 0;
+      id = 0;
     } else {
-        // Current flowing through the series path
-        id = drivingVoltage / totalResistance;
+      // Current flowing through the series path
+      id = drivingVoltage / totalResistance;
     }
 
     // Calculate Drain voltage relative to ground/common
@@ -177,7 +175,7 @@ export const calculatePChannelConduction = (
     // Let's double-check the previous calculation: vd = vs - (id * rds_on); This is also correct.
     // Let's use vd = vs - (id * rds_on) as it's defined relative to Vs.
 
-    vd = vs - (id * rds_on); // Voltage at Drain node relative to ground/common
+    vd = vs - id * rds_on; // Voltage at Drain node relative to ground/common
     voltageAcrossLoad = id * loadResistance; // Voltage drop across the load resistor
     currentThroughLoad = id; // Current through load is the drain current
     powerDissipated = id * id * rds_on; // Power in MOSFET = Ids^2 * Rds_on
@@ -203,12 +201,11 @@ export const calculatePChannelConduction = (
 
   // Format the power with higher precision to show small values
   let formattedPower = powerDissipated.toFixed(6);
-  let powerUnit = 'W';
-   if (powerDissipated < 0.001 && powerDissipated > 0) {
+  let powerUnit = "W";
+  if (powerDissipated < 0.001 && powerDissipated > 0) {
     formattedPower = (powerDissipated * 1000).toFixed(2);
-    powerUnit = 'mW';
+    powerUnit = "mW";
   }
-
 
   return {
     conducting,
@@ -218,8 +215,8 @@ export const calculatePChannelConduction = (
     voltageAcrossLoad: voltageAcrossLoad.toFixed(4),
     currentThroughLoad: currentThroughLoad.toFixed(4),
     powerDissipated: formattedPower, // Just the number part
-    powerUnit: powerUnit,           // Unit separate
+    powerUnit: powerUnit, // Unit separate
     rawPowerDissipated: powerDissipated,
-    description
+    description,
   };
 };
