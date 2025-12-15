@@ -432,6 +432,7 @@ function BattleForgeIDEContent() {
         "-mcpu=cortex-m3",
         "-mthumb",
         "-nostdlib",
+        "-nostdinc",  // Don't search Clang's built-in include paths (not available in WASM)
         "-ffreestanding",
       ];
 
@@ -464,6 +465,7 @@ function BattleForgeIDEContent() {
       }
 
       includePaths.push("-I/src");
+      includePaths.push("-I/include"); // Freestanding libc headers (stdint.h, etc)
       const userDirs = new Set<string>();
       for (const path of Object.keys(vfsFiles)) {
         if (path.endsWith(".h")) {

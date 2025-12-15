@@ -539,6 +539,26 @@ async function loadHeadersFromGitHub(
     }
   }
 
+  // Fetch freestanding libc headers from LLVM (required for stdint.h etc)
+  onProgress?.({
+    stage: "downloading",
+    message: "Downloading freestanding C headers...",
+  });
+
+  for (const file of FREESTANDING_LIBC_FILES) {
+    const content = await fetchGitHubFile(
+      "llvm",
+      "llvm-project",
+      "main",
+      `clang/lib/Headers/${file}`,
+    );
+    if (content) {
+      // Store in root include path so clang can find them
+      headers.set(`/include/${file}`, content);
+      fetched++;
+    }
+  }
+
   if (headers.size === 0) {
     onProgress?.({
       stage: "warning",

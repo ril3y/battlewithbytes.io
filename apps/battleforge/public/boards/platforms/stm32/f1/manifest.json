@@ -53,9 +53,13 @@
 
   "build": {
     "compilerFlags": [
+      "--target=thumbv7m-none-eabi",
       "-mcpu=cortex-m3",
       "-mthumb",
-      "-mfloat-abi=soft"
+      "-mfloat-abi=soft",
+      "-nostdlib",
+      "-nostdinc",
+      "-ffreestanding"
     ],
     "linkerFlags": [
       "-mcpu=cortex-m3",
