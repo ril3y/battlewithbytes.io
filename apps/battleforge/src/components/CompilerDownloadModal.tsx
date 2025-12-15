@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
   WasmManager,
-  type CompilerId,
   type DownloadProgress,
   getCompilerDisplayInfo,
 } from "../lib/wasm";

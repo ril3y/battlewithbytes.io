@@ -113,7 +113,7 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
       WasmManager.clearManifestCache();
       await loadCompilerInfo();
       onLog?.("Checked for updates", "info");
-    } catch (e) {
+    } catch (_e) {
       onLog?.("Failed to check for updates", "error");
     }
   }, [loadCompilerInfo, onLog]);
@@ -470,7 +470,7 @@ function CompilerCard({
 // Status badge component
 function StatusBadge({
   state,
-  hasUpdate,
+  hasUpdate: _hasUpdate,
 }: {
   state: string;
   hasUpdate: boolean;

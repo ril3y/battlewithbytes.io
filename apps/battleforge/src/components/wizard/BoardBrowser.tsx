@@ -62,7 +62,7 @@ export function BoardBrowser({ boards, onSelect }: BoardBrowserProps) {
     <div className="board-browser">
       <h3 className="step-title">Select Your Board</h3>
       <p className="step-subtitle">
-        Choose the specific development board you're using
+        Choose the specific development board you&apos;re using
       </p>
 
       {/* Filters */}

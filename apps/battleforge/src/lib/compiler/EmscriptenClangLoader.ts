@@ -47,7 +47,7 @@ export async function executeClang(
 
     let stdout = "";
     let stderr = "";
-    let exitCode = 0;
+    const exitCode = 0;
     let resolved = false;
 
     const cleanup = () => {

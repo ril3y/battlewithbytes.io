@@ -125,8 +125,8 @@ export function WelcomePage({
             >
               <div className="confirm-title">Delete Project?</div>
               <div className="confirm-message">
-                Are you sure you want to delete "
-                {recentProjects.find((p) => p.id === confirmDelete)?.name}"?
+                Are you sure you want to delete &quot;
+                {recentProjects.find((p) => p.id === confirmDelete)?.name}&quot;?
                 This action cannot be undone.
               </div>
               <div className="confirm-actions">
