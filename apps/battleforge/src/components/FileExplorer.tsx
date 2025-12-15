@@ -738,7 +738,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
 
   const handleRename = useCallback(() => {
     if (contextMenu.nodeId) {
-      setRenamingPath(contextMenu.nodeId);
+      _setRenamingPath(contextMenu.nodeId);
     }
     closeContextMenu();
   }, [contextMenu.nodeId, closeContextMenu]);

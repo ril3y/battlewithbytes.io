@@ -166,11 +166,11 @@ export async function loadWasmAnalyzer(): Promise<WasmAnalyzerModule> {
         "[WasmAnalyzer] Loading WASM module from /wasm/battlemagic_analyzer_bg.wasm",
       );
 
-      // Import the glue code from local copy (same pattern as wasm-loader.ts)
+      // Import the glue code from battlemagic-analyzer package
       const glueModule = await import(
         /* webpackChunkName: "battlemagic-analyzer-glue" */
         /* webpackMode: "lazy" */
-        "./battlemagic_analyzer_bg.js"
+        "battlemagic-analyzer/pkg/battlemagic_analyzer_bg.js"
       );
 
       // Fetch WASM from public directory
