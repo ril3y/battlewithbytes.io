@@ -34,6 +34,7 @@ import { getLibraryManager } from "../lib/library";
 
 // Types
 import type { SelectedPlatform } from "../lib/platform/types";
+import { getPlatformManager } from "../lib/platform/PlatformManager";
 import { withBasePath } from "../lib/utils/basePath";
 
 // Default linker script
@@ -387,7 +388,53 @@ function BattleForgeIDEContent() {
     return files;
   }, [state]);
 
-  // Load platform linker script
+  // Load startup file for v2 platforms
+  const loadStartupFile = async (): Promise<Uint8Array | null> => {
+    if (!selectedPlatform) {
+      return null;
+    }
+
+    try {
+      const platformManager = getPlatformManager();
+      const startupFile = await platformManager.loadStartupFile(
+        selectedPlatform.platformId,
+        selectedPlatform.family.id,
+        selectedPlatform.device.id
+      );
+      if (startupFile) {
+        log(`Loaded startup file from platform sources`, "info");
+      }
+      return startupFile;
+    } catch (err) {
+      console.warn("[BattleForge] Failed to load startup file:", err);
+      return null;
+    }
+  };
+
+  // Load system file for v2 platforms (e.g., system_stm32f1xx.c)
+  const loadSystemFile = async (): Promise<Uint8Array | null> => {
+    if (!selectedPlatform) {
+      return null;
+    }
+
+    try {
+      const platformManager = getPlatformManager();
+      const systemFile = await platformManager.loadSystemFile(
+        selectedPlatform.platformId,
+        selectedPlatform.family.id,
+        selectedPlatform.device.id
+      );
+      if (systemFile) {
+        log(`Loaded system file from platform sources`, "info");
+      }
+      return systemFile;
+    } catch (err) {
+      console.warn("[BattleForge] Failed to load system file:", err);
+      return null;
+    }
+  };
+
+  // Load platform linker script (supports v2 GitHub sources)
   const loadPlatformLinkerScript = async (): Promise<string> => {
     if (!selectedPlatform) {
       return DEFAULT_LINKER_SCRIPT;
@@ -395,6 +442,23 @@ function BattleForgeIDEContent() {
 
     try {
       const { family, device } = selectedPlatform;
+      const platformManager = getPlatformManager();
+
+      // Try v2-aware loading through PlatformManager (fetches from GitHub for v2 manifests)
+      try {
+        const linkerScript = await platformManager.loadLinkerScript(
+          selectedPlatform.platformId,
+          family.id,
+          device.linkerScript,
+          device.id
+        );
+        log(`Loaded linker script from platform sources`, "info");
+        return linkerScript;
+      } catch (v2Error) {
+        console.warn("[BattleForge] V2 linker script load failed:", v2Error);
+      }
+
+      // Fallback: try direct URL fetch
       const linkerUrl = withBasePath(`/boards/platforms/${selectedPlatform.platformId}/${family.id}/linker/${device.linkerScript}`);
       const response = await fetch(linkerUrl);
       if (!response.ok) {
@@ -451,6 +515,42 @@ function BattleForgeIDEContent() {
           files[path] = content;
         }
       }
+
+      // Load startup file for v2 platforms
+      const startupFile = await loadStartupFile();
+      if (startupFile) {
+        files["/startup.s"] = startupFile;
+        log(`Loaded startup file (${startupFile.length} bytes)`, "info");
+      }
+
+      // Load system file for v2 platforms (e.g., system_stm32f1xx.c)
+      const systemFile = await loadSystemFile();
+      if (systemFile) {
+        files["/system.c"] = systemFile;
+        log(`Loaded system file (${systemFile.length} bytes)`, "info");
+      }
+
+      // Add minimal C runtime stubs for -nostdlib
+      // These are required by the startup code but not provided by -nostdlib
+      const crtStubs = `
+/* Minimal C runtime stubs for bare-metal ARM */
+
+/* Called by startup code to initialize C++ global constructors */
+/* We provide an empty implementation since we're not using C++ globals */
+void __libc_init_array(void) {
+    /* Empty - no C++ constructors to call in pure C code */
+}
+
+/* Optional: newlib/libc may need this */
+void _init(void) {
+    /* Empty */
+}
+
+void _fini(void) {
+    /* Empty */
+}
+`;
+      files["/crt_stubs.c"] = crtStubs;
 
       const includePaths: string[] = [];
       if (headers) {
@@ -531,10 +631,21 @@ function BattleForgeIDEContent() {
         }
       }
 
-      const allSourceFiles = [...userSourceFiles, ...librarySourceFiles];
+      // Add platform source files (startup, system, crt stubs)
+      const platformSourceFiles: string[] = [];
+      if (startupFile) {
+        platformSourceFiles.push("/startup.s");
+      }
+      if (systemFile) {
+        platformSourceFiles.push("/system.c");
+      }
+      // Always add CRT stubs for -nostdlib builds
+      platformSourceFiles.push("/crt_stubs.c");
+
+      const allSourceFiles = [...userSourceFiles, ...librarySourceFiles, ...platformSourceFiles];
 
       log(
-        `Step 1: Compiling ${userSourceFiles.length} user + ${librarySourceFiles.length} library source file(s) for ARM ${archName}...`,
+        `Step 1: Compiling ${userSourceFiles.length} user + ${librarySourceFiles.length} library + ${platformSourceFiles.length} platform source file(s) for ARM ${archName}...`,
         "info"
       );
       if (includePaths.length > 0) {
@@ -548,9 +659,9 @@ function BattleForgeIDEContent() {
 
       for (const srcPath of allSourceFiles) {
         const srcFileName = srcPath.substring(srcPath.lastIndexOf("/") + 1);
-        const objFileName = srcFileName.replace(/\.(c|cpp|cc)$/, ".o");
+        const objFileName = srcFileName.replace(/\.(c|cpp|cc|s|S)$/, ".o");
         const objPath = srcPath.startsWith("/libs/")
-          ? `/build/libs_${srcFileName.replace(/\.(c|cpp|cc)$/, ".o")}`
+          ? `/build/libs_${srcFileName.replace(/\.(c|cpp|cc|s|S)$/, ".o")}`
           : `/build/${objFileName}`;
 
         const compileFiles = { ...files };
