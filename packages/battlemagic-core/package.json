@@ -15,7 +15,7 @@
     "pkg/"
   ],
   "scripts": {
-    "build": "bash build.sh",
+    "build": "echo 'WASM build handled by build:wasm task'",
     "build:wasm": "bash build.sh",
     "build:dev": "bash build.sh --dev",
     "clean": "cargo clean && rm -rf pkg"
