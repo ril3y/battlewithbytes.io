@@ -1,0 +1,95 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "feather_nrf52840_express",
+  "name": "Adafruit Feather nRF52840 Express",
+  "vendor": "adafruit",
+  "version": "1.0.0",
+  "description": "Feather-format nRF52840 board with native USB, BLE 5.0, and UF2 bootloader. Perfect for portable Bluetooth projects.",
+  "image": "images/adafruit/feather_nrf52840.png",
+
+  "chip": {
+    "platform": "nrf",
+    "family": "nrf52",
+    "device": "nrf52840",
+    "architecture": "cortex-m4f"
+  },
+
+  "memory": {
+    "flash": 1048576,
+    "flashAvailable": 835584,
+    "flashNote": "SoftDevice S140 uses 152KB, bootloader uses 48KB",
+    "ram": 262144,
+    "ramAvailable": 243200
+  },
+
+  "build": {
+    "frequency": 64000000,
+    "defines": [
+      "NRF52840_XXAA",
+      "BOARD_FEATHER_NRF52840",
+      "BSP_DEFINES_ONLY",
+      "CONFIG_GPIO_AS_PINRESET"
+    ],
+    "linkerScript": "nrf52840_s140_v6.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "P0.13", "arduino": 13, "activeLow": false },
+    "ledRed": { "pin": "P1.15", "arduino": 47, "activeLow": true },
+    "ledBlue": { "pin": "P1.10", "arduino": 46, "activeLow": true },
+    "neopixel": { "pin": "P0.16", "arduino": 8, "count": 1 },
+    "serial": { "rx": "P0.24", "tx": "P0.25" },
+    "i2c": { "sda": "P0.12", "scl": "P0.11" },
+    "spi": { "mosi": "P0.13", "miso": "P0.14", "sck": "P0.15", "ss": "P0.07" },
+    "adc": ["A0", "A1", "A2", "A3", "A4", "A5"],
+    "pwm": ["D5", "D6", "D9", "D10", "D11", "D12", "D13"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "adafruit-nrf52",
+      "variant": "feather_nrf52840_express",
+      "coreUrl": "https://github.com/adafruit/Adafruit_nRF52_Arduino",
+      "softdevice": "s140_6.1.1",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_NRF52_ADAFRUIT",
+        "ARDUINO_FEATHER52840",
+        "NRF52_SERIES"
+      ]
+    },
+    "zephyr": {
+      "board": "adafruit_feather_nrf52840"
+    },
+    "platformio": {
+      "board": "adafruit_feather_nrf52840",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "nrf5_sdk",
+      "sdkVersion": "17.1.0"
+    }
+  },
+
+  "upload": {
+    "methods": ["uf2", "dfu", "jlink", "cmsis-dap"],
+    "default": "uf2",
+    "bootloader": {
+      "type": "uf2",
+      "familyId": "0xADA52840",
+      "driveLabel": "FTHR840BOOT",
+      "vid": "0x239A",
+      "pid": "0x8029"
+    }
+  },
+
+  "documentation": {
+    "product": "https://www.adafruit.com/product/4062",
+    "pinout": "https://learn.adafruit.com/assets/68545",
+    "schematic": "https://learn.adafruit.com/assets/68544",
+    "guide": "https://learn.adafruit.com/introducing-the-adafruit-nrf52840-feather"
+  },
+
+  "features": ["bluetooth", "ble5", "usb", "nfc", "lipo-charger", "qspi"],
+  "tags": ["feather", "bluetooth", "nrf52840", "ble", "portable"]
+}

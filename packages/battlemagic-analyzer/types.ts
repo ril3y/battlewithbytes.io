@@ -4,7 +4,7 @@
  */
 
 // Re-export the WASM types
-export { BinaryAnalyzer, XrefType, init } from './pkg/battlemagic_analyzer';
+export { BinaryAnalyzer, XrefType, init } from "./pkg/battlemagic_analyzer";
 
 /**
  * Disassembled instruction (input format)
@@ -22,7 +22,7 @@ export interface DisassembledInstruction {
 export interface CrossReference {
   from_addr: number;
   to_addr: number;
-  xref_type: 'Call' | 'Branch' | 'ConditionalBranch' | 'DataRead' | 'DataWrite';
+  xref_type: "Call" | "Branch" | "ConditionalBranch" | "DataRead" | "DataWrite";
   instruction: string;
   operands: string;
 }

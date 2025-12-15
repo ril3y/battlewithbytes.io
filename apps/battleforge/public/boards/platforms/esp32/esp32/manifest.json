@@ -1,0 +1,60 @@
+{
+  "$schema": "../../../schema/platform-v1.schema.json",
+  "platform": "esp32",
+  "family": "esp32",
+  "name": "ESP32 Series",
+  "description": "Espressif ESP32 dual-core Xtensa with WiFi and Bluetooth",
+  "architecture": "xtensa-lx6",
+  "version": "1.0.0",
+
+  "headers": {
+    "url": "/platforms/esp32/esp32/headers.tar.gz",
+    "hash": null,
+    "includes": [
+      "esp_common",
+      "esp32"
+    ]
+  },
+
+  "devices": [
+    {
+      "id": "esp32",
+      "name": "ESP32",
+      "flash": 4194304,
+      "ram": 520192,
+      "frequency": 240000000,
+      "defines": ["ESP32", "ESP_PLATFORM"],
+      "linkerScript": "esp32.ld"
+    },
+    {
+      "id": "esp32-wrover",
+      "name": "ESP32-WROVER",
+      "flash": 4194304,
+      "ram": 520192,
+      "psram": 8388608,
+      "frequency": 240000000,
+      "defines": ["ESP32", "ESP_PLATFORM", "BOARD_HAS_PSRAM"],
+      "linkerScript": "esp32.ld"
+    }
+  ],
+
+  "build": {
+    "compilerFlags": [],
+    "linkerFlags": [],
+    "defines": [
+      "ESP_PLATFORM"
+    ]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "esp32",
+      "coreUrl": "https://github.com/espressif/arduino-esp32",
+      "packageIndex": "https://espressif.github.io/arduino-esp32/package_esp32_index.json"
+    },
+    "native": {
+      "sdk": "esp-idf",
+      "sdkVersion": "5.1"
+    }
+  }
+}

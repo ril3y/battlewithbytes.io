@@ -1,0 +1,29 @@
+{
+  "vendor": "sparkfun",
+  "vendorName": "SparkFun",
+  "platform": "nrf",
+  "boards": [
+    {
+      "id": "sparkfun_thing_plus_nrf52840",
+      "name": "SparkFun Thing Plus - nRF52840",
+      "vendor": "sparkfun",
+      "family": "nrf52",
+      "path": "nrf/sparkfun/thing_plus_nrf52840.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb-c",
+        "qwiic",
+        "lipo-charger"
+      ],
+      "tags": [
+        "sparkfun",
+        "thing-plus",
+        "nrf52840",
+        "qwiic",
+        "bluetooth"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

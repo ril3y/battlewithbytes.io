@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://battleforge.battlewithbytes.com/schemas/platform-v1.json",
+  "title": "BattleForge Platform Definition",
+  "description": "Schema for defining platform/chip families in BattleForge IDE",
+  "type": "object",
+  "required": ["platform", "family", "name", "architecture", "version", "headers", "devices"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to the JSON schema"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["stm32", "nrf", "esp32", "rp2040", "samd", "avr"],
+      "description": "Platform identifier"
+    },
+    "family": {
+      "type": "string",
+      "description": "Chip family (e.g., f1, nrf52, esp32s3)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the platform"
+    },
+    "architecture": {
+      "type": "string",
+      "enum": [
+        "cortex-m0", "cortex-m0+", "cortex-m3", "cortex-m4", "cortex-m4f",
+        "cortex-m7", "cortex-m7f", "cortex-m33",
+        "xtensa-lx6", "xtensa-lx7", "riscv32"
+      ],
+      "description": "CPU architecture"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Platform definition version (semver)"
+    },
+    "headers": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL to download headers archive (relative or absolute)"
+        },
+        "hash": {
+          "type": ["string", "null"],
+          "description": "SHA256 hash for verification (optional)"
+        },
+        "includes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Include directories within the archive"
+        }
+      }
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "flash", "ram", "frequency"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Device identifier (e.g., stm32f103c8)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable device name"
+          },
+          "flash": {
+            "type": "integer",
+            "description": "Flash size in bytes"
+          },
+          "ram": {
+            "type": "integer",
+            "description": "RAM size in bytes"
+          },
+          "psram": {
+            "type": "integer",
+            "description": "External PSRAM size in bytes (optional)"
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "CPU frequency in Hz"
+          },
+          "defines": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Device-specific preprocessor defines"
+          },
+          "linkerScript": {
+            "type": "string",
+            "description": "Linker script filename"
+          }
+        }
+      }
+    },
+    "softdevices": {
+      "type": "array",
+      "description": "BLE SoftDevice configurations (Nordic only)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "devices": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "flashUsed": { "type": "integer" },
+          "ramUsed": { "type": "integer" },
+          "linkerScript": { "type": "string" }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "compilerFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Platform-level compiler flags"
+        },
+        "linkerFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Platform-level linker flags"
+        },
+        "defines": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Platform-level preprocessor defines"
+        }
+      }
+    },
+    "frameworks": {
+      "type": "object",
+      "properties": {
+        "arduino": {
+          "type": "object",
+          "properties": {
+            "core": { "type": "string" },
+            "coreUrl": { "type": "string", "format": "uri" },
+            "packageIndex": { "type": "string", "format": "uri" }
+          }
+        },
+        "zephyr": {
+          "type": "object",
+          "properties": {
+            "board": { "type": "string" }
+          }
+        },
+        "native": {
+          "type": "object",
+          "properties": {
+            "sdk": { "type": "string" },
+            "sdkVersion": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -34,7 +34,7 @@ battlewithbytes.io/
 │   │   │   ├── serial-terminal/     # BattleTerm (4KB)
 │   │   │   ├── battlemagic/         # BattleMagic (9.1MB - largest)
 │   │   │   ├── ucan/                # uCAN (705KB)
-│   │   │   ├── wiremapper/          # WireMapper (8KB)
+│   │   │   ├── wirewizard/          # WireMapper (8KB)
 │   │   │   ├── mosfet-calculator/   # Calculator tools (4KB each)
 │   │   │   └── ohms-law-calculator/
 │   │   └── ...
@@ -2336,7 +2336,7 @@ pnpm run dev
 #   - /tools/ucan (uCAN)
 #   - /tools/mosfet-calculator
 #   - /tools/ohms-law-calculator
-#   - /tools/wiremapper
+#   - /tools/wirewizard
 # Ctrl+C
 
 # Test production build

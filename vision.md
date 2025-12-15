@@ -5,24 +5,25 @@
 **Battle With Bytes** is a personal hub for sharing insights on cybersecurity, embedded hardware, and software engineering through a diverse mix of content.
 **Tagline:** _Ask me about little data._
 **Primary Goals:**
+
 - Provide a platform for high-quality, technical blog entries.
 - Host multiple single page applications (SPAs), including engineering calculators (e.g., a MOSFET power calculator).
 - Create an engaging, hacker-inspired user experience while keeping things minimal and functional.
 
 ## 2. Goals & Objectives
 
-- **Content Hub:**  
+- **Content Hub:**
   - **Blogs:** Create a dynamic blog system where each blog post is authored in Markdown (or MDX) and automatically rendered by Next.js.
   - **Technical Write-Ups:** Include posts on topics like embedded development, cybersecurity, and reverse engineering.
 
-- **Tool Integration:**  
-  - **Single Page Applications (SPAs):**  
+- **Tool Integration:**
+  - **Single Page Applications (SPAs):**
     - Host independent tools such as a MOSFET calculator.
     - Explore converting existing React.js SPAs into the Next.js ecosystem (as submodules or micro frontends).
-  - **Modular Architecture:**  
+  - **Modular Architecture:**
     - Enable easy addition and maintenance of diverse tools and applications, ensuring each tool is self-contained but integrated under the unified site theme.
 
-- **Deployment & Hosting:**  
+- **Deployment & Hosting:**
   - Leverage GitHub Pages for hosting the static build.
   - Use Next.js export mode for static site generation.
   - Map the custom domain [battlewithbytes.io](https://battlewithbytes.io).
@@ -76,7 +77,7 @@
       "deploy": "pnpm build && pnpm export && gh-pages -d out"
     }
     ```
-- **Custom Domain Setup:**  
+- **Custom Domain Setup:**
   - Update DNS settings to point `battlewithbytes.io` to GitHub Pages.
   - Configure a CNAME file in the static export folder if necessary.
 
@@ -118,6 +119,7 @@
 ### 6.1 Current State Assessment
 
 **Existing Content & Tools:**
+
 - **Blog Posts (5):** Custom protocol decoders, I2C/HDMI hacks, PicoTag project, LoRa communication, IoT device analysis
 - **Tools (3):** MOSFET Calculator, Ohm's Law Calculator, Wire Mapper
 - **Components:** Well-structured with modular approach, good TypeScript coverage
@@ -125,7 +127,8 @@
 ### 6.2 Code Unification & Architecture Improvements
 
 **Component Standardization Needed:**
-1. **Styling Consistency:** 
+
+1. **Styling Consistency:**
    - Mix of CSS modules, Tailwind, and inline styles across components
    - **Recommendation:** Standardize on Tailwind with CSS modules only for complex animations
    - Create design system with consistent spacing, colors, typography
@@ -145,6 +148,7 @@
 ### 6.3 Suggested New Tools
 
 **Hardware Engineering Tools:**
+
 1. **Resistor Color Code Calculator**
    - Visual resistor with interactive color bands
    - Supports 4, 5, and 6-band resistors
@@ -170,11 +174,11 @@
    - Frequency stability analysis
    - Temperature coefficient calculations
 
-**Software/Security Tools:**
-6. **CRC Calculator**
-   - Multiple polynomial support (CRC8, CRC16, CRC32)
-   - Visual bit-by-bit calculation
-   - Code generation for embedded systems
+**Software/Security Tools:** 6. **CRC Calculator**
+
+- Multiple polynomial support (CRC8, CRC16, CRC32)
+- Visual bit-by-bit calculation
+- Code generation for embedded systems
 
 7. **Number Base Converter**
    - Binary, Decimal, Hex, Octal
@@ -199,6 +203,7 @@
 ### 6.4 Blog Post Ideas
 
 **Hardware Deep Dives:**
+
 1. **"Building a Logic Analyzer with RP2040"**
    - PIO programming for protocol capture
    - USB streaming implementation
@@ -219,11 +224,11 @@
    - Hardware security modules
    - Side-channel attack mitigation
 
-**Software Engineering:**
-5. **"Building Real-time Systems with Rust"**
-   - Embassy framework exploration
-   - Memory safety in embedded contexts
-   - Performance optimization techniques
+**Software Engineering:** 5. **"Building Real-time Systems with Rust"**
+
+- Embassy framework exploration
+- Memory safety in embedded contexts
+- Performance optimization techniques
 
 6. **"WebAssembly for Embedded Visualization"**
    - Porting C algorithms to WASM
@@ -235,11 +240,11 @@
    - Memory-efficient design patterns
    - Template metaprogramming for hardware abstraction
 
-**Cybersecurity:**
-8. **"Firmware Extraction and Analysis"**
-   - JTAG/SWD debugging techniques
-   - Flash memory dumping
-   - Binary analysis workflows
+**Cybersecurity:** 8. **"Firmware Extraction and Analysis"**
+
+- JTAG/SWD debugging techniques
+- Flash memory dumping
+- Binary analysis workflows
 
 9. **"Hardware Hacking: From PCB to Pwn"**
    - Circuit board reverse engineering
@@ -254,6 +259,7 @@
 ### 6.5 Interactive Component Ideas
 
 **Educational Visualizations:**
+
 1. **Op-Amp Configuration Visualizer**
    - Interactive circuit diagrams
    - Real-time gain calculations
@@ -277,17 +283,20 @@
 ### 6.6 Site Architecture Improvements
 
 **Performance Optimizations:**
+
 1. **Code Splitting:** Implement lazy loading for tool components
 2. **Image Optimization:** WebP format with fallbacks
 3. **Bundle Analysis:** Identify and remove unused dependencies
 
 **User Experience:**
+
 1. **Tool Integration:** Shared workspace for multiple tools
 2. **Export Functionality:** PDF/PNG export for calculations
 3. **Bookmarking:** Save and share tool configurations
 4. **Mobile Optimization:** Touch-friendly interfaces for tools
 
 **SEO & Discoverability:**
+
 1. **Tool Sitemap:** Dedicated sitemap for tools
 2. **Rich Snippets:** Structured data for tool results
 3. **Social Sharing:** Tool-specific Open Graph images
@@ -296,12 +305,14 @@
 ### 6.7 Technical Debt & Maintenance
 
 **Priority Fixes:**
+
 1. **Consistent Error Handling:** Standardize error boundaries and user feedback
 2. **Accessibility:** ARIA labels, keyboard navigation, screen reader support
 3. **Testing:** Unit tests for calculation functions, E2E tests for critical paths
 4. **Documentation:** Component documentation, tool usage guides
 
 **Code Quality:**
+
 1. **ESLint Rules:** Enforce consistent code style
 2. **Type Safety:** Eliminate any remaining `any` types
 3. **Performance:** Memoization for expensive calculations
@@ -310,14 +321,16 @@
 ### 6.8 Content Strategy
 
 **Target Audience Expansion:**
+
 - **Beginners:** Step-by-step tutorials with theory explanations
 - **Professionals:** Advanced techniques and optimization strategies
 - **Students:** Educational content with interactive examples
 
 **Content Calendar Suggestions:**
+
 - Monthly tool releases
 - Bi-weekly blog posts
 - Quarterly project showcases
 - Annual technology review posts
 
-*End of Updated PRD*
+_End of Updated PRD_

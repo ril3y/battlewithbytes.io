@@ -1,0 +1,95 @@
+{
+  "platform": "nrf",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-14",
+  "vendors": [
+    {
+      "id": "adafruit",
+      "name": "Adafruit",
+      "boardCount": 1,
+      "indexPath": "adafruit/index.json"
+    },
+    {
+      "id": "nordic",
+      "name": "Nordic Semiconductor",
+      "boardCount": 1,
+      "indexPath": "nordic/index.json"
+    },
+    {
+      "id": "sparkfun",
+      "name": "SparkFun",
+      "boardCount": 1,
+      "indexPath": "sparkfun/index.json"
+    }
+  ],
+  "boards": [
+    {
+      "id": "feather_nrf52840_express",
+      "name": "Adafruit Feather nRF52840 Express",
+      "vendor": "adafruit",
+      "family": "nrf52",
+      "path": "nrf/adafruit/feather_nrf52840_express.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb",
+        "nfc",
+        "lipo-charger",
+        "qspi"
+      ],
+      "tags": [
+        "feather",
+        "bluetooth",
+        "nrf52840",
+        "ble",
+        "portable"
+      ],
+      "exampleCount": 0
+    },
+    {
+      "id": "nrf52840_dk",
+      "name": "Nordic nRF52840 DK",
+      "vendor": "nordic",
+      "family": "nrf52",
+      "path": "nrf/nordic/nrf52840_dk.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb",
+        "nfc",
+        "arduino-shield",
+        "debugger"
+      ],
+      "tags": [
+        "devkit",
+        "nordic",
+        "nrf52840",
+        "official",
+        "debugger"
+      ],
+      "exampleCount": 0
+    },
+    {
+      "id": "sparkfun_thing_plus_nrf52840",
+      "name": "SparkFun Thing Plus - nRF52840",
+      "vendor": "sparkfun",
+      "family": "nrf52",
+      "path": "nrf/sparkfun/thing_plus_nrf52840.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb-c",
+        "qwiic",
+        "lipo-charger"
+      ],
+      "tags": [
+        "sparkfun",
+        "thing-plus",
+        "nrf52840",
+        "qwiic",
+        "bluetooth"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

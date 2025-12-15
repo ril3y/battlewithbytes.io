@@ -1,0 +1,6 @@
+# WASM generated files only
+battlemagic_analyzer_bg.js
+battlemagic_analyzer_bg.wasm
+battlemagic_analyzer.js
+battlemagic_analyzer.d.ts
+battlemagic_analyzer_bg.wasm.d.ts

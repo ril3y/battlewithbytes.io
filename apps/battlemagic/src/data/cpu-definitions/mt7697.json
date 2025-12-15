@@ -1,0 +1,140 @@
+{
+  "id": "mt7697",
+  "name": "MediaTek MT7697",
+  "family": "ARM Cortex-M4F",
+  "vendor": "MediaTek",
+  "architecture": "ARMv7-M",
+  "coreFrequency": 192000000,
+  "flashSize": 1048576,
+  "ramSize": 352256,
+  "memoryRegions": [
+    {
+      "name": "ROM (BootROM)",
+      "type": "flash",
+      "start": 0,
+      "end": 65535,
+      "size": 65536,
+      "permissions": {
+        "read": true,
+        "write": false,
+        "execute": true
+      },
+      "description": "Boot ROM containing bootloader"
+    },
+    {
+      "name": "TCM (Tightly Coupled Memory)",
+      "type": "sram",
+      "start": 67108864,
+      "end": 67174399,
+      "size": 65536,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": true
+      },
+      "description": "Fast zero-wait-state memory for critical code"
+    },
+    {
+      "name": "Main SRAM",
+      "type": "sram",
+      "start": 268435456,
+      "end": 268722175,
+      "size": 286720,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": true
+      },
+      "description": "Main system RAM - 280 KB"
+    },
+    {
+      "name": "Internal Flash",
+      "type": "flash",
+      "start": 134217728,
+      "end": 135266303,
+      "size": 1048576,
+      "permissions": {
+        "read": true,
+        "write": false,
+        "execute": true
+      },
+      "description": "1 MB internal flash memory"
+    },
+    {
+      "name": "Core Peripherals",
+      "type": "system",
+      "start": 3758096384,
+      "end": 4026531839,
+      "size": 268435456,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": false
+      },
+      "description": "ARM Cortex-M4 system peripherals (NVIC, SysTick, etc.)"
+    },
+    {
+      "name": "APB Peripherals 0",
+      "type": "peripheral",
+      "start": 2147483648,
+      "end": 2164260863,
+      "size": 16777216,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": false
+      },
+      "description": "APB peripheral region 0"
+    },
+    {
+      "name": "APB Peripherals 1",
+      "type": "peripheral",
+      "start": 2164260864,
+      "end": 2181038079,
+      "size": 16777216,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": false
+      },
+      "description": "APB peripheral region 1"
+    },
+    {
+      "name": "AHB Peripherals",
+      "type": "peripheral",
+      "start": 2181038080,
+      "end": 2214592511,
+      "size": 33554432,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "execute": false
+      },
+      "description": "AHB peripheral region"
+    }
+  ],
+  "vectorTable": {
+    "address": 0,
+    "entries": [
+      {"offset": 0, "name": "Initial SP", "description": "Initial Stack Pointer"},
+      {"offset": 4, "name": "Reset", "description": "Reset Handler"},
+      {"offset": 8, "name": "NMI", "description": "Non-Maskable Interrupt"},
+      {"offset": 12, "name": "HardFault", "description": "Hard Fault Handler"},
+      {"offset": 16, "name": "MemManage", "description": "Memory Management Fault"},
+      {"offset": 20, "name": "BusFault", "description": "Bus Fault Handler"},
+      {"offset": 24, "name": "UsageFault", "description": "Usage Fault Handler"},
+      {"offset": 44, "name": "SVCall", "description": "Supervisor Call"},
+      {"offset": 56, "name": "PendSV", "description": "Pendable Service Call"},
+      {"offset": 60, "name": "SysTick", "description": "System Tick Timer"}
+    ]
+  },
+  "breakpointCaps": {
+    "hardwareBreakpoints": 6,
+    "watchpoints": 4,
+    "supportsConditional": false,
+    "supportsDataBreakpoints": true
+  },
+  "debugInterface": ["SWD", "JTAG"],
+  "notes": "MediaTek MT7697 is an IoT SoC with integrated 802.11n WiFi and BLE 4.2. Features ARM Cortex-M4F core with FPU.",
+  "datasheet": "src/app/tools/battlemagic/docs/mt7697.pdf"
+}

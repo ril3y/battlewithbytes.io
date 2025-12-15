@@ -1,0 +1,85 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "esp32_devkitc",
+  "name": "ESP32-DevKitC",
+  "vendor": "espressif",
+  "version": "1.0.0",
+  "description": "Official Espressif ESP32 development board. Dual-core Xtensa, WiFi, Bluetooth, plenty of GPIO.",
+  "image": "images/espressif/esp32_devkitc.png",
+
+  "chip": {
+    "platform": "esp32",
+    "family": "esp32",
+    "device": "esp32",
+    "architecture": "xtensa-lx6"
+  },
+
+  "memory": {
+    "flash": 4194304,
+    "flashAvailable": 3145728,
+    "flashNote": "4MB flash, ~1MB used by bootloader and partition table",
+    "ram": 520192,
+    "ramAvailable": 327680
+  },
+
+  "build": {
+    "frequency": 240000000,
+    "defines": [
+      "ESP32",
+      "ESP_PLATFORM",
+      "BOARD_ESP32_DEVKITC"
+    ],
+    "linkerScript": "esp32.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "GPIO2", "arduino": 2, "activeLow": false },
+    "serial": { "rx": "GPIO3", "tx": "GPIO1" },
+    "serial2": { "rx": "GPIO16", "tx": "GPIO17" },
+    "i2c": { "sda": "GPIO21", "scl": "GPIO22" },
+    "spi": { "mosi": "GPIO23", "miso": "GPIO19", "sck": "GPIO18", "ss": "GPIO5" },
+    "adc": ["GPIO32", "GPIO33", "GPIO34", "GPIO35", "GPIO36", "GPIO39"],
+    "pwm": ["GPIO2", "GPIO4", "GPIO5", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO21", "GPIO22", "GPIO23", "GPIO25", "GPIO26", "GPIO27"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "esp32",
+      "variant": "esp32",
+      "coreUrl": "https://github.com/espressif/arduino-esp32",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_ESP32_DEV",
+        "ARDUINO_ARCH_ESP32"
+      ]
+    },
+    "platformio": {
+      "board": "esp32dev",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "esp-idf",
+      "sdkVersion": "5.1"
+    }
+  },
+
+  "upload": {
+    "methods": ["esptool", "jtag"],
+    "default": "esptool",
+    "bootloader": {
+      "type": "esptool",
+      "vid": "0x10C4",
+      "pid": "0xEA60"
+    }
+  },
+
+  "documentation": {
+    "product": "https://www.espressif.com/en/products/devkits/esp32-devkitc",
+    "pinout": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32/_images/esp32-devkitC-v4-pinout.png",
+    "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf",
+    "guide": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-devkitc.html"
+  },
+
+  "features": ["wifi", "bluetooth", "ble", "dual-core", "touch", "hall-sensor"],
+  "tags": ["esp32", "wifi", "bluetooth", "iot", "espressif"]
+}

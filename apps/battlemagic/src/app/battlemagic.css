@@ -1,0 +1,27 @@
+/* BattleMagic specific styles to ensure full viewport height */
+.battlemagic-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure proper scrollbar styling */
+.battlemagic-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.battlemagic-container ::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+.battlemagic-container ::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+.battlemagic-container ::-webkit-scrollbar-thumb:hover {
+  background: #00ff9d;
+}

@@ -1,0 +1,96 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "nrf52840_dk",
+  "name": "Nordic nRF52840 DK",
+  "vendor": "nordic",
+  "version": "1.0.0",
+  "description": "Official Nordic Semiconductor development kit for nRF52840. Full access to all pins, on-board debugger, Arduino shield compatible.",
+  "image": "images/nordic/nrf52840_dk.png",
+
+  "chip": {
+    "platform": "nrf",
+    "family": "nrf52",
+    "device": "nrf52840",
+    "architecture": "cortex-m4f"
+  },
+
+  "memory": {
+    "flash": 1048576,
+    "flashAvailable": 1048576,
+    "flashNote": "Full flash available when not using SoftDevice",
+    "ram": 262144,
+    "ramAvailable": 262144
+  },
+
+  "build": {
+    "frequency": 64000000,
+    "defines": [
+      "NRF52840_XXAA",
+      "BOARD_PCA10056",
+      "BSP_DEFINES_ONLY",
+      "CONFIG_GPIO_AS_PINRESET"
+    ],
+    "linkerScript": "nrf52840_xxaa.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "P0.13", "arduino": 13, "activeLow": true },
+    "led1": { "pin": "P0.13", "activeLow": true },
+    "led2": { "pin": "P0.14", "activeLow": true },
+    "led3": { "pin": "P1.09", "activeLow": true },
+    "led4": { "pin": "P0.16", "activeLow": true },
+    "button1": { "pin": "P0.11", "activeLow": true },
+    "button2": { "pin": "P0.12", "activeLow": true },
+    "button3": { "pin": "P0.24", "activeLow": true },
+    "button4": { "pin": "P0.25", "activeLow": true },
+    "serial": { "rx": "P0.08", "tx": "P0.06" },
+    "i2c": { "sda": "P0.26", "scl": "P0.27" },
+    "spi": { "mosi": "P1.13", "miso": "P1.14", "sck": "P1.15" },
+    "adc": ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "adafruit-nrf52",
+      "variant": "pca10056",
+      "coreUrl": "https://github.com/adafruit/Adafruit_nRF52_Arduino",
+      "softdevice": "s140_6.1.1",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_NRF52840_PCA10056",
+        "NRF52_SERIES"
+      ]
+    },
+    "zephyr": {
+      "board": "nrf52840dk_nrf52840"
+    },
+    "platformio": {
+      "board": "nrf52840_dk",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "nrf5_sdk",
+      "sdkVersion": "17.1.0"
+    }
+  },
+
+  "upload": {
+    "methods": ["jlink", "cmsis-dap", "openocd"],
+    "default": "jlink",
+    "bootloader": {
+      "type": "jlink",
+      "vid": "0x1366",
+      "pid": "0x1015"
+    }
+  },
+
+  "documentation": {
+    "product": "https://www.nordicsemi.com/Products/Development-hardware/nrf52840-dk",
+    "pinout": "https://infocenter.nordicsemi.com/topic/ug_nrf52840_dk/UG/dk/hw_description.html",
+    "schematic": "https://infocenter.nordicsemi.com/topic/ug_nrf52840_dk/UG/dk/pcb_layout.html",
+    "guide": "https://infocenter.nordicsemi.com/topic/ug_nrf52840_dk/UG/nrf52840_DK/intro.html"
+  },
+
+  "features": ["bluetooth", "ble5", "usb", "nfc", "arduino-shield", "debugger"],
+  "tags": ["devkit", "nordic", "nrf52840", "official", "debugger"]
+}

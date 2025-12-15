@@ -1,0 +1,61 @@
+{
+  "version": "2.1.0",
+  "lastUpdated": "2025-12-14",
+  "schemas": {
+    "platform": "./schema/platform-v1.schema.json",
+    "board": "./schema/board-v1.schema.json",
+    "library": "./schema/library-v1.schema.json"
+  },
+  "platforms": [
+    {
+      "id": "stm32",
+      "configPath": "platforms/stm32/platform.json",
+      "boardsPath": "stm32/index.json"
+    },
+    {
+      "id": "esp32",
+      "configPath": "platforms/esp32/platform.json",
+      "boardsPath": "esp32/index.json"
+    },
+    {
+      "id": "nrf",
+      "configPath": "platforms/nrf/platform.json",
+      "boardsPath": "nrf/index.json"
+    },
+    {
+      "id": "rp2040",
+      "configPath": "platforms/rp2040/platform.json",
+      "boardsPath": "rp2040/index.json"
+    }
+  ],
+  "libraries": [
+    {
+      "id": "freertos",
+      "name": "FreeRTOS",
+      "version": "10.5.1",
+      "category": "rtos",
+      "path": "libraries/freertos/manifest.json"
+    },
+    {
+      "id": "wire",
+      "name": "Wire",
+      "version": "1.0.0",
+      "category": "communication",
+      "path": "libraries/wire/manifest.json"
+    },
+    {
+      "id": "spi",
+      "name": "SPI",
+      "version": "1.0.0",
+      "category": "communication",
+      "path": "libraries/spi/manifest.json"
+    },
+    {
+      "id": "adafruit_neopixel",
+      "name": "Adafruit NeoPixel",
+      "version": "1.12.0",
+      "category": "display",
+      "path": "libraries/adafruit_neopixel/manifest.json"
+    }
+  ]
+}

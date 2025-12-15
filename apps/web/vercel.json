@@ -1,0 +1,32 @@
+{
+  "rewrites": [
+    {
+      "source": "/tools/battleforge/:path*",
+      "destination": "https://battleforge.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/battlemagic/:path*",
+      "destination": "https://battlemagic.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/ucan/:path*",
+      "destination": "https://ucan.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/battleterm/:path*",
+      "destination": "https://battleterm.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/wirewizard/:path*",
+      "destination": "https://wirewizard.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/mosfet-calculator/:path*",
+      "destination": "https://mosfet-calculator.battlewithbytes.io/:path*"
+    },
+    {
+      "source": "/tools/ohms-law-calculator/:path*",
+      "destination": "https://ohms-law-calculator.battlewithbytes.io/:path*"
+    }
+  ]
+}

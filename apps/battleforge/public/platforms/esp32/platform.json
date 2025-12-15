@@ -1,0 +1,10 @@
+{
+  "id": "esp32",
+  "name": "ESP32",
+  "vendor": "Espressif",
+  "description": "WiFi and Bluetooth SoCs for IoT applications",
+  "icon": "esp32",
+  "color": "#E7352C",
+  "website": "https://www.espressif.com/en/products/socs/esp32",
+  "families": ["esp32", "esp32s2", "esp32s3", "esp32c3"]
+}

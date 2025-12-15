@@ -46,27 +46,33 @@ A modern, cyber-hacker themed personal website focused on cybersecurity, embedde
 ## ⚡ Getting Started
 
 ### 1. **Install Dependencies**
+
 ```sh
 pnpm install
 ```
 
 ### 2. **Run the Development Server**
+
 ```sh
 pnpm dev
 ```
+
 - Open [http://localhost:3000](http://localhost:3000) to view your site.
 
 ### 3. **Build for Production**
+
 ```sh
 pnpm build
 ```
 
 ### 4. **Export Static Site**
+
 ```sh
 pnpm export
 ```
 
 ### 5. **Deploy to GitHub Pages**
+
 ```sh
 pnpm deploy
 ```
@@ -76,25 +82,31 @@ pnpm deploy
 ## 📝 Content Management Scripts
 
 ### **Blog Management**
+
 - **Interactive Blog Manager:**
   ```sh
   pnpm blog
   ```
+
   - List, create, update, or delete blog posts interactively.
 - **Create Blog Post (Quick):**
   ```sh
   node scripts/create-blog-post.js
   ```
+
   - Guided prompts for title, slug, excerpt, tags, etc.
 
 ### **Project Management**
+
 - **Interactive Project Manager:**
   ```sh
   pnpm project
   ```
+
   - List, create, update, delete, enable, or disable projects interactively.
 
 ### **Other Scripts**
+
 - **generate-blog-data.js:** Generates blog data for static export.
 - **deploy-gh-pages.js:** Deploys the site to GitHub Pages.
 
@@ -105,6 +117,7 @@ pnpm deploy
 - **Blog posts:** Place MDX files in `src/content/blog/[slug]/index.mdx`.
 - **Projects:** Place MDX files in `src/content/projects/[slug]/index.mdx`.
 - **Frontmatter Example:**
+
   ```md
   ---
   title: "Your Title"
@@ -114,9 +127,10 @@ pnpm deploy
   author: "Battle With Bytes"
   enabled: true
   ---
-  
+
   Your content goes here...
   ```
+
 - **Images:** Place in `public/images/blog/[slug]/` or `public/images/projects/[slug]/`.
 - **Cover Images:** Reference as `/images/blog/[slug]/cover.png` or `/images/projects/[slug]/cover.png`.
 
