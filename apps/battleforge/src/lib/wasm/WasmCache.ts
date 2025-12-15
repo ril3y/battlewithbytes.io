@@ -381,4 +381,45 @@ export class WasmCache {
       size: meta.size,
     }));
   }
+
+  /**
+   * Register a compiler as installed via HTTP loading (without storing binary)
+   * Used by EmscriptenClangLoader to record successful HTTP-based loads
+   */
+  async setMetadataOnly(
+    compilerId: CompilerId,
+    version: string,
+    hash: string,
+    size: number,
+  ): Promise<void> {
+    await this.init();
+    if (!this.db) return;
+
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(META_STORE, "readwrite");
+      const metaStore = tx.objectStore(META_STORE);
+
+      // Store metadata only (no binary in WASM_STORE)
+      const meta: WasmCacheMetadata = {
+        id: compilerId,
+        version,
+        hash,
+        size,
+        timestamp: Date.now(),
+      };
+      metaStore.put(meta);
+
+      tx.oncomplete = () => {
+        console.log(
+          `[WasmCache] Registered ${compilerId} v${version} (HTTP-loaded, ${(size / 1024 / 1024).toFixed(1)} MB)`,
+        );
+        resolve();
+      };
+
+      tx.onerror = () => {
+        console.error("[WasmCache] Transaction error:", tx.error);
+        reject(tx.error);
+      };
+    });
+  }
 }

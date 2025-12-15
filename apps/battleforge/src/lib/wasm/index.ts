@@ -15,6 +15,7 @@ export type {
   DownloadProgress,
   WasmManifest,
   AvailableLinker,
+  AvailableDisassembler,
   WasmCacheMetadata,
   StorageStats,
   UpdateNotification,

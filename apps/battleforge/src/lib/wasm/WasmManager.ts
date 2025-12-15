@@ -291,9 +291,11 @@ class WasmManagerService {
 
     const downloadPromise = (async () => {
       try {
+        // Use baseUrl (v1) or meta.fallbackBaseUrl (v2) or default
+        const baseUrl = manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
         const wasm = await downloadCompiler(
           compiler,
-          manifest.baseUrl,
+          baseUrl,
           progressHandler,
         );
         this.emit({ type: "download_complete", compilerId });
@@ -335,12 +337,14 @@ class WasmManagerService {
 
     for (const compiler of installed) {
       const available = manifest.compilers.find((c) => c.id === compiler.id);
-      if (available && available.hash !== compiler.hash) {
+      // Use hash from hashes object (v2) or hash field (v1)
+      const availableHash = available?.hashes?.compressed || available?.hash;
+      if (available && availableHash !== compiler.hash) {
         notifications.push({
           type: "compiler",
           id: compiler.id,
-          currentVersion: compiler.version,
-          availableVersion: available.version,
+          currentVersion: compiler.version || compiler.fullVersion || "previous",
+          availableVersion: available.fullVersion || available.version || available.softwareVersion,
           size: available.size,
           message: `${available.name} update available`,
         });
@@ -410,7 +414,7 @@ class WasmManagerService {
    */
   async getBaseUrl(): Promise<string> {
     const manifest = await this.getManifest();
-    return manifest.baseUrl;
+    return manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
   }
 }
 

@@ -8,6 +8,7 @@ import {
   type DownloadProgress,
   type CompilerId,
 } from "../lib/wasm";
+import { HeaderCache } from "../lib/platform/HeaderCache";
 
 interface WasmManagerPanelProps {
   onLog?: (
@@ -16,9 +17,13 @@ interface WasmManagerPanelProps {
   ) => void;
 }
 
+// Singleton header cache instance
+const headerCache = new HeaderCache();
+
 export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
   const [compilers, setCompilers] = useState<CompilerInfo[]>([]);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
+  const [headerCacheSize, setHeaderCacheSize] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<
@@ -63,13 +68,15 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
       setIsLoading(true);
       setError(null);
 
-      const [compilerInfos, stats] = await Promise.all([
+      const [compilerInfos, stats, headerSize] = await Promise.all([
         WasmManager.getAllCompilerInfos(),
         WasmManager.getStorageStats(),
+        headerCache.getTotalSize(),
       ]);
 
       setCompilers(compilerInfos);
       setStorageStats(stats);
+      setHeaderCacheSize(headerSize);
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Failed to load compilers";
@@ -117,6 +124,18 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
       onLog?.("Failed to check for updates", "error");
     }
   }, [loadCompilerInfo, onLog]);
+
+  const handleClearHeaderCache = useCallback(async () => {
+    try {
+      onLog?.("Clearing header cache...", "info");
+      await headerCache.clear();
+      setHeaderCacheSize(0);
+      onLog?.("Header cache cleared. Headers will be re-downloaded on next compile.", "success");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to clear header cache";
+      onLog?.(message, "error");
+    }
+  }, [onLog]);
 
   const formatBytes = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -188,14 +207,35 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
             fontSize: "12px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
             <span>
-              <strong>Storage Used:</strong> {formatBytes(storageStats.used)}
+              <strong>Compiler Storage:</strong> {formatBytes(storageStats.used)}
             </span>
             {storageStats.quota > 0 && (
               <span style={{ color: "var(--text-secondary, #888)" }}>
                 / {formatBytes(storageStats.quota)} available
               </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span>
+              <strong>Header Cache:</strong> {formatBytes(headerCacheSize)}
+            </span>
+            {headerCacheSize > 0 && (
+              <button
+                onClick={handleClearHeaderCache}
+                style={{
+                  padding: "4px 8px",
+                  backgroundColor: "var(--warning-bg, #854d0e)",
+                  border: "none",
+                  borderRadius: "4px",
+                  color: "var(--warning-text, #fde047)",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                }}
+              >
+                Clear Headers
+              </button>
             )}
           </div>
         </div>

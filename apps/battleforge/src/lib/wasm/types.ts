@@ -64,7 +64,10 @@ export type CompilerState =
  */
 export interface InstalledCompiler {
   id: CompilerId;
-  version: string;
+  version: string; // Alias for fullVersion (backward compat)
+  softwareVersion?: string; // Upstream version (e.g., "21.1.4")
+  releaseVersion?: string; // BattleForge release (e.g., "1.0.0")
+  fullVersion?: string; // Combined (e.g., "21.1.4-r1.0.0")
   hash: string;
   installedAt: number;
   size: number;
@@ -78,14 +81,43 @@ export interface AvailableCompiler {
   id: CompilerId;
   name: string;
   description: string;
-  version: string;
+  status?: "stable" | "beta" | "deprecated" | "coming_soon";
+
+  // Dual versioning
+  softwareVersion: string; // Upstream version (e.g., "21.1.4")
+  releaseVersion: string; // BattleForge release (e.g., "1.0.0")
+  fullVersion: string; // Combined (e.g., "21.1.4-r1.0.0")
+  version?: string; // Alias for fullVersion (backward compat)
+
+  releaseNotes?: string;
+  releaseDate?: string;
+
   files: {
     wasm: string; // e.g., "clang_arm/clang-arm.wasm.gz"
     js: string; // e.g., "clang_arm/clang.js"
   };
+
   size: number; // Compressed size in bytes
-  hash: string; // SHA-256 hash
-  architectures: Architecture[]; // Supported architectures
+  sizeUncompressed?: number; // Uncompressed size
+
+  // Dual hash support
+  hashes: {
+    compressed: string;
+    uncompressed?: string;
+  };
+  hash?: string; // Alias for hashes.compressed (backward compat)
+
+  architectures: string[]; // Supported architectures
+
+  buildInfo?: {
+    llvmCommit?: string;
+    buildDate?: string;
+    buildScript?: string;
+    buildHost?: string;
+  };
+
+  minAppVersion?: string;
+  deprecationDate?: string | null;
 }
 
 /**
@@ -130,11 +162,20 @@ export interface DownloadProgress {
  * WASM Version Manifest - served from /wasm/manifest.json
  */
 export interface WasmManifest {
-  version: string; // Manifest version "1.0.0"
+  $schema?: string;
+  schemaVersion: string; // Schema version "2.0.0"
+  version?: string; // Legacy: Manifest version (backward compat)
   lastUpdated: string; // ISO date
-  baseUrl: string; // Base URL for WASM files "/wasm"
+  releaseChannel?: "stable" | "beta" | "nightly";
+  baseUrl?: string; // Base URL for WASM files "/wasm" (legacy)
   compilers: AvailableCompiler[];
   linkers?: AvailableLinker[];
+  disassemblers?: AvailableDisassembler[];
+  meta?: {
+    cdnBaseUrl?: string;
+    fallbackBaseUrl?: string;
+    checksumAlgorithm?: "sha256" | "sha384" | "sha512";
+  };
 }
 
 /**
@@ -143,13 +184,55 @@ export interface WasmManifest {
 export interface AvailableLinker {
   id: string;
   name: string;
-  version: string;
+  description?: string;
+  status?: "stable" | "beta" | "deprecated";
+
+  // Dual versioning
+  softwareVersion: string;
+  releaseVersion: string;
+  fullVersion: string;
+  version?: string; // Alias (backward compat)
+
   files: {
     wasm: string;
     js: string;
   };
   size: number;
-  hash: string;
+  hashes: {
+    compressed: string;
+    uncompressed?: string;
+  };
+  hash?: string; // Alias (backward compat)
+  architectures?: string[];
+}
+
+/**
+ * Available disassembler from manifest
+ */
+export interface AvailableDisassembler {
+  id: string;
+  name: string;
+  description?: string;
+  status?: "stable" | "beta" | "deprecated";
+
+  softwareVersion: string;
+  releaseVersion: string;
+  fullVersion: string;
+
+  files: {
+    wasm: string;
+    wasmGz?: string;
+    js: string;
+    api?: string;
+  };
+  size: number;
+  sizeCompressed?: number;
+  hashes: {
+    compressed: string;
+    uncompressed?: string;
+  };
+  architectures?: string[];
+  features?: string[];
 }
 
 // ============================================================================
@@ -161,7 +244,9 @@ export interface AvailableLinker {
  */
 export interface WasmCacheMetadata {
   id: CompilerId;
-  version: string;
+  version: string; // fullVersion or legacy version
+  softwareVersion?: string;
+  releaseVersion?: string;
   hash: string;
   size: number;
   timestamp: number;

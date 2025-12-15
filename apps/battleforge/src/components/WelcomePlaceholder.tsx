@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface WelcomePlaceholderProps {
   onGetStarted: () => void;
 }
@@ -8,7 +10,15 @@ export function WelcomePlaceholder({ onGetStarted }: WelcomePlaceholderProps) {
   return (
     <div className="welcome-placeholder">
       <div className="welcome-content">
-        <div className="welcome-icon">&#x26A1;</div>
+        <div className="welcome-logo">
+          <Image
+            src="/battleforge.png"
+            alt="BattleForge Logo"
+            width={120}
+            height={120}
+            priority
+          />
+        </div>
         <h2>Welcome to BattleForge</h2>
         <p>Browser-based embedded firmware development</p>
         <div className="welcome-steps">
@@ -45,9 +55,11 @@ export function WelcomePlaceholder({ onGetStarted }: WelcomePlaceholderProps) {
           padding: 40px;
         }
 
-        .welcome-icon {
-          font-size: 4rem;
-          margin-bottom: 20px;
+        .welcome-logo {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 24px;
         }
 
         .welcome-content h2 {
