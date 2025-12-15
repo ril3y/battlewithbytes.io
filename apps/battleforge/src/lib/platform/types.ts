@@ -325,3 +325,186 @@ export interface BuildOutput {
   hexFile?: Uint8Array;
   mapFile?: string;
 }
+
+// ============================================================================
+// Platform Manifest v2 Types (GitHub Source Architecture)
+// ============================================================================
+
+/**
+ * Schema version discriminator
+ */
+export type SchemaVersion = "1.0.0" | "2.0.0";
+
+/**
+ * Source definition for fetching files from GitHub
+ */
+export interface SourceDefinition {
+  /** Repository in format 'github:owner/repo' */
+  repo: string;
+  /** Git ref (branch, tag, or commit SHA) */
+  ref?: string;
+  /** Paths within the repository for different file types */
+  paths?: {
+    headers?: string;
+    startup?: string;
+    linker?: string;
+    system?: string;
+  };
+  /** Specific files to fetch (if not fetching entire directories) */
+  files?: {
+    headers?: string[];
+    system?: string[];
+  };
+}
+
+/**
+ * Device-specific files from sources
+ */
+export interface DeviceFiles {
+  startup?: string;
+  linker?: string;
+  header?: string;
+}
+
+/**
+ * Device definition for v2 manifests
+ */
+export interface DeviceDefinitionV2 {
+  id: string;
+  name: string;
+  flash: number;
+  ram: number;
+  psram?: number;
+  ccram?: number;
+  frequency: number;
+  defines?: string[];
+  files?: DeviceFiles;
+  fpu?: "none" | "soft" | "softfp" | "hard";
+}
+
+/**
+ * Build configuration in v2 manifest
+ */
+export interface BuildConfigV2 {
+  compilerFlags?: string[];
+  linkerFlags?: string[];
+  defines?: string[];
+  includePaths?: string[];
+}
+
+/**
+ * Platform Manifest v2 format
+ * Uses external GitHub sources for headers, startup files, and linker scripts
+ */
+export interface PlatformManifestV2 {
+  $schema?: string;
+  schemaVersion: "2.0.0";
+  platform: string;
+  family: string;
+  name: string;
+  description?: string;
+  architecture: Architecture;
+  version: string;
+
+  /** External source repositories */
+  sources: Record<string, SourceDefinition>;
+
+  /** Device variants */
+  devices: DeviceDefinitionV2[];
+
+  /** Build configuration */
+  build?: BuildConfigV2;
+
+  /** Framework support */
+  frameworks?: {
+    arduino?: {
+      core?: string;
+      coreUrl?: string;
+      packageIndex?: string;
+      variant?: string;
+    };
+    zephyr?: {
+      board?: string;
+      soc?: string;
+    };
+    espidf?: {
+      target?: string;
+      sdkVersion?: string;
+    };
+    native?: {
+      sdk?: string;
+      sdkVersion?: string;
+    };
+  };
+}
+
+/**
+ * Platform Manifest v1 format (legacy)
+ */
+export interface PlatformManifestV1 {
+  $schema?: string;
+  platform: string;
+  family: string;
+  name: string;
+  description?: string;
+  architecture: Architecture;
+  version: string;
+
+  headers: {
+    url?: string;
+    source?: string;
+    ref?: string;
+    files?: string[];
+    hash?: string;
+    includes?: string[];
+    cmsis?: {
+      source: string;
+      ref?: string;
+      files?: string[];
+    };
+  };
+
+  devices: Array<{
+    id: string;
+    name: string;
+    flash: number;
+    ram: number;
+    frequency: number;
+    defines?: string[];
+    linkerScript?: string;
+  }>;
+
+  build?: {
+    compilerFlags?: string[];
+    linkerFlags?: string[];
+    defines?: string[];
+  };
+
+  frameworks?: Record<string, unknown>;
+}
+
+/**
+ * Union type for either manifest version
+ */
+export type PlatformManifest = PlatformManifestV1 | PlatformManifestV2;
+
+/**
+ * Type guard to check if manifest is v2
+ */
+export function isManifestV2(manifest: PlatformManifest): manifest is PlatformManifestV2 {
+  return "schemaVersion" in manifest && manifest.schemaVersion === "2.0.0";
+}
+
+/**
+ * Fetched source files for a device
+ */
+export interface DeviceSourceFiles {
+  /** Startup assembly file content */
+  startup?: Uint8Array;
+  /** Linker script content */
+  linker?: string;
+  /** System initialization file (e.g., system_stm32f1xx.c) */
+  system?: Uint8Array;
+  /** Device-specific header */
+  header?: Uint8Array;
+}

@@ -214,6 +214,7 @@ function ContextMenu({
   onNewFolder,
   onRename,
   onDelete,
+  onDownload,
 }: {
   state: ContextMenuState;
   onClose: () => void;
@@ -221,6 +222,7 @@ function ContextMenu({
   onNewFolder: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onDownload: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -259,6 +261,11 @@ function ContextMenu({
       {state.nodeId && (
         <>
           <div className="menu-divider" />
+          {!state.isFolder && (
+            <button className="menu-item" onClick={onDownload}>
+              <span className="menu-icon">⬇️</span> Download
+            </button>
+          )}
           <button
             className="menu-item"
             onClick={onRename}
@@ -750,6 +757,37 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     closeContextMenu();
   }, [contextMenu.nodeId, deleteFile, closeContextMenu]);
 
+  const handleDownload = useCallback(() => {
+    if (contextMenu.nodeId && !contextMenu.isFolder) {
+      const file = getFile(contextMenu.nodeId);
+      if (file) {
+        // Get filename from path
+        const filename = contextMenu.nodeId.split("/").pop() || "file";
+
+        // Create blob from content
+        let blob: Blob;
+        if (file.content instanceof Uint8Array) {
+          // Copy to new Uint8Array to ensure clean ArrayBuffer for Blob
+          const copy = new Uint8Array(file.content);
+          blob = new Blob([copy], { type: "application/octet-stream" });
+        } else {
+          blob = new Blob([file.content], { type: "text/plain" });
+        }
+
+        // Create download link and trigger download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    }
+    closeContextMenu();
+  }, [contextMenu.nodeId, contextMenu.isFolder, getFile, closeContextMenu]);
+
   const _handleRenameSubmit = useCallback(
     (oldPath: string, newName: string) => {
       if (renameFile) {
@@ -844,6 +882,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
         onNewFolder={handleNewFolder}
         onRename={handleRename}
         onDelete={handleDelete}
+        onDownload={handleDownload}
       />
 
       {/* New File Dialog */}
