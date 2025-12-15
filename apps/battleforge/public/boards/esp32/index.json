@@ -1,0 +1,68 @@
+{
+  "platform": "esp32",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-14",
+  "vendors": [
+    {
+      "id": "adafruit",
+      "name": "Adafruit",
+      "boardCount": 1,
+      "indexPath": "adafruit/index.json"
+    },
+    {
+      "id": "espressif",
+      "name": "Espressif",
+      "boardCount": 1,
+      "indexPath": "espressif/index.json"
+    }
+  ],
+  "boards": [
+    {
+      "id": "adafruit_feather_esp32_v2",
+      "name": "Adafruit ESP32 Feather V2",
+      "vendor": "adafruit",
+      "family": "esp32",
+      "path": "esp32/adafruit/feather_esp32_v2.json",
+      "thumbnail": "https://cdn-shop.adafruit.com/310x233/5400-00.jpg",
+      "features": [
+        "WiFi",
+        "BLE",
+        "PSRAM",
+        "STEMMA_QT",
+        "NeoPixel",
+        "LiPo_Charger",
+        "USB-C"
+      ],
+      "tags": [
+        "feather",
+        "iot",
+        "wireless",
+        "beginner-friendly"
+      ],
+      "exampleCount": 4
+    },
+    {
+      "id": "esp32_devkitc",
+      "name": "ESP32-DevKitC",
+      "vendor": "espressif",
+      "family": "esp32",
+      "path": "esp32/espressif/esp32_devkitc.json",
+      "features": [
+        "wifi",
+        "bluetooth",
+        "ble",
+        "dual-core",
+        "touch",
+        "hall-sensor"
+      ],
+      "tags": [
+        "esp32",
+        "wifi",
+        "bluetooth",
+        "iot",
+        "espressif"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

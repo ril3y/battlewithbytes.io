@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "frameworks": {
+    "arduino": {
+      "name": "Arduino",
+      "description": "Easy-to-use framework with familiar setup()/loop() structure",
+      "supported": true
+    },
+    "native": {
+      "name": "Native (Bare Metal)",
+      "description": "Direct hardware access using vendor SDK (STM32Cube, ESP-IDF, etc.)",
+      "supported": true
+    },
+    "zephyr": {
+      "name": "Zephyr RTOS",
+      "description": "Scalable real-time operating system for IoT",
+      "supported": false,
+      "comingSoon": true
+    },
+    "mbed": {
+      "name": "Mbed OS",
+      "description": "ARM Mbed operating system for IoT devices",
+      "supported": false,
+      "comingSoon": true
+    },
+    "espidf": {
+      "name": "ESP-IDF",
+      "description": "Espressif IoT Development Framework for ESP32",
+      "supported": false,
+      "comingSoon": true,
+      "platformSpecific": ["esp32"]
+    },
+    "platformio": {
+      "name": "PlatformIO",
+      "description": "Professional embedded development platform",
+      "supported": false,
+      "note": "Reference only - use PlatformIO desktop IDE"
+    }
+  }
+}

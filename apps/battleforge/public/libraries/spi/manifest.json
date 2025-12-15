@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schema/library-v1.schema.json",
+  "id": "spi",
+  "name": "SPI",
+  "version": "1.0.0",
+  "description": "SPI library for Arduino",
+  "author": "Arduino",
+  "license": "LGPL-2.1",
+  "repository": "https://github.com/arduino/ArduinoCore-avr",
+
+  "url": "/libs/spi-1.0.0.tar.gz",
+  "hash": null,
+
+  "platforms": ["stm32", "nrf", "esp32", "rp2040", "avr", "samd"],
+  "architectures": ["*"],
+
+  "frameworks": ["arduino"],
+
+  "includes": ["src"],
+  "sources": ["src/*.cpp", "src/*.c"],
+
+  "dependencies": [],
+
+  "categories": ["communication", "spi"],
+  "keywords": ["spi", "communication", "bus"]
+}

@@ -1,3 +1,3 @@
-import InteractiveCodeBlock from './InteractiveCodeBlock';
+import InteractiveCodeBlock from "./InteractiveCodeBlock";
 
 export default InteractiveCodeBlock;

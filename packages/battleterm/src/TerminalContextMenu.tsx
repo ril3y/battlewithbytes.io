@@ -3,9 +3,9 @@
  * Right-click context menu for copy/paste/clear operations
  */
 
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
 interface MenuPosition {
   x: number;
@@ -27,18 +27,18 @@ export default function TerminalContextMenu({
   onCopy,
   onPaste,
   onClear,
-  hasSelection
+  hasSelection,
 }: TerminalContextMenuProps) {
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   // Close on click outside
@@ -48,8 +48,8 @@ export default function TerminalContextMenu({
     };
 
     if (position) {
-      window.addEventListener('click', handleClickOutside);
-      return () => window.removeEventListener('click', handleClickOutside);
+      window.addEventListener("click", handleClickOutside);
+      return () => window.removeEventListener("click", handleClickOutside);
     }
   }, [position, onClose]);
 
@@ -65,7 +65,7 @@ export default function TerminalContextMenu({
       className="fixed z-50 min-w-[180px] bg-gray-900 border-2 border-green-500/50 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.3)] overflow-hidden animate-fadeIn"
       style={{
         left: `${position.x}px`,
-        top: `${position.y}px`
+        top: `${position.y}px`,
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -76,7 +76,12 @@ export default function TerminalContextMenu({
           disabled={!hasSelection}
           className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm font-mono text-gray-300 hover:bg-green-500/10 hover:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-300 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -95,7 +100,12 @@ export default function TerminalContextMenu({
           onClick={() => handleMenuClick(onPaste)}
           className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm font-mono text-gray-300 hover:bg-green-500/10 hover:text-green-400 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -115,7 +125,12 @@ export default function TerminalContextMenu({
           onClick={() => handleMenuClick(onClear)}
           className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm font-mono text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

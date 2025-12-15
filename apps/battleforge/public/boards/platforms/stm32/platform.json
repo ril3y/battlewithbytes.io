@@ -1,0 +1,10 @@
+{
+  "id": "stm32",
+  "name": "STM32",
+  "vendor": "STMicroelectronics",
+  "description": "Industry-leading ARM Cortex-M microcontrollers",
+  "icon": "stm32",
+  "color": "#03234B",
+  "website": "https://www.st.com/stm32",
+  "families": ["f1", "f4", "l4", "h7"]
+}

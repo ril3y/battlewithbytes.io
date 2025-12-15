@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import Image from 'next/image';
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
           {/* Updated grid pattern to match global style */}
           <div className="absolute inset-0 bg-[linear-gradient(var(--grid-color)_1px,_transparent_1px),_linear-gradient(90deg,_var(--grid-color)_1px,_transparent_1px)] bg-[length:30px_30px] bg-[0_0]"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between py-8 gap-8 md:gap-16">
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
@@ -21,17 +21,27 @@ export default function Home() {
                 width={700}
                 height={380}
                 className="drop-shadow-2xl rounded-2xl border border-[3px] border-[var(--accent-purple)] bg-black"
-                style={{ maxWidth: '100%', height: 'auto', boxShadow: '0 0 32px 0 var(--accent-purple), 0 0 0 8px #18102b' }}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                  boxShadow:
+                    "0 0 32px 0 var(--accent-purple), 0 0 0 8px #18102b",
+                }}
                 priority
               />
             </div>
             <div className="flex-1 text-center md:text-left max-w-xl">
               <div className="h-16 md:h-24" aria-hidden="true"></div>
               <p className="text-xl md:text-2xl text-gray-300 mb-4 font-mono">
-                <span className="text-[var(--accent-purple)] drop-shadow-[0_0_8px_var(--accent-purple)]">$</span> Ask me about little data.
+                <span className="text-[var(--accent-purple)] drop-shadow-[0_0_8px_var(--accent-purple)]">
+                  $
+                </span>{" "}
+                Ask me about little data.
               </p>
               <p className="text-md md:text-lg text-gray-400 mb-8 font-mono">
-                A personal hub for sharing insights on cybersecurity, embedded hardware,<br />
+                A personal hub for sharing insights on cybersecurity, embedded
+                hardware,
+                <br />
                 and software engineering through a diverse mix of content.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -51,47 +61,70 @@ export default function Home() {
       <section className="py-16 px-4 bg-gray-900/50">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-mono font-bold mb-12 text-center section-heading-purple">
-            <span className="text-green-400">&lt;</span> Featured Content <span className="text-green-400">/&gt;</span>
+            <span className="text-green-400">&lt;</span> Featured Content{" "}
+            <span className="text-green-400">/&gt;</span>
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Featured Blog */}
             <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
               <div className="p-6">
-                <div className="text-green-400 font-mono text-sm mb-2">01 // BLOG</div>
-                <h3 className="text-xl font-bold mb-3">Cybersecurity Insights</h3>
+                <div className="text-green-400 font-mono text-sm mb-2">
+                  01 // BLOG
+                </div>
+                <h3 className="text-xl font-bold mb-3">
+                  Cybersecurity Insights
+                </h3>
                 <p className="text-gray-400 mb-4">
-                  Deep dives into security topics, vulnerability research, and practical defense strategies.
+                  Deep dives into security topics, vulnerability research, and
+                  practical defense strategies.
                 </p>
-                <Link href="/blog" className="text-green-400 font-mono text-sm hover:underline">
+                <Link
+                  href="/blog"
+                  className="text-green-400 font-mono text-sm hover:underline"
+                >
                   Read more →
                 </Link>
               </div>
             </div>
-            
+
             {/* Featured Tools */}
             <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
               <div className="p-6">
-                <div className="text-green-400 font-mono text-sm mb-2">02 // TOOLS</div>
-                <h3 className="text-xl font-bold mb-3">Engineering Calculators</h3>
+                <div className="text-green-400 font-mono text-sm mb-2">
+                  02 // TOOLS
+                </div>
+                <h3 className="text-xl font-bold mb-3">
+                  Engineering Calculators
+                </h3>
                 <p className="text-gray-400 mb-4">
-                  Interactive tools for hardware engineers, including MOSFET power calculators and more.
+                  Interactive tools for hardware engineers, including MOSFET
+                  power calculators and more.
                 </p>
-                <Link href="/tools" className="text-green-400 font-mono text-sm hover:underline">
+                <Link
+                  href="/tools"
+                  className="text-green-400 font-mono text-sm hover:underline"
+                >
                   Explore tools →
                 </Link>
               </div>
             </div>
-            
+
             {/* Featured Projects */}
             <div className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1">
               <div className="p-6">
-                <div className="text-green-400 font-mono text-sm mb-2">03 // PROJECTS</div>
+                <div className="text-green-400 font-mono text-sm mb-2">
+                  03 // PROJECTS
+                </div>
                 <h3 className="text-xl font-bold mb-3">Open Source Work</h3>
                 <p className="text-gray-400 mb-4">
-                  Highlights of personal and collaborative projects in embedded systems and software development.
+                  Highlights of personal and collaborative projects in embedded
+                  systems and software development.
                 </p>
-                <Link href="/projects" className="text-green-400 font-mono text-sm hover:underline">
+                <Link
+                  href="/projects"
+                  className="text-green-400 font-mono text-sm hover:underline"
+                >
                   View projects →
                 </Link>
               </div>
@@ -99,13 +132,20 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Terminal Tip Section */}
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-block bg-black/70 border border-gray-800 rounded-lg p-6 font-mono">
-            <p className="text-gray-400 mb-2">Press <kbd className="bg-gray-800 px-2 py-1 rounded text-xs">~</kbd> to access the terminal</p>
-            <p className="text-green-400">Try commands like <code>help</code>, <code>about</code>, or <code>blog</code></p>
+            <p className="text-gray-400 mb-2">
+              Press{" "}
+              <kbd className="bg-gray-800 px-2 py-1 rounded text-xs">~</kbd> to
+              access the terminal
+            </p>
+            <p className="text-green-400">
+              Try commands like <code>help</code>, <code>about</code>, or{" "}
+              <code>blog</code>
+            </p>
           </div>
         </div>
       </section>

@@ -1,0 +1,16 @@
+After line 724 (after the closing brace of the header dirs loop), add:
+
+      // Add user source directories to include paths (for user headers)
+      const userDirs = new Set<string>();
+      for (const path of Object.keys(vfsFiles)) {
+        if (path.endsWith('.h')) {
+          const dir = path.substring(0, path.lastIndexOf('/'));
+          if (dir && !dir.startsWith('/cmsis') && !dir.startsWith('/device') && !dir.startsWith('/libc')) {
+            userDirs.add(dir);
+          }
+        }
+      }
+      for (const dir of userDirs) {
+        includePaths.push(`-I${dir}`);
+      }
+

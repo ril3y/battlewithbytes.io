@@ -1,7 +1,8 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   helpText?: string;
@@ -11,12 +12,12 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, helpText, options, id, ...props }, ref) => {
     const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     return (
       <div className="w-full">
         {label && (
-          <label 
-            htmlFor={selectId} 
+          <label
+            htmlFor={selectId}
             className="block text-sm font-medium mb-2 font-mono text-green-400"
           >
             {label}
@@ -25,20 +26,20 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
           id={selectId}
           className={cn(
-            'w-full px-4 py-3 bg-gray-900/70 border border-gray-700',
-            'focus:border-green-400 focus:ring-1 focus:ring-green-400',
-            'rounded-md shadow-sm font-mono text-white',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-            className
+            "w-full px-4 py-3 bg-gray-900/70 border border-gray-700",
+            "focus:border-green-400 focus:ring-1 focus:ring-green-400",
+            "rounded-md shadow-sm font-mono text-white",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+            className,
           )}
           ref={ref}
           {...props}
         >
           {options.map((option) => (
-            <option 
-              key={option.value} 
-              value={option.value} 
+            <option
+              key={option.value}
+              value={option.value}
               disabled={option.disabled}
               className="bg-gray-900 text-white"
             >
@@ -54,9 +55,9 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 export { Select };

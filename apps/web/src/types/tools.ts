@@ -2,7 +2,7 @@
 
 // MOSFET Calculator types
 export interface MosfetCalculatorState {
-  mosfetType: 'n-channel' | 'p-channel';
+  mosfetType: "n-channel" | "p-channel";
   mosfetName: string;
   mosfetDetails: MosfetDetails;
   inputValues: MosfetInputValues;
@@ -39,28 +39,28 @@ export interface OhmsLawResults {
   current: string;
   resistance: string;
   power: string;
-  calculatedProperty: 'voltage' | 'current' | 'resistance' | 'power' | null;
+  calculatedProperty: "voltage" | "current" | "resistance" | "power" | null;
   description: string;
   displayCurrentInMilliamps?: boolean;
 }
 
 // Wire Mapper types (re-export from existing)
-export type { 
-  Connector, 
-  Pin, 
-  Mapping, 
-  Wire, 
-  WireMapperProject 
-} from '../components/tools/WireMapper/types';
+export type {
+  Connector,
+  Pin,
+  Mapping,
+  Wire,
+  WireMapperProject,
+} from "../components/tools/WireMapper/types";
 
 // Generic tool types
 export interface ToolMetadata {
   name: string;
   description: string;
   path: string;
-  category: 'hardware' | 'software' | 'electrical' | 'general';
+  category: "hardware" | "software" | "electrical" | "general";
   tags: string[];
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: "beginner" | "intermediate" | "advanced";
 }
 
 export interface CalculatorState {

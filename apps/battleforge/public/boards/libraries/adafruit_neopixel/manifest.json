@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schema/library-v1.schema.json",
+  "id": "adafruit_neopixel",
+  "name": "Adafruit NeoPixel",
+  "version": "1.12.0",
+  "description": "Arduino library for controlling WS2812 NeoPixel LEDs",
+  "author": "Adafruit",
+  "license": "LGPL-3.0",
+  "repository": "https://github.com/adafruit/Adafruit_NeoPixel",
+
+  "url": "/libs/adafruit-neopixel-1.12.0.tar.gz",
+  "hash": null,
+
+  "platforms": ["stm32", "nrf", "esp32", "rp2040", "avr", "samd"],
+  "architectures": ["*"],
+
+  "frameworks": ["arduino"],
+
+  "includes": ["."],
+  "sources": ["*.cpp"],
+
+  "dependencies": [],
+
+  "categories": ["display", "led"],
+  "keywords": ["neopixel", "ws2812", "led", "rgb", "addressable"]
+}

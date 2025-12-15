@@ -1,0 +1,10 @@
+{
+  "id": "nrf",
+  "name": "nRF",
+  "vendor": "Nordic Semiconductor",
+  "description": "Ultra low power wireless SoCs for BLE and IoT",
+  "icon": "nrf",
+  "color": "#00A9CE",
+  "website": "https://www.nordicsemi.com/Products",
+  "families": ["nrf52", "nrf53"]
+}

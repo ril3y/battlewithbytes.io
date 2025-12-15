@@ -110,6 +110,12 @@ nul
 /QUICK_REFERENCE.md
 /PHASE*.md
 
+# Build tooling (not needed in production)
+experiments/yowasp-clang/
+
+# Claude Code local settings (never commit)
+.claude/settings.local.json
+
 # Turborepo
 .turbo
 dist/

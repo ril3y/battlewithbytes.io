@@ -1,0 +1,30 @@
+{
+  "vendor": "generic",
+  "vendorName": "Generic",
+  "platform": "stm32",
+  "boards": [
+    {
+      "id": "bluepill_stm32f103c8",
+      "name": "STM32 Blue Pill (F103C8)",
+      "vendor": "generic",
+      "family": "f1",
+      "path": "stm32/generic/bluepill_stm32f103c8.json",
+      "features": [
+        "usb",
+        "rtc",
+        "can",
+        "i2c",
+        "spi",
+        "uart"
+      ],
+      "tags": [
+        "bluepill",
+        "stm32f103",
+        "beginner",
+        "low-cost",
+        "arm"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

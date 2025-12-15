@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * DropCap component for a hacker/cyber motif drop cap effect.
@@ -6,7 +6,5 @@ import React from 'react';
  * Usage: <DropCap>LoRa ...</DropCap>
  */
 export default function DropCap({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="dropcap-paragraph">{children}</div>
-  );
+  return <div className="dropcap-paragraph">{children}</div>;
 }

@@ -1,0 +1,32 @@
+{
+  "$schema": "../../schema/library-v1.schema.json",
+  "id": "freertos",
+  "name": "FreeRTOS",
+  "version": "10.5.1",
+  "description": "Real-time operating system kernel for embedded devices",
+  "author": "Amazon Web Services",
+  "license": "MIT",
+  "repository": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+
+  "url": "/libs/freertos-10.5.1.tar.gz",
+  "hash": null,
+
+  "platforms": ["stm32", "nrf", "esp32", "rp2040"],
+  "architectures": ["cortex-m0", "cortex-m0+", "cortex-m3", "cortex-m4", "cortex-m4f", "cortex-m7"],
+
+  "includes": ["include"],
+  "sources": [
+    "*.c",
+    "portable/GCC/ARM_CM0/*.c",
+    "portable/GCC/ARM_CM3/*.c",
+    "portable/GCC/ARM_CM4F/*.c",
+    "portable/MemMang/heap_4.c"
+  ],
+
+  "dependencies": [],
+
+  "configTemplate": "FreeRTOSConfig.h",
+
+  "categories": ["rtos", "scheduler", "multitasking"],
+  "keywords": ["rtos", "freertos", "scheduler", "tasks", "queues", "semaphores"]
+}

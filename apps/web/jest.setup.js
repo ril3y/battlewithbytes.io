@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+require('@testing-library/jest-dom')
 
 // Mock TextEncoder/TextDecoder for jsdom
 global.TextEncoder = global.TextEncoder || require('util').TextEncoder

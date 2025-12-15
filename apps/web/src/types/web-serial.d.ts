@@ -16,20 +16,34 @@ interface SerialPort extends EventTarget {
   setSignals(signals: SerialOutputSignals): Promise<void>;
   getSignals(): Promise<SerialInputSignals>;
 
-  addEventListener(type: 'connect' | 'disconnect', listener: (this: this, ev: Event) => void): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(
+    type: "connect" | "disconnect",
+    listener: (this: this, ev: Event) => void,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
 
-  removeEventListener(type: 'connect' | 'disconnect', listener: (this: this, ev: Event) => void): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+  removeEventListener(
+    type: "connect" | "disconnect",
+    listener: (this: this, ev: Event) => void,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
 }
 
 interface SerialOptions {
   baudRate: number;
   dataBits?: 7 | 8;
   stopBits?: 1 | 2;
-  parity?: 'none' | 'even' | 'odd';
+  parity?: "none" | "even" | "odd";
   bufferSize?: number;
-  flowControl?: 'none' | 'hardware';
+  flowControl?: "none" | "hardware";
 }
 
 interface SerialPortInfo {
@@ -63,11 +77,25 @@ interface Serial extends EventTarget {
   getPorts(): Promise<SerialPort[]>;
   requestPort(options?: SerialPortRequestOptions): Promise<SerialPort>;
 
-  addEventListener(type: 'connect' | 'disconnect', listener: (this: this, ev: Event) => void): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(
+    type: "connect" | "disconnect",
+    listener: (this: this, ev: Event) => void,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
 
-  removeEventListener(type: 'connect' | 'disconnect', listener: (this: this, ev: Event) => void): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+  removeEventListener(
+    type: "connect" | "disconnect",
+    listener: (this: this, ev: Event) => void,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
 }
 
 interface Navigator {

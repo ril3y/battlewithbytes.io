@@ -5,6 +5,9 @@
   "description": "BattleWithBytes.io monorepo",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:all": "node scripts/dev-all.js",
+    "dev:tools": "node scripts/dev-all.js --group tools",
+    "dev:app": "node scripts/dev.js",
     "build": "turbo run build",
     "build:wasm": "turbo run build:wasm",
     "test": "turbo run test",

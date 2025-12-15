@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 // Import WASM module
 // Note: This will be loaded asynchronously
-let wasmModule: typeof import('@battlewithbytes/battlemagic-core') | null = null;
+let wasmModule: typeof import("@battlewithbytes/battlemagic-core") | null =
+  null;
 
 /**
  * Hook to load and initialize the WASM module
@@ -18,7 +19,7 @@ export function useBattleMagicCore() {
     const loadWasm = async () => {
       try {
         // Dynamic import of WASM module
-        const wasmCoreModule = await import('@battlewithbytes/battlemagic-core');
+        const wasmCoreModule = await import("@battlewithbytes/battlemagic-core");
 
         if (!mounted) return;
 
@@ -53,7 +54,10 @@ interface BattleMagicProviderProps {
   onError?: (error: Error) => void;
 }
 
-export function BattleMagicProvider({ children, onError }: BattleMagicProviderProps) {
+export function BattleMagicProvider({
+  children,
+  onError,
+}: BattleMagicProviderProps) {
   const { loading, error } = useBattleMagicCore();
 
   useEffect(() => {

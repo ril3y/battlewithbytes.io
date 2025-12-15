@@ -1,0 +1,43 @@
+{
+  "name": "@battlewithbytes/battlemagic",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5567",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@battlewithbytes/battlemagic-core": "workspace:^",
+    "@battlewithbytes/battlemagic-ui": "workspace:^",
+    "@heroicons/react": "^2.2.0",
+    "battlemagic-analyzer": "workspace:^",
+    "classnames": "^2.5.1",
+    "clsx": "^2.1.1",
+    "immer": "^10.1.1",
+    "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.553.0",
+    "nanoid": "^5.1.5",
+    "next": "15.3.0",
+    "react": "^19.0.0",
+    "react-arborist": "^3.4.3",
+    "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
+    "tailwind-merge": "^2.6.0",
+    "zustand": "^5.0.4"
+  },
+  "devDependencies": {
+    "@battlewithbytes/tsconfig": "workspace:^",
+    "@tailwindcss/postcss": "^4.1.3",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/w3c-web-serial": "^1.0.0",
+    "postcss": "^8",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

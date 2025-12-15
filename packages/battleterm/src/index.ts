@@ -4,8 +4,8 @@
  */
 
 // Main component
-export { default as BattleTerm } from './BattleTerm';
-export { default } from './BattleTerm';
+export { default as BattleTerm } from "./BattleTerm";
+export { default } from "./BattleTerm";
 
 // Types
 export type {
@@ -15,15 +15,15 @@ export type {
   TerminalState,
   ConnectionStats,
   ViewMode,
-  LineEnding
-} from './serialTerminal.types';
+  LineEnding,
+} from "./serialTerminal.types";
 
 export {
   DEFAULT_SERIAL_CONFIG,
   DEFAULT_TERMINAL_OPTIONS,
   DEFAULT_SEND_OPTIONS,
-  BAUD_RATES
-} from './serialTerminal.types';
+  BAUD_RATES,
+} from "./serialTerminal.types";
 
 // Utilities
 export {
@@ -33,19 +33,13 @@ export {
   closeSerialPort,
   formatDataForSend,
   parseSerialData,
-  bytesToHex
-} from './serialUtils';
+  bytesToHex,
+} from "./serialUtils";
 
-export {
-  downloadTerminalLog,
-  formatWithTimestamp
-} from './terminalUtils';
+export { downloadTerminalLog, formatWithTimestamp } from "./terminalUtils";
 
 // Config management
-export {
-  saveLastConfig,
-  loadLastConfig
-} from './configManager';
+export { saveLastConfig, loadLastConfig } from "./configManager";
 
 // Version info
 export {
@@ -54,7 +48,7 @@ export {
   VERSION_NAME,
   CHANGELOG,
   getLatestChangelog,
-  formatChangelogForTerminal
-} from './version';
+  formatChangelogForTerminal,
+} from "./version";
 
-export type { ChangelogEntry } from './version';
+export type { ChangelogEntry } from "./version";

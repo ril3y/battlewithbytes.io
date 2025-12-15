@@ -1,0 +1,580 @@
+/**
+ * UI Integration Tests
+ *
+ * Tests the UI components with analysis context:
+ * - Comment types (standard, repeatable, anterior, block)
+ * - Argument annotations display
+ * - Vector table panel rendering and interaction
+ * - Database persistence
+ */
+
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AnalysisProvider, useAnalysis } from '../lib/context/AnalysisContext';
+import { ArgumentAnnotation } from '../components/ArgumentAnnotation';
+import VectorTablePanel from '../components/VectorTablePanel';
+import type { AnalysisResults, VectorTableEntry } from '../lib/wasmAnalyzer';
+
+// Mock WASM module for UI tests
+jest.mock('../lib/wasmAnalyzer', () => ({
+  ...jest.requireActual('../lib/wasmAnalyzer'),
+  loadWasmAnalyzer: jest.fn(),
+  createAnalyzer: jest.fn(),
+}));
+
+// Mock IndexedDB
+const mockDb = {
+  init: jest.fn().mockResolvedValue(undefined),
+  saveFunctions: jest.fn().mockResolvedValue(undefined),
+  saveComments: jest.fn().mockResolvedValue(undefined),
+  saveXrefs: jest.fn().mockResolvedValue(undefined),
+  setMetadata: jest.fn().mockResolvedValue(undefined),
+  getAllComments: jest.fn().mockResolvedValue([]),
+  getAllXrefs: jest.fn().mockResolvedValue([]),
+  getMetadata: jest.fn().mockResolvedValue(null),
+  hasAnalysis: jest.fn().mockResolvedValue(false),
+  clear: jest.fn().mockResolvedValue(undefined),
+};
+
+jest.mock('../lib/db/AnalysisDatabase', () => ({
+  getAnalysisDatabase: jest.fn(() => mockDb),
+  CommentType: 'standard',
+}));
+
+describe('Comment Types UI Integration', () => {
+  // Test component that uses analysis context
+  const CommentTestComponent = () => {
+    const { setComment, getComment, getCommentsAt, deleteComment } = useAnalysis();
+    const [selectedType, setSelectedType] = React.useState<'standard' | 'repeatable' | 'anterior' | 'block'>('standard');
+    const [commentText, setCommentText] = React.useState('');
+    const address = 0x08000100;
+
+    const handleAddComment = () => {
+      if (commentText) {
+        setComment(address, commentText, selectedType);
+        setCommentText('');
+      }
+    };
+
+    const handleDeleteComment = (type: 'standard' | 'repeatable' | 'anterior' | 'block') => {
+      deleteComment(address, type);
+    };
+
+    const commentsMap = getCommentsAt(address);
+    const standardComment = getComment(address, 'standard');
+    const repeatableComment = getComment(address, 'repeatable');
+    const anteriorComment = getComment(address, 'anterior');
+    const blockComment = getComment(address, 'block');
+
+    return (
+      <div>
+        <h3>Add Comment</h3>
+        <select
+          data-testid="comment-type-select"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value as any)}
+        >
+          <option value="standard">Standard</option>
+          <option value="repeatable">Repeatable</option>
+          <option value="anterior">Anterior</option>
+          <option value="block">Block</option>
+        </select>
+        <input
+          data-testid="comment-input"
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          placeholder="Comment text"
+        />
+        <button data-testid="add-comment-btn" onClick={handleAddComment}>
+          Add Comment
+        </button>
+
+        <div data-testid="comments-display">
+          <h4>Comments at 0x{address.toString(16)}</h4>
+          <div data-testid="comment-count">Total: {commentsMap.size}</div>
+
+          {standardComment && (
+            <div data-testid="standard-comment">
+              <strong>Standard:</strong> {standardComment.text}
+              <button
+                data-testid="delete-standard"
+                onClick={() => handleDeleteComment('standard')}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+
+          {repeatableComment && (
+            <div data-testid="repeatable-comment">
+              <strong>Repeatable:</strong> {repeatableComment.text}
+              <button
+                data-testid="delete-repeatable"
+                onClick={() => handleDeleteComment('repeatable')}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+
+          {anteriorComment && (
+            <div data-testid="anterior-comment">
+              <strong>Anterior:</strong> {anteriorComment.text}
+              <button
+                data-testid="delete-anterior"
+                onClick={() => handleDeleteComment('anterior')}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+
+          {blockComment && (
+            <div data-testid="block-comment">
+              <strong>Block:</strong> {blockComment.text}
+              <button
+                data-testid="delete-block"
+                onClick={() => handleDeleteComment('block')}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should add standard comment', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    await user.type(input, 'This is a standard comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('standard-comment')).toHaveTextContent(
+        'This is a standard comment'
+      );
+    });
+  });
+
+  it('should add repeatable comment', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const select = screen.getByTestId('comment-type-select');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    await user.selectOptions(select, 'repeatable');
+    await user.type(input, 'This is a repeatable comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('repeatable-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('repeatable-comment')).toHaveTextContent(
+        'This is a repeatable comment'
+      );
+    });
+  });
+
+  it('should add anterior comment', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const select = screen.getByTestId('comment-type-select');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    await user.selectOptions(select, 'anterior');
+    await user.type(input, 'This is an anterior comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('anterior-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('anterior-comment')).toHaveTextContent(
+        'This is an anterior comment'
+      );
+    });
+  });
+
+  it('should add block comment', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const select = screen.getByTestId('comment-type-select');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    await user.selectOptions(select, 'block');
+    await user.type(input, 'This is a block comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('block-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('block-comment')).toHaveTextContent(
+        'This is a block comment'
+      );
+    });
+  });
+
+  it('should handle multiple comment types at same address', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const select = screen.getByTestId('comment-type-select');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    // Add standard comment
+    await user.selectOptions(select, 'standard');
+    await user.type(input, 'Standard comment');
+    await user.click(addBtn);
+
+    // Add repeatable comment
+    await user.selectOptions(select, 'repeatable');
+    await user.type(input, 'Repeatable comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('repeatable-comment')).toBeInTheDocument();
+      expect(screen.getByTestId('comment-count')).toHaveTextContent('Total: 2');
+    });
+  });
+
+  it('should delete comment by type', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    // Add a comment
+    await user.type(input, 'Temporary comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-comment')).toBeInTheDocument();
+    });
+
+    // Delete it
+    const deleteBtn = screen.getByTestId('delete-standard');
+    await user.click(deleteBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('standard-comment')).not.toBeInTheDocument();
+      expect(screen.getByTestId('comment-count')).toHaveTextContent('Total: 0');
+    });
+  });
+
+  it('should update comment if type already exists', async () => {
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <CommentTestComponent />
+      </AnalysisProvider>
+    );
+
+    const input = screen.getByTestId('comment-input');
+    const addBtn = screen.getByTestId('add-comment-btn');
+
+    // Add first comment
+    await user.type(input, 'First comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-comment')).toHaveTextContent('First comment');
+    });
+
+    // Add second comment of same type (should replace)
+    await user.type(input, 'Second comment');
+    await user.click(addBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-comment')).toHaveTextContent('Second comment');
+      expect(screen.getByTestId('comment-count')).toHaveTextContent('Total: 1');
+    });
+  });
+});
+
+describe('Argument Annotation UI', () => {
+  it('should render argument annotation in compact mode', () => {
+    const annotation = {
+      call_address: 0x08000104,
+      function_target: 0x08000200,
+      args: [
+        [0, 'r0=0'],
+        [1, 'r1=42'],
+        [2, 'r2=0xFF'],
+      ] as Array<[number, string]>,
+    };
+
+    render(<ArgumentAnnotation annotation={annotation} compact={true} />);
+
+    // Should show function target
+    expect(screen.getByText(/sub_8000200/i)).toBeInTheDocument();
+
+    // Should show arguments
+    expect(screen.getByText(/r0/)).toBeInTheDocument();
+    expect(screen.getByText(/r1/)).toBeInTheDocument();
+    expect(screen.getByText(/r2/)).toBeInTheDocument();
+  });
+
+  it('should display function name when provided', () => {
+    const annotation = {
+      call_address: 0x08000104,
+      function_target: 0x08000200,
+      args: [[0, 'r0=0']] as Array<[number, string]>,
+    };
+
+    render(
+      <ArgumentAnnotation
+        annotation={annotation}
+        functionName="my_function"
+        compact={true}
+      />
+    );
+
+    expect(screen.getByText(/my_function/i)).toBeInTheDocument();
+  });
+
+  it('should show tooltip on hover', async () => {
+    const annotation = {
+      call_address: 0x08000104,
+      function_target: 0x08000200,
+      args: [[0, 'r0=0x1234']] as Array<[number, string]>,
+    };
+
+    render(<ArgumentAnnotation annotation={annotation} compact={true} />);
+
+    // Find the annotation element
+    const annotationElement = screen.getByText(/sub_8000200/i).closest('span');
+    expect(annotationElement).toBeInTheDocument();
+
+    // Hover to show tooltip
+    if (annotationElement) {
+      fireEvent.mouseEnter(annotationElement);
+
+      await waitFor(() => {
+        // Tooltip should show detailed info
+        expect(screen.getByText(/Function Call Arguments/i)).toBeInTheDocument();
+        expect(screen.getByText(/Target:/i)).toBeInTheDocument();
+        expect(screen.getByText(/Address:/i)).toBeInTheDocument();
+      });
+    }
+  });
+});
+
+describe('Vector Table Panel UI', () => {
+  const mockVectorTable: VectorTableEntry[] = [
+    {
+      vector_number: 0,
+      handler_address: 0x20001000,
+      handler_name: 'Initial_SP',
+      is_valid: true,
+    },
+    {
+      vector_number: 1,
+      handler_address: 0x08000101,
+      handler_name: 'Reset_Handler',
+      is_valid: true,
+    },
+    {
+      vector_number: 2,
+      handler_address: 0x08000201,
+      handler_name: 'NMI_Handler',
+      is_valid: true,
+    },
+    {
+      vector_number: 7,
+      handler_address: 0x00000000,
+      handler_name: 'Reserved',
+      is_valid: false,
+    },
+  ];
+
+  const mockAnalysisResults: AnalysisResults = {
+    xrefs: [],
+    loops: [],
+    functions: [],
+    vector_table: mockVectorTable,
+    total_instructions: 100,
+    analysis_time_ms: 50,
+    unique_targets: 10,
+    start_address: 0x08000000,
+    end_address: 0x08001000,
+  };
+
+  const VectorTableTestWrapper = () => {
+    const { setAnalysisResults } = useAnalysis();
+
+    React.useEffect(() => {
+      setAnalysisResults(mockAnalysisResults, 0x08000000, 2048);
+    }, [setAnalysisResults]);
+
+    return <VectorTablePanel />;
+  };
+
+  it('should render vector table entries', async () => {
+    render(
+      <AnalysisProvider>
+        <VectorTableTestWrapper />
+      </AnalysisProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Initial_SP')).toBeInTheDocument();
+      expect(screen.getByText('Reset_Handler')).toBeInTheDocument();
+      expect(screen.getByText('NMI_Handler')).toBeInTheDocument();
+    });
+  });
+
+  it('should display vector table statistics', async () => {
+    render(
+      <AnalysisProvider>
+        <VectorTableTestWrapper />
+      </AnalysisProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Total entries:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Valid handlers:/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should show validity status for each entry', async () => {
+    render(
+      <AnalysisProvider>
+        <VectorTableTestWrapper />
+      </AnalysisProvider>
+    );
+
+    await waitFor(() => {
+      // Valid entries should show VALID
+      const validElements = screen.getAllByText(/VALID/i);
+      expect(validElements.length).toBeGreaterThan(0);
+
+      // Invalid/NULL entries
+      expect(screen.getByText(/NULL/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should format addresses correctly', async () => {
+    render(
+      <AnalysisProvider>
+        <VectorTableTestWrapper />
+      </AnalysisProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/0x20001000/i)).toBeInTheDocument();
+      expect(screen.getByText(/0x08000101/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should handle click navigation', async () => {
+    const mockNavigate = jest.fn();
+    const VectorTableWithNav = () => {
+      const { setAnalysisResults } = useAnalysis();
+
+      React.useEffect(() => {
+        setAnalysisResults(mockAnalysisResults, 0x08000000, 2048);
+      }, [setAnalysisResults]);
+
+      return <VectorTablePanel onNavigateToAddress={mockNavigate} />;
+    };
+
+    render(
+      <AnalysisProvider>
+        <VectorTableWithNav />
+      </AnalysisProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Reset_Handler')).toBeInTheDocument();
+    });
+
+    // Click on Reset_Handler row
+    const resetRow = screen.getByText('Reset_Handler').closest('tr');
+    expect(resetRow).toBeInTheDocument();
+
+    if (resetRow) {
+      fireEvent.click(resetRow);
+      expect(mockNavigate).toHaveBeenCalledWith(0x08000100); // Thumb bit cleared
+    }
+  });
+
+  it('should show empty state when no analysis', () => {
+    render(
+      <AnalysisProvider>
+        <VectorTablePanel />
+      </AnalysisProvider>
+    );
+
+    expect(screen.getByText(/No analysis data available/i)).toBeInTheDocument();
+  });
+});
+
+describe('Database Persistence', () => {
+  it('should save comments to database', async () => {
+    const TestComponent = () => {
+      const { setComment, saveToDatabase } = useAnalysis();
+
+      const handleSave = async () => {
+        setComment(0x08000100, 'Test comment', 'standard');
+        await saveToDatabase();
+      };
+
+      return <button onClick={handleSave}>Save</button>;
+    };
+
+    const user = userEvent.setup();
+    render(
+      <AnalysisProvider>
+        <TestComponent />
+      </AnalysisProvider>
+    );
+
+    const saveBtn = screen.getByText('Save');
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockDb.saveComments).toHaveBeenCalled();
+    });
+  });
+});

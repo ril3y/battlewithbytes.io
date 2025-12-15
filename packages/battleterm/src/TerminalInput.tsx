@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Terminal Input Component
@@ -6,7 +6,14 @@
  * Handles command input, history, and auto-completion
  */
 
-import React, { useState, useRef, useCallback, useEffect, KeyboardEvent, ChangeEvent } from 'react';
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  KeyboardEvent,
+  ChangeEvent,
+} from "react";
 
 export interface TerminalInputProps {
   isConnected: boolean;
@@ -17,9 +24,9 @@ export interface TerminalInputProps {
 export default function TerminalInput({
   isConnected,
   onCommand,
-  placeholder = 'Type a command and press Enter...'
+  placeholder = "Type a command and press Enter...",
 }: TerminalInputProps) {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -45,49 +52,58 @@ export default function TerminalInput({
   }, []);
 
   // Handle key down for command history and submission
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    // Arrow Up - previous command
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
-        const newIndex = historyIndex + 1;
-        setHistoryIndex(newIndex);
-        setInput(commandHistory[newIndex]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      // Arrow Up - previous command
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (
+          commandHistory.length > 0 &&
+          historyIndex < commandHistory.length - 1
+        ) {
+          const newIndex = historyIndex + 1;
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        }
       }
-    }
-    // Arrow Down - next command
-    else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyIndex > 0) {
-        const newIndex = historyIndex - 1;
-        setHistoryIndex(newIndex);
-        setInput(commandHistory[newIndex]);
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
-        setInput('');
+      // Arrow Down - next command
+      else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        } else if (historyIndex === 0) {
+          setHistoryIndex(-1);
+          setInput("");
+        }
       }
-    }
-    // Enter - send command
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-      const command = input.trim();
+      // Enter - send command
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        const command = input.trim();
 
-      if (command && isConnected) {
-        // Add to history (most recent first)
-        setCommandHistory(prev => {
-          const newHistory = [command, ...prev.filter(cmd => cmd !== command)];
-          return newHistory.slice(0, 50); // Keep last 50 commands
-        });
+        if (command && isConnected) {
+          // Add to history (most recent first)
+          setCommandHistory((prev) => {
+            const newHistory = [
+              command,
+              ...prev.filter((cmd) => cmd !== command),
+            ];
+            return newHistory.slice(0, 50); // Keep last 50 commands
+          });
 
-        // Send command
-        onCommand(command);
+          // Send command
+          onCommand(command);
 
-        // Clear input
-        setInput('');
-        setHistoryIndex(-1);
+          // Clear input
+          setInput("");
+          setHistoryIndex(-1);
+        }
       }
-    }
-  }, [input, commandHistory, historyIndex, isConnected, onCommand]);
+    },
+    [input, commandHistory, historyIndex, isConnected, onCommand],
+  );
 
   // Focus input when connected
   const handleFocus = useCallback(() => {
@@ -116,12 +132,14 @@ export default function TerminalInput({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         disabled={!isConnected}
-        placeholder={isConnected ? placeholder : 'Connect to a serial port to begin...'}
+        placeholder={
+          isConnected ? placeholder : "Connect to a serial port to begin..."
+        }
         className={`
           flex-1 bg-transparent border-none outline-none text-white font-mono text-sm
           placeholder:text-gray-500
           disabled:cursor-not-allowed disabled:opacity-50
-          ${isConnected ? 'cursor-text' : ''}
+          ${isConnected ? "cursor-text" : ""}
         `}
         spellCheck={false}
         autoComplete="off"
