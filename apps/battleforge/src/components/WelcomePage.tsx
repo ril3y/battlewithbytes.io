@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 interface WelcomePageProps {
   onCreateProject: () => void;
@@ -43,7 +44,15 @@ export function WelcomePage({
       <div className="welcome-container">
         {/* Main Welcome Section */}
         <div className="welcome-hero">
-          <div className="welcome-icon">⚡</div>
+          <div className="welcome-logo">
+            <Image
+              src="/battleforge.png"
+              alt="BattleForge Logo"
+              width={160}
+              height={160}
+              priority
+            />
+          </div>
           <h1 className="welcome-title">Welcome to BattleForge</h1>
           <p className="welcome-subtitle">
             Browser-based embedded firmware development
@@ -213,22 +222,11 @@ export function WelcomePage({
           padding: 40px 20px;
         }
 
-        .welcome-icon {
-          font-size: 5rem;
-          margin-bottom: 24px;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.8;
-            transform: scale(1.05);
-          }
+        .welcome-logo {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 32px;
         }
 
         .welcome-title {

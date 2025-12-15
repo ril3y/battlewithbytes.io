@@ -32,6 +32,15 @@ const EXTERNAL_COPIES = [
   { from: path.join(__dirname, '../src/data/platforms/icons'), to: 'platforms/icons', description: 'Platform icons' },
 ];
 
+// Individual file copies (for WASM manifest, etc.)
+const FILE_COPIES = [
+  {
+    from: path.join(SUBMODULE_DIR, 'wasm/manifest.json'),
+    to: path.join(PUBLIC_DIR, 'wasm/manifest.json'),
+    description: 'WASM manifest (versioned from submodule)'
+  },
+];
+
 function copyRecursive(src, dest) {
   if (!fs.existsSync(src)) {
     return false;
@@ -135,6 +144,27 @@ for (const { from, to, description } of EXTERNAL_COPIES) {
   const fileCount = countFiles(dest);
   totalFiles += fileCount;
   console.log(`    Copied: ${fileCount} files`);
+}
+
+// Copy individual files (WASM manifest, etc.)
+console.log('\nCopying individual files...');
+for (const { from, to, description } of FILE_COPIES) {
+  console.log(`  ${path.basename(to)} - ${description}`);
+
+  if (!fs.existsSync(from)) {
+    console.log(`    Skipped (source not found)`);
+    continue;
+  }
+
+  // Ensure destination directory exists
+  const destDir = path.dirname(to);
+  if (!fs.existsSync(destDir)) {
+    fs.mkdirSync(destDir, { recursive: true });
+  }
+
+  fs.copyFileSync(from, to);
+  totalFiles++;
+  console.log(`    Copied: ${from} -> ${to}`);
 }
 
 console.log(`\nBattleForge data copied: ${totalFiles} total files`);

@@ -6,6 +6,10 @@
  */
 
 import { getBasePath } from "../utils/basePath";
+import { WasmCache } from "../wasm/WasmCache";
+
+// Singleton cache instance for registering HTTP-loaded compilers
+const wasmCache = new WasmCache();
 
 export interface LoadProgress {
   stage: "downloading" | "instantiating" | "ready" | "error";
@@ -364,6 +368,11 @@ export async function loadClangModule(
     const combinedOutput = (result.stdout + result.stderr).toLowerCase();
     if (combinedOutput.includes("clang") || result.exitCode === 0) {
       initialLoadDone = true;
+
+      // Register the compiler as installed in WasmCache
+      // This syncs the HTTP-loaded compiler with the WasmManagerPanel
+      await registerCompilerAsInstalled();
+
       onProgress?.({
         stage: "ready",
         progress: 100,
@@ -381,6 +390,39 @@ export async function loadClangModule(
       message: `Failed to load: ${error}`,
     });
     throw error;
+  }
+}
+
+/**
+ * Register the compiler as installed in WasmCache
+ * Fetches manifest to get version/hash/size info
+ */
+async function registerCompilerAsInstalled(): Promise<void> {
+  try {
+    const basePath = getBasePath();
+    const manifestUrl = `${basePath}/wasm/manifest.json`;
+
+    const response = await fetch(manifestUrl);
+    if (!response.ok) {
+      console.warn("[EmscriptenClang] Could not fetch manifest for registration");
+      return;
+    }
+
+    const manifest = await response.json();
+    const compiler = manifest.compilers?.find((c: { id: string }) => c.id === "clang-arm");
+
+    if (compiler) {
+      await wasmCache.setMetadataOnly(
+        "clang-arm",
+        compiler.version,
+        compiler.hash,
+        compiler.size,
+      );
+      console.log("[EmscriptenClang] Registered clang-arm as installed");
+    }
+  } catch (err) {
+    console.warn("[EmscriptenClang] Failed to register compiler:", err);
+    // Non-fatal - compiler still works, just won't show in panel
   }
 }
 

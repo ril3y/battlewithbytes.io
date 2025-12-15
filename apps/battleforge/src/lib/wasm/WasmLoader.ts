@@ -8,6 +8,7 @@
 import type {
   CompilerId,
   AvailableCompiler,
+  AvailableLinker,
   DownloadProgress,
   WasmManifest,
 } from "./types";
@@ -46,6 +47,7 @@ async function decompressGzip(compressed: Uint8Array): Promise<Uint8Array> {
 
 /**
  * Load WASM manifest from server
+ * Supports both v1 (legacy) and v2 (dual versioning) manifest formats
  */
 export async function loadManifest(
   manifestUrl: string = "/wasm/manifest.json",
@@ -54,7 +56,94 @@ export async function loadManifest(
   if (!response.ok) {
     throw new Error(`Failed to load WASM manifest: ${response.status}`);
   }
-  return response.json();
+  const manifest = await response.json();
+
+  // Normalize manifest to v2 format with backward compatibility
+  return normalizeManifest(manifest);
+}
+
+/**
+ * Normalize manifest to v2 format
+ * Ensures backward compatibility with v1 manifests
+ */
+function normalizeManifest(manifest: Record<string, unknown>): WasmManifest {
+  // Add schemaVersion if missing (v1 manifest)
+  if (!manifest.schemaVersion) {
+    manifest.schemaVersion = "1.0.0";
+  }
+
+  // Normalize compilers
+  if (Array.isArray(manifest.compilers)) {
+    manifest.compilers = manifest.compilers.map(normalizeCompiler);
+  }
+
+  // Normalize linkers
+  if (Array.isArray(manifest.linkers)) {
+    manifest.linkers = manifest.linkers.map(normalizeLinker);
+  }
+
+  return manifest as unknown as WasmManifest;
+}
+
+/**
+ * Normalize compiler to v2 format
+ */
+function normalizeCompiler(compiler: Record<string, unknown>): AvailableCompiler {
+  // Handle legacy 'version' field
+  if (!compiler.softwareVersion && compiler.version) {
+    compiler.softwareVersion = compiler.version as string;
+  }
+
+  // Default releaseVersion if missing
+  if (!compiler.releaseVersion) {
+    compiler.releaseVersion = "1.0.0";
+  }
+
+  // Generate fullVersion if missing
+  if (!compiler.fullVersion) {
+    compiler.fullVersion = `${compiler.softwareVersion}-r${compiler.releaseVersion}`;
+  }
+
+  // Ensure version alias exists
+  if (!compiler.version) {
+    compiler.version = compiler.fullVersion;
+  }
+
+  // Handle legacy 'hash' field -> hashes object
+  if (!compiler.hashes && compiler.hash) {
+    compiler.hashes = { compressed: compiler.hash as string };
+  }
+
+  // Ensure hash alias exists
+  if (compiler.hashes && !compiler.hash) {
+    compiler.hash = (compiler.hashes as { compressed: string }).compressed;
+  }
+
+  return compiler as unknown as AvailableCompiler;
+}
+
+/**
+ * Normalize linker to v2 format
+ */
+function normalizeLinker(linker: Record<string, unknown>): AvailableLinker {
+  // Same normalization as compiler
+  if (!linker.softwareVersion && linker.version) {
+    linker.softwareVersion = linker.version as string;
+  }
+  if (!linker.releaseVersion) {
+    linker.releaseVersion = "1.0.0";
+  }
+  if (!linker.fullVersion) {
+    linker.fullVersion = `${linker.softwareVersion}-r${linker.releaseVersion}`;
+  }
+  if (!linker.hashes && linker.hash) {
+    linker.hashes = { compressed: linker.hash as string };
+  }
+  if (linker.hashes && !linker.hash) {
+    linker.hash = (linker.hashes as { compressed: string }).compressed;
+  }
+
+  return linker as unknown as AvailableLinker;
 }
 
 /**
@@ -73,8 +162,9 @@ export async function downloadCompiler(
     percentage: 0,
   });
 
-  // Check cache first
-  const isValid = await cache.isValid(compiler.id, compiler.hash);
+  // Check cache first using hash (with backward compat)
+  const compilerHash = compiler.hash || compiler.hashes?.compressed;
+  const isValid = compilerHash ? await cache.isValid(compiler.id, compilerHash) : false;
   if (isValid) {
     const cached = await cache.getWasm(compiler.id);
     if (cached) {
@@ -179,7 +269,10 @@ export async function downloadCompiler(
     percentage: 100,
   });
 
-  await cache.setWasm(compiler.id, wasm, compiler.version, compiler.hash);
+  // Cache using fullVersion and hash (with backward compat)
+  const version = compiler.fullVersion || compiler.version || compiler.softwareVersion;
+  const hash = compiler.hash || compiler.hashes?.compressed || "";
+  await cache.setWasm(compiler.id, wasm, version, hash);
 
   onProgress?.({
     stage: "ready",
