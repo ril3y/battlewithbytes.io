@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { BoardManifest } from "../../lib/registry/types";
 import type { FrameworkOption } from "./types";
+import { withBasePath } from "../../lib/utils/basePath";
 
 interface FrameworkSelectorProps {
   board: BoardManifest;
@@ -42,7 +43,7 @@ export function FrameworkSelector({
 
     const loadFrameworks = async () => {
       try {
-        const response = await fetch("/boards/frameworks.json");
+        const response = await fetch(withBasePath("/boards/frameworks.json"));
         if (response.ok) {
           const data = await response.json();
           frameworksCache = data;

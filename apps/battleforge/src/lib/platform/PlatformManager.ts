@@ -16,9 +16,10 @@ import type {
 } from "./types";
 import { HeaderCache } from "./HeaderCache";
 import { loadHeadersFromRegistry } from "./HeaderLoader";
+import { withBasePath } from "../utils/basePath";
 
 // Use the boards submodule for all platform data
-const PLATFORMS_BASE_URL = "/boards/platforms";
+const getPlatformsBaseUrl = () => withBasePath("/boards/platforms");
 
 export class PlatformManager {
   private registry: PlatformRegistry | null = null;
@@ -49,7 +50,7 @@ export class PlatformManager {
     this.reportProgress("downloading", 0, 0, "Loading platform registry...");
 
     try {
-      const response = await fetch(`${PLATFORMS_BASE_URL}/registry.json`);
+      const response = await fetch(`${getPlatformsBaseUrl()}/registry.json`);
       if (!response.ok) {
         throw new Error(`Failed to load registry: ${response.status}`);
       }
@@ -117,7 +118,7 @@ export class PlatformManager {
 
     try {
       const response = await fetch(
-        `${PLATFORMS_BASE_URL}/${platformId}/${familyId}/manifest.json`,
+        `${getPlatformsBaseUrl()}/${platformId}/${familyId}/manifest.json`,
       );
       if (!response.ok) {
         throw new Error(`Failed to load family: ${response.status}`);
@@ -254,7 +255,7 @@ export class PlatformManager {
       }
 
       // Download and extract headers
-      const url = `${PLATFORMS_BASE_URL}/${headerBundle.url}`;
+      const url = `${getPlatformsBaseUrl()}/${headerBundle.url}`;
       onProgress?.({
         stage: "downloading",
         current: 0,
@@ -435,7 +436,7 @@ export class PlatformManager {
     familyId: string,
     linkerScriptName: string,
   ): Promise<string> {
-    const url = `${PLATFORMS_BASE_URL}/${platformId}/${familyId}/linker/${linkerScriptName}`;
+    const url = `${getPlatformsBaseUrl()}/${platformId}/${familyId}/linker/${linkerScriptName}`;
     const response = await fetch(url);
 
     if (!response.ok) {

@@ -12,9 +12,10 @@ import type {
   BoardManifest,
   LibraryManifest,
 } from "./types";
+import { withBasePath } from "../utils/basePath";
 
-// Registry base URL - can be overridden for testing
-const REGISTRY_BASE_URL = "/boards";
+// Registry base URL - uses basePath for production deployment
+const getRegistryBaseUrl = () => withBasePath("/boards");
 
 class TargetRegistryImpl {
   private registryIndex: RegistryIndex | null = null;
@@ -27,7 +28,7 @@ class TargetRegistryImpl {
    * Get the base URL for the registry
    */
   getBaseUrl(): string {
-    return REGISTRY_BASE_URL;
+    return getRegistryBaseUrl();
   }
 
   /**
@@ -45,7 +46,7 @@ class TargetRegistryImpl {
     }
 
     this.loadPromise = (async () => {
-      const url = `${REGISTRY_BASE_URL}/registry.json`;
+      const url = `${getRegistryBaseUrl()}/registry.json`;
       console.log(`[TargetRegistry] Loading registry from ${url}`);
 
       const response = await fetch(url);
@@ -134,7 +135,7 @@ class TargetRegistryImpl {
     }
 
     // Fetch manifest
-    const url = `${REGISTRY_BASE_URL}/${entry.path}`;
+    const url = `${getRegistryBaseUrl()}/${entry.path}`;
     console.log(`[TargetRegistry] Loading platform manifest from ${url}`);
 
     const response = await fetch(url);
@@ -173,7 +174,7 @@ class TargetRegistryImpl {
     }
 
     // Fetch manifest
-    const url = `${REGISTRY_BASE_URL}/${entry.path}`;
+    const url = `${getRegistryBaseUrl()}/${entry.path}`;
     console.log(`[TargetRegistry] Loading board manifest from ${url}`);
 
     const response = await fetch(url);
@@ -209,7 +210,7 @@ class TargetRegistryImpl {
     }
 
     // Fetch manifest
-    const url = `${REGISTRY_BASE_URL}/${entry.path}`;
+    const url = `${getRegistryBaseUrl()}/${entry.path}`;
     console.log(`[TargetRegistry] Loading library manifest from ${url}`);
 
     const response = await fetch(url);
@@ -241,7 +242,7 @@ class TargetRegistryImpl {
       return headerUrl;
     }
 
-    return `${REGISTRY_BASE_URL}/${headerUrl}`;
+    return `${getRegistryBaseUrl()}/${headerUrl}`;
   }
 
   /**
@@ -259,7 +260,7 @@ class TargetRegistryImpl {
       return libUrl;
     }
 
-    return `${REGISTRY_BASE_URL}/${libUrl}`;
+    return `${getRegistryBaseUrl()}/${libUrl}`;
   }
 
   /**
