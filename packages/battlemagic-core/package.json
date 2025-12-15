@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "bash build.sh",
+    "build:wasm": "bash build.sh",
     "build:dev": "bash build.sh --dev",
     "clean": "cargo clean && rm -rf pkg"
   },
