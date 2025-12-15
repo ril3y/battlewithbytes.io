@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Tree, NodeRendererProps, TreeApi, NodeApi } from "react-arborist";
 import { useVFS } from "../lib/vfs/VFSContext";
 import type { VFSNode } from "../lib/vfs/types";
-import { isDirectory, isFile } from "../lib/vfs/types";
+import { isDirectory } from "../lib/vfs/types";
 
 interface FileExplorerProps {
   onFileSelect?: (path: string, content: string | Uint8Array) => void;
@@ -483,7 +483,8 @@ function NameInputDialog({
   return createPortal(dialogContent, document.body);
 }
 
-// Rename input component (inline)
+// Rename input component (inline) - Reserved for future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function RenameInput({
   initialValue,
   onSubmit,
@@ -560,7 +561,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     isFolder: false,
     isEditable: true,
   });
-  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [_renamingPath, _setRenamingPath] = useState<string | null>(null);
 
   // Dialog state for new file/folder
   const [newFileDialog, setNewFileDialog] = useState<{
@@ -749,12 +750,12 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     closeContextMenu();
   }, [contextMenu.nodeId, deleteFile, closeContextMenu]);
 
-  const handleRenameSubmit = useCallback(
+  const _handleRenameSubmit = useCallback(
     (oldPath: string, newName: string) => {
       if (renameFile) {
         renameFile(oldPath, newName);
       }
-      setRenamingPath(null);
+      _setRenamingPath(null);
     },
     [renameFile],
   );

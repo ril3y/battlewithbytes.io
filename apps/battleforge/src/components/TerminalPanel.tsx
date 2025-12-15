@@ -51,7 +51,7 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
     }
   }, [output]);
 
-  const handleClear = useCallback(() => {
+  const _handleClear = useCallback(() => {
     // Note: This would need to be lifted to parent to actually clear
     // For now it's a placeholder - parent would need to pass onClear prop
   }, []);

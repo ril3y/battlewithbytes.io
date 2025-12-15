@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LoadingProgress, ToolchainState } from "../lib/platform/types";
 
 interface LoadingOverlayProps {

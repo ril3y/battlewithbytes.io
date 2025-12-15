@@ -14,7 +14,7 @@ interface VFSConsolePanelProps {
   onClose?: () => void;
 }
 
-export function VFSConsolePanel({ fs, onClose }: VFSConsolePanelProps) {
+export function VFSConsolePanel({ fs: _fs, onClose }: VFSConsolePanelProps) {
   const [lines, setLines] = useState<ConsoleLine[]>([
     {
       type: "output",

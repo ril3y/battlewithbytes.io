@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { PlatformOption } from "./types";
 
 interface PlatformSelectorProps {

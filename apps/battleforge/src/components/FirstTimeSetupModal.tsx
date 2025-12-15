@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { SelectedPlatform, LoadingProgress } from "../lib/platform/types";
 
-interface SetupItem {
+interface _SetupItem {
   id: string;
   name: string;
   description: string;

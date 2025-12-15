@@ -27,10 +27,10 @@ export function ToolbarPanel({
   onSave,
   onCloseProject,
   onEditProject,
-  onToggleConsole,
+  onToggleConsole: _onToggleConsole,
   isLoading,
   compilerReady,
-  showConsole,
+  showConsole: _showConsole,
   canSave,
   hasBuildArtifacts,
 }: ToolbarPanelProps) {
