@@ -1,0 +1,31 @@
+{
+  "vendor": "adafruit",
+  "vendorName": "Adafruit",
+  "platform": "esp32",
+  "boards": [
+    {
+      "id": "adafruit_feather_esp32_v2",
+      "name": "Adafruit ESP32 Feather V2",
+      "vendor": "adafruit",
+      "family": "esp32",
+      "path": "esp32/adafruit/feather_esp32_v2.json",
+      "thumbnail": "https://cdn-shop.adafruit.com/310x233/5400-00.jpg",
+      "features": [
+        "WiFi",
+        "BLE",
+        "PSRAM",
+        "STEMMA_QT",
+        "NeoPixel",
+        "LiPo_Charger",
+        "USB-C"
+      ],
+      "tags": [
+        "feather",
+        "iot",
+        "wireless",
+        "beginner-friendly"
+      ],
+      "exampleCount": 4
+    }
+  ]
+}

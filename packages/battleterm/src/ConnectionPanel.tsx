@@ -19,6 +19,8 @@ export default function ConnectionPanel({
   logo,
 }: ConnectionPanelProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showClearTooltip, setShowClearTooltip] = useState(false);
+  const [showDownloadTooltip, setShowDownloadTooltip] = useState(false);
 
   const handleConnect = async () => {
     try {
@@ -41,14 +43,11 @@ export default function ConnectionPanel({
       <div className="flex items-center gap-4 flex-wrap">
         {/* Logo */}
         {logo && (
-          <img src={logo} alt="BattleTerm" className="h-12 w-12" />
+          <img src={logo} alt="BattleTerm" className="h-16 w-16" />
         )}
         <div className="flex gap-3 items-center">
           {!isConnected ? (
             <>
-              <div className="text-gray-500 text-sm font-mono hidden sm:block">
-                Click to select COM port
-              </div>
               <div className="relative">
                 <button
                   onClick={handleConnect}
@@ -84,26 +83,44 @@ export default function ConnectionPanel({
 
         {/* Toolbar Icons */}
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={onClear}
-            className="group w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded transition-colors"
-            aria-label="Clear terminal"
-            title="Clear terminal"
-          >
-            <span className="text-sm font-mono text-gray-400 group-hover:text-green-400 transition-colors">
-              CLR
-            </span>
-          </button>
-          <button
-            onClick={onDownloadLog}
-            className="group w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded transition-colors"
-            aria-label="Download terminal log"
-            title="Download terminal log"
-          >
-            <span className="text-lg text-gray-400 group-hover:text-green-400 transition-colors">
-              ⤓
-            </span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={onClear}
+              onMouseEnter={() => setShowClearTooltip(true)}
+              onMouseLeave={() => setShowClearTooltip(false)}
+              className="group w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded transition-colors"
+              aria-label="Clear terminal"
+            >
+              <span className="text-sm font-mono text-gray-400 group-hover:text-green-400 transition-colors">
+                CLR
+              </span>
+            </button>
+            {showClearTooltip && (
+              <div className="absolute top-full right-0 mt-2 z-10 w-48 p-3 bg-gray-900 border border-gray-700 rounded shadow-lg text-xs text-gray-300 font-mono">
+                <div className="text-green-400 font-bold mb-1">[i] Clear</div>
+                <div>Clear all terminal output and reset the display.</div>
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              onClick={onDownloadLog}
+              onMouseEnter={() => setShowDownloadTooltip(true)}
+              onMouseLeave={() => setShowDownloadTooltip(false)}
+              className="group w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded transition-colors"
+              aria-label="Download terminal log"
+            >
+              <span className="text-lg text-gray-400 group-hover:text-green-400 transition-colors">
+                ⤓
+              </span>
+            </button>
+            {showDownloadTooltip && (
+              <div className="absolute top-full right-0 mt-2 z-10 w-48 p-3 bg-gray-900 border border-gray-700 rounded shadow-lg text-xs text-gray-300 font-mono">
+                <div className="text-green-400 font-bold mb-1">[i] Download</div>
+                <div>Download the terminal session log as a text file.</div>
+              </div>
+            )}
+          </div>
           <ToolbarIcons
             onConfigClick={onConfigClick}
             onHelpClick={onHelpClick}

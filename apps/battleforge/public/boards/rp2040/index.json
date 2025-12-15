@@ -1,0 +1,37 @@
+{
+  "platform": "rp2040",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-14",
+  "vendors": [
+    {
+      "id": "raspberry_pi",
+      "name": "Raspberry Pi",
+      "boardCount": 1,
+      "indexPath": "raspberry_pi/index.json"
+    }
+  ],
+  "boards": [
+    {
+      "id": "raspberry_pi_pico",
+      "name": "Raspberry Pi Pico",
+      "vendor": "raspberry_pi",
+      "family": "rp2",
+      "path": "rp2040/raspberry_pi/pico.json",
+      "features": [
+        "pio",
+        "dual-core",
+        "usb",
+        "adc",
+        "pwm"
+      ],
+      "tags": [
+        "pico",
+        "rp2040",
+        "raspberry-pi",
+        "beginner",
+        "pio"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

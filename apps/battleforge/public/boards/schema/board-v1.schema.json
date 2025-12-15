@@ -1,0 +1,269 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://battleforge.battlewithbytes.com/schemas/board-v1.json",
+  "title": "BattleForge Board Definition",
+  "description": "Schema for defining development boards in BattleForge IDE",
+  "type": "object",
+  "required": ["id", "name", "vendor", "version", "chip", "memory", "build"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to the JSON schema"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique identifier for the board (lowercase, underscores only)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable board name"
+    },
+    "vendor": {
+      "type": "string",
+      "description": "Vendor/manufacturer identifier"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Board definition version (semver)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the board"
+    },
+    "image": {
+      "type": "string",
+      "description": "Path to board image relative to boards repo"
+    },
+    "chip": {
+      "type": "object",
+      "required": ["platform", "family", "device", "architecture"],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["stm32", "nrf", "esp32", "rp2040", "samd", "avr"],
+          "description": "Platform/vendor identifier"
+        },
+        "family": {
+          "type": "string",
+          "description": "Chip family (e.g., f1, nrf52, s3)"
+        },
+        "device": {
+          "type": "string",
+          "description": "Specific device/chip (e.g., stm32f103c8, nrf52840)"
+        },
+        "architecture": {
+          "type": "string",
+          "enum": [
+            "cortex-m0", "cortex-m0+", "cortex-m3", "cortex-m4", "cortex-m4f",
+            "cortex-m7", "cortex-m7f", "cortex-m33",
+            "xtensa-lx6", "xtensa-lx7", "riscv32"
+          ],
+          "description": "CPU architecture"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "required": ["flash", "ram"],
+      "properties": {
+        "flash": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total flash size in bytes"
+        },
+        "flashAvailable": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Available flash after bootloader/softdevice (bytes)"
+        },
+        "flashNote": {
+          "type": "string",
+          "description": "Explanation of flash usage"
+        },
+        "ram": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total RAM size in bytes"
+        },
+        "ramAvailable": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Available RAM after system reservations (bytes)"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "required": ["frequency"],
+      "properties": {
+        "frequency": {
+          "type": "integer",
+          "description": "CPU frequency in Hz"
+        },
+        "defines": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Preprocessor defines for this board"
+        },
+        "compilerFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional compiler flags"
+        },
+        "linkerFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional linker flags"
+        },
+        "linkerScript": {
+          "type": "string",
+          "description": "Linker script filename"
+        }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "description": "Pin definitions for the board",
+      "properties": {
+        "ledBuiltin": {
+          "type": "object",
+          "properties": {
+            "pin": { "type": "string", "description": "Physical pin name (e.g., P0.13, PA5)" },
+            "arduino": { "type": "integer", "description": "Arduino pin number" },
+            "activeLow": { "type": "boolean", "default": false }
+          }
+        },
+        "neopixel": {
+          "type": "object",
+          "properties": {
+            "pin": { "type": "string" },
+            "arduino": { "type": "integer" },
+            "count": { "type": "integer", "default": 1 }
+          }
+        },
+        "serial": {
+          "type": "object",
+          "properties": {
+            "rx": { "type": "string" },
+            "tx": { "type": "string" }
+          }
+        },
+        "i2c": {
+          "type": "object",
+          "properties": {
+            "sda": { "type": "string" },
+            "scl": { "type": "string" }
+          }
+        },
+        "spi": {
+          "type": "object",
+          "properties": {
+            "mosi": { "type": "string" },
+            "miso": { "type": "string" },
+            "sck": { "type": "string" },
+            "ss": { "type": "string" }
+          }
+        },
+        "adc": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Available ADC pins"
+        },
+        "pwm": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Available PWM pins"
+        }
+      }
+    },
+    "frameworks": {
+      "type": "object",
+      "description": "Framework-specific configurations",
+      "properties": {
+        "arduino": {
+          "type": "object",
+          "properties": {
+            "core": { "type": "string", "description": "Arduino core identifier" },
+            "variant": { "type": "string", "description": "Variant folder name" },
+            "coreUrl": { "type": "string", "format": "uri", "description": "Arduino core repository URL" },
+            "softdevice": { "type": "string", "description": "BLE SoftDevice version (Nordic)" },
+            "defines": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Arduino-specific defines"
+            }
+          }
+        },
+        "zephyr": {
+          "type": "object",
+          "properties": {
+            "board": { "type": "string", "description": "Zephyr board identifier" }
+          }
+        },
+        "platformio": {
+          "type": "object",
+          "properties": {
+            "board": { "type": "string", "description": "PlatformIO board identifier" },
+            "framework": { "type": "string" }
+          }
+        },
+        "native": {
+          "type": "object",
+          "properties": {
+            "sdk": { "type": "string", "description": "Native SDK name" },
+            "sdkVersion": { "type": "string" }
+          }
+        }
+      }
+    },
+    "upload": {
+      "type": "object",
+      "properties": {
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["uf2", "dfu", "stlink", "jlink", "cmsis-dap", "openocd", "esptool", "picotool"]
+          },
+          "description": "Supported upload methods"
+        },
+        "default": {
+          "type": "string",
+          "description": "Default upload method"
+        },
+        "bootloader": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "familyId": { "type": "string", "description": "UF2 family ID" },
+            "driveLabel": { "type": "string", "description": "USB drive label when in bootloader" },
+            "vid": { "type": "string", "description": "USB Vendor ID" },
+            "pid": { "type": "string", "description": "USB Product ID" }
+          }
+        }
+      }
+    },
+    "documentation": {
+      "type": "object",
+      "properties": {
+        "product": { "type": "string", "format": "uri" },
+        "pinout": { "type": "string", "format": "uri" },
+        "schematic": { "type": "string", "format": "uri" },
+        "datasheet": { "type": "string", "format": "uri" },
+        "guide": { "type": "string", "format": "uri" }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Board features/capabilities (e.g., bluetooth, wifi, usb, nfc)"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Searchable tags"
+    }
+  }
+}

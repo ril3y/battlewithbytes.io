@@ -6,7 +6,7 @@ export class SudoCommand extends Command {
   usage = "sudo [command]";
 
   execute(args: string[]): string {
-    // eslint-disable-line @typescript-eslint/no-unused-vars
+     
     return "Permission denied: You are not root!";
   }
 }

@@ -18,6 +18,7 @@ This directory contains patches and configuration needed to build Clang to WebAs
 ```
 
 **Why Safe:**
+
 - Code paths using these syscalls are disabled via CMake flags
 - Emscripten provides stubs where needed
 - Features requiring these syscalls are already disabled (backtraces, expensive checks, etc.)
@@ -25,11 +26,13 @@ This directory contains patches and configuration needed to build Clang to WebAs
 ### 2. Size Optimization
 
 **Target-Specific Backend:**
+
 ```cmake
 -DLLVM_TARGETS_TO_BUILD="ARM"
 ```
 
 **Disabled Features:**
+
 - Tests, examples, benchmarks
 - Static analyzer
 - ARCMT (Automatic Reference Counting Migration Tool)
@@ -90,13 +93,13 @@ emcmake cmake ../llvm-project/llvm \
 
 ## Supported Architectures
 
-| Architecture | CMake Value | Use Case |
-|--------------|-------------|----------|
-| ARM | `ARM` | STM32, ARM Cortex-M |
-| MIPS | `Mips` | PIC32, legacy embedded |
-| RISC-V | `RISCV` | ESP32-C3, modern RISC-V |
-| AVR | `AVR` | Arduino, ATmega |
-| x86 | `X86` | PC emulators |
+| Architecture | CMake Value | Use Case                |
+| ------------ | ----------- | ----------------------- |
+| ARM          | `ARM`       | STM32, ARM Cortex-M     |
+| MIPS         | `Mips`      | PIC32, legacy embedded  |
+| RISC-V       | `RISCV`     | ESP32-C3, modern RISC-V |
+| AVR          | `AVR`       | Arduino, ATmega         |
+| x86          | `X86`       | PC emulators            |
 
 ## Version Information
 

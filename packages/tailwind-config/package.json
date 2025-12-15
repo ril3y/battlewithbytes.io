@@ -1,0 +1,12 @@
+{
+  "name": "@battlewithbytes/tailwind-config",
+  "version": "0.1.0",
+  "main": "./tailwind.config.ts",
+  "exports": {
+    ".": "./tailwind.config.ts",
+    "./base.css": "./base.css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4"
+  }
+}

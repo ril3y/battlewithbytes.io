@@ -1,0 +1,83 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "bluepill_stm32f103c8",
+  "name": "STM32 Blue Pill (F103C8)",
+  "vendor": "generic",
+  "version": "1.0.0",
+  "description": "Popular low-cost STM32F103C8T6 development board. 64KB flash, 20KB RAM, USB, perfect for learning ARM development.",
+  "image": "images/generic/bluepill.png",
+
+  "chip": {
+    "platform": "stm32",
+    "family": "f1",
+    "device": "stm32f103c8",
+    "architecture": "cortex-m3"
+  },
+
+  "memory": {
+    "flash": 65536,
+    "flashAvailable": 65536,
+    "ram": 20480,
+    "ramAvailable": 20480
+  },
+
+  "build": {
+    "frequency": 72000000,
+    "defines": [
+      "STM32F103xB",
+      "STM32F1",
+      "BOARD_BLUEPILL",
+      "HSE_VALUE=8000000"
+    ],
+    "linkerScript": "STM32F103C8Tx_FLASH.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "PC13", "arduino": 32, "activeLow": true },
+    "serial": { "rx": "PA10", "tx": "PA9" },
+    "serial2": { "rx": "PA3", "tx": "PA2" },
+    "i2c": { "sda": "PB7", "scl": "PB6" },
+    "spi": { "mosi": "PA7", "miso": "PA6", "sck": "PA5", "ss": "PA4" },
+    "adc": ["PA0", "PA1", "PA2", "PA3", "PA4", "PA5", "PA6", "PA7", "PB0", "PB1"],
+    "pwm": ["PA0", "PA1", "PA2", "PA3", "PA6", "PA7", "PA8", "PA9", "PA10"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "stm32duino",
+      "variant": "BLUEPILL_F103C8",
+      "coreUrl": "https://github.com/stm32duino/Arduino_Core_STM32",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_BLUEPILL_F103C8",
+        "ARDUINO_ARCH_STM32"
+      ]
+    },
+    "platformio": {
+      "board": "bluepill_f103c8",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "stm32cube",
+      "sdkVersion": "1.8.5"
+    }
+  },
+
+  "upload": {
+    "methods": ["stlink", "jlink", "cmsis-dap", "dfu", "serial"],
+    "default": "stlink",
+    "bootloader": {
+      "type": "stm32-serial",
+      "vid": "0x0483",
+      "pid": "0x5740"
+    }
+  },
+
+  "documentation": {
+    "pinout": "https://wiki.stm32duino.com/images/a/ae/Bluepillpinout.gif",
+    "datasheet": "https://www.st.com/resource/en/datasheet/stm32f103c8.pdf"
+  },
+
+  "features": ["usb", "rtc", "can", "i2c", "spi", "uart"],
+  "tags": ["bluepill", "stm32f103", "beginner", "low-cost", "arm"]
+}

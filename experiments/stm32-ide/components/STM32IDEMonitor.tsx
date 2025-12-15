@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { EditorPanel } from './EditorPanel';
-import { TerminalPanel } from './TerminalPanel';
-import { ToolbarPanel } from './ToolbarPanel';
-import { ProjectProvider } from '../lib/context/ProjectContext';
+import { useState } from "react";
+import { EditorPanel } from "./EditorPanel";
+import { TerminalPanel } from "./TerminalPanel";
+import { ToolbarPanel } from "./ToolbarPanel";
+import { ProjectProvider } from "../lib/context/ProjectContext";
 
 export function STM32IDEMonitor() {
   const [sourceCode, setSourceCode] = useState(`// STM32F103C8T6 Blink Example
@@ -34,37 +34,42 @@ void main(void) {
 }
 `);
 
-  const [output, setOutput] = useState<Array<{message: string, type: 'info' | 'success' | 'error' | 'warning'}>>([
-    { message: 'STM32 IDE Ready', type: 'info' },
-    { message: 'Waiting for compilation...', type: 'info' },
+  const [output, setOutput] = useState<
+    Array<{ message: string; type: "info" | "success" | "error" | "warning" }>
+  >([
+    { message: "STM32 IDE Ready", type: "info" },
+    { message: "Waiting for compilation...", type: "info" },
   ]);
 
-  const log = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
-    setOutput(prev => [...prev, { message, type }]);
+  const log = (
+    message: string,
+    type: "info" | "success" | "error" | "warning" = "info",
+  ) => {
+    setOutput((prev) => [...prev, { message, type }]);
   };
 
   const handleCompile = async () => {
-    log('Starting compilation...', 'info');
-    log('=== MOCK MODE ===', 'warning');
-    log('Real compiler integration pending', 'warning');
+    log("Starting compilation...", "info");
+    log("=== MOCK MODE ===", "warning");
+    log("Real compiler integration pending", "warning");
 
     setTimeout(() => {
-      log('Parsing C source...', 'info');
+      log("Parsing C source...", "info");
     }, 100);
 
     setTimeout(() => {
-      log('Generating ARM Thumb-2 code...', 'info');
+      log("Generating ARM Thumb-2 code...", "info");
     }, 300);
 
     setTimeout(() => {
-      log('Compilation successful!', 'success');
-      log('Generated 8 bytes of ARM code', 'success');
+      log("Compilation successful!", "success");
+      log("Generated 8 bytes of ARM code", "success");
     }, 600);
   };
 
   const handleFlash = async () => {
-    log('Flash operation not yet implemented', 'warning');
-    log('Will integrate STM32 UART bootloader protocol', 'info');
+    log("Flash operation not yet implemented", "warning");
+    log("Will integrate STM32 UART bootloader protocol", "info");
   };
 
   return (
@@ -72,16 +77,10 @@ void main(void) {
       <div className="stm32-ide-container">
         <div className="ide-grid">
           <div className="toolbar-container">
-            <ToolbarPanel
-              onCompile={handleCompile}
-              onFlash={handleFlash}
-            />
+            <ToolbarPanel onCompile={handleCompile} onFlash={handleFlash} />
           </div>
 
-          <EditorPanel
-            sourceCode={sourceCode}
-            onChange={setSourceCode}
-          />
+          <EditorPanel sourceCode={sourceCode} onChange={setSourceCode} />
 
           <TerminalPanel output={output} />
         </div>

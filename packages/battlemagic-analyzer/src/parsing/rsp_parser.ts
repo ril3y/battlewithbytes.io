@@ -28,7 +28,7 @@ import {
   parseRspResponse,
   isSuccess,
   isError,
-} from '../pkg/battlemagic_analyzer';
+} from "../pkg/battlemagic_analyzer";
 
 // ============================================================================
 // TYPE DEFINITIONS (matching original TypeScript API)
@@ -80,13 +80,13 @@ export interface MemoryWriteResult {
 }
 
 export enum StopReason {
-  BREAKPOINT = 'Breakpoint',
-  WATCHPOINT = 'Watchpoint',
-  SINGLE_STEP = 'SingleStep',
-  SIGNAL = 'Signal',
-  EXITED = 'Exited',
-  TERMINATED = 'Terminated',
-  UNKNOWN = 'Unknown',
+  BREAKPOINT = "Breakpoint",
+  WATCHPOINT = "Watchpoint",
+  SINGLE_STEP = "SingleStep",
+  SIGNAL = "Signal",
+  EXITED = "Exited",
+  TERMINATED = "Terminated",
+  UNKNOWN = "Unknown",
 }
 
 export interface StopReplyDetailed {
@@ -105,8 +105,8 @@ export interface StopReplySimple {
 }
 
 export type StopReply =
-  | { type: 'Detailed'; data: StopReplyDetailed }
-  | { type: 'Simple'; data: StopReplySimple };
+  | { type: "Detailed"; data: StopReplyDetailed }
+  | { type: "Simple"; data: StopReplySimple };
 
 export interface BreakpointResult {
   success: boolean;
@@ -141,7 +141,9 @@ export class RegisterParser {
   /**
    * Parse ARM Cortex-M register dump from 'g' command
    */
-  static parseArmCortexM(hexResponse: string): ParseResult<ArmCortexMRegisters> {
+  static parseArmCortexM(
+    hexResponse: string,
+  ): ParseResult<ArmCortexMRegisters> {
     try {
       const result = JSON.parse(parseArmCortexMRegisters(hexResponse));
       if (result.error) {
@@ -156,7 +158,10 @@ export class RegisterParser {
   /**
    * Parse single register response from 'p' command
    */
-  static parseSingleRegister(hexResponse: string, regNum: number): ParseResult<RegisterValue> {
+  static parseSingleRegister(
+    hexResponse: string,
+    regNum: number,
+  ): ParseResult<RegisterValue> {
     try {
       const result = JSON.parse(parseSingleRegister(hexResponse, regNum));
       if (result.error) {
@@ -173,12 +178,29 @@ export class RegisterParser {
    */
   static getRegisterName(regNum: number): string | null {
     const names: Record<number, string> = {
-      0: 'r0', 1: 'r1', 2: 'r2', 3: 'r3',
-      4: 'r4', 5: 'r5', 6: 'r6', 7: 'r7',
-      8: 'r8', 9: 'r9', 10: 'r10', 11: 'r11',
-      12: 'r12', 13: 'sp', 14: 'lr', 15: 'pc',
-      16: 'xpsr', 17: 'msp', 18: 'psp',
-      19: 'primask', 20: 'basepri', 21: 'faultmask', 22: 'control'
+      0: "r0",
+      1: "r1",
+      2: "r2",
+      3: "r3",
+      4: "r4",
+      5: "r5",
+      6: "r6",
+      7: "r7",
+      8: "r8",
+      9: "r9",
+      10: "r10",
+      11: "r11",
+      12: "r12",
+      13: "sp",
+      14: "lr",
+      15: "pc",
+      16: "xpsr",
+      17: "msp",
+      18: "psp",
+      19: "primask",
+      20: "basepri",
+      21: "faultmask",
+      22: "control",
     };
     return names[regNum] || null;
   }
@@ -187,12 +209,12 @@ export class RegisterParser {
    * Convert register value to little-endian hex string
    */
   static toHex(value: number): string {
-    const hex = (value >>> 0).toString(16).padStart(8, '0');
+    const hex = (value >>> 0).toString(16).padStart(8, "0");
     const bytes = hex.match(/.{2}/g);
     if (!bytes || bytes.length !== 4) {
-      throw new Error('Invalid register value');
+      throw new Error("Invalid register value");
     }
-    return bytes.reverse().join('');
+    return bytes.reverse().join("");
   }
 }
 
@@ -206,7 +228,7 @@ export class MemoryParser {
   static parseMemoryRead(
     hexResponse: string,
     address: number,
-    length: number
+    length: number,
   ): ParseResult<MemoryReadResult> {
     try {
       const result = JSON.parse(parseMemoryRead(hexResponse, address, length));
@@ -228,7 +250,7 @@ export class MemoryParser {
   static parseMemoryWrite(
     response: string,
     address: number,
-    length: number
+    length: number,
   ): ParseResult<MemoryWriteResult> {
     try {
       const result = JSON.parse(parseMemoryWrite(response, address, length));
@@ -246,8 +268,8 @@ export class MemoryParser {
    */
   static toHex(data: Uint8Array): string {
     return Array.from(data)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   /**
@@ -255,14 +277,15 @@ export class MemoryParser {
    */
   static readWord(data: Uint8Array, offset: number): number {
     if (offset + 4 > data.length) {
-      throw new Error('Read past end of memory data');
+      throw new Error("Read past end of memory data");
     }
     return (
-      data[offset] |
-      (data[offset + 1] << 8) |
-      (data[offset + 2] << 16) |
-      (data[offset + 3] << 24)
-    ) >>> 0;
+      (data[offset] |
+        (data[offset + 1] << 8) |
+        (data[offset + 2] << 16) |
+        (data[offset + 3] << 24)) >>>
+      0
+    );
   }
 
   /**
@@ -270,9 +293,9 @@ export class MemoryParser {
    */
   static readHalfword(data: Uint8Array, offset: number): number {
     if (offset + 2 > data.length) {
-      throw new Error('Read past end of memory data');
+      throw new Error("Read past end of memory data");
     }
-    return (data[offset] | (data[offset + 1] << 8)) & 0xFFFF;
+    return (data[offset] | (data[offset + 1] << 8)) & 0xffff;
   }
 }
 
@@ -304,8 +327,12 @@ export class StopReplyParser {
       return result as ParseResult<StopReplyDetailed>;
     }
 
-    if (result.data.type !== 'Detailed') {
-      return { success: false, error: 'Not a detailed stop reply', raw: packet };
+    if (result.data.type !== "Detailed") {
+      return {
+        success: false,
+        error: "Not a detailed stop reply",
+        raw: packet,
+      };
     }
 
     return { success: true, data: result.data.data };
@@ -320,8 +347,8 @@ export class StopReplyParser {
       return result as ParseResult<StopReplySimple>;
     }
 
-    if (result.data.type !== 'Simple') {
-      return { success: false, error: 'Not a simple stop reply', raw: packet };
+    if (result.data.type !== "Simple") {
+      return { success: false, error: "Not a simple stop reply", raw: packet };
     }
 
     return { success: true, data: result.data.data };
@@ -332,11 +359,11 @@ export class StopReplyParser {
    */
   static getSignalName(signal: number): string {
     const names: Record<number, string> = {
-      0: 'SIG0',
-      2: 'SIGINT',
-      5: 'SIGTRAP',
-      11: 'SIGSEGV',
-      15: 'SIGTERM',
+      0: "SIG0",
+      2: "SIGINT",
+      5: "SIGTRAP",
+      11: "SIGSEGV",
+      15: "SIGTERM",
     };
     return names[signal] || `SIG${signal}`;
   }
@@ -349,21 +376,33 @@ export class BreakpointParser {
   /**
    * Parse breakpoint insert response
    */
-  static parseInsert(response: string, address: number, type: number): BreakpointResult {
+  static parseInsert(
+    response: string,
+    address: number,
+    type: number,
+  ): BreakpointResult {
     return this.parse(response, address, type);
   }
 
   /**
    * Parse breakpoint remove response
    */
-  static parseRemove(response: string, address: number, type: number): BreakpointResult {
+  static parseRemove(
+    response: string,
+    address: number,
+    type: number,
+  ): BreakpointResult {
     return this.parse(response, address, type);
   }
 
   /**
    * Parse any breakpoint response
    */
-  static parse(response: string, address: number, type: number): BreakpointResult {
+  static parse(
+    response: string,
+    address: number,
+    type: number,
+  ): BreakpointResult {
     try {
       return JSON.parse(parseBreakpointResponse(response, address, type));
     } catch (error) {
@@ -381,11 +420,11 @@ export class BreakpointParser {
    */
   static getTypeName(type: number): string {
     const names: Record<number, string> = {
-      0: 'Software Breakpoint',
-      1: 'Hardware Breakpoint',
-      2: 'Write Watchpoint',
-      3: 'Read Watchpoint',
-      4: 'Access Watchpoint'
+      0: "Software Breakpoint",
+      1: "Hardware Breakpoint",
+      2: "Write Watchpoint",
+      3: "Read Watchpoint",
+      4: "Access Watchpoint",
     };
     return names[type] || `Unknown (${type})`;
   }
@@ -446,7 +485,7 @@ export class RspParser {
    * Auto-detect response type and parse accordingly
    */
   static parse(response: string): {
-    type: 'ok' | 'error' | 'data' | 'stop' | 'monitor' | 'empty';
+    type: "ok" | "error" | "data" | "stop" | "monitor" | "empty";
     data?: unknown;
     error?: string;
   } {
@@ -460,7 +499,7 @@ export class RspParser {
       };
     } catch (error) {
       return {
-        type: 'error',
+        type: "error",
         error: String(error),
       };
     }

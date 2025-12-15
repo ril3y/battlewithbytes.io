@@ -1,0 +1,85 @@
+{
+  "$schema": "../schema/board-v1.schema.json",
+  "id": "sparkfun_thing_plus_nrf52840",
+  "name": "SparkFun Thing Plus - nRF52840",
+  "vendor": "sparkfun",
+  "version": "1.0.0",
+  "description": "Feather-compatible nRF52840 board with Qwiic connector, USB-C, and LiPo charging. Great for BLE projects.",
+  "image": "images/sparkfun/thing_plus_nrf52840.png",
+
+  "chip": {
+    "platform": "nrf",
+    "family": "nrf52",
+    "device": "nrf52840",
+    "architecture": "cortex-m4f"
+  },
+
+  "memory": {
+    "flash": 1048576,
+    "flashAvailable": 835584,
+    "flashNote": "SoftDevice S140 uses 152KB, bootloader uses 48KB",
+    "ram": 262144,
+    "ramAvailable": 243200
+  },
+
+  "build": {
+    "frequency": 64000000,
+    "defines": [
+      "NRF52840_XXAA",
+      "BOARD_SPARKFUN_NRF52840_THING_PLUS",
+      "BSP_DEFINES_ONLY"
+    ],
+    "linkerScript": "nrf52840_s140_v6.ld"
+  },
+
+  "pins": {
+    "ledBuiltin": { "pin": "P0.13", "arduino": 13, "activeLow": false },
+    "ledBlue": { "pin": "P0.07", "activeLow": false },
+    "serial": { "rx": "P1.10", "tx": "P1.03" },
+    "i2c": { "sda": "P0.08", "scl": "P0.11" },
+    "spi": { "mosi": "P0.03", "miso": "P0.28", "sck": "P0.30" },
+    "qwiic": { "sda": "P0.08", "scl": "P0.11" },
+    "adc": ["A0", "A1", "A2", "A3", "A4", "A5"]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "adafruit-nrf52",
+      "variant": "sparkfun_nrf52840_thing_plus",
+      "coreUrl": "https://github.com/adafruit/Adafruit_nRF52_Arduino",
+      "softdevice": "s140_6.1.1",
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_NRF52_ADAFRUIT"
+      ]
+    },
+    "platformio": {
+      "board": "sparkfun_nrf52840_thing_plus",
+      "framework": "arduino"
+    },
+    "native": {
+      "sdk": "nrf5_sdk",
+      "sdkVersion": "17.1.0"
+    }
+  },
+
+  "upload": {
+    "methods": ["uf2", "dfu", "jlink"],
+    "default": "uf2",
+    "bootloader": {
+      "type": "uf2",
+      "familyId": "0xADA52840",
+      "driveLabel": "NRF52BOOT"
+    }
+  },
+
+  "documentation": {
+    "product": "https://www.sparkfun.com/products/15025",
+    "pinout": "https://learn.sparkfun.com/tutorials/nrf52840-development-board-hookup-guide",
+    "schematic": "https://cdn.sparkfun.com/assets/0/a/d/8/d/nRF52840_Thing_Plus_Schematic.pdf",
+    "guide": "https://learn.sparkfun.com/tutorials/nrf52840-development-board-hookup-guide"
+  },
+
+  "features": ["bluetooth", "ble5", "usb-c", "qwiic", "lipo-charger"],
+  "tags": ["sparkfun", "thing-plus", "nrf52840", "qwiic", "bluetooth"]
+}

@@ -1,0 +1,29 @@
+{
+  "vendor": "raspberry_pi",
+  "vendorName": "Raspberry Pi",
+  "platform": "rp2040",
+  "boards": [
+    {
+      "id": "raspberry_pi_pico",
+      "name": "Raspberry Pi Pico",
+      "vendor": "raspberry_pi",
+      "family": "rp2",
+      "path": "rp2040/raspberry_pi/pico.json",
+      "features": [
+        "pio",
+        "dual-core",
+        "usb",
+        "adc",
+        "pwm"
+      ],
+      "tags": [
+        "pico",
+        "rp2040",
+        "raspberry-pi",
+        "beginner",
+        "pio"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}
