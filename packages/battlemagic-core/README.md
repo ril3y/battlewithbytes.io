@@ -28,7 +28,7 @@ pnpm build:dev
 ## Usage
 
 ```typescript
-import { Disassembler } from '@battlewithbytes/battlemagic-core';
+import { Disassembler } from "@battlewithbytes/battlemagic-core";
 
 const disasm = new Disassembler(0x08000000);
 const instructions = disasm.disassemble_thumb(bytes, 100);
@@ -37,6 +37,7 @@ const instructions = disasm.disassemble_thumb(bytes, 100);
 ## Size Optimization
 
 The WASM module is optimized for size:
+
 - LTO enabled
 - Size optimization level `z`
 - Debug symbols stripped

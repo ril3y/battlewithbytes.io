@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useDebounce } from './useDebounce';
-import { useLocalStorage } from './useLocalStorage';
-import type { CalculatorState } from '@/types/tools';
-import type { ToolResult } from '@/types';
+import { useState, useCallback, useMemo } from "react";
+import { useDebounce } from "./useDebounce";
+import { useLocalStorage } from "./useLocalStorage";
+import type { CalculatorState } from "@/types/tools";
+import type { ToolResult } from "@/types";
 
 interface UseCalculatorOptions {
   name: string;
@@ -35,16 +35,19 @@ export function useCalculator({
   autoSave = true,
 }: UseCalculatorOptions): UseCalculatorReturn {
   const storageKey = `calculator-${name}`;
-  
-  const [storedState, setStoredState] = useLocalStorage<CalculatorState>(storageKey, {
-    inputs: initialInputs,
-    outputs: {},
-    errors: {},
-    isValid: false,
-  });
+
+  const [storedState, setStoredState] = useLocalStorage<CalculatorState>(
+    storageKey,
+    {
+      inputs: initialInputs,
+      outputs: {},
+      errors: {},
+      isValid: false,
+    },
+  );
 
   const [inputs, setInputs] = useState<Record<string, string>>(
-    autoSave ? storedState.inputs : initialInputs
+    autoSave ? storedState.inputs : initialInputs,
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCalculating, setIsCalculating] = useState(false);
@@ -59,7 +62,7 @@ export function useCalculator({
     }
 
     setIsCalculating(true);
-    
+
     try {
       // Validate inputs
       if (validate) {
@@ -77,15 +80,18 @@ export function useCalculator({
       // Calculate results
       const results = calculate(debouncedInputs);
       setIsCalculating(false);
-      
+
       // Auto-save if enabled
       if (autoSave) {
         setStoredState({
           inputs: debouncedInputs,
-          outputs: results.reduce((acc, result, index) => {
-            acc[index] = typeof result.value === 'number' ? result.value : 0;
-            return acc;
-          }, {} as Record<string, number>),
+          outputs: results.reduce(
+            (acc, result, index) => {
+              acc[index] = typeof result.value === "number" ? result.value : 0;
+              return acc;
+            },
+            {} as Record<string, number>,
+          ),
           errors: {},
           isValid: true,
         });
@@ -93,7 +99,10 @@ export function useCalculator({
 
       return results;
     } catch (error) {
-      setErrors({ calculation: error instanceof Error ? error.message : 'Calculation error' });
+      setErrors({
+        calculation:
+          error instanceof Error ? error.message : "Calculation error",
+      });
       setIsCalculating(false);
       return [];
     }
@@ -103,18 +112,21 @@ export function useCalculator({
     return Object.keys(errors).length === 0 && outputs.length > 0;
   }, [errors, outputs]);
 
-  const setInput = useCallback((name: string, value: string) => {
-    setInputs(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  }, [errors]);
+  const setInput = useCallback(
+    (name: string, value: string) => {
+      setInputs((prev) => ({ ...prev, [name]: value }));
+
+      // Clear error for this field
+      if (errors[name]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    },
+    [errors],
+  );
 
   const clearInputs = useCallback(() => {
     setInputs(initialInputs);
@@ -124,10 +136,13 @@ export function useCalculator({
   const saveState = useCallback(() => {
     setStoredState({
       inputs,
-      outputs: outputs.reduce((acc, result, index) => {
-        acc[index] = typeof result.value === 'number' ? result.value : 0;
-        return acc;
-      }, {} as Record<string, number>),
+      outputs: outputs.reduce(
+        (acc, result, index) => {
+          acc[index] = typeof result.value === "number" ? result.value : 0;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
       errors,
       isValid,
     });

@@ -1,0 +1,30 @@
+{
+  "vendor": "nordic",
+  "vendorName": "Nordic Semiconductor",
+  "platform": "nrf",
+  "boards": [
+    {
+      "id": "nrf52840_dk",
+      "name": "Nordic nRF52840 DK",
+      "vendor": "nordic",
+      "family": "nrf52",
+      "path": "nrf/nordic/nrf52840_dk.json",
+      "features": [
+        "bluetooth",
+        "ble5",
+        "usb",
+        "nfc",
+        "arduino-shield",
+        "debugger"
+      ],
+      "tags": [
+        "devkit",
+        "nordic",
+        "nrf52840",
+        "official",
+        "debugger"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}

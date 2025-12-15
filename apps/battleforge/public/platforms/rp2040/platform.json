@@ -1,0 +1,10 @@
+{
+  "id": "rp2040",
+  "name": "RP2040",
+  "vendor": "Raspberry Pi",
+  "description": "Dual-core ARM Cortex-M0+ with programmable I/O",
+  "icon": "rp2040",
+  "color": "#C51A4A",
+  "website": "https://www.raspberrypi.com/products/rp2040/",
+  "families": ["rp2"]
+}

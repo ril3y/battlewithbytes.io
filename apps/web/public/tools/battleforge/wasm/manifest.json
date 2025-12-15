@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-13",
+  "baseUrl": "/tools/battleforge/wasm",
+  "compilers": [
+    {
+      "id": "clang-arm",
+      "name": "Clang ARM",
+      "description": "ARM Cortex-M compiler for STM32, nRF52, RP2040, and other ARM-based microcontrollers",
+      "version": "18.1.0",
+      "files": {
+        "wasm": "clang_arm/clang-arm.wasm.gz",
+        "js": "clang_arm/clang.js"
+      },
+      "size": 23115439,
+      "hash": "sha256:ca67fe80d2a9d3247de8c846e25d6ffc6c169e05bc52b5ca33d595e120579175",
+      "architectures": [
+        "cortex-m0",
+        "cortex-m0+",
+        "cortex-m3",
+        "cortex-m4",
+        "cortex-m4f",
+        "cortex-m7",
+        "cortex-m7f",
+        "cortex-m33"
+      ]
+    },
+    {
+      "id": "clang-riscv",
+      "name": "Clang RISC-V",
+      "description": "RISC-V compiler for ESP32-C3, ESP32-C6, ESP32-H2, and other RISC-V microcontrollers",
+      "version": "19.0.0",
+      "files": {
+        "wasm": "clang_riscv/clang-riscv.wasm.gz",
+        "js": "clang_riscv/clang.js"
+      },
+      "size": 15868309,
+      "hash": "sha256:4a93f73c762a93554217e2c3253a8403ceee429267ecb4cd45d689c3d1dc5be0",
+      "architectures": [
+        "riscv32"
+      ]
+    },
+    {
+      "id": "clang-xtensa",
+      "name": "Clang Xtensa",
+      "description": "Xtensa compiler for ESP32, ESP32-S2, ESP32-S3 (built from Espressif LLVM fork)",
+      "version": "18.1.0-esp",
+      "files": {
+        "wasm": "clang_xtensa/clang-xtensa.wasm.gz",
+        "js": "clang_xtensa/clang.js"
+      },
+      "size": 0,
+      "hash": "sha256:pending",
+      "architectures": [
+        "xtensa-lx6",
+        "xtensa-lx7"
+      ],
+      "status": "coming_soon"
+    }
+  ],
+  "linkers": [
+    {
+      "id": "lld-arm",
+      "name": "LLD ARM",
+      "version": "18.1.0",
+      "files": {
+        "wasm": "clang_arm/lld.wasm",
+        "js": "clang_arm/lld.js"
+      },
+      "size": 26588320,
+      "hash": "sha256:pending"
+    }
+  ]
+}

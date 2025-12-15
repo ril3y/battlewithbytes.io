@@ -1,7 +1,8 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
-export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextAreaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helpText?: string;
@@ -9,13 +10,14 @@ export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 
 const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ className, label, error, helpText, id, ...props }, ref) => {
-    const textareaId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
-    
+    const textareaId =
+      id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
+
     return (
       <div className="w-full">
         {label && (
-          <label 
-            htmlFor={textareaId} 
+          <label
+            htmlFor={textareaId}
             className="block text-sm font-medium mb-2 font-mono text-green-400"
           >
             {label}
@@ -24,13 +26,13 @@ const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         <textarea
           id={textareaId}
           className={cn(
-            'w-full px-4 py-3 bg-gray-900/70 border border-gray-700',
-            'focus:border-green-400 focus:ring-1 focus:ring-green-400',
-            'rounded-md shadow-sm font-mono text-white',
-            'placeholder:text-gray-500 resize-vertical',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-            className
+            "w-full px-4 py-3 bg-gray-900/70 border border-gray-700",
+            "focus:border-green-400 focus:ring-1 focus:ring-green-400",
+            "rounded-md shadow-sm font-mono text-white",
+            "placeholder:text-gray-500 resize-vertical",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+            className,
           )}
           ref={ref}
           {...props}
@@ -43,9 +45,9 @@ const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-TextArea.displayName = 'TextArea';
+TextArea.displayName = "TextArea";
 
 export { TextArea };

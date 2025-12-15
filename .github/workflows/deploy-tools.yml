@@ -1,0 +1,179 @@
+name: Build and Deploy Tools
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - 'apps/battleterm/**'
+      - 'apps/ucan/**'
+      - 'apps/battleforge/**'
+      - 'apps/battlemagic/**'
+      - 'apps/mosfet-calculator/**'
+      - 'apps/ohms-law-calculator/**'
+      - 'apps/wirewizard/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to deploy (or "all" for all apps)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - battleterm
+          - ucan
+          - battleforge
+          - battlemagic
+          - mosfet-calculator
+          - ohms-law-calculator
+          - wirewizard
+
+concurrency:
+  group: "tools-deploy"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - battleterm
+          - ucan
+          - battleforge
+          - battlemagic
+          - mosfet-calculator
+          - ohms-law-calculator
+          - wirewizard
+    steps:
+      - name: Check if app should be built
+        id: should-build
+        run: |
+          if [ "${{ github.event.inputs.app }}" = "" ] || [ "${{ github.event.inputs.app }}" = "all" ] || [ "${{ github.event.inputs.app }}" = "${{ matrix.app }}" ]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+          else
+            echo "build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        if: steps.should-build.outputs.build == 'true'
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+
+      - name: Setup Node.js
+        if: steps.should-build.outputs.build == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.10.0"
+
+      - name: Setup pnpm
+        if: steps.should-build.outputs.build == 'true'
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.14.4
+          run_install: false
+
+      - name: Enable Corepack
+        if: steps.should-build.outputs.build == 'true'
+        run: corepack enable
+
+      - name: Get pnpm store directory
+        if: steps.should-build.outputs.build == 'true'
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        if: steps.should-build.outputs.build == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Setup Turbo cache
+        if: steps.should-build.outputs.build == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ matrix.app }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-${{ matrix.app }}-
+
+      - name: Install dependencies
+        if: steps.should-build.outputs.build == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.app }}
+        if: steps.should-build.outputs.build == 'true'
+        run: |
+          if [ "${{ matrix.app }}" = "battleterm" ]; then
+            pnpm run build --filter=@battlewithbytes/battleterm-app
+          else
+            pnpm run build --filter=@battlewithbytes/${{ matrix.app }}
+          fi
+        env:
+          TURBO_CACHE_DIR: .turbo
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Upload ${{ matrix.app }} artifact
+        if: steps.should-build.outputs.build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-deployment
+          path: ./apps/${{ matrix.app }}/out
+          retention-days: 30
+
+  # Placeholder jobs for deploying to different platforms
+  # These can be customized based on your deployment needs
+
+  prepare-vercel:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./deployments
+
+      - name: List deployments ready for Vercel
+        run: |
+          echo "The following apps are ready for deployment to Vercel:"
+          ls -la ./deployments/
+          echo ""
+          echo "To deploy to Vercel, use the Vercel CLI with these artifacts:"
+          echo "vercel --prod --prebuilt --cwd ./deployments/<app-name>-deployment"
+
+  prepare-cloudflare:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./deployments
+
+      - name: List deployments ready for Cloudflare Pages
+        run: |
+          echo "The following apps are ready for deployment to Cloudflare Pages:"
+          ls -la ./deployments/
+          echo ""
+          echo "To deploy to Cloudflare Pages, use wrangler:"
+          echo "wrangler pages deploy ./deployments/<app-name>-deployment --project-name=<subdomain>"
+          echo ""
+          echo "Subdomain mappings:"
+          echo "  battleterm.battlewithbytes.io → battleterm-deployment"
+          echo "  ucan.battlewithbytes.io → ucan-deployment"
+          echo "  battleforge.battlewithbytes.io → battleforge-deployment"
+          echo "  battlemagic.battlewithbytes.io → battlemagic-deployment"
+          echo "  mosfet-calculator.battlewithbytes.io → mosfet-calculator-deployment"
+          echo "  ohms-law-calculator.battlewithbytes.io → ohms-law-calculator-deployment"
+          echo "  wirewizard.battlewithbytes.io → wirewizard-deployment"

@@ -1,0 +1,95 @@
+{
+  "$schema": "../../../schema/platform-v1.schema.json",
+  "platform": "nrf",
+  "family": "nrf52",
+  "name": "Nordic nRF52 Series",
+  "description": "Nordic Semiconductor nRF52 Bluetooth Low Energy SoCs",
+  "architecture": "cortex-m4f",
+  "version": "1.0.0",
+
+  "headers": {
+    "url": "/platforms/nrf/nrf52/headers.tar.gz",
+    "hash": null,
+    "includes": [
+      "cmsis",
+      "nrf52"
+    ]
+  },
+
+  "devices": [
+    {
+      "id": "nrf52832",
+      "name": "nRF52832",
+      "flash": 524288,
+      "ram": 65536,
+      "frequency": 64000000,
+      "defines": ["NRF52832_XXAA", "NRF52_SERIES"],
+      "linkerScript": "nrf52832_xxaa.ld"
+    },
+    {
+      "id": "nrf52840",
+      "name": "nRF52840",
+      "flash": 1048576,
+      "ram": 262144,
+      "frequency": 64000000,
+      "defines": ["NRF52840_XXAA", "NRF52_SERIES"],
+      "linkerScript": "nrf52840_xxaa.ld"
+    }
+  ],
+
+  "softdevices": [
+    {
+      "id": "s132",
+      "name": "S132 SoftDevice",
+      "version": "7.3.0",
+      "devices": ["nrf52832"],
+      "flashUsed": 155648,
+      "ramUsed": 5632,
+      "linkerScript": "nrf52832_s132.ld"
+    },
+    {
+      "id": "s140",
+      "name": "S140 SoftDevice",
+      "version": "6.1.1",
+      "devices": ["nrf52840"],
+      "flashUsed": 155648,
+      "ramUsed": 5632,
+      "linkerScript": "nrf52840_s140.ld"
+    }
+  ],
+
+  "build": {
+    "compilerFlags": [
+      "-mcpu=cortex-m4",
+      "-mthumb",
+      "-mfloat-abi=hard",
+      "-mfpu=fpv4-sp-d16"
+    ],
+    "linkerFlags": [
+      "-mcpu=cortex-m4",
+      "-mthumb",
+      "-mfloat-abi=hard",
+      "-mfpu=fpv4-sp-d16",
+      "--specs=nano.specs",
+      "--specs=nosys.specs"
+    ],
+    "defines": [
+      "NRF52_SERIES"
+    ]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "adafruit-nrf52",
+      "coreUrl": "https://github.com/adafruit/Adafruit_nRF52_Arduino",
+      "packageIndex": "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json"
+    },
+    "zephyr": {
+      "board": "nrf52840dk_nrf52840"
+    },
+    "native": {
+      "sdk": "nrf5_sdk",
+      "sdkVersion": "17.1.0"
+    }
+  }
+}

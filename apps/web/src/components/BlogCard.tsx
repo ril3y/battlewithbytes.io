@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 interface BlogCardProps {
   post: {
@@ -22,9 +22,9 @@ export default function BlogCard({ post, formattedDate }: BlogCardProps) {
     <Link
       href={`/blog/${post.slug}`}
       className="no-underline hover:no-underline text-decoration-none decoration-none group bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1 block focus:outline-none focus:ring-2 focus:ring-green-400"
-      style={{ textDecoration: 'none' }}
+      style={{ textDecoration: "none" }}
       tabIndex={0}
-      aria-label={post.title || 'Blog post'}
+      aria-label={post.title || "Blog post"}
     >
       {post.coverImage ? (
         <div className="relative w-full h-56 md:h-64 overflow-hidden border-b border-gray-800">
@@ -51,18 +51,21 @@ export default function BlogCard({ post, formattedDate }: BlogCardProps) {
           </div>
         )}
         {/* Title section */}
-        <h2 className="text-xl font-bold mb-3" style={{ textDecoration: 'none' }}>
+        <h2
+          className="text-xl font-bold mb-3"
+          style={{ textDecoration: "none" }}
+        >
           {post.title || "Untitled Post"}
         </h2>
         {/* Excerpt section */}
         {post.excerpt && (
-          <p className="text-gray-400 mb-4 line-clamp-3">
-            {post.excerpt}
-          </p>
+          <p className="text-gray-400 mb-4 line-clamp-3">{post.excerpt}</p>
         )}
         {/* Author and date section */}
         <div className="flex justify-between items-center text-sm text-gray-500">
-          <span style={{ textDecoration: 'none' }}>{post.author || "Anonymous"}</span>
+          <span style={{ textDecoration: "none" }}>
+            {post.author || "Anonymous"}
+          </span>
           <time dateTime={post.date || ""}>{formattedDate}</time>
         </div>
       </div>
@@ -76,7 +79,7 @@ function TagButton({ tag }: { tag: string }) {
     <button
       type="button"
       className="no-underline hover:no-underline text-decoration-none decoration-none bg-gray-800 text-green-400 px-2 py-1 rounded-full text-xs font-mono hover:bg-gray-700 transition-colors"
-      style={{ textDecoration: 'none' }}
+      style={{ textDecoration: "none" }}
       onClick={(e) => {
         e.stopPropagation();
         router.push(`/blog/tag/${tag}`);

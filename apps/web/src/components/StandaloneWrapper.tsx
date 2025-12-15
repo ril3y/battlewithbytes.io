@@ -1,27 +1,41 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Navigation from './Navigation';
-import Footer from './Footer';
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import Navigation from "./Navigation";
+import Footer from "./Footer";
 
 /**
  * Wrapper component that conditionally shows Navigation and Footer
  * based on whether the app is running in PWA standalone mode or on specific routes
  */
-export default function StandaloneWrapper({ children }: { children: React.ReactNode }) {
+export default function StandaloneWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isStandalone, setIsStandalone] = useState(false);
   const pathname = usePathname();
 
   // Routes that should be full-screen without navigation/footer
-  const fullscreenRoutes = ['/tools/ucan', '/tools/battlemagic'];
-  const isFullscreenRoute = fullscreenRoutes.some(route => pathname?.startsWith(route));
+  const fullscreenRoutes = [
+    "/tools/ucan",
+    "/tools/battlemagic",
+    "/tools/battleforge",
+  ];
+  const isFullscreenRoute = fullscreenRoutes.some((route) =>
+    pathname?.startsWith(route),
+  );
 
   useEffect(() => {
     // Check if running in standalone mode (PWA)
-    const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = 'standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone;
-    const isAndroidApp = document.referrer.includes('android-app://');
+    const isDisplayStandalone = window.matchMedia(
+      "(display-mode: standalone)",
+    ).matches;
+    const isIOSStandalone =
+      "standalone" in window.navigator &&
+      (window.navigator as { standalone?: boolean }).standalone;
+    const isAndroidApp = document.referrer.includes("android-app://");
 
     const standalone = isDisplayStandalone || isIOSStandalone || isAndroidApp;
     setIsStandalone(standalone);
@@ -33,7 +47,7 @@ export default function StandaloneWrapper({ children }: { children: React.ReactN
   return (
     <>
       {!shouldHideNavigation && <Navigation />}
-      <div className={shouldHideNavigation ? 'flex-grow' : 'pt-16 flex-grow'}>
+      <div className={shouldHideNavigation ? "flex-grow" : "pt-16 flex-grow"}>
         {children}
       </div>
       {!shouldHideNavigation && <Footer />}

@@ -5,6 +5,7 @@ High-performance Rust-based binary analysis module that builds comprehensive cro
 ## Features
 
 ### Core Analysis
+
 - **Complete Xref Database**: Analyzes entire binary to build cross-reference database
 - **Fast Analysis**: Processes 128KB binaries in < 100ms
 - **Cross-Reference Types**:
@@ -19,7 +20,9 @@ High-performance Rust-based binary analysis module that builds comprehensive cro
 ### New in v2.0: Advanced Analysis
 
 #### 1. Argument Analysis
+
 Automatically detects and tracks function arguments at call sites:
+
 - Tracks values passed in registers (r0-r3 for ARM AAPCS)
 - Analyzes stack arguments for functions with > 4 parameters
 - Supports immediate values, PC-relative loads, register copies
@@ -27,7 +30,9 @@ Automatically detects and tracks function arguments at call sites:
 - Provides structured annotations for each function call
 
 #### 2. Vector Table Detection
+
 Parses ARM Cortex-M vector tables to identify interrupt handlers:
+
 - Validates all vector table entries (Initial SP, Reset, exceptions, IRQs)
 - Checks Thumb bit and address bounds for each handler
 - Auto-creates symbols for valid interrupt handlers
@@ -35,7 +40,9 @@ Parses ARM Cortex-M vector tables to identify interrupt handlers:
 - Exports handler names and addresses for UI integration
 
 #### 3. Control Flow Graph Analysis
+
 Advanced CFG analysis with loop detection:
+
 - Builds complete control flow graphs for functions
 - Detects natural loops using dominator analysis
 - Identifies loop headers and back edges
@@ -43,7 +50,9 @@ Advanced CFG analysis with loop detection:
 - Optimized dominator tree computation
 
 #### 4. Function Analysis
+
 Enhanced function detection and metadata:
+
 - Detects function boundaries from call xrefs
 - Tracks caller/callee relationships
 - Calculates function complexity metrics
@@ -51,7 +60,9 @@ Enhanced function detection and metadata:
 - Identifies local variables on stack
 
 #### 5. Database Persistence
+
 IDA Pro-style database for persistent analysis:
+
 - Schema versioning with automatic migrations
 - Stores functions, comments, xrefs, symbols
 - Supports multiple comment types (standard, repeatable, anterior, block)
@@ -91,6 +102,7 @@ wasm-pack build --release --target web
 ```
 
 This generates the `pkg/` directory with:
+
 - `battlemagic_analyzer_bg.wasm` - Compiled WebAssembly module
 - `battlemagic_analyzer.js` - JavaScript bindings
 - `battlemagic_analyzer.d.ts` - TypeScript type definitions
@@ -101,6 +113,7 @@ This generates the `pkg/` directory with:
 The project includes two optimized build profiles:
 
 **Release Profile** (Cargo.toml):
+
 - Size optimization (`opt-level = "z"`)
 - Link-time optimization (LTO)
 - Symbol stripping
@@ -108,6 +121,7 @@ The project includes two optimized build profiles:
 - Target binary size: ~20-30KB
 
 **Dev Profile**:
+
 - Fast compilation
 - No optimizations
 - Useful for development/testing
@@ -117,7 +131,7 @@ The project includes two optimized build profiles:
 ### JavaScript/TypeScript Integration
 
 ```typescript
-import init, { BinaryAnalyzer } from './pkg/battlemagic_analyzer.js';
+import init, { BinaryAnalyzer } from "./pkg/battlemagic_analyzer.js";
 
 // Initialize WASM module
 await init();
@@ -130,14 +144,14 @@ const disasmData = [
   {
     address: 0x8000,
     bytes: [0x00, 0x48, 0x00, 0x47],
-    mnemonic: 'bl',
-    operands: '#0x8100'
+    mnemonic: "bl",
+    operands: "#0x8100",
   },
   {
     address: 0x8004,
     bytes: [0x01, 0x20],
-    mnemonic: 'b.eq',
-    operands: '#0x8200'
+    mnemonic: "b.eq",
+    operands: "#0x8200",
   },
   // ... more instructions
 ];
@@ -152,14 +166,18 @@ console.log(`${results.unique_targets} unique target addresses`);
 
 // Query xrefs to specific address
 const xrefsTo = analyzer.get_xrefs_to(0x8100);
-xrefsTo.xrefs.forEach(xref => {
-  console.log(`0x${xref.from_addr.toString(16)}: ${xref.instruction} -> 0x${xref.to_addr.toString(16)}`);
+xrefsTo.xrefs.forEach((xref) => {
+  console.log(
+    `0x${xref.from_addr.toString(16)}: ${xref.instruction} -> 0x${xref.to_addr.toString(16)}`,
+  );
 });
 
 // Query xrefs from specific address
 const xrefsFrom = analyzer.get_xrefs_from(0x8000);
-xrefsFrom.xrefs.forEach(xref => {
-  console.log(`${xref.instruction}: 0x${xref.from_addr.toString(16)} -> 0x${xref.to_addr.toString(16)}`);
+xrefsFrom.xrefs.forEach((xref) => {
+  console.log(
+    `${xref.instruction}: 0x${xref.from_addr.toString(16)} -> 0x${xref.to_addr.toString(16)}`,
+  );
 });
 
 // Check analysis status
@@ -221,7 +239,7 @@ const results = analyzer.analyze_from_bytes_with_progress(
     console.log(`${stage}: ${progress}%`);
     // Update UI progress bar
     updateProgressBar(progress);
-  }
+  },
 );
 
 // Progress updates:
@@ -237,10 +255,10 @@ const results = analyzer.analyze_from_bytes_with_progress(
 ```typescript
 // Export complete analysis database
 const json = analyzer.export_database();
-localStorage.setItem('analysis', json);
+localStorage.setItem("analysis", json);
 
 // Import previously saved database
-const savedJson = localStorage.getItem('analysis');
+const savedJson = localStorage.getItem("analysis");
 analyzer.import_database(savedJson);
 
 // Get database statistics
@@ -256,9 +274,9 @@ console.log(`  - ${stats.vector_table_size} vector entries`);
 
 ```typescript
 // Add comments to specific addresses
-analyzer.add_comment(0x08000100, 'Initialize UART peripheral', 'standard');
-analyzer.add_comment(0x08002000, 'Main application loop', 'block');
-analyzer.add_comment(0x08003000, 'Calculate CRC32 checksum', 'repeatable');
+analyzer.add_comment(0x08000100, "Initialize UART peripheral", "standard");
+analyzer.add_comment(0x08002000, "Main application loop", "block");
+analyzer.add_comment(0x08003000, "Calculate CRC32 checksum", "repeatable");
 
 // Get comment at address
 const comment = analyzer.get_comment(0x08000100);
@@ -276,7 +294,7 @@ The module exports TypeScript-compatible types:
 interface CrossReference {
   from_addr: number;
   to_addr: number;
-  xref_type: 'Call' | 'Branch' | 'ConditionalBranch' | 'DataRead' | 'DataWrite';
+  xref_type: "Call" | "Branch" | "ConditionalBranch" | "DataRead" | "DataWrite";
   instruction: string;
   operands: string;
 }
@@ -321,8 +339,8 @@ Or add to package.json:
 Create `apps/web/src/app/tools/battlemagic/lib/hooks/useBinaryAnalyzer.ts`:
 
 ```typescript
-import { useEffect, useState } from 'react';
-import init, { BinaryAnalyzer } from 'battlemagic-analyzer';
+import { useEffect, useState } from "react";
+import init, { BinaryAnalyzer } from "battlemagic-analyzer";
 
 export function useBinaryAnalyzer(baseAddress: number = 0x8000) {
   const [analyzer, setAnalyzer] = useState<BinaryAnalyzer | null>(null);
@@ -382,6 +400,7 @@ function DisassemblyView() {
 Expected performance on 128KB ARM Cortex-M binary:
 
 ### Analysis Speed (128KB firmware)
+
 - **Instruction Decoding**: 20-30ms
 - **Xref Database Build**: 30-50ms
 - **Function Analysis**: 10-20ms
@@ -391,6 +410,7 @@ Expected performance on 128KB ARM Cortex-M binary:
 - **Total Analysis Time**: 80-135ms
 
 ### Memory Usage
+
 - **WASM Module Size**: ~35KB (gzipped: ~12KB)
 - **Peak Memory Usage**: ~3MB
 - **Per-Xref Overhead**: ~80 bytes
@@ -398,6 +418,7 @@ Expected performance on 128KB ARM Cortex-M binary:
 - **Per-Annotation Overhead**: ~40 bytes
 
 ### Typical Results (128KB firmware)
+
 - **Instructions Decoded**: 20,000-30,000
 - **Cross-References**: 1,500-5,000
 - **Functions Detected**: 100-500
@@ -406,6 +427,7 @@ Expected performance on 128KB ARM Cortex-M binary:
 - **Loops Detected**: 50-200
 
 ### Performance Optimizations
+
 - Zero-copy instruction parsing
 - Indexed xref lookups (O(1) average case)
 - Lazy CFG computation (only when needed)
@@ -486,12 +508,14 @@ wasm-pack build --release --target web -- --features console_error_panic_hook
 ## Size Optimization Tips
 
 Current optimizations applied:
+
 - Link-time optimization (LTO)
 - Size-focused optimization (`opt-level = "z"`)
 - Symbol stripping
 - Panic unwinding removed
 
 Further optimizations:
+
 - Use `wasm-opt` from binaryen toolkit:
   ```bash
   wasm-opt -Oz -o pkg/battlemagic_analyzer_bg_opt.wasm pkg/battlemagic_analyzer_bg.wasm

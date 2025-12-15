@@ -1,0 +1,59 @@
+{
+  "$schema": "../../../schema/platform-v1.schema.json",
+  "platform": "rp2040",
+  "family": "rp2",
+  "name": "RP2040 Series",
+  "description": "Raspberry Pi RP2040 dual-core Cortex-M0+ with PIO",
+  "architecture": "cortex-m0+",
+  "version": "1.0.0",
+
+  "headers": {
+    "url": "/platforms/rp2040/rp2/headers.tar.gz",
+    "hash": null,
+    "includes": [
+      "cmsis",
+      "rp2040"
+    ]
+  },
+
+  "devices": [
+    {
+      "id": "rp2040",
+      "name": "RP2040",
+      "flash": 2097152,
+      "ram": 270336,
+      "frequency": 133000000,
+      "defines": ["RP2040", "PICO_BUILD"],
+      "linkerScript": "memmap_default.ld"
+    }
+  ],
+
+  "build": {
+    "compilerFlags": [
+      "-mcpu=cortex-m0plus",
+      "-mthumb",
+      "-mfloat-abi=soft"
+    ],
+    "linkerFlags": [
+      "-mcpu=cortex-m0plus",
+      "-mthumb",
+      "--specs=nano.specs",
+      "--specs=nosys.specs"
+    ],
+    "defines": [
+      "PICO_BUILD"
+    ]
+  },
+
+  "frameworks": {
+    "arduino": {
+      "core": "arduino-pico",
+      "coreUrl": "https://github.com/earlephilhower/arduino-pico",
+      "packageIndex": "https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json"
+    },
+    "native": {
+      "sdk": "pico-sdk",
+      "sdkVersion": "1.5.1"
+    }
+  }
+}

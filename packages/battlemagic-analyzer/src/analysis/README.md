@@ -17,11 +17,13 @@ All analysis algorithms are architecture-agnostic and query architecture-specifi
 ## Modules
 
 ### `functions.rs`
+
 Function boundary detection and call graph construction.
 
 **Key Type:** `FunctionDetector<A: Architecture>`
 
 **Features:**
+
 - Detects function entry points from prologue patterns (push {lr})
 - Identifies function exits from epilogue patterns (pop {pc}, bx lr)
 - Finds call targets from cross-references
@@ -29,6 +31,7 @@ Function boundary detection and call graph construction.
 - Assigns function end addresses
 
 **Example:**
+
 ```rust
 use battlemagic_analyzer::analysis::FunctionDetector;
 use battlemagic_analyzer::arch::arm::ArmArchitecture;
@@ -44,11 +47,13 @@ for (addr, func) in &functions {
 ```
 
 ### `stack_analysis.rs`
+
 Stack frame analysis and local variable tracking.
 
 **Key Type:** `StackAnalyzer`
 
 **Features:**
+
 - Detects stack allocation (sub sp, sp, #N)
 - Tracks stack stores/loads (str/ldr with [sp, #offset])
 - Identifies saved registers vs local variables
@@ -56,6 +61,7 @@ Stack frame analysis and local variable tracking.
 - Tracks read/write access patterns
 
 **Example:**
+
 ```rust
 use battlemagic_analyzer::analysis::StackAnalyzer;
 
@@ -70,20 +76,24 @@ for var in &function.stack_vars {
 ```
 
 ### `calling_convention.rs`
+
 Calling convention detection and argument tracking.
 
 **Key Type:** `CallingConvention` trait
 
 **Implementations:**
+
 - `ArmCallingConvention` - ARM AAPCS (r0-r3 for args, r0 for return)
 
 **Features:**
+
 - Detects arguments passed to function calls
 - Tracks register assignments before calls
 - Identifies stack-passed arguments
 - Architecture-specific calling conventions
 
 **Example:**
+
 ```rust
 use battlemagic_analyzer::analysis::{ArmCallingConvention, CallingConvention};
 
@@ -98,6 +108,7 @@ for (arg_num, location) in &args {
 ## Types Added to `types.rs`
 
 ### `StackAccessType`
+
 ```rust
 pub enum StackAccessType {
     Read,      // Variable is read from
@@ -107,6 +118,7 @@ pub enum StackAccessType {
 ```
 
 ### `StackVariable`
+
 ```rust
 pub struct StackVariable {
     pub function_start: u32,  // Function containing this variable
@@ -117,6 +129,7 @@ pub struct StackVariable {
 ```
 
 ### `ArgAnnotation`
+
 ```rust
 pub struct ArgAnnotation {
     pub call_address: u32,     // Address of the call instruction
@@ -126,6 +139,7 @@ pub struct ArgAnnotation {
 ```
 
 ### `FunctionInfo`
+
 ```rust
 pub struct FunctionInfo {
     pub start_address: u32,
@@ -143,13 +157,17 @@ pub struct FunctionInfo {
 ## Design Principles
 
 ### 1. Modularity
+
 Each analysis component is independent with clear interfaces:
+
 - `FunctionDetector` - Finds function boundaries
 - `StackAnalyzer` - Analyzes stack usage
 - `CallingConvention` - Detects calling patterns
 
 ### 2. Testability
+
 All components can be tested in isolation with mock architectures:
+
 ```rust
 struct MockArch;
 impl Architecture for MockArch { ... }
@@ -158,13 +176,16 @@ let detector = FunctionDetector::new(MockArch);
 ```
 
 ### 3. Architecture Independence
+
 All algorithms query arch-specific info via trait methods:
+
 ```rust
 if arch.is_function_start(inst) { ... }
 if arch.is_function_end(inst) { ... }
 ```
 
 ### 4. Efficiency
+
 - O(n) algorithms where possible
 - Single-pass analysis for most operations
 - Minimal memory allocations

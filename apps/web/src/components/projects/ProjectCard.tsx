@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image'; 
-import { ProjectMetadata } from '@/lib/utils/projects'; 
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ProjectMetadata } from "@/lib/utils/projects";
 
 interface ProjectCardProps {
   project: ProjectMetadata;
@@ -14,11 +14,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     <Link
       href={`/projects/${project.slug}`}
       className="bg-gray-900/90 border border-green-500/30 rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-[1.02] hover:shadow-green-500/20 flex flex-col focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
-      style={{ textDecoration: 'none' }}
+      style={{ textDecoration: "none" }}
       aria-label={`View project: ${project.title}`}
     >
       {project.coverImage && (
-        <div className="relative w-full h-48 group"> 
+        <div className="relative w-full h-48 group">
           <Image
             src={project.coverImage}
             alt={`${project.title} cover image`}
@@ -28,15 +28,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           />
           {/* Optional theme overlay - uses green color from the theme */}
           {project.useThemeOverlay !== false && (
-            <div 
+            <div
               className="absolute inset-0 bg-gradient-to-br from-green-900/40 to-gray-900/60 mix-blend-multiply"
               aria-hidden="true"
             />
           )}
         </div>
       )}
-      <div className="p-6 flex-grow relative"> 
-        <h3 className="text-xl font-semibold text-green-400 mb-3 tracking-wide pr-8"> 
+      <div className="p-6 flex-grow relative">
+        <h3 className="text-xl font-semibold text-green-400 mb-3 tracking-wide pr-8">
           {project.title}
         </h3>
         <p className="text-gray-400 text-sm font-mono leading-relaxed">
@@ -49,10 +49,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()} // Prevent Link navigation when clicking icon
             aria-label={`${project.title} GitHub repository`}
-            className="absolute bottom-4 right-4 z-10 p-1 bg-gray-800 bg-opacity-0 rounded-full hover:bg-opacity-25 transition-colors duration-200" 
+            className="absolute bottom-4 right-4 z-10 p-1 bg-gray-800 bg-opacity-0 rounded-full hover:bg-opacity-25 transition-colors duration-200"
           >
             <svg
-              width="24" 
+              width="24"
               height="24"
               fill="currentColor"
               viewBox="0 0 24 24"

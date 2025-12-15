@@ -3,13 +3,17 @@
  * Helper functions for Web Serial API operations
  */
 
-import type { SerialConfig, LineEnding, ParsedSerialData } from './serialTerminal.types';
+import type {
+  SerialConfig,
+  LineEnding,
+  ParsedSerialData,
+} from "./serialTerminal.types";
 
 /**
  * Check if Web Serial API is supported in the browser
  */
 export function isSerialSupported(): boolean {
-  return 'serial' in navigator;
+  return "serial" in navigator;
 }
 
 /**
@@ -17,15 +21,17 @@ export function isSerialSupported(): boolean {
  */
 export async function requestSerialPort(): Promise<SerialPort> {
   if (!isSerialSupported()) {
-    throw new Error('Web Serial API is not supported in this browser. Please use Chrome, Edge, or Opera.');
+    throw new Error(
+      "Web Serial API is not supported in this browser. Please use Chrome, Edge, or Opera.",
+    );
   }
 
   try {
     const port = await navigator.serial.requestPort();
     return port;
   } catch (error) {
-    if (error instanceof Error && error.name === 'NotFoundError') {
-      throw new Error('No port selected');
+    if (error instanceof Error && error.name === "NotFoundError") {
+      throw new Error("No port selected");
     }
     throw error;
   }
@@ -36,7 +42,7 @@ export async function requestSerialPort(): Promise<SerialPort> {
  */
 export async function openSerialPort(
   port: SerialPort,
-  config: SerialConfig
+  config: SerialConfig,
 ): Promise<void> {
   try {
     await port.open({
@@ -45,7 +51,7 @@ export async function openSerialPort(
       stopBits: config.stopBits,
       parity: config.parity,
       flowControl: config.flowControl,
-      bufferSize: config.bufferSize
+      bufferSize: config.bufferSize,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -68,7 +74,7 @@ export async function closeSerialPort(port: SerialPort): Promise<void> {
     }
     await port.close();
   } catch (error) {
-    console.error('Error closing port:', error);
+    console.error("Error closing port:", error);
   }
 }
 
@@ -77,10 +83,10 @@ export async function closeSerialPort(port: SerialPort): Promise<void> {
  */
 export async function writeToPort(
   writer: WritableStreamDefaultWriter<Uint8Array>,
-  data: string | Uint8Array
+  data: string | Uint8Array,
 ): Promise<void> {
   const encoder = new TextEncoder();
-  const bytes = typeof data === 'string' ? encoder.encode(data) : data;
+  const bytes = typeof data === "string" ? encoder.encode(data) : data;
   await writer.write(bytes);
 }
 
@@ -89,15 +95,15 @@ export async function writeToPort(
  */
 export function getLineEndingChars(lineEnding: LineEnding): string {
   switch (lineEnding) {
-    case 'cr':
-      return '\r';
-    case 'lf':
-      return '\n';
-    case 'crlf':
-      return '\r\n';
-    case 'none':
+    case "cr":
+      return "\r";
+    case "lf":
+      return "\n";
+    case "crlf":
+      return "\r\n";
+    case "none":
     default:
-      return '';
+      return "";
   }
 }
 
@@ -107,13 +113,13 @@ export function getLineEndingChars(lineEnding: LineEnding): string {
 export function formatDataForSend(
   data: string,
   lineEnding: LineEnding,
-  asHex: boolean = false
+  asHex: boolean = false,
 ): Uint8Array {
   const encoder = new TextEncoder();
 
   if (asHex) {
     // Parse hex string (e.g., "48 65 6C 6C 6F" or "48656C6C6F")
-    const hexString = data.replace(/\s+/g, '');
+    const hexString = data.replace(/\s+/g, "");
     const bytes = new Uint8Array(hexString.length / 2);
     for (let i = 0; i < hexString.length; i += 2) {
       bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
@@ -128,27 +134,30 @@ export function formatDataForSend(
 /**
  * Parse received serial data
  */
-export function parseSerialData(data: Uint8Array, timestamp?: Date): ParsedSerialData {
-  const decoder = new TextDecoder('utf-8');
+export function parseSerialData(
+  data: Uint8Array,
+  timestamp?: Date,
+): ParsedSerialData {
+  const decoder = new TextDecoder("utf-8");
   const text = decoder.decode(data);
   const hex = Array.from(data)
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join(' ');
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join(" ");
 
   const time = timestamp || new Date();
-  const timestampStr = time.toLocaleTimeString('en-US', {
+  const timestampStr = time.toLocaleTimeString("en-US", {
     hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    fractionalSecondDigits: 3,
   });
 
   return {
     raw: data,
     text,
     hex,
-    timestamp: timestampStr
+    timestamp: timestampStr,
   };
 }
 
@@ -161,26 +170,21 @@ export function bytesToHex(
     uppercase?: boolean;
     separator?: string;
     bytesPerLine?: number;
-  } = {}
+  } = {},
 ): string {
-  const {
-    uppercase = true,
-    separator = ' ',
-    bytesPerLine = 16
-  } = options;
+  const { uppercase = true, separator = " ", bytesPerLine = 16 } = options;
 
-  const hex = Array.from(bytes)
-    .map(byte => {
-      const hexByte = byte.toString(16).padStart(2, '0');
-      return uppercase ? hexByte.toUpperCase() : hexByte;
-    });
+  const hex = Array.from(bytes).map((byte) => {
+    const hexByte = byte.toString(16).padStart(2, "0");
+    return uppercase ? hexByte.toUpperCase() : hexByte;
+  });
 
   if (bytesPerLine && bytesPerLine > 0) {
     const lines: string[] = [];
     for (let i = 0; i < hex.length; i += bytesPerLine) {
       lines.push(hex.slice(i, i + bytesPerLine).join(separator));
     }
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   return hex.join(separator);
@@ -190,9 +194,9 @@ export function bytesToHex(
  * Convert hex string to bytes
  */
 export function hexToBytes(hexString: string): Uint8Array {
-  const cleaned = hexString.replace(/[^0-9a-fA-F]/g, '');
+  const cleaned = hexString.replace(/[^0-9a-fA-F]/g, "");
   if (cleaned.length % 2 !== 0) {
-    throw new Error('Invalid hex string length');
+    throw new Error("Invalid hex string length");
   }
 
   const bytes = new Uint8Array(cleaned.length / 2);
@@ -205,16 +209,19 @@ export function hexToBytes(hexString: string): Uint8Array {
 /**
  * Format bytes as ASCII with non-printable characters replaced
  */
-export function bytesToAscii(bytes: Uint8Array, placeholder: string = '.'): string {
+export function bytesToAscii(
+  bytes: Uint8Array,
+  placeholder: string = ".",
+): string {
   return Array.from(bytes)
-    .map(byte => {
+    .map((byte) => {
       // Printable ASCII range
       if (byte >= 32 && byte <= 126) {
         return String.fromCharCode(byte);
       }
       return placeholder;
     })
-    .join('');
+    .join("");
 }
 
 /**
@@ -223,7 +230,7 @@ export function bytesToAscii(bytes: Uint8Array, placeholder: string = '.'): stri
 export function calculateTransferRate(
   bytes: number,
   startTime: number,
-  endTime: number = Date.now()
+  endTime: number = Date.now(),
 ): number {
   const durationSeconds = (endTime - startTime) / 1000;
   if (durationSeconds <= 0) return 0;
@@ -234,9 +241,9 @@ export function calculateTransferRate(
  * Format bytes to human-readable string
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
 
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ["B", "KB", "MB", "GB"];
   const k = 1024;
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -258,31 +265,31 @@ export function validateSerialConfig(config: Partial<SerialConfig>): string[] {
 
   if (config.baudRate !== undefined) {
     if (config.baudRate <= 0 || !Number.isInteger(config.baudRate)) {
-      errors.push('Baud rate must be a positive integer');
+      errors.push("Baud rate must be a positive integer");
     }
   }
 
   if (config.dataBits !== undefined) {
     if (config.dataBits !== 7 && config.dataBits !== 8) {
-      errors.push('Data bits must be 7 or 8');
+      errors.push("Data bits must be 7 or 8");
     }
   }
 
   if (config.stopBits !== undefined) {
     if (config.stopBits !== 1 && config.stopBits !== 2) {
-      errors.push('Stop bits must be 1 or 2');
+      errors.push("Stop bits must be 1 or 2");
     }
   }
 
   if (config.parity !== undefined) {
-    if (!['none', 'even', 'odd'].includes(config.parity)) {
-      errors.push('Parity must be none, even, or odd');
+    if (!["none", "even", "odd"].includes(config.parity)) {
+      errors.push("Parity must be none, even, or odd");
     }
   }
 
   if (config.flowControl !== undefined) {
-    if (!['none', 'hardware'].includes(config.flowControl)) {
-      errors.push('Flow control must be none or hardware');
+    if (!["none", "hardware"].includes(config.flowControl)) {
+      errors.push("Flow control must be none or hardware");
     }
   }
 
@@ -297,11 +304,11 @@ export function getPortInfo(port: SerialPort): string {
   const parts: string[] = [];
 
   if (info.usbVendorId) {
-    parts.push(`VID: 0x${info.usbVendorId.toString(16).padStart(4, '0')}`);
+    parts.push(`VID: 0x${info.usbVendorId.toString(16).padStart(4, "0")}`);
   }
   if (info.usbProductId) {
-    parts.push(`PID: 0x${info.usbProductId.toString(16).padStart(4, '0')}`);
+    parts.push(`PID: 0x${info.usbProductId.toString(16).padStart(4, "0")}`);
   }
 
-  return parts.length > 0 ? parts.join(', ') : 'Unknown device';
+  return parts.length > 0 ? parts.join(", ") : "Unknown device";
 }

@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://battleforge.battlewithbytes.com/schemas/library-v1.json",
+  "title": "BattleForge Library Definition",
+  "description": "Schema for defining libraries in BattleForge IDE",
+  "type": "object",
+  "required": ["id", "name", "version", "url"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to the JSON schema"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique library identifier (lowercase, underscores only)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable library name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Library version"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the library"
+    },
+    "author": {
+      "type": "string",
+      "description": "Library author or maintainer"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier (e.g., MIT, LGPL-2.1)"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source code repository URL"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to download library archive (relative or absolute)"
+    },
+    "hash": {
+      "type": ["string", "null"],
+      "description": "SHA256 hash for verification (optional)"
+    },
+    "platforms": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Compatible platforms (e.g., stm32, nrf, esp32)"
+    },
+    "architectures": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Compatible architectures (* for all)"
+    },
+    "frameworks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["arduino", "native", "mbed", "zephyr"]
+      },
+      "description": "Compatible frameworks"
+    },
+    "includes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Include directories within the library"
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Source file patterns (glob)"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Library dependencies (other library IDs)"
+    },
+    "configTemplate": {
+      "type": "string",
+      "description": "Configuration header template filename"
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Library categories for organization"
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Searchable keywords"
+    }
+  }
+}

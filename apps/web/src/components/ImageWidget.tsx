@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Image, { ImageProps } from 'next/image';
+import React, { useState, useEffect } from "react";
+import Image, { ImageProps } from "next/image";
 
-interface ImageWidgetProps extends Omit<ImageProps, 'alt'> {
+interface ImageWidgetProps extends Omit<ImageProps, "alt"> {
   alt: string; // Make alt explicitly required
   caption?: string;
   containerClassName?: string; // Optional class for the main wrapper
-  imageClassName?: string;   // Optional class for the Next Image component itself
+  imageClassName?: string; // Optional class for the Next Image component itself
   // Allow any other Next.js ImageProps like priority, quality, fill, sizes, etc.
 }
 
@@ -17,8 +17,8 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
   width,
   height,
   caption,
-  containerClassName = '',
-  imageClassName = '',
+  containerClassName = "",
+  imageClassName = "",
   priority,
   quality,
   fill,
@@ -32,24 +32,42 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         closeLightbox();
       }
     };
     if (isLightboxOpen) {
-      document.body.style.overflow = 'hidden'; // Prevent scrolling when lightbox is open
-      window.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = "hidden"; // Prevent scrolling when lightbox is open
+      window.addEventListener("keydown", handleEsc);
     }
     return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleEsc);
     };
   }, [isLightboxOpen]);
 
   // Determine props for Next Image based on whether `fill` is used
-  const imageProps: ImageProps = fill 
-    ? { src, alt, fill: true, sizes, priority, quality, className: `rounded-lg ${imageClassName}`, ...rest }
-    : { src, alt, width, height, priority, quality, className: `rounded-lg ${imageClassName}`, ...rest };
+  const imageProps: ImageProps = fill
+    ? {
+        src,
+        alt,
+        fill: true,
+        sizes,
+        priority,
+        quality,
+        className: `rounded-lg ${imageClassName}`,
+        ...rest,
+      }
+    : {
+        src,
+        alt,
+        width,
+        height,
+        priority,
+        quality,
+        className: `rounded-lg ${imageClassName}`,
+        ...rest,
+      };
 
   return (
     <div className={`my-6 ${containerClassName}`}>
@@ -59,7 +77,7 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
           onClick={openLightbox}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && openLightbox()}
+          onKeyDown={(e) => e.key === "Enter" && openLightbox()}
           aria-label={`View larger image: ${alt}`}
         >
           <Image {...imageProps} alt={alt} />
@@ -95,9 +113,9 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
             {/* The parent needs position relative and defined dimensions or aspect ratio. */}
             {/* Changed h-auto to flex-1 to allow this container to grow within the flex-col parent */}
             <div className="relative w-full flex-1 overflow-hidden flex justify-center items-center">
-              <Image 
-                src={src} 
-                alt={alt} 
+              <Image
+                src={src}
+                alt={alt}
                 className="object-contain rounded-lg"
                 fill
                 sizes="100vw"
@@ -106,11 +124,16 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
               />
             </div>
             {caption && (
-              <p id="lightbox-caption" className="mt-3 text-base text-center text-gray-200">
+              <p
+                id="lightbox-caption"
+                className="mt-3 text-base text-center text-gray-200"
+              >
                 {caption}
               </p>
             )}
-            <p id="lightbox-image-description" className="sr-only">{alt}</p>
+            <p id="lightbox-image-description" className="sr-only">
+              {alt}
+            </p>
           </div>
         </div>
       )}

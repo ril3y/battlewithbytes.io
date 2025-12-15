@@ -41,7 +41,7 @@ export interface FormState {
   [key: string]: string | number | boolean;
 }
 
-export type FormStatus = 'idle' | 'submitting' | 'success' | 'error';
+export type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export interface ContactFormData {
   name: string;

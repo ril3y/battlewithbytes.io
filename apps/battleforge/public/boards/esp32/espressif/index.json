@@ -1,0 +1,30 @@
+{
+  "vendor": "espressif",
+  "vendorName": "Espressif",
+  "platform": "esp32",
+  "boards": [
+    {
+      "id": "esp32_devkitc",
+      "name": "ESP32-DevKitC",
+      "vendor": "espressif",
+      "family": "esp32",
+      "path": "esp32/espressif/esp32_devkitc.json",
+      "features": [
+        "wifi",
+        "bluetooth",
+        "ble",
+        "dual-core",
+        "touch",
+        "hall-sensor"
+      ],
+      "tags": [
+        "esp32",
+        "wifi",
+        "bluetooth",
+        "iot",
+        "espressif"
+      ],
+      "exampleCount": 0
+    }
+  ]
+}
