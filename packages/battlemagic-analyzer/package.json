@@ -4,6 +4,13 @@
   "description": "WebAssembly-powered binary analysis engine for ARM and MIPS architectures",
   "main": "pkg/battlemagic_analyzer.js",
   "types": "pkg/battlemagic_analyzer.d.ts",
+  "exports": {
+    ".": {
+      "import": "./pkg/battlemagic_analyzer.js",
+      "types": "./pkg/battlemagic_analyzer.d.ts"
+    },
+    "./pkg/*": "./pkg/*"
+  },
   "files": [
     "pkg"
   ],

@@ -41,8 +41,8 @@ let wasmInitialized = false;
 async function initWasm() {
   if (!wasmInitialized) {
     try {
-      // Import the glue code
-      const glueModule = await import("../lib/battlemagic_analyzer_bg.js");
+      // Import the glue code from battlemagic-analyzer package
+      const glueModule = await import("battlemagic-analyzer/pkg/battlemagic_analyzer_bg.js");
 
       // Fetch WASM from public directory
       const response = await fetch(
