@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  basePath: process.env.NODE_ENV === 'production' ? '/tools/battleforge' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/tools/battleforge' : '',
   reactStrictMode: false,
   images: {
     unoptimized: true,

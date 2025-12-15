@@ -117,10 +117,11 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
 
       # Combine all apps into a single directory for GitHub Pages
-      # Structure: / = web, /battleterm = battleterm, etc.
+      # Structure: / = web, /tools/<app> = tool apps
       - name: Prepare combined deployment
         run: |
           mkdir -p _site
+          mkdir -p _site/tools
 
           # Copy web app to root (if built)
           if [ -d "apps/web/out" ]; then
@@ -128,19 +129,19 @@ jobs:
             echo "✓ Added web to /"
           fi
 
-          # Copy other apps to subdirectories (if built)
+          # Copy tool apps to /tools/ subdirectory (if built)
           for app in battleterm battleforge battlemagic ucan wirewizard mosfet-calculator ohms-law-calculator; do
             if [ -d "apps/$app/out" ]; then
-              mkdir -p "_site/$app"
-              cp -r "apps/$app/out/"* "_site/$app/"
-              echo "✓ Added $app to /$app/"
+              mkdir -p "_site/tools/$app"
+              cp -r "apps/$app/out/"* "_site/tools/$app/"
+              echo "✓ Added $app to /tools/$app/"
             fi
           done
 
           # List final structure
           echo ""
           echo "=== Deployment Structure ==="
-          find _site -maxdepth 2 -type d | head -20
+          find _site -maxdepth 3 -type d | head -30
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
