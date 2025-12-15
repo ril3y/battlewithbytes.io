@@ -7,6 +7,7 @@
 
 import type { FrameworkId, Framework } from "../platform/types";
 import { FrameworkCache } from "./FrameworkCache";
+import { withBasePath } from "../utils/basePath";
 
 const cache = new FrameworkCache();
 
@@ -131,7 +132,7 @@ export class FrameworkManager {
 
     // Fetch framework definition from server
     try {
-      const url = `/boards/platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`;
+      const url = withBasePath(`/boards/platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -205,7 +206,7 @@ export class FrameworkManager {
       message: "Downloading framework core files...",
     });
 
-    const response = await fetch(`/boards/platforms/${coreUrl}`);
+    const response = await fetch(withBasePath(`/boards/platforms/${coreUrl}`));
     if (!response.ok) {
       throw new Error(
         `Failed to download framework core files: ${response.status}`,

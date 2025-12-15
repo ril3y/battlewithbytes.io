@@ -14,6 +14,7 @@ import { BoardBrowser } from "./BoardBrowser";
 import { FrameworkSelector } from "./FrameworkSelector";
 import { ExamplePicker } from "./ExamplePicker";
 import { ProjectDetailsForm } from "./ProjectDetailsForm";
+import { withBasePath } from "../../lib/utils/basePath";
 
 interface BoardSelectionWizardProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ export function BoardSelectionWizard({
     try {
       setLoading(true);
       // Load lean registry from submodule
-      const response = await fetch("/boards/registry.json");
+      const response = await fetch(withBasePath("/boards/registry.json"));
       if (!response.ok) throw new Error("Failed to load registry");
       const registry = await response.json();
 
@@ -63,14 +64,14 @@ export function BoardSelectionWizard({
           async (p: { id: string; configPath: string; boardsPath: string }) => {
             try {
               // Load platform config from submodule
-              const configResponse = await fetch(`/boards/${p.configPath}`);
+              const configResponse = await fetch(withBasePath(`/boards/${p.configPath}`));
               if (!configResponse.ok) {
                 throw new Error(`Failed to load platform config: ${p.id}`);
               }
               const config = await configResponse.json();
 
               // Load boards index to get board count
-              const boardsResponse = await fetch(`/boards/${p.boardsPath}`);
+              const boardsResponse = await fetch(withBasePath(`/boards/${p.boardsPath}`));
               let boardCount = 0;
               if (boardsResponse.ok) {
                 const boardsData = await boardsResponse.json();
@@ -122,7 +123,7 @@ export function BoardSelectionWizard({
 
       // Use the indexPath from the platform, or fall back to constructing from id
       const path = indexPath || `${platformId.split("-")[0]}/index.json`;
-      const response = await fetch(`/boards/${path}`);
+      const response = await fetch(withBasePath(`/boards/${path}`));
       if (!response.ok)
         throw new Error(`Failed to load boards for ${platformId}`);
       const data = await response.json();
@@ -170,7 +171,7 @@ export function BoardSelectionWizard({
     try {
       setLoading(true);
       // Load full board manifest
-      const response = await fetch(`/boards/${board.path}`);
+      const response = await fetch(withBasePath(`/boards/${board.path}`));
       if (!response.ok) throw new Error("Failed to load board");
       const manifest: BoardManifest = await response.json();
 

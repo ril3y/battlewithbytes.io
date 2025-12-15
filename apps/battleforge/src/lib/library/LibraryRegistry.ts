@@ -12,9 +12,10 @@ import type {
   PlatformId,
   Architecture,
 } from "./types";
+import { withBasePath } from "../utils/basePath";
 
 // Base URL for library registry (from boards submodule)
-const REGISTRY_BASE = "/boards/libraries";
+const getRegistryBase = () => withBasePath("/boards/libraries");
 
 /**
  * In-memory cache for registry and manifests
@@ -33,7 +34,7 @@ export async function loadRegistry(
   }
 
   try {
-    const response = await fetch(`${REGISTRY_BASE}/registry.json`);
+    const response = await fetch(`${getRegistryBase()}/registry.json`);
 
     if (!response.ok) {
       throw new Error(`Failed to load registry: ${response.status}`);
@@ -65,7 +66,7 @@ export async function loadLibraryManifest(
   }
 
   try {
-    const response = await fetch(`${REGISTRY_BASE}/${libraryId}/library.json`);
+    const response = await fetch(`${getRegistryBase()}/${libraryId}/library.json`);
 
     if (!response.ok) {
       if (response.status === 404) {

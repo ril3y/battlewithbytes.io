@@ -7,6 +7,7 @@
  */
 
 import { HeaderCache } from "./HeaderCache";
+import { withBasePath } from "../utils/basePath";
 
 const cache = new HeaderCache();
 
@@ -244,7 +245,7 @@ export async function loadHeadersFromRegistry(
   onProgress?.({ stage: "checking", message: "Loading platform manifest..." });
 
   // Load manifest directly from known path pattern
-  const manifestUrl = `/boards/platforms/${platformId}/${familyId}/manifest.json`;
+  const manifestUrl = withBasePath(`/boards/platforms/${platformId}/${familyId}/manifest.json`);
   console.log(`[HeaderLoader] Loading manifest from ${manifestUrl}`);
 
   let manifest: { headers?: HeadersConfig } | null = null;
@@ -281,8 +282,8 @@ export async function loadHeadersFromRegistry(
 
   // Legacy: Get header URL from manifest (tar.gz)
   const headerUrl = headersConfig.url?.startsWith("/")
-    ? headersConfig.url
-    : `/boards/${headersConfig.url}`;
+    ? withBasePath(headersConfig.url)
+    : withBasePath(`/boards/${headersConfig.url}`);
 
   const checksum = headersConfig.hash || "unknown";
 

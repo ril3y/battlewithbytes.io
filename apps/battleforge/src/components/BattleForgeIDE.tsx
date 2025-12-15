@@ -34,6 +34,7 @@ import { getLibraryManager } from "../lib/library";
 
 // Types
 import type { SelectedPlatform } from "../lib/platform/types";
+import { withBasePath } from "../lib/utils/basePath";
 
 // Default linker script
 const DEFAULT_LINKER_SCRIPT = `
@@ -394,7 +395,7 @@ function BattleForgeIDEContent() {
 
     try {
       const { family, device } = selectedPlatform;
-      const linkerUrl = `/boards/platforms/${selectedPlatform.platformId}/${family.id}/linker/${device.linkerScript}`;
+      const linkerUrl = withBasePath(`/boards/platforms/${selectedPlatform.platformId}/${family.id}/linker/${device.linkerScript}`);
       const response = await fetch(linkerUrl);
       if (!response.ok) {
         log(

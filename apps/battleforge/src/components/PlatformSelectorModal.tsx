@@ -10,6 +10,7 @@ import type {
   FrameworkSupport,
   FrameworkId,
 } from "../lib/platform/types";
+import { withBasePath } from "../lib/utils/basePath";
 
 interface PlatformSelectorModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export function PlatformSelectorModal({
     setError(null);
     try {
       // Load lean registry from submodule
-      const response = await fetch("/boards/registry.json");
+      const response = await fetch(withBasePath("/boards/registry.json"));
       if (!response.ok) throw new Error("Failed to load platform registry");
       const leanRegistry = await response.json();
 
@@ -106,7 +107,7 @@ export function PlatformSelectorModal({
         (leanRegistry.platforms || []).map(
           async (p: { id: string; configPath: string; boardsPath: string }) => {
             try {
-              const configResponse = await fetch(`/boards/${p.configPath}`);
+              const configResponse = await fetch(withBasePath(`/boards/${p.configPath}`));
               if (!configResponse.ok) {
                 throw new Error(`Failed to load platform config: ${p.id}`);
               }
@@ -158,7 +159,7 @@ export function PlatformSelectorModal({
     // Load frameworks.json for display metadata
     let frameworksData: Record<string, { name: string; description: string; supported: boolean }> = {};
     try {
-      const fwResponse = await fetch("/boards/frameworks.json");
+      const fwResponse = await fetch(withBasePath("/boards/frameworks.json"));
       if (fwResponse.ok) {
         const fwJson = await fwResponse.json();
         frameworksData = fwJson.frameworks || {};
@@ -173,7 +174,7 @@ export function PlatformSelectorModal({
       if (!families.has(cacheKey)) {
         try {
           const response = await fetch(
-            `/boards/platforms/${basePlatform}/${familyId}/manifest.json`,
+            withBasePath(`/boards/platforms/${basePlatform}/${familyId}/manifest.json`),
           );
           if (response.ok) {
             const manifest = await response.json();
