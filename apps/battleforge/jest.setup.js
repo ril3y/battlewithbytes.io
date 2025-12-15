@@ -1,5 +1,29 @@
 require('@testing-library/jest-dom')
 
+// Mock MessagePort and MessageChannel for Web Worker tests
+class MockMessagePort {
+  constructor() {
+    this.onmessage = null;
+    this.onmessageerror = null;
+  }
+  postMessage() {}
+  start() {}
+  close() {}
+  addEventListener() {}
+  removeEventListener() {}
+  dispatchEvent() { return true; }
+}
+
+class MockMessageChannel {
+  constructor() {
+    this.port1 = new MockMessagePort();
+    this.port2 = new MockMessagePort();
+  }
+}
+
+global.MessagePort = global.MessagePort || MockMessagePort;
+global.MessageChannel = global.MessageChannel || MockMessageChannel;
+
 // Mock TextEncoder/TextDecoder for jsdom (must be before undici)
 global.TextEncoder = global.TextEncoder || require('util').TextEncoder
 global.TextDecoder = global.TextDecoder || require('util').TextDecoder
