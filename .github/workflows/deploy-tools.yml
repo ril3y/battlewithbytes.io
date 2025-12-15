@@ -81,6 +81,22 @@ jobs:
         if: steps.should-build.outputs.build == 'true'
         run: corepack enable
 
+      - name: Install Rust toolchain
+        if: steps.should-build.outputs.build == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        if: steps.should-build.outputs.build == 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/battlemagic-core
+
+      - name: Install wasm-pack
+        if: steps.should-build.outputs.build == 'true'
+        run: cargo install wasm-pack
+
       - name: Get pnpm store directory
         if: steps.should-build.outputs.build == 'true'
         id: pnpm-cache
