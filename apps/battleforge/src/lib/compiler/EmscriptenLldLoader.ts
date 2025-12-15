@@ -5,6 +5,8 @@
  * declares global variables that can't be redeclared.
  */
 
+import { getBasePath } from "../utils/basePath";
+
 export interface LldExecutionResult {
   success: boolean;
   exitCode: number;
@@ -57,8 +59,9 @@ export async function executeLld(
     }, 120000);
 
     // Configure Module via inline script injection
-    const baseUrl = window.location.origin;
-    console.log("[EmscriptenLld] Base URL:", baseUrl);
+    const basePath = getBasePath();
+    const baseUrl = window.location.origin + basePath;
+    console.log("[EmscriptenLld] Base URL:", baseUrl, "(basePath:", basePath, ")");
     console.log("[EmscriptenLld] Args:", args);
 
     // First, inject Module configuration as inline script

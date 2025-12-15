@@ -5,7 +5,12 @@
   "vendor": "generic",
   "version": "1.0.0",
   "description": "Popular low-cost STM32F103C8T6 development board. 64KB flash, 20KB RAM, USB, perfect for learning ARM development.",
-  "image": "images/generic/bluepill.png",
+  "image": "https://stm32-base.org/assets/img/boards/STM32F103C8T6_Blue_Pill-1.jpg",
+  "assets": {
+    "image": "https://stm32-base.org/assets/img/boards/STM32F103C8T6_Blue_Pill-1.jpg",
+    "pinout": "https://deepbluembedded.com/wp-content/uploads/2020/06/Bluepillpinout.gif",
+    "thumbnail": "https://stm32-base.org/assets/img/boards/STM32F103C8T6_Blue_Pill-1.jpg"
+  },
 
   "chip": {
     "platform": "stm32",
@@ -74,8 +79,9 @@
   },
 
   "documentation": {
-    "pinout": "https://wiki.stm32duino.com/images/a/ae/Bluepillpinout.gif",
-    "datasheet": "https://www.st.com/resource/en/datasheet/stm32f103c8.pdf"
+    "pinout": "https://deepbluembedded.com/wp-content/uploads/2020/06/Bluepillpinout.gif",
+    "datasheet": "https://www.st.com/resource/en/datasheet/stm32f103c8.pdf",
+    "productPage": "https://stm32-base.org/boards/STM32F103C8T6-Blue-Pill.html"
   },
 
   "features": ["usb", "rtc", "can", "i2c", "spi", "uart"],
