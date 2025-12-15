@@ -5,6 +5,8 @@
  * declares global variables that can't be redeclared.
  */
 
+import { getBasePath } from "../utils/basePath";
+
 export interface LoadProgress {
   stage: "downloading" | "instantiating" | "ready" | "error";
   progress: number;
@@ -66,8 +68,9 @@ export async function executeClang(
     }, 60000);
 
     // Configure Module via inline script injection
-    const baseUrl = window.location.origin;
-    console.log("[EmscriptenClang] Base URL:", baseUrl);
+    const basePath = getBasePath();
+    const baseUrl = window.location.origin + basePath;
+    console.log("[EmscriptenClang] Base URL:", baseUrl, "(basePath:", basePath, ")");
     console.log("[EmscriptenClang] Args:", args);
 
     // First, inject Module configuration as inline script
