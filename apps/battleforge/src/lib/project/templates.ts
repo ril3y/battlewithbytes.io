@@ -25,93 +25,12 @@ const stm32BlinkTemplate: ProjectTemplate = {
  * Uses CMSIS headers for proper register definitions.
  * The onboard LED is connected to PC13 (active low).
  *
- * Select STM32 > F1 > STM32F103C8T6 from the platform selector.
+ * Platform provides: startup.s, system.c (SystemInit)
  */
 
 #include "stm32f1xx.h"
 #include <stdint.h>
 #include "utils.h"  /* Include user library header */
-
-/*===========================================================================
- * Linker symbols (defined in linker script)
- *===========================================================================*/
-extern uint32_t _sidata;    /* Start of .data in FLASH */
-extern uint32_t _sdata;     /* Start of .data in RAM */
-extern uint32_t _edata;     /* End of .data in RAM */
-extern uint32_t _sbss;      /* Start of .bss */
-extern uint32_t _ebss;      /* End of .bss */
-extern uint32_t _estack;    /* Top of stack */
-
-/*===========================================================================
- * Function prototypes
- *===========================================================================*/
-void Reset_Handler(void);
-void Default_Handler(void);
-void NMI_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void MemManage_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void BusFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void UsageFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void SVC_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void DebugMon_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void PendSV_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void SysTick_Handler(void) __attribute__((weak, alias("Default_Handler")));
-
-extern int main(void);
-
-/*===========================================================================
- * Vector Table - placed at start of FLASH (0x08000000)
- *===========================================================================*/
-__attribute__((section(".isr_vector")))
-const uint32_t vector_table[] = {
-    (uint32_t)&_estack,           /* Initial stack pointer */
-    (uint32_t)Reset_Handler,      /* Reset handler */
-    (uint32_t)NMI_Handler,        /* NMI handler */
-    (uint32_t)HardFault_Handler,  /* Hard fault handler */
-    (uint32_t)MemManage_Handler,  /* MPU fault handler */
-    (uint32_t)BusFault_Handler,   /* Bus fault handler */
-    (uint32_t)UsageFault_Handler, /* Usage fault handler */
-    0, 0, 0, 0,                   /* Reserved */
-    (uint32_t)SVC_Handler,        /* SVCall handler */
-    (uint32_t)DebugMon_Handler,   /* Debug monitor handler */
-    0,                            /* Reserved */
-    (uint32_t)PendSV_Handler,     /* PendSV handler */
-    (uint32_t)SysTick_Handler,    /* SysTick handler */
-    /* External interrupts would follow here... */
-};
-
-/*===========================================================================
- * Reset Handler - Entry point after reset
- *===========================================================================*/
-void Reset_Handler(void) {
-    uint32_t *src, *dst;
-
-    /* Copy .data section from FLASH to RAM */
-    src = &_sidata;
-    dst = &_sdata;
-    while (dst < &_edata) {
-        *dst++ = *src++;
-    }
-
-    /* Zero-fill .bss section */
-    dst = &_sbss;
-    while (dst < &_ebss) {
-        *dst++ = 0;
-    }
-
-    /* Call main() */
-    main();
-
-    /* Hang if main returns */
-    while (1) {}
-}
-
-/*===========================================================================
- * Default Handler - Catches unhandled interrupts
- *===========================================================================*/
-void Default_Handler(void) {
-    while (1) {}
-}
 
 /*===========================================================================
  * Main Application
@@ -239,84 +158,12 @@ const stm32UartEchoTemplate: ProjectTemplate = {
  * Echoes characters received on USART1 (PA9=TX, PA10=RX)
  * Baud rate: 115200
  * System clock: 8MHz (HSI)
+ *
+ * Platform provides: startup.s, system.c (SystemInit)
  */
 
 #include "stm32f1xx.h"
 #include <stdint.h>
-
-/*===========================================================================
- * Linker symbols
- *===========================================================================*/
-extern uint32_t _sidata;
-extern uint32_t _sdata;
-extern uint32_t _edata;
-extern uint32_t _sbss;
-extern uint32_t _ebss;
-extern uint32_t _estack;
-
-/*===========================================================================
- * Function prototypes
- *===========================================================================*/
-void Reset_Handler(void);
-void Default_Handler(void);
-void NMI_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void MemManage_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void BusFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void UsageFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void SVC_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void DebugMon_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void PendSV_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void SysTick_Handler(void) __attribute__((weak, alias("Default_Handler")));
-
-extern int main(void);
-
-/*===========================================================================
- * Vector Table
- *===========================================================================*/
-__attribute__((section(".isr_vector")))
-const uint32_t vector_table[] = {
-    (uint32_t)&_estack,
-    (uint32_t)Reset_Handler,
-    (uint32_t)NMI_Handler,
-    (uint32_t)HardFault_Handler,
-    (uint32_t)MemManage_Handler,
-    (uint32_t)BusFault_Handler,
-    (uint32_t)UsageFault_Handler,
-    0, 0, 0, 0,
-    (uint32_t)SVC_Handler,
-    (uint32_t)DebugMon_Handler,
-    0,
-    (uint32_t)PendSV_Handler,
-    (uint32_t)SysTick_Handler,
-};
-
-/*===========================================================================
- * Reset Handler
- *===========================================================================*/
-void Reset_Handler(void) {
-    uint32_t *src = &_sidata;
-    uint32_t *dst = &_sdata;
-
-    while (dst < &_edata) {
-        *dst++ = *src++;
-    }
-
-    dst = &_sbss;
-    while (dst < &_ebss) {
-        *dst++ = 0;
-    }
-
-    main();
-    while (1) {}
-}
-
-/*===========================================================================
- * Default Handler
- *===========================================================================*/
-void Default_Handler(void) {
-    while (1) {}
-}
 
 /*===========================================================================
  * UART Functions
@@ -382,6 +229,117 @@ int main(void) {
 };
 
 /**
+ * STM32 Serial Hello World Template
+ * Simple "Hello World" on USART1 for STM32F103C8T6
+ */
+const stm32SerialHelloTemplate: ProjectTemplate = {
+  id: "stm32-serial-hello",
+  name: "STM32 Serial Hello World",
+  description: "Print 'Hello World' on USART1 (PA9/PA10) at 115200 baud",
+  icon: "👋",
+  framework: "native",
+  platformPreset: {
+    platformId: "stm32",
+    familyId: "f1",
+    deviceId: "stm32f103c8",
+    frameworkId: "native",
+  },
+  files: [
+    {
+      path: "/src/main.c",
+      editable: true,
+      content: `/**
+ * STM32F103C8T6 Serial Hello World
+ * Prints "Hello World" on USART1 (PA9=TX, PA10=RX)
+ * Baud rate: 115200, 8N1
+ * System clock: 8MHz (HSI)
+ *
+ * Connect a USB-Serial adapter:
+ *   PA9 (TX) -> RX on adapter
+ *   PA10 (RX) -> TX on adapter
+ *   GND -> GND
+ *
+ * Platform provides: startup.s, system.c (SystemInit)
+ */
+
+#include "stm32f1xx.h"
+#include <stdint.h>
+
+/*===========================================================================
+ * UART Functions
+ *===========================================================================*/
+static void uart_init(void) {
+    /* Enable GPIOA and USART1 clocks */
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_USART1EN;
+
+    /* Configure PA9 (TX) as alternate function push-pull, 50MHz */
+    GPIOA->CRH &= ~(0xF << 4);
+    GPIOA->CRH |= (0xB << 4);
+
+    /* Configure PA10 (RX) as input floating */
+    GPIOA->CRH &= ~(0xF << 8);
+    GPIOA->CRH |= (0x4 << 8);
+
+    /* 115200 baud @ 8MHz: BRR = 8000000 / 115200 = 69 */
+    USART1->BRR = 69;
+    USART1->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+}
+
+static void uart_putc(char c) {
+    while (!(USART1->SR & USART_SR_TXE));
+    USART1->DR = c;
+}
+
+static void uart_puts(const char *str) {
+    while (*str) {
+        if (*str == '\\n') uart_putc('\\r');
+        uart_putc(*str++);
+    }
+}
+
+static void delay(volatile uint32_t count) {
+    while (count--) __asm__("nop");
+}
+
+/*===========================================================================
+ * Main Application
+ *===========================================================================*/
+int main(void) {
+    uint32_t counter = 0;
+
+    uart_init();
+
+    uart_puts("\\n==============================\\n");
+    uart_puts("  STM32F103 Serial Hello World\\n");
+    uart_puts("==============================\\n\\n");
+
+    while (1) {
+        uart_puts("Hello World! Count: ");
+
+        /* Print counter (simple decimal conversion) */
+        char buf[12];
+        int i = 10;
+        buf[11] = '\\0';
+        uint32_t n = counter++;
+        do {
+            buf[i--] = '0' + (n % 10);
+            n /= 10;
+        } while (n > 0 && i >= 0);
+        uart_puts(&buf[i + 1]);
+
+        uart_puts("\\n");
+
+        delay(500000);  /* ~1 second delay at 8MHz */
+    }
+
+    return 0;
+}
+`,
+    },
+  ],
+};
+
+/**
  * STM32 FreeRTOS Template
  * FreeRTOS example with two tasks for STM32F103C8T6
  */
@@ -406,97 +364,13 @@ const stm32FreeRtosTemplate: ProjectTemplate = {
  * Two tasks blinking the LED at different rates
  *
  * Note: Install FreeRTOS library from the Libraries panel first!
+ * Platform provides: startup.s, system.c (SystemInit)
  */
 
 #include "stm32f1xx.h"
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "task.h"
-
-/*===========================================================================
- * Linker symbols (defined in linker script)
- *===========================================================================*/
-extern uint32_t _sidata;
-extern uint32_t _sdata;
-extern uint32_t _edata;
-extern uint32_t _sbss;
-extern uint32_t _ebss;
-extern uint32_t _estack;
-
-/*===========================================================================
- * FreeRTOS exception handlers (provided by FreeRTOS port)
- *===========================================================================*/
-extern void xPortPendSVHandler(void);
-extern void xPortSysTickHandler(void);
-extern void vPortSVCHandler(void);
-
-/*===========================================================================
- * Function prototypes
- *===========================================================================*/
-void Reset_Handler(void);
-void Default_Handler(void);
-void NMI_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void MemManage_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void BusFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void UsageFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
-
-extern int main(void);
-
-/*===========================================================================
- * Vector Table - placed at start of FLASH (0x08000000)
- * FreeRTOS handlers for SVC, PendSV, and SysTick
- *===========================================================================*/
-__attribute__((section(".isr_vector")))
-const uint32_t vector_table[] = {
-    (uint32_t)&_estack,              /* Initial stack pointer */
-    (uint32_t)Reset_Handler,         /* Reset handler */
-    (uint32_t)NMI_Handler,           /* NMI handler */
-    (uint32_t)HardFault_Handler,     /* Hard fault handler */
-    (uint32_t)MemManage_Handler,     /* MPU fault handler */
-    (uint32_t)BusFault_Handler,      /* Bus fault handler */
-    (uint32_t)UsageFault_Handler,    /* Usage fault handler */
-    0, 0, 0, 0,                      /* Reserved */
-    (uint32_t)vPortSVCHandler,       /* FreeRTOS SVCall handler */
-    0,                               /* Debug monitor handler */
-    0,                               /* Reserved */
-    (uint32_t)xPortPendSVHandler,    /* FreeRTOS PendSV handler */
-    (uint32_t)xPortSysTickHandler,   /* FreeRTOS SysTick handler */
-    /* External interrupts would follow here... */
-};
-
-/*===========================================================================
- * Reset Handler - Entry point after reset
- *===========================================================================*/
-void Reset_Handler(void) {
-    uint32_t *src, *dst;
-
-    /* Copy .data section from FLASH to RAM */
-    src = &_sidata;
-    dst = &_sdata;
-    while (dst < &_edata) {
-        *dst++ = *src++;
-    }
-
-    /* Zero-fill .bss section */
-    dst = &_sbss;
-    while (dst < &_ebss) {
-        *dst++ = 0;
-    }
-
-    /* Call main() */
-    main();
-
-    /* Hang if main returns */
-    while (1) {}
-}
-
-/*===========================================================================
- * Default Handler - Catches unhandled interrupts
- *===========================================================================*/
-void Default_Handler(void) {
-    while (1) {}
-}
 
 /*===========================================================================
  * FreeRTOS Tasks
@@ -732,6 +606,7 @@ int main(void) {
  */
 export const PROJECT_TEMPLATES: ProjectTemplate[] = [
   stm32BlinkTemplate,
+  stm32SerialHelloTemplate,
   stm32UartEchoTemplate,
   stm32FreeRtosTemplate,
   arduinoBlinkTemplate,
