@@ -20,14 +20,19 @@ export type Architecture =
   | "cortex-m4f"
   | "cortex-m7"
   | "cortex-m7f"
+  | "cortex-m23"
+  | "cortex-m33"
+  | "cortex-m55"
   | "xtensa-lx6"
   | "xtensa-lx7"
-  | "riscv32";
+  | "riscv32"
+  | "riscv32imc"
+  | "riscv32imac";
 
 /**
  * Platform identifiers used in BattleForge
  */
-export type PlatformId = "stm32" | "esp32" | "nrf" | "rp2040";
+export type PlatformId = "stm32" | "esp32" | "nrf" | "rp2040" | "samd" | "avr" | "ch32" | "gd32";
 
 /**
  * A file mapping in a library source definition

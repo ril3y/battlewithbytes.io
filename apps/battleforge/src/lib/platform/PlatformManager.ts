@@ -2,7 +2,8 @@
  * Platform Manager
  *
  * Handles loading and caching of platform definitions.
- * Supports both v1 (legacy) and v2 (GitHub sources) manifest formats.
+ * Supports v2 (GitHub sources) manifest format.
+ * Fetches platform data from GitHub with caching.
  */
 
 import type {
@@ -18,14 +19,15 @@ import type {
   DeviceDefinitionV2,
   DeviceSourceFiles,
 } from "./types";
-import { isManifestV2 } from "./types";
 import { HeaderCache } from "./HeaderCache";
-import { loadHeadersFromRegistry } from "./HeaderLoader";
 import { createSourceFetcher } from "./SourceFetcher";
-import { withBasePath } from "../utils/basePath";
+import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
+import { RegistryCache } from "../registry/RegistryCache";
+import { linkerScriptGenerator } from "../linker";
 
-// Use the boards submodule for all platform data
-const getPlatformsBaseUrl = () => withBasePath("/boards/platforms");
+// GitHub fetcher for platform data
+const fetcher = new GitHubRegistryFetcher();
+const registryCache = new RegistryCache();
 
 export class PlatformManager {
   private registry: PlatformRegistry | null = null;
@@ -41,7 +43,7 @@ export class PlatformManager {
 
   /**
    * Get the raw manifest for a platform family
-   * Returns either v1 or v2 format
+   * Returns v2 format only
    */
   async getManifest(
     platformId: string,
@@ -49,38 +51,36 @@ export class PlatformManager {
   ): Promise<PlatformManifest | null> {
     const cacheKey = `${platformId}/${familyId}`;
 
-    // Check cache
-    const cached = this.manifestCache.get(cacheKey);
-    if (cached) {
-      return cached;
+    // Check in-memory cache
+    const memCached = this.manifestCache.get(cacheKey);
+    if (memCached) {
+      return memCached;
     }
 
-    // Try loading v2 manifest first
-    try {
-      const v2Response = await fetch(
-        `${getPlatformsBaseUrl()}/${platformId}/${familyId}/manifest-v2.json`
-      );
-      if (v2Response.ok) {
-        const manifest = (await v2Response.json()) as PlatformManifestV2;
-        this.manifestCache.set(cacheKey, manifest);
-        console.log(`[PlatformManager] Loaded v2 manifest for ${cacheKey}`);
-        return manifest;
-      }
-    } catch {
-      // V2 not found, try v1
+    // Check IndexedDB cache
+    const dbCached = await registryCache.getPlatformManifest(platformId, familyId);
+    if (dbCached) {
+      // Type assertion - registry cache stores the same structure
+      const manifest = dbCached as unknown as PlatformManifestV2;
+      this.manifestCache.set(cacheKey, manifest);
+      console.log(`[PlatformManager] Using cached manifest for ${cacheKey}`);
+      return manifest;
     }
 
-    // Fall back to v1 manifest
+    // Load v2 manifest from GitHub
     try {
-      const v1Response = await fetch(
-        `${getPlatformsBaseUrl()}/${platformId}/${familyId}/manifest.json`
+      const manifest = await fetcher.fetchPlatformManifestByFamily(platformId, familyId);
+      this.manifestCache.set(cacheKey, manifest as unknown as PlatformManifestV2);
+
+      // Cache in IndexedDB
+      await registryCache.setPlatformManifest(
+        platformId,
+        familyId,
+        manifest as unknown as Parameters<typeof registryCache.setPlatformManifest>[2]
       );
-      if (v1Response.ok) {
-        const manifest = await v1Response.json();
-        this.manifestCache.set(cacheKey, manifest);
-        console.log(`[PlatformManager] Loaded v1 manifest for ${cacheKey}`);
-        return manifest;
-      }
+
+      console.log(`[PlatformManager] Loaded v2 manifest for ${cacheKey} from GitHub`);
+      return manifest as unknown as PlatformManifestV2;
     } catch (error) {
       console.warn(`[PlatformManager] Failed to load manifest: ${error}`);
     }
@@ -90,10 +90,11 @@ export class PlatformManager {
 
   /**
    * Check if a platform uses v2 manifest format
+   * Now always returns true if manifest exists (v2 only)
    */
   async isV2Platform(platformId: string, familyId: string): Promise<boolean> {
     const manifest = await this.getManifest(platformId, familyId);
-    return manifest !== null && isManifestV2(manifest);
+    return manifest !== null;
   }
 
   /**
@@ -114,12 +115,8 @@ export class PlatformManager {
     this.reportProgress("downloading", 0, 0, "Loading platform registry...");
 
     try {
-      const response = await fetch(`${getPlatformsBaseUrl()}/registry.json`);
-      if (!response.ok) {
-        throw new Error(`Failed to load registry: ${response.status}`);
-      }
-
-      this.registry = (await response.json()) as PlatformRegistry;
+      // Fetch from GitHub
+      this.registry = await fetcher.fetchJson<PlatformRegistry>("platforms/registry.json");
 
       // Index platforms for quick lookup
       for (const platform of this.registry.platforms) {
@@ -160,7 +157,7 @@ export class PlatformManager {
 
   /**
    * Load a platform family definition
-   * Supports both v1 and v2 manifest formats
+   * Supports v2 manifest format only
    */
   async loadFamily(
     platformId: string,
@@ -187,15 +184,8 @@ export class PlatformManager {
         throw new Error(`Failed to load family manifest: ${platformId}/${familyId}`);
       }
 
-      let family: PlatformFamily;
-
-      if (isManifestV2(manifest)) {
-        // V2 manifest format
-        family = this.transformV2Manifest(manifest, familyId);
-      } else {
-        // V1 manifest format (legacy)
-        family = this.transformV1Manifest(manifest, familyId);
-      }
+      // V2 manifest format only
+      const family = this.transformV2Manifest(manifest, familyId);
 
       this.familyCache.set(cacheKey, family);
 
@@ -207,63 +197,6 @@ export class PlatformManager {
     }
   }
 
-  /**
-   * Transform v1 manifest to PlatformFamily
-   */
-  private transformV1Manifest(
-    manifest: PlatformManifest,
-    familyId: string
-  ): PlatformFamily {
-    // Type assertion since we know it's v1 if isManifestV2 returns false
-    const v1 = manifest as {
-      family?: string;
-      name: string;
-      description?: string;
-      architecture: string;
-      devices?: DeviceEntry[];
-      headers?: {
-        url?: string;
-        size?: number;
-        hash?: string;
-        checksum?: string;
-        includes?: string[];
-      };
-      libs?: {
-        architecture: string;
-        required: string[];
-        optional: string[];
-      };
-      build?: {
-        compilerFlags?: string[];
-        linkerFlags?: string[];
-      };
-      compilerFlags?: string[];
-      linkerFlags?: string[];
-      frameworks?: unknown;
-    };
-
-    return {
-      id: v1.family || familyId,
-      name: v1.name,
-      description: v1.description,
-      architecture: v1.architecture as PlatformFamily["architecture"],
-      devices: (v1.devices || []) as DeviceEntry[],
-      headers: {
-        url: v1.headers?.url || "",
-        size: v1.headers?.size || 0,
-        checksum: v1.headers?.hash || v1.headers?.checksum || "",
-        includes: v1.headers?.includes || [],
-      },
-      libs: (v1.libs as PlatformFamily["libs"]) || {
-        architecture: v1.architecture as PlatformFamily["architecture"],
-        required: [],
-        optional: [],
-      },
-      compilerFlags: v1.build?.compilerFlags || v1.compilerFlags || [],
-      linkerFlags: v1.build?.linkerFlags || v1.linkerFlags || [],
-      frameworks: v1.frameworks as PlatformFamily["frameworks"],
-    };
-  }
 
   /**
    * Transform v2 manifest to PlatformFamily
@@ -279,7 +212,8 @@ export class PlatformManager {
       description: undefined,
       flash: d.flash,
       ram: d.ram,
-      linkerScript: d.files?.linker || "",
+      // Support both formats: d.linkerScript (v1/v2) or d.files?.linker (older v2)
+      linkerScript: (d as unknown as { linkerScript?: string }).linkerScript || d.files?.linker || "",
       defines: d.defines,
     }));
 
@@ -354,21 +288,33 @@ export class PlatformManager {
 
   /**
    * Load headers for a platform family
-   * Supports both v1 (tar.gz) and v2 (GitHub) sources
+   * Uses v2 (GitHub) sources only
    */
   async loadHeaders(
     platformId: string,
     familyId: string,
     onProgress?: (progress: LoadingProgress) => void
   ): Promise<Map<string, Uint8Array>> {
-    // Check if this is a v2 manifest
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (manifest && isManifestV2(manifest)) {
-      // Use SourceFetcher for v2 manifests
-      console.log(
-        `[PlatformManager] Loading headers via SourceFetcher (v2): ${platformId}/${familyId}`
+    if (!manifest) {
+      console.warn(
+        `[PlatformManager] No manifest found for ${platformId}/${familyId}`
       );
+      onProgress?.({
+        stage: "warning",
+        current: 0,
+        total: 0,
+        message: `Headers not available for this platform. You can still write code.`,
+      });
+      return new Map<string, Uint8Array>();
+    }
+
+    // Use SourceFetcher for v2 manifests
+    console.log(
+      `[PlatformManager] Loading headers via SourceFetcher (v2): ${platformId}/${familyId}`
+    );
+    try {
       const fetcher = createSourceFetcher(manifest);
       return fetcher.fetchHeaders((progress) => {
         onProgress?.({
@@ -378,92 +324,7 @@ export class PlatformManager {
           message: progress.message,
         });
       });
-    }
-
-    // V1 manifest: try registry-based loader first
-    try {
-      console.log(
-        `[PlatformManager] Loading headers via registry (v1): ${platformId}/${familyId}`
-      );
-      const headers = await loadHeadersFromRegistry(
-        platformId,
-        familyId,
-        (progress) => {
-          onProgress?.({
-            stage: progress.stage as LoadingProgress["stage"],
-            current: progress.current || 0,
-            total: progress.total || 0,
-            message: progress.message,
-          });
-        }
-      );
-      return headers;
-    } catch (registryError) {
-      console.warn(
-        `[PlatformManager] Registry-based load failed, trying legacy path:`,
-        registryError
-      );
-    }
-
-    // Fallback to legacy loading from /platforms/ directory
-    try {
-      const family = await this.loadFamily(platformId, familyId);
-      const headerBundle = family.headers;
-
-      // Check if already cached
-      const cached = await this.headerCache.getHeaders(platformId, familyId);
-      if (cached) {
-        onProgress?.({
-          stage: "ready",
-          current: 0,
-          total: 0,
-          message: "Headers loaded from cache",
-        });
-        return cached;
-      }
-
-      // Download and extract headers
-      const url = `${getPlatformsBaseUrl()}/${headerBundle.url}`;
-      onProgress?.({
-        stage: "downloading",
-        current: 0,
-        total: headerBundle.size,
-        message: "Downloading headers...",
-      });
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to download headers: ${response.status}`);
-      }
-
-      const buffer = await response.arrayBuffer();
-      onProgress?.({
-        stage: "extracting",
-        current: buffer.byteLength,
-        total: headerBundle.size,
-        message: "Extracting headers...",
-      });
-
-      // Extract tar.gz
-      const headers = await this.extractTarGz(new Uint8Array(buffer));
-
-      // Cache the extracted headers
-      await this.headerCache.setHeaders(
-        platformId,
-        familyId,
-        headers,
-        headerBundle.checksum
-      );
-
-      onProgress?.({
-        stage: "ready",
-        current: 0,
-        total: 0,
-        message: "Headers ready",
-      });
-      return headers;
     } catch (error) {
-      // Return empty map with warning instead of throwing
       console.warn(
         `[PlatformManager] Headers not available for ${platformId}/${familyId}:`,
         error
@@ -598,7 +459,8 @@ export class PlatformManager {
 
   /**
    * Load linker script for a device
-   * Supports both v1 (local files) and v2 (GitHub) sources
+   * Uses linker script generator when memory/linker config is available,
+   * falls back to fetching from GitHub sources
    */
   async loadLinkerScript(
     platformId: string,
@@ -606,46 +468,87 @@ export class PlatformManager {
     linkerScriptName: string,
     deviceId?: string
   ): Promise<string> {
-    // Check if this is a v2 manifest
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (manifest && isManifestV2(manifest)) {
-      // Find the device to get file info
-      const device = deviceId
-        ? manifest.devices.find((d) => d.id === deviceId)
-        : manifest.devices.find((d) => d.files?.linker === linkerScriptName);
-
-      if (device) {
-        console.log(
-          `[PlatformManager] Loading linker script via SourceFetcher (v2): ${linkerScriptName}`
-        );
-        const fetcher = createSourceFetcher(manifest);
-        const linkerContent = await fetcher.fetchLinkerScript(device);
-        if (linkerContent) {
-          return linkerContent;
-        }
-        console.warn(
-          `[PlatformManager] V2 linker script fetch failed, trying fallback`
-        );
-      }
+    if (!manifest) {
+      throw new Error(`No manifest found for ${platformId}/${familyId}`);
     }
 
-    // V1: Try loading from local path
-    const url = `${getPlatformsBaseUrl()}/${platformId}/${familyId}/linker/${linkerScriptName}`;
-    const response = await fetch(url);
+    // Find the device to get file info
+    const device = deviceId
+      ? manifest.devices.find((d) => d.id === deviceId)
+      : manifest.devices.find((d) => d.files?.linker === linkerScriptName);
 
-    if (!response.ok) {
-      console.warn(
-        `[PlatformManager] Could not load linker script from ${url}: ${response.status}`
+    if (!device) {
+      throw new Error(`Device not found for linker script: ${linkerScriptName}`);
+    }
+
+    // Cast manifest to access v2 memory/linker config
+    const v2Manifest = manifest as unknown as {
+      memory?: {
+        regions: {
+          FLASH: { origin: string; attr: "rx" | "rwx" | "rw" };
+          RAM: { origin: string; attr: "rx" | "rwx" | "rw" };
+          [key: string]: { origin: string; attr: "rx" | "rwx" | "rw" } | undefined;
+        };
+        stack?: { endSymbol?: string; minSize?: number };
+        heap?: { minSize?: number };
+      };
+      linker?: {
+        entry: string;
+        template: "arm-cortex-m" | "arm-cortex-m0" | "arm-cortex-m4f" | "rp2040" | "xtensa-esp32";
+      };
+    };
+
+    // If manifest has memory and linker config, generate the linker script
+    if (v2Manifest.memory && v2Manifest.linker) {
+      console.log(
+        `[PlatformManager] Generating linker script for ${device.id} using template: ${v2Manifest.linker.template}`
       );
-      throw new Error(`Failed to load linker script: ${response.status}`);
+
+      return linkerScriptGenerator.generate({
+        memory: v2Manifest.memory,
+        linker: v2Manifest.linker,
+        deviceSizes: {
+          FLASH: device.flash,
+          RAM: device.ram,
+        },
+        deviceName: device.name,
+      });
     }
 
-    return await response.text();
+    // Fallback: Try to fetch from GitHub sources
+    console.log(
+      `[PlatformManager] Loading linker script via SourceFetcher (v2): ${linkerScriptName}`
+    );
+    try {
+      const sourceFetcher = createSourceFetcher(manifest);
+      const linkerContent = await sourceFetcher.fetchLinkerScript(device);
+
+      if (linkerContent) {
+        return linkerContent;
+      }
+    } catch (fetchError) {
+      console.warn(
+        `[PlatformManager] Failed to fetch linker script from source: ${fetchError}`
+      );
+    }
+
+    // Final fallback: Generate a default linker script using device flash/ram
+    console.log(
+      `[PlatformManager] Using generated default linker script for ${device.id}`
+    );
+    return linkerScriptGenerator.generateDefault(
+      device.flash,
+      device.ram,
+      "0x08000000", // Default STM32-style flash origin
+      "0x20000000", // Default RAM origin
+      "Reset_Handler"
+    );
   }
 
   /**
-   * Load device-specific files (startup, linker, system) for v2 manifests
+   * Load device-specific files (startup, linker, system)
    */
   async loadDeviceFiles(
     platformId: string,
@@ -655,9 +558,9 @@ export class PlatformManager {
   ): Promise<DeviceSourceFiles> {
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (!manifest || !isManifestV2(manifest)) {
+    if (!manifest) {
       console.warn(
-        `[PlatformManager] loadDeviceFiles only works with v2 manifests`
+        `[PlatformManager] No manifest found for ${platformId}/${familyId}`
       );
       return {};
     }
@@ -693,9 +596,9 @@ export class PlatformManager {
   ): Promise<Uint8Array | null> {
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (!manifest || !isManifestV2(manifest)) {
+    if (!manifest) {
       console.warn(
-        `[PlatformManager] loadStartupFile only works with v2 manifests`
+        `[PlatformManager] No manifest found for ${platformId}/${familyId}`
       );
       return null;
     }
@@ -728,9 +631,9 @@ export class PlatformManager {
   ): Promise<Uint8Array | null> {
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (!manifest || !isManifestV2(manifest)) {
+    if (!manifest) {
       console.warn(
-        `[PlatformManager] loadSystemFile only works with v2 manifests`
+        `[PlatformManager] No manifest found for ${platformId}/${familyId}`
       );
       return null;
     }
@@ -755,7 +658,7 @@ export class PlatformManager {
   }
 
   /**
-   * Get the v2 device definition if available
+   * Get the device definition
    */
   async getDeviceV2(
     platformId: string,
@@ -764,7 +667,7 @@ export class PlatformManager {
   ): Promise<DeviceDefinitionV2 | null> {
     const manifest = await this.getManifest(platformId, familyId);
 
-    if (!manifest || !isManifestV2(manifest)) {
+    if (!manifest) {
       return null;
     }
 

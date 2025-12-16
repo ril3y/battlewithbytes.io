@@ -8,6 +8,7 @@
 
 import { HeaderCache } from "./HeaderCache";
 import { withBasePath } from "../utils/basePath";
+import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
 
 const cache = new HeaderCache();
 
@@ -244,15 +245,29 @@ export async function loadHeadersFromRegistry(
 ): Promise<Map<string, Uint8Array>> {
   onProgress?.({ stage: "checking", message: "Loading platform manifest..." });
 
-  // Load manifest directly from known path pattern
-  const manifestUrl = withBasePath(`/boards/platforms/${platformId}/${familyId}/manifest.json`);
-  console.log(`[HeaderLoader] Loading manifest from ${manifestUrl}`);
+  // Load manifest from GitHub
+  const fetcher = new GitHubRegistryFetcher();
+  console.log(`[HeaderLoader] Loading manifest from GitHub: platforms/${platformId}/${familyId}`);
 
   let manifest: { headers?: HeadersConfig } | null = null;
   try {
-    const response = await fetch(manifestUrl);
-    if (response.ok) {
-      manifest = await response.json();
+    // Try v2 manifest first, then v1
+    // Type assertion since PlatformManifest has compatible headers structure
+    const fetchedManifest = await fetcher.fetchPlatformManifestByFamily(platformId, familyId);
+    if (fetchedManifest?.headers) {
+      // Pass through all headers config including source, ref, files, cmsis
+      const headersConfig = fetchedManifest.headers as unknown as Record<string, unknown>;
+      manifest = {
+        headers: {
+          url: headersConfig.url as string | undefined,
+          hash: (headersConfig.hash as string) || undefined,
+          source: headersConfig.source as string | undefined,
+          ref: headersConfig.ref as string | undefined,
+          files: headersConfig.files as string[] | undefined,
+          includes: headersConfig.includes as string[] | undefined,
+          cmsis: headersConfig.cmsis as HeadersConfig["cmsis"],
+        },
+      };
     }
   } catch (err) {
     console.warn(`[HeaderLoader] Failed to load manifest:`, err);
@@ -280,10 +295,11 @@ export async function loadHeadersFromRegistry(
     return loadHeadersFromGitHub(platformId, familyId, headersConfig, onProgress);
   }
 
-  // Legacy: Get header URL from manifest (tar.gz)
-  const headerUrl = headersConfig.url?.startsWith("/")
-    ? withBasePath(headersConfig.url)
-    : withBasePath(`/boards/${headersConfig.url}`);
+  // Legacy: Get header URL from manifest (tar.gz) - build GitHub URL
+  const baseUrl = fetcher.getBaseUrl();
+  const headerUrl = headersConfig.url?.startsWith("http")
+    ? headersConfig.url
+    : `${baseUrl}/${headersConfig.url}`;
 
   const checksum = headersConfig.hash || "unknown";
 

@@ -35,7 +35,6 @@ import { getLibraryManager } from "../lib/library";
 // Types
 import type { SelectedPlatform } from "../lib/platform/types";
 import { getPlatformManager } from "../lib/platform/PlatformManager";
-import { withBasePath } from "../lib/utils/basePath";
 
 // Default linker script
 const DEFAULT_LINKER_SCRIPT = `
@@ -434,7 +433,7 @@ function BattleForgeIDEContent() {
     }
   };
 
-  // Load platform linker script (supports v2 GitHub sources)
+  // Load platform linker script (generated from memory/linker config)
   const loadPlatformLinkerScript = async (): Promise<string> => {
     if (!selectedPlatform) {
       return DEFAULT_LINKER_SCRIPT;
@@ -444,31 +443,17 @@ function BattleForgeIDEContent() {
       const { family, device } = selectedPlatform;
       const platformManager = getPlatformManager();
 
-      // Try v2-aware loading through PlatformManager (fetches from GitHub for v2 manifests)
-      try {
-        const linkerScript = await platformManager.loadLinkerScript(
-          selectedPlatform.platformId,
-          family.id,
-          device.linkerScript,
-          device.id
-        );
-        log(`Loaded linker script from platform sources`, "info");
-        return linkerScript;
-      } catch (v2Error) {
-        console.warn("[BattleForge] V2 linker script load failed:", v2Error);
-      }
-
-      // Fallback: try direct URL fetch
-      const linkerUrl = withBasePath(`/boards/platforms/${selectedPlatform.platformId}/${family.id}/linker/${device.linkerScript}`);
-      const response = await fetch(linkerUrl);
-      if (!response.ok) {
-        log(
-          `Warning: Could not load linker script from ${linkerUrl}, using default`,
-          "warning"
-        );
-        return DEFAULT_LINKER_SCRIPT;
-      }
-      return await response.text();
+      // Load linker script through PlatformManager
+      // This will generate from memory/linker config if available,
+      // or fall back to fetching from GitHub sources, or generate a default
+      const linkerScript = await platformManager.loadLinkerScript(
+        selectedPlatform.platformId,
+        family.id,
+        device.linkerScript || "",
+        device.id
+      );
+      log(`Loaded linker script for ${device.name}`, "info");
+      return linkerScript;
     } catch (err) {
       log(`Warning: Failed to load linker script: ${err}`, "warning");
       return DEFAULT_LINKER_SCRIPT;
@@ -657,6 +642,17 @@ void _fini(void) {
 
       const objectFiles: Map<string, Uint8Array> = new Map();
 
+      // Flags that are only relevant for C/C++ compilation, not assembly
+      const cOnlyFlags = new Set([
+        "-ffreestanding",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+      ]);
+
       for (const srcPath of allSourceFiles) {
         const srcFileName = srcPath.substring(srcPath.lastIndexOf("/") + 1);
         const objFileName = srcFileName.replace(/\.(c|cpp|cc|s|S)$/, ".o");
@@ -669,10 +665,19 @@ void _fini(void) {
           compileFiles[srcPath] = editorContent;
         }
 
+        // Check if this is an assembly file
+        const isAssembly = srcPath.endsWith(".s") || srcPath.endsWith(".S");
+
+        // Filter flags for assembly files (remove C-only flags and defines)
+        const filteredPlatformFlags = isAssembly
+          ? platformFlags.filter((flag) => !cOnlyFlags.has(flag) && !flag.startsWith("-std="))
+          : platformFlags;
+        const filteredDefines = isAssembly ? [] : defines;
+
         const compileArgs = [
-          ...platformFlags,
+          ...filteredPlatformFlags,
           ...includePaths,
-          ...defines,
+          ...filteredDefines,
           "-c",
           srcPath,
           "-o",

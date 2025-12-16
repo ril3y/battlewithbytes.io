@@ -148,7 +148,9 @@ class WasmManagerService {
     let state: CompilerState = "not_installed";
 
     if (installed) {
-      if (available && installed.hash !== available.hash) {
+      // Compare hashes - use hashes.compressed for v2 format, hash for v1
+      const availableHash = available?.hashes?.compressed || available?.hash;
+      if (available && availableHash && installed.hash !== availableHash) {
         state = "update_available";
       } else {
         state = "installed";
@@ -298,6 +300,9 @@ class WasmManagerService {
           baseUrl,
           progressHandler,
         );
+        // Clean up BEFORE emitting events so state is correct when listeners query
+        this.downloadPromises.delete(compilerId);
+        this.downloadProgress.delete(compilerId);
         this.emit({ type: "download_complete", compilerId });
         this.emit({
           type: "storage_changed",
@@ -306,11 +311,11 @@ class WasmManagerService {
         return wasm;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.emit({ type: "download_error", compilerId, error: message });
-        throw error;
-      } finally {
+        // Clean up on error too
         this.downloadPromises.delete(compilerId);
         this.downloadProgress.delete(compilerId);
+        this.emit({ type: "download_error", compilerId, error: message });
+        throw error;
       }
     })();
 
@@ -343,7 +348,7 @@ class WasmManagerService {
         notifications.push({
           type: "compiler",
           id: compiler.id,
-          currentVersion: compiler.version || compiler.fullVersion || "previous",
+          currentVersion: compiler.version || compiler.fullVersion || "older",
           availableVersion: available.fullVersion || available.version || available.softwareVersion,
           size: available.size,
           message: `${available.name} update available`,

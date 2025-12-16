@@ -1,6 +1,6 @@
 /**
  * TargetRegistry - Fetches and manages platform, board, and library definitions
- * from the remote battleforge_targets registry
+ * from the battleforge_boards GitHub repository with IndexedDB caching.
  */
 
 import type {
@@ -12,30 +12,37 @@ import type {
   BoardManifest,
   LibraryManifest,
 } from "./types";
-import { withBasePath } from "../utils/basePath";
+import { RegistryCache } from "./RegistryCache";
+import { GitHubRegistryFetcher } from "./GitHubRegistryFetcher";
 
-// Registry base URL - uses basePath for production deployment
-const getRegistryBaseUrl = () => withBasePath("/boards");
+// Cache TTL: 30 minutes
+const CACHE_TTL_MS = 1000 * 60 * 30;
 
 class TargetRegistryImpl {
+  private cache = new RegistryCache();
+  private fetcher = new GitHubRegistryFetcher();
+
+  // In-memory caches for current session
   private registryIndex: RegistryIndex | null = null;
   private platformCache = new Map<string, PlatformManifest>();
   private boardCache = new Map<string, BoardManifest>();
   private libraryCache = new Map<string, LibraryManifest>();
+
+  // Prevent concurrent fetches
   private loadPromise: Promise<RegistryIndex> | null = null;
 
   /**
-   * Get the base URL for the registry
+   * Get the GitHub base URL for the registry
    */
   getBaseUrl(): string {
-    return getRegistryBaseUrl();
+    return this.fetcher.getBaseUrl();
   }
 
   /**
-   * Load the registry index
+   * Load the registry index with caching
    */
   async loadRegistry(): Promise<RegistryIndex> {
-    // Return cached if available
+    // Return in-memory cache if available
     if (this.registryIndex) {
       return this.registryIndex;
     }
@@ -45,29 +52,78 @@ class TargetRegistryImpl {
       return this.loadPromise;
     }
 
-    this.loadPromise = (async () => {
-      const url = `${getRegistryBaseUrl()}/registry.json`;
-      console.log(`[TargetRegistry] Loading registry from ${url}`);
+    this.loadPromise = this._loadRegistryWithCache();
+    return this.loadPromise;
+  }
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to load registry: ${response.status}`);
+  private async _loadRegistryWithCache(): Promise<RegistryIndex> {
+    try {
+      // 1. Check IndexedDB cache
+      const cached = await this.cache.getRegistry();
+      const meta = await this.cache.getRegistryMetadata();
+
+      // 2. If cache is fresh, use it
+      if (cached && meta && Date.now() - meta.timestamp < CACHE_TTL_MS) {
+        console.log(
+          `[TargetRegistry] Using cached registry v${cached.version} (${Math.round((Date.now() - meta.timestamp) / 1000 / 60)}min old)`
+        );
+        this.registryIndex = cached;
+        return cached;
       }
 
-      this.registryIndex = await response.json();
-      console.log(
-        `[TargetRegistry] Loaded registry v${this.registryIndex!.version}:`,
-        {
-          platforms: this.registryIndex!.platforms.length,
-          boards: this.registryIndex!.boards.length,
-          libraries: this.registryIndex!.libraries.length,
-        },
-      );
+      // 3. Try to fetch from GitHub (with ETag if we have it)
+      try {
+        const result = await this.fetcher.fetchRegistryIfModified(meta?.etag);
 
-      return this.registryIndex!;
-    })();
+        if (result === null && cached) {
+          // 304 Not Modified - update timestamp and use cache
+          console.log("[TargetRegistry] Registry unchanged (304), using cache");
+          await this.cache.setRegistry(cached, {
+            version: cached.version,
+            timestamp: Date.now(),
+            etag: meta?.etag,
+          });
+          this.registryIndex = cached;
+          return cached;
+        }
 
-    return this.loadPromise;
+        if (result) {
+          // New data - cache it
+          console.log(
+            `[TargetRegistry] Fetched registry v${result.data.version}:`,
+            {
+              platforms: result.data.platforms.length,
+              boards: result.data.boards.length,
+              libraries: result.data.libraries.length,
+            }
+          );
+
+          await this.cache.setRegistry(result.data, {
+            version: result.data.version,
+            timestamp: Date.now(),
+            etag: result.etag,
+          });
+
+          this.registryIndex = result.data;
+          return result.data;
+        }
+      } catch (fetchError) {
+        // Network error - try to use stale cache
+        if (cached) {
+          console.warn(
+            "[TargetRegistry] Network error, using stale cache:",
+            fetchError
+          );
+          this.registryIndex = cached;
+          return cached;
+        }
+        throw fetchError;
+      }
+
+      throw new Error("Failed to load registry: no data available");
+    } finally {
+      this.loadPromise = null;
+    }
   }
 
   /**
@@ -91,11 +147,11 @@ class TargetRegistryImpl {
    */
   async getBoardsForPlatform(
     platform: string,
-    family?: string,
+    family?: string
   ): Promise<BoardIndexEntry[]> {
     const boards = await this.getBoards();
     return boards.filter(
-      (b) => b.platform === platform && (!family || b.family === family),
+      (b) => b.platform === platform && (!family || b.family === family)
     );
   }
 
@@ -108,60 +164,79 @@ class TargetRegistryImpl {
   }
 
   /**
-   * Load a platform manifest
+   * Load a platform manifest with caching
    */
   async getPlatformManifest(
     platform: string,
-    family: string,
+    family: string
   ): Promise<PlatformManifest | null> {
     const cacheKey = `${platform}-${family}`;
 
-    // Check cache first
+    // Check in-memory cache first
     if (this.platformCache.has(cacheKey)) {
       return this.platformCache.get(cacheKey)!;
+    }
+
+    // Check IndexedDB cache
+    const cached = await this.cache.getPlatformManifest(platform, family);
+    if (cached) {
+      console.log(`[TargetRegistry] Using cached platform: ${platform}/${family}`);
+      this.platformCache.set(cacheKey, cached);
+      return cached;
     }
 
     // Find platform in registry
     const registry = await this.loadRegistry();
     const entry = registry.platforms.find(
-      (p) => p.platform === platform && p.family === family,
+      (p) => p.platform === platform && p.family === family
     );
 
     if (!entry) {
       console.warn(
-        `[TargetRegistry] Platform not found: ${platform}/${family}`,
+        `[TargetRegistry] Platform not found: ${platform}/${family}`
       );
       return null;
     }
 
-    // Fetch manifest
-    const url = `${getRegistryBaseUrl()}/${entry.path}`;
-    console.log(`[TargetRegistry] Loading platform manifest from ${url}`);
+    // Fetch from GitHub
+    try {
+      console.log(`[TargetRegistry] Fetching platform manifest: ${entry.path}`);
+      const manifest = await this.fetcher.fetchPlatformManifest(entry.path);
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to load platform manifest: ${response.status}`);
+      // Cache it
+      await this.cache.setPlatformManifest(platform, family, manifest);
+      this.platformCache.set(cacheKey, manifest);
+
+      console.log(`[TargetRegistry] Loaded platform: ${manifest.name}`, {
+        devices: manifest.devices.length,
+        architecture: manifest.architecture,
+      });
+
+      return manifest;
+    } catch (error) {
+      console.error(
+        `[TargetRegistry] Failed to load platform manifest:`,
+        error
+      );
       return null;
     }
-
-    const manifest: PlatformManifest = await response.json();
-    this.platformCache.set(cacheKey, manifest);
-
-    console.log(`[TargetRegistry] Loaded platform: ${manifest.name}`, {
-      devices: manifest.devices.length,
-      architecture: manifest.architecture,
-    });
-
-    return manifest;
   }
 
   /**
-   * Load a board manifest
+   * Load a board manifest with caching
    */
   async getBoardManifest(boardId: string): Promise<BoardManifest | null> {
-    // Check cache first
+    // Check in-memory cache first
     if (this.boardCache.has(boardId)) {
       return this.boardCache.get(boardId)!;
+    }
+
+    // Check IndexedDB cache
+    const cached = await this.cache.getBoardManifest(boardId);
+    if (cached) {
+      console.log(`[TargetRegistry] Using cached board: ${boardId}`);
+      this.boardCache.set(boardId, cached);
+      return cached;
     }
 
     // Find board in registry
@@ -173,31 +248,39 @@ class TargetRegistryImpl {
       return null;
     }
 
-    // Fetch manifest
-    const url = `${getRegistryBaseUrl()}/${entry.path}`;
-    console.log(`[TargetRegistry] Loading board manifest from ${url}`);
+    // Fetch from GitHub
+    try {
+      console.log(`[TargetRegistry] Fetching board manifest: ${entry.path}`);
+      const manifest = await this.fetcher.fetchBoardManifest(entry.path);
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to load board manifest: ${response.status}`);
+      // Cache it
+      await this.cache.setBoardManifest(boardId, manifest);
+      this.boardCache.set(boardId, manifest);
+
+      console.log(`[TargetRegistry] Loaded board: ${manifest.name}`);
+
+      return manifest;
+    } catch (error) {
+      console.error(`[TargetRegistry] Failed to load board manifest:`, error);
       return null;
     }
-
-    const manifest: BoardManifest = await response.json();
-    this.boardCache.set(boardId, manifest);
-
-    console.log(`[TargetRegistry] Loaded board: ${manifest.name}`);
-
-    return manifest;
   }
 
   /**
-   * Load a library manifest
+   * Load a library manifest with caching
    */
   async getLibraryManifest(libraryId: string): Promise<LibraryManifest | null> {
-    // Check cache first
+    // Check in-memory cache first
     if (this.libraryCache.has(libraryId)) {
       return this.libraryCache.get(libraryId)!;
+    }
+
+    // Check IndexedDB cache
+    const cached = await this.cache.getLibraryManifest(libraryId);
+    if (cached) {
+      console.log(`[TargetRegistry] Using cached library: ${libraryId}`);
+      this.libraryCache.set(libraryId, cached);
+      return cached;
     }
 
     // Find library in registry
@@ -209,22 +292,22 @@ class TargetRegistryImpl {
       return null;
     }
 
-    // Fetch manifest
-    const url = `${getRegistryBaseUrl()}/${entry.path}`;
-    console.log(`[TargetRegistry] Loading library manifest from ${url}`);
+    // Fetch from GitHub
+    try {
+      console.log(`[TargetRegistry] Fetching library manifest: ${entry.path}`);
+      const manifest = await this.fetcher.fetchLibraryManifest(entry.path);
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to load library manifest: ${response.status}`);
+      // Cache it
+      await this.cache.setLibraryManifest(libraryId, manifest);
+      this.libraryCache.set(libraryId, manifest);
+
+      console.log(`[TargetRegistry] Loaded library: ${manifest.name}`);
+
+      return manifest;
+    } catch (error) {
+      console.error(`[TargetRegistry] Failed to load library manifest:`, error);
       return null;
     }
-
-    const manifest: LibraryManifest = await response.json();
-    this.libraryCache.set(libraryId, manifest);
-
-    console.log(`[TargetRegistry] Loaded library: ${manifest.name}`);
-
-    return manifest;
   }
 
   /**
@@ -236,13 +319,15 @@ class TargetRegistryImpl {
       return null;
     }
 
-    // If URL is relative, prepend base URL
+    // Headers are now fetched via SourceFetcher from GitHub
+    // Return the headers.url if it's a full URL, otherwise construct GitHub URL
     const headerUrl = manifest.headers.url;
-    if (headerUrl.startsWith("/")) {
+    if (headerUrl.startsWith("http")) {
       return headerUrl;
     }
 
-    return `${getRegistryBaseUrl()}/${headerUrl}`;
+    // For relative URLs, they're fetched via SourceFetcher
+    return `${this.fetcher.getBaseUrl()}/${headerUrl}`;
   }
 
   /**
@@ -254,13 +339,12 @@ class TargetRegistryImpl {
       return null;
     }
 
-    // If URL is relative, prepend base URL
     const libUrl = manifest.url;
-    if (libUrl.startsWith("/")) {
+    if (libUrl.startsWith("http")) {
       return libUrl;
     }
 
-    return `${getRegistryBaseUrl()}/${libUrl}`;
+    return `${this.fetcher.getBaseUrl()}/${libUrl}`;
   }
 
   /**
@@ -269,7 +353,7 @@ class TargetRegistryImpl {
   async getDevice(
     platform: string,
     family: string,
-    deviceId: string,
+    deviceId: string
   ): Promise<PlatformManifest["devices"][0] | null> {
     const manifest = await this.getPlatformManifest(platform, family);
     if (!manifest) {
@@ -280,15 +364,52 @@ class TargetRegistryImpl {
   }
 
   /**
-   * Clear all caches
+   * Clear all caches (in-memory and IndexedDB)
    */
-  clearCache(): void {
+  async clearCache(): Promise<void> {
     this.registryIndex = null;
     this.loadPromise = null;
     this.platformCache.clear();
     this.boardCache.clear();
     this.libraryCache.clear();
-    console.log("[TargetRegistry] Cache cleared");
+    await this.cache.clear();
+    console.log("[TargetRegistry] All caches cleared");
+  }
+
+  /**
+   * Clear only in-memory caches (keep IndexedDB)
+   */
+  clearMemoryCache(): void {
+    this.registryIndex = null;
+    this.loadPromise = null;
+    this.platformCache.clear();
+    this.boardCache.clear();
+    this.libraryCache.clear();
+    console.log("[TargetRegistry] Memory cache cleared");
+  }
+
+  /**
+   * Force refresh from GitHub
+   */
+  async refresh(): Promise<RegistryIndex> {
+    this.clearMemoryCache();
+    // Clear registry metadata to force re-fetch
+    await this.cache.clear();
+    return this.loadRegistry();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  async getCacheStats() {
+    return this.cache.getStats();
+  }
+
+  /**
+   * Check if GitHub is reachable
+   */
+  async isOnline(): Promise<boolean> {
+    return this.fetcher.isReachable();
   }
 }
 

@@ -30,10 +30,14 @@ export const ARCHITECTURE_COMPILER_MAP: Record<Architecture, CompilerId> = {
   "cortex-m4f": "clang-arm",
   "cortex-m7": "clang-arm",
   "cortex-m7f": "clang-arm",
+  "cortex-m23": "clang-arm",
   "cortex-m33": "clang-arm",
+  "cortex-m55": "clang-arm",
   "xtensa-lx6": "clang-xtensa",
   "xtensa-lx7": "clang-xtensa",
   riscv32: "clang-riscv",
+  riscv32imc: "clang-riscv",
+  riscv32imac: "clang-riscv",
 };
 
 /**

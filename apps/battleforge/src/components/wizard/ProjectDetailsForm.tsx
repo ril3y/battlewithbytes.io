@@ -90,9 +90,9 @@ export function ProjectDetailsForm({
             </div>
           )}
           <div className="board-links">
-            {board.documentation?.productPage && (
+            {board.documentation?.product && (
               <a
-                href={board.documentation.productPage}
+                href={board.documentation.product}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="doc-link"

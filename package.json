@@ -21,7 +21,8 @@
     "build:web": "turbo run build --filter=@battlewithbytes/web",
     "build:battleterm": "turbo run build --filter=@battlewithbytes/battleterm",
     "build:battlemagic-core": "turbo run build:wasm --filter=@battlewithbytes/battlemagic-core",
-    "dev:battlemagic": "turbo run dev --filter=@battlewithbytes/battlemagic-core --filter=@battlewithbytes/battlemagic-ui"
+    "dev:battlemagic": "turbo run dev --filter=@battlewithbytes/battlemagic-core --filter=@battlewithbytes/battlemagic-ui",
+    "blog": "pnpm --filter @battlewithbytes/web blog"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.3",

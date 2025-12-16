@@ -14,7 +14,7 @@ import { BoardBrowser } from "./BoardBrowser";
 import { FrameworkSelector } from "./FrameworkSelector";
 import { ExamplePicker } from "./ExamplePicker";
 import { ProjectDetailsForm } from "./ProjectDetailsForm";
-import { withBasePath } from "../../lib/utils/basePath";
+import { GitHubRegistryFetcher } from "../../lib/registry/GitHubRegistryFetcher";
 
 interface BoardSelectionWizardProps {
   isOpen: boolean;
@@ -53,57 +53,60 @@ export function BoardSelectionWizard({
   const loadRegistry = async () => {
     try {
       setLoading(true);
-      // Load lean registry from submodule
-      const response = await fetch(withBasePath("/boards/registry.json"));
-      if (!response.ok) throw new Error("Failed to load registry");
-      const registry = await response.json();
+      // Load registry from GitHub
+      const fetcher = new GitHubRegistryFetcher();
+      const registryData = await fetcher.fetchJson<{
+        version: string;
+        platforms: Array<{ id: string; configPath: string; boardsPath: string }>;
+      }>("registry.json");
 
       // Load platform.json for each platform to get display metadata
       const platformList: PlatformOption[] = await Promise.all(
-        (registry.platforms || []).map(
-          async (p: { id: string; configPath: string; boardsPath: string }) => {
+        (registryData.platforms || []).map(async (p) => {
+          try {
+            // Load platform config from GitHub
+            const config = await fetcher.fetchJson<{
+              name?: string;
+              description?: string;
+              icon?: string;
+              color?: string;
+              families?: string[];
+            }>(p.configPath);
+
+            // Load boards index to get board count
+            let boardCount = 0;
             try {
-              // Load platform config from submodule
-              const configResponse = await fetch(withBasePath(`/boards/${p.configPath}`));
-              if (!configResponse.ok) {
-                throw new Error(`Failed to load platform config: ${p.id}`);
-              }
-              const config = await configResponse.json();
-
-              // Load boards index to get board count
-              const boardsResponse = await fetch(withBasePath(`/boards/${p.boardsPath}`));
-              let boardCount = 0;
-              if (boardsResponse.ok) {
-                const boardsData = await boardsResponse.json();
-                boardCount = boardsData.boards?.length || 0;
-              }
-
-              return {
-                id: p.id,
-                name: config.name || p.id,
-                description: config.description || "",
-                icon: `/images/platforms/${config.icon || p.id}.svg`,
-                color: config.color || "#333",
-                supported: true,
-                boardCount,
-                indexPath: p.boardsPath,
-              };
-            } catch (err) {
-              console.warn(`Failed to load platform ${p.id}:`, err);
-              // Return fallback for failed platform
-              return {
-                id: p.id,
-                name: p.id.toUpperCase(),
-                description: "",
-                icon: `/images/platforms/${p.id}.svg`,
-                color: "#333",
-                supported: false,
-                boardCount: 0,
-                indexPath: p.boardsPath,
-              };
+              const boardsData = await fetcher.fetchJson<{ boards?: unknown[] }>(p.boardsPath);
+              boardCount = boardsData.boards?.length || 0;
+            } catch {
+              // Ignore board count errors
             }
-          },
-        ),
+
+            return {
+              id: p.id,
+              name: config.name || p.id.toUpperCase(),
+              description: config.description || "",
+              icon: `/images/platforms/${config.icon || p.id}.svg`,
+              color: config.color || "#333",
+              supported: true,
+              boardCount,
+              indexPath: p.boardsPath,
+            };
+          } catch (err) {
+            console.warn(`Failed to load platform ${p.id}:`, err);
+            // Return fallback for failed platform
+            return {
+              id: p.id,
+              name: p.id.toUpperCase(),
+              description: "",
+              icon: `/images/platforms/${p.id}.svg`,
+              color: "#333",
+              supported: true,
+              boardCount: 0,
+              indexPath: p.boardsPath,
+            };
+          }
+        }),
       );
 
       setPlatforms(platformList);
@@ -121,22 +124,22 @@ export function BoardSelectionWizard({
       setLoadingBoards(true);
       setError(null);
 
-      // Use the indexPath from the platform, or fall back to constructing from id
-      const path = indexPath || `${platformId.split("-")[0]}/index.json`;
-      const response = await fetch(withBasePath(`/boards/${path}`));
-      if (!response.ok)
-        throw new Error(`Failed to load boards for ${platformId}`);
-      const data = await response.json();
+      // Load boards from the platform's index file
+      const fetcher = new GitHubRegistryFetcher();
+      const path = indexPath || `${platformId}/index.json`;
+      const data = await fetcher.fetchJson<{
+        platform?: string;
+        boards?: BoardIndexEntry[];
+      }>(path);
 
       // Transform boards from platform index
-      // Extract base platform from platformId (e.g., "stm32" from "stm32-f1")
       const basePlatform = data.platform || platformId.split("-")[0];
       const boardList: BoardIndexEntry[] = (data.boards || []).map(
-        (b: BoardIndexEntry) => ({
+        (b) => ({
           ...b,
           // Add platform field from index data for filtering
           platform: b.platform || basePlatform,
-          // Ensure path doesn't have 'boards/' prefix since we use /boards/ base
+          // Ensure path doesn't have 'boards/' prefix
           path: b.path.replace(/^boards\//, ""),
         }),
       );
@@ -170,10 +173,10 @@ export function BoardSelectionWizard({
   const handleBoardSelect = useCallback(async (board: BoardIndexEntry) => {
     try {
       setLoading(true);
-      // Load full board manifest
-      const response = await fetch(withBasePath(`/boards/${board.path}`));
-      if (!response.ok) throw new Error("Failed to load board");
-      const manifest: BoardManifest = await response.json();
+      // Load full board manifest from GitHub
+      const fetcher = new GitHubRegistryFetcher();
+      const manifest = await fetcher.fetchJson<BoardManifest>(board.path);
+      if (!manifest) throw new Error("Failed to load board");
 
       setState((prev) => ({
         ...prev,
