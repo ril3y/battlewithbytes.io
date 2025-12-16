@@ -45,6 +45,8 @@ interface VFSContextType {
   hasUnsavedChanges: () => boolean;
   // Check if directory exists and has files
   hasDirectory: (path: string) => boolean;
+  // Get all editable files for project save
+  getEditableFiles: () => Array<{ path: string; content: string }>;
 }
 
 const VFSContext = createContext<VFSContextType | undefined>(undefined);
@@ -647,6 +649,25 @@ export function VFSProvider({ children }: { children: ReactNode }) {
     return checkModified(state.root);
   }, [state.root]);
 
+  const getEditableFiles = useCallback((): Array<{ path: string; content: string }> => {
+    const editableFiles: Array<{ path: string; content: string }> = [];
+
+    const collectEditableFiles = (node: VFSNode) => {
+      if (isFile(node) && node.editable) {
+        // Convert Uint8Array to string if needed
+        const content = typeof node.content === "string"
+          ? node.content
+          : new TextDecoder().decode(node.content);
+        editableFiles.push({ path: node.path, content });
+      } else if (isDirectory(node)) {
+        node.children.forEach(collectEditableFiles);
+      }
+    };
+
+    collectEditableFiles(state.root);
+    return editableFiles;
+  }, [state.root]);
+
   return (
     <VFSContext.Provider
       value={{
@@ -670,6 +691,7 @@ export function VFSProvider({ children }: { children: ReactNode }) {
         getFilesForCompiler,
         hasUnsavedChanges,
         hasDirectory,
+        getEditableFiles,
       }}
     >
       {children}
