@@ -26,7 +26,21 @@ let registryCache: LibraryRegistry | null = null;
 const manifestCache = new Map<string, BattleForgeLibraryManifest>();
 
 /**
- * Load the library registry index
+ * Main registry structure (from registry.json)
+ */
+interface MainRegistry {
+  version: string;
+  libraries: Array<{
+    id: string;
+    name: string;
+    version: string;
+    category: string;
+    path: string;
+  }>;
+}
+
+/**
+ * Load the library registry index from main registry.json
  */
 export async function loadRegistry(
   forceRefresh = false
@@ -36,16 +50,32 @@ export async function loadRegistry(
   }
 
   try {
-    // Fetch from GitHub
-    const registry = await fetcher.fetchJson<LibraryRegistry>(
-      "libraries/registry.json"
-    );
-    registryCache = registry;
+    // Fetch main registry.json which contains libraries array
+    const mainRegistry = await fetcher.fetchJson<MainRegistry>("registry.json");
+
+    // Transform to LibraryRegistry format
+    const libraryEntries: LibraryRegistryEntry[] = mainRegistry.libraries.map((lib) => ({
+      id: lib.id,
+      name: lib.name,
+      version: lib.version,
+      description: `${lib.name} library`,
+      category: lib.category as LibraryRegistryEntry["category"],
+      platforms: ["stm32", "esp32", "nrf", "rp2040"] as PlatformId[], // All platforms for now
+      tags: [lib.category],
+      author: "BattleForge",
+      license: "MIT",
+      manifestPath: lib.path,
+    }));
+
+    registryCache = {
+      version: mainRegistry.version,
+      libraries: libraryEntries,
+    };
 
     console.log(
-      `[LibraryRegistry] Loaded ${registry.libraries.length} libraries from GitHub`
+      `[LibraryRegistry] Loaded ${registryCache.libraries.length} libraries from main registry`
     );
-    return registry;
+    return registryCache;
   } catch (error) {
     console.error("[LibraryRegistry] Failed to load registry:", error);
     // Return empty registry on error
