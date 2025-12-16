@@ -10,6 +10,7 @@ import type {
   LibraryRegistryEntry,
   BattleForgeLibraryManifest,
   PlatformId,
+  FrameworkId,
   Architecture,
 } from "./types";
 import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
@@ -148,15 +149,43 @@ export async function getLibraries(): Promise<LibraryRegistryEntry[]> {
  * Filter libraries by platform compatibility
  */
 export async function getLibrariesForPlatform(
-  platformId: PlatformId
+  platformId: PlatformId,
+  frameworkId?: FrameworkId
 ): Promise<LibraryRegistryEntry[]> {
   const registry = await loadRegistry();
 
-  return registry.libraries.filter(
-    (lib) =>
+  return registry.libraries.filter((lib) => {
+    // Check platform compatibility
+    const platformMatch =
       lib.platforms.includes(platformId) ||
-      lib.platforms.includes("*" as PlatformId)
-  );
+      lib.platforms.includes("*" as PlatformId);
+
+    if (!platformMatch) return false;
+
+    // Check framework compatibility if specified
+    if (frameworkId) {
+      // If library has no frameworks specified, assume it works with all
+      if (!lib.frameworks || lib.frameworks.length === 0) return true;
+      return lib.frameworks.includes(frameworkId);
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Filter libraries by framework compatibility
+ */
+export async function getLibrariesForFramework(
+  frameworkId: FrameworkId
+): Promise<LibraryRegistryEntry[]> {
+  const registry = await loadRegistry();
+
+  return registry.libraries.filter((lib) => {
+    // If library has no frameworks specified, assume it works with all
+    if (!lib.frameworks || lib.frameworks.length === 0) return true;
+    return lib.frameworks.includes(frameworkId);
+  });
 }
 
 /**

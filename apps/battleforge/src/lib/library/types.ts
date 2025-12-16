@@ -35,6 +35,11 @@ export type Architecture =
 export type PlatformId = "stm32" | "esp32" | "nrf" | "rp2040" | "samd" | "avr" | "ch32" | "gd32";
 
 /**
+ * Framework identifiers used in BattleForge
+ */
+export type FrameworkId = "arduino" | "native" | "espidf" | "zephyr" | "mbed";
+
+/**
  * A file mapping in a library source definition
  */
 export interface LibrarySourceFile {
@@ -123,8 +128,18 @@ export interface LibraryRegistryEntry {
   version: string;
   /** Compatible platforms */
   platforms: PlatformId[];
+  /** Compatible frameworks (arduino, native, espidf, etc.) */
+  frameworks?: FrameworkId[];
   /** Tags for filtering */
   tags?: string[];
+  /** Library category */
+  category?: "rtos" | "communication" | "display" | "sensor" | "storage" | "network" | "core" | "other";
+  /** Library author */
+  author?: string;
+  /** License identifier */
+  license?: string;
+  /** Path to manifest file (for internal use) */
+  manifestPath?: string;
 }
 
 /**

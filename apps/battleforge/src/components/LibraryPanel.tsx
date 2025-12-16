@@ -5,11 +5,13 @@ import { useLibraryManager } from "../lib/hooks/useLibraryManager";
 import type {
   LibraryRegistryEntry,
   PlatformId,
+  FrameworkId,
   Architecture,
 } from "../lib/library";
 
 interface LibraryPanelProps {
   platformId?: PlatformId;
+  frameworkId?: FrameworkId;
   architecture?: Architecture;
   onLog?: (
     message: string,
@@ -21,6 +23,7 @@ interface LibraryPanelProps {
 
 export function LibraryPanel({
   platformId,
+  frameworkId,
   architecture,
   onLog,
   onLibraryFilesChanged,
@@ -43,18 +46,18 @@ export function LibraryPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"browse" | "installed">("browse");
 
-  // Load registry libraries on mount and when platform changes
+  // Load registry libraries on mount and when platform/framework changes
   useEffect(() => {
-    loadRegistryLibraries(platformId);
-  }, [platformId, loadRegistryLibraries]);
+    loadRegistryLibraries(platformId, frameworkId);
+  }, [platformId, frameworkId, loadRegistryLibraries]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) {
-      loadRegistryLibraries(platformId);
+      loadRegistryLibraries(platformId, frameworkId);
     } else {
       await searchRegistryLibraries(searchQuery);
     }
-  }, [searchQuery, platformId, loadRegistryLibraries, searchRegistryLibraries]);
+  }, [searchQuery, platformId, frameworkId, loadRegistryLibraries, searchRegistryLibraries]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -228,8 +231,8 @@ export function LibraryPanel({
             </button>
           </div>
 
-          {/* Platform Info */}
-          {platformId && (
+          {/* Platform/Framework Info */}
+          {(platformId || frameworkId) && (
             <div
               style={{
                 padding: "4px 8px",
@@ -238,7 +241,12 @@ export function LibraryPanel({
                 borderBottom: "1px solid var(--border-color, #333)",
               }}
             >
-              Showing libraries compatible with <strong>{platformId}</strong>
+              Showing libraries compatible with{" "}
+              {platformId && <strong>{platformId}</strong>}
+              {platformId && frameworkId && " + "}
+              {frameworkId && (
+                <strong style={{ color: "#10b981" }}>{frameworkId}</strong>
+              )}
               {architecture && <> ({architecture})</>}
             </div>
           )}
@@ -457,6 +465,32 @@ function RegistryLibraryCard({
               </span>
             ))}
           </div>
+          {/* Framework badges */}
+          {library.frameworks && library.frameworks.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px",
+                marginTop: "4px",
+              }}
+            >
+              {library.frameworks.map((framework) => (
+                <span
+                  key={framework}
+                  style={{
+                    padding: "2px 6px",
+                    backgroundColor: "#064e3b",
+                    borderRadius: "3px",
+                    fontSize: "10px",
+                    color: "#10b981",
+                  }}
+                >
+                  {framework}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <button
           onClick={onInstall}

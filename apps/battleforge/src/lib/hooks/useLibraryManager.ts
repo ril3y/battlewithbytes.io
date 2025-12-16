@@ -15,6 +15,7 @@ import {
   type CachedLibrary,
   type LibraryRegistryEntry,
   type PlatformId,
+  type FrameworkId,
   type Architecture,
   loadRegistry,
   loadLibraryManifest,
@@ -41,7 +42,7 @@ interface UseLibraryManagerReturn {
   ) => Promise<CachedLibrary | null>;
 
   // Registry Actions
-  loadRegistryLibraries: (platformId?: PlatformId) => Promise<void>;
+  loadRegistryLibraries: (platformId?: PlatformId, frameworkId?: FrameworkId) => Promise<void>;
   searchRegistryLibraries: (query: string) => Promise<void>;
   installFromRegistry: (
     libraryId: string,
@@ -146,17 +147,24 @@ export function useLibraryManager(): UseLibraryManagerReturn {
 
   // Load curated libraries from our registry
   const loadRegistryLibrariesFn = useCallback(
-    async (platformId?: PlatformId) => {
+    async (platformId?: PlatformId, frameworkId?: FrameworkId) => {
       setIsLoadingRegistry(true);
       setError(null);
 
       try {
         let libraries: LibraryRegistryEntry[];
         if (platformId) {
-          libraries = await getLibrariesForPlatform(platformId);
+          libraries = await getLibrariesForPlatform(platformId, frameworkId);
         } else {
           const registry = await loadRegistry();
           libraries = registry.libraries;
+          // Filter by framework if specified (even without platform)
+          if (frameworkId) {
+            libraries = libraries.filter((lib) => {
+              if (!lib.frameworks || lib.frameworks.length === 0) return true;
+              return lib.frameworks.includes(frameworkId);
+            });
+          }
         }
         setRegistryLibraries(libraries);
       } catch (err) {
