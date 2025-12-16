@@ -146,6 +146,38 @@
       ]
     }
   ],
+  "emulators": [
+    {
+      "id": "unicorn-arm",
+      "name": "Unicorn ARM",
+      "description": "ARM/Thumb CPU emulator for code execution and debugging",
+      "status": "stable",
+      "softwareVersion": "2.0.0",
+      "releaseVersion": "1.0.0",
+      "fullVersion": "2.0.0-r1.0.0",
+      "files": {
+        "js": "unicorn/unicorn-arm.js"
+      },
+      "size": 88000,
+      "embeddedWasm": true,
+      "hashes": {
+        "compressed": "sha256:pending"
+      },
+      "supportedCpus": [
+        "cortex-m0",
+        "cortex-m0+",
+        "cortex-m3",
+        "cortex-m4",
+        "cortex-m7"
+      ],
+      "hooks": [
+        "code",
+        "block",
+        "memory",
+        "interrupt"
+      ]
+    }
+  ],
   "meta": {
     "cdnBaseUrl": "https://cdn.battlewithbytes.com/wasm",
     "fallbackBaseUrl": "/wasm",

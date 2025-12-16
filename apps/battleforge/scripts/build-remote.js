@@ -68,12 +68,12 @@ const CONFIG = {
     },
     unicorn: {
       script: 'build-unicorn-arm.sh',
-      output: 'unicorn-arm.wasm.gz',
+      output: 'unicorn-arm.js',  // WASM embedded in JS (older emscripten style)
       outputDir: 'output',
       remoteBuildDir: '~/unicorn-wasm-builds',
       isEmulator: true,  // Flag to update emulators section in manifest
       localSubdir: 'unicorn',  // Output to public/wasm/unicorn/
-      additionalFiles: ['unicorn-arm.js'],
+      embeddedWasm: true,  // No separate .wasm file
     },
   },
 };

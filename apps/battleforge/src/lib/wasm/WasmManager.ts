@@ -528,6 +528,7 @@ class WasmManagerService {
 
   /**
    * Ensure an emulator is available
+   * Handles both separate WASM files and embedded WASM (JS-only)
    */
   async ensureEmulator(
     id: string,
@@ -553,10 +554,18 @@ class WasmManagerService {
       return cached;
     }
 
-    // Download
+    // Download - handle embedded WASM (JS-only) vs separate WASM files
     const baseUrl = manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
-    const wasmFile = emu.files.wasmGz || emu.files.wasm;
-    const url = `${baseUrl}/${wasmFile}`;
+    const isEmbedded = (emu as { embeddedWasm?: boolean }).embeddedWasm;
+    const targetFile = isEmbedded
+      ? emu.files.js
+      : (emu.files.wasmGz || emu.files.wasm);
+
+    if (!targetFile) {
+      throw new Error(`No download file specified for ${emu.name}`);
+    }
+
+    const url = `${baseUrl}/${targetFile}`;
 
     onProgress?.({
       stage: "downloading",
@@ -572,7 +581,7 @@ class WasmManagerService {
     }
 
     let data: Uint8Array;
-    if (wasmFile.endsWith(".gz")) {
+    if (targetFile.endsWith(".gz")) {
       const compressed = await response.arrayBuffer();
       const decompressedStream = new Response(compressed).body!.pipeThrough(
         new DecompressionStream("gzip")
