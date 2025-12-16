@@ -23,6 +23,9 @@
     "wasm:build:riscv": "node scripts/build-remote.js riscv",
     "wasm:build:xtensa": "node scripts/build-remote.js xtensa",
     "wasm:build:lld": "node scripts/build-remote.js lld",
+    "wasm:build:capstone": "node scripts/build-remote.js capstone",
+    "wasm:build:unicorn": "node scripts/build-remote.js unicorn",
+    "wasm:build:tools": "node scripts/build-remote.js capstone unicorn",
     "wasm:build:all": "node scripts/build-remote.js all",
     "wasm:build:check": "node scripts/build-remote.js --check"
   },

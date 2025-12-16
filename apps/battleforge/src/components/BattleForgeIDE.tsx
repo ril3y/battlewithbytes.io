@@ -25,6 +25,7 @@ import { ToolbarPanel } from "./ToolbarPanel";
 import { PlatformSelectorModal } from "./PlatformSelectorModal";
 import { FirstTimeSetupModal } from "./FirstTimeSetupModal";
 import { EditProjectModal } from "./EditProjectModal";
+import { WasmPackageManager } from "./WasmPackageManager";
 import { isBinaryContent } from "./HexViewer";
 
 // Compiler/linker
@@ -111,6 +112,7 @@ function BattleForgeIDEContent() {
   // Modal states
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [isWasmToolsOpen, setIsWasmToolsOpen] = useState(false);
 
   // Sidebar tab state
   const [rightSidebarTab, setRightSidebarTab] =
@@ -1056,6 +1058,7 @@ void _fini(void) {
           onSave={handleSave}
           onCloseProject={closeProject}
           onEditProject={() => setIsEditProjectModalOpen(true)}
+          onOpenWasmTools={() => setIsWasmToolsOpen(true)}
           isLoading={isLoading}
           compilerReady={compilerReady}
           canSave={canSave}
@@ -1134,6 +1137,12 @@ void _fini(void) {
       <EditProjectModal
         isOpen={isEditProjectModalOpen}
         onClose={() => setIsEditProjectModalOpen(false)}
+      />
+
+      {/* WASM Package Manager */}
+      <WasmPackageManager
+        isOpen={isWasmToolsOpen}
+        onClose={() => setIsWasmToolsOpen(false)}
       />
     </IDELayout>
   );
