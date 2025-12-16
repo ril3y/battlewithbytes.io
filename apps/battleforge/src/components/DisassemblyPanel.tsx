@@ -1,0 +1,374 @@
+"use client";
+
+/**
+ * Disassembly Panel Component
+ *
+ * Displays disassembled ARM/Thumb code from ELF files using Capstone WASM.
+ * Shows address, bytes, mnemonic, and operands with syntax highlighting.
+ */
+
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import type { DisassembledInstruction } from "../lib/disasm/types";
+
+interface DisassemblyPanelProps {
+  data: Uint8Array;
+  filename?: string;
+}
+
+// Minimal ELF parsing - just extract .text section
+interface ElfSection {
+  name: string;
+  offset: number;
+  size: number;
+  address: number;
+  data: Uint8Array;
+}
+
+function parseElf(data: Uint8Array): { textSection: ElfSection | null; entryPoint: number } {
+  // Check ELF magic
+  if (data[0] !== 0x7f || data[1] !== 0x45 || data[2] !== 0x4c || data[3] !== 0x46) {
+    return { textSection: null, entryPoint: 0 };
+  }
+
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const is32bit = data[4] === 1;
+  const isLittleEndian = data[5] === 1;
+
+  if (!is32bit) {
+    console.warn("64-bit ELF not supported for disassembly");
+    return { textSection: null, entryPoint: 0 };
+  }
+
+  // Read ELF header (32-bit)
+  const entryPoint = view.getUint32(0x18, isLittleEndian);
+  const shOffset = view.getUint32(0x20, isLittleEndian);
+  const shEntSize = view.getUint16(0x2e, isLittleEndian);
+  const shNum = view.getUint16(0x30, isLittleEndian);
+  const shStrIndex = view.getUint16(0x32, isLittleEndian);
+
+  if (shOffset === 0 || shNum === 0) {
+    return { textSection: null, entryPoint };
+  }
+
+  // Read section headers
+  const sections: Array<{
+    nameOffset: number;
+    type: number;
+    addr: number;
+    offset: number;
+    size: number;
+  }> = [];
+
+  for (let i = 0; i < shNum; i++) {
+    const base = shOffset + i * shEntSize;
+    sections.push({
+      nameOffset: view.getUint32(base + 0, isLittleEndian),
+      type: view.getUint32(base + 4, isLittleEndian),
+      addr: view.getUint32(base + 12, isLittleEndian),
+      offset: view.getUint32(base + 16, isLittleEndian),
+      size: view.getUint32(base + 20, isLittleEndian),
+    });
+  }
+
+  // Get string table for section names
+  const strSection = sections[shStrIndex];
+  if (!strSection) {
+    return { textSection: null, entryPoint };
+  }
+
+  const getString = (offset: number): string => {
+    let str = "";
+    let pos = strSection.offset + offset;
+    while (pos < data.length && data[pos] !== 0) {
+      str += String.fromCharCode(data[pos++]);
+    }
+    return str;
+  };
+
+  // Find .text section
+  for (const section of sections) {
+    const name = getString(section.nameOffset);
+    if (name === ".text" && section.size > 0) {
+      return {
+        textSection: {
+          name,
+          offset: section.offset,
+          size: section.size,
+          address: section.addr,
+          data: data.slice(section.offset, section.offset + section.size),
+        },
+        entryPoint,
+      };
+    }
+  }
+
+  return { textSection: null, entryPoint };
+}
+
+// Syntax highlighting colors (matching BattleMagic)
+function getInstructionColor(mnemonic: string): string {
+  const mnem = mnemonic.toLowerCase();
+
+  // Return instructions
+  if (mnem === "bx" || mnem === "ret") return "text-orange-300";
+  // Function calls
+  if (mnem.startsWith("bl")) return "text-orange-400";
+  // Branches
+  if (mnem.startsWith("b")) return "text-yellow-400";
+  // Memory operations
+  if (mnem.includes("ldr") || mnem.includes("str")) return "text-blue-400";
+  // Stack operations
+  if (mnem.includes("push") || mnem.includes("pop")) return "text-purple-400";
+  if (mnem.includes("stm") || mnem.includes("ldm")) return "text-purple-300";
+  // Arithmetic
+  if (mnem.includes("add") || mnem.includes("sub") || mnem.includes("mul"))
+    return "text-cyan-400";
+  // Comparisons
+  if (mnem.includes("cmp") || mnem.includes("tst")) return "text-pink-400";
+  // Move operations
+  if (mnem.includes("mov")) return "text-green-400";
+  // System instructions
+  if (mnem === "svc" || mnem === "bkpt" || mnem === "udf") return "text-red-400";
+  // NOP
+  if (mnem === "nop") return "text-gray-500";
+
+  return "text-gray-300";
+}
+
+function formatAddress(addr: number): string {
+  return `0x${addr.toString(16).padStart(8, "0")}`;
+}
+
+function formatBytes(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join(" ");
+}
+
+// Virtual scrolling constants
+const ROW_HEIGHT = 20;
+const BUFFER_ROWS = 20;
+
+export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
+  const [instructions, setInstructions] = useState<DisassembledInstruction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [baseAddress, setBaseAddress] = useState(0);
+  const [showBytes, setShowBytes] = useState(true);
+
+  // Virtual scrolling state
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(400);
+
+  // Load and disassemble
+  useEffect(() => {
+    let cancelled = false;
+
+    async function disassemble() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Parse ELF to get .text section
+        const { textSection } = parseElf(data);
+
+        if (!textSection) {
+          // If not ELF or no .text, try disassembling as raw binary from start
+          setError("Could not find .text section in ELF. Showing raw binary disassembly.");
+          // For raw binary, assume it starts at 0x08000000 (common for STM32)
+          setBaseAddress(0x08000000);
+        } else {
+          setBaseAddress(textSection.address);
+        }
+
+        const codeData = textSection?.data || data;
+        const startAddr = textSection?.address || 0x08000000;
+
+        // Dynamically import Capstone loader
+        const { createDisassemblerFactory } = await import("../lib/disasm/CapstoneLoader");
+
+        const factory = await createDisassemblerFactory({
+          onProgress: (p) => console.log("[Disasm]", p.message),
+        });
+
+        const disasm = factory.createArmThumb();
+
+        if (cancelled) return;
+
+        // Disassemble code
+        const result = disasm.disassemble(codeData, startAddr, 0);
+
+        disasm.dispose();
+
+        if (cancelled) return;
+
+        setInstructions(result);
+        setIsLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Disassembly failed:", err);
+        setError(err instanceof Error ? err.message : "Disassembly failed");
+        setIsLoading(false);
+      }
+    }
+
+    disassemble();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
+  // Handle scroll
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  // Update container height on resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateHeight = () => {
+      setContainerHeight(container.clientHeight);
+    };
+
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Calculate visible rows
+  const visibleRange = useMemo(() => {
+    const startRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
+    const visibleRows = Math.ceil(containerHeight / ROW_HEIGHT) + BUFFER_ROWS * 2;
+    const endRow = Math.min(instructions.length, startRow + visibleRows);
+    return { startRow, endRow };
+  }, [scrollTop, containerHeight, instructions.length]);
+
+  const totalHeight = instructions.length * ROW_HEIGHT;
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a] text-gray-400">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <p>Loading Capstone disassembler...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && instructions.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a] text-red-400">
+        <div className="text-center max-w-md">
+          <p className="text-lg mb-2">Disassembly Error</p>
+          <p className="text-sm text-gray-400">{error}</p>
+          <p className="text-xs text-gray-500 mt-4">
+            Make sure Capstone is installed via WASM Tools.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col bg-[#0a0a0a] text-gray-200 font-mono text-xs">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#111] border-b border-gray-800">
+        <div className="flex items-center gap-4">
+          {filename && <span className="text-green-400">{filename}</span>}
+          <span className="text-gray-500">
+            {instructions.length.toLocaleString()} instructions
+          </span>
+          <span className="text-gray-500">
+            Base: {formatAddress(baseAddress)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 text-gray-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showBytes}
+              onChange={(e) => setShowBytes(e.target.checked)}
+              className="accent-green-500"
+            />
+            Show bytes
+          </label>
+        </div>
+      </div>
+
+      {error && (
+        <div className="px-3 py-1 bg-yellow-900/30 text-yellow-400 text-xs">
+          {error}
+        </div>
+      )}
+
+      {/* Column headers */}
+      <div className="flex px-3 py-1 bg-[#151515] border-b border-gray-800 text-gray-500 text-[10px] uppercase tracking-wide">
+        <span className="w-24 shrink-0">Address</span>
+        {showBytes && <span className="w-28 shrink-0">Bytes</span>}
+        <span className="w-16 shrink-0">Mnemonic</span>
+        <span className="flex-1">Operands</span>
+      </div>
+
+      {/* Disassembly content with virtual scrolling */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto"
+        onScroll={handleScroll}
+      >
+        <div style={{ height: totalHeight, position: "relative" }}>
+          {instructions.slice(visibleRange.startRow, visibleRange.endRow).map((inst, i) => {
+            const rowIndex = visibleRange.startRow + i;
+            return (
+              <div
+                key={rowIndex}
+                className="flex px-3 hover:bg-gray-800/50"
+                style={{
+                  position: "absolute",
+                  top: rowIndex * ROW_HEIGHT,
+                  left: 0,
+                  right: 0,
+                  height: ROW_HEIGHT,
+                  lineHeight: `${ROW_HEIGHT}px`,
+                }}
+              >
+                {/* Address */}
+                <span className="w-24 shrink-0 text-gray-500">
+                  {formatAddress(inst.address)}
+                </span>
+
+                {/* Bytes */}
+                {showBytes && (
+                  <span className="w-28 shrink-0 text-gray-600 truncate">
+                    {formatBytes(inst.bytes)}
+                  </span>
+                )}
+
+                {/* Mnemonic */}
+                <span className={`w-16 shrink-0 ${getInstructionColor(inst.mnemonic)}`}>
+                  {inst.mnemonic}
+                </span>
+
+                {/* Operands */}
+                <span className={getInstructionColor(inst.mnemonic)}>
+                  {inst.opStr}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer status */}
+      <div className="px-3 py-1 bg-[#111] border-t border-gray-800 text-gray-500 text-[10px]">
+        Disassembled with Capstone 5.0.3 (ARM/Thumb mode)
+      </div>
+    </div>
+  );
+}
