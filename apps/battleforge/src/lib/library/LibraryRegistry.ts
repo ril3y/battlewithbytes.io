@@ -2,7 +2,7 @@
  * Library Registry
  *
  * Loads and manages the BattleForge curated library registry.
- * Libraries are defined in src/app/data/libraries/ with JSON manifests.
+ * Fetches library data from GitHub with IndexedDB caching.
  */
 
 import type {
@@ -12,10 +12,12 @@ import type {
   PlatformId,
   Architecture,
 } from "./types";
-import { withBasePath } from "../utils/basePath";
+import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
+import { RegistryCache } from "../registry/RegistryCache";
 
-// Base URL for library registry (from boards submodule)
-const getRegistryBase = () => withBasePath("/boards/libraries");
+// GitHub fetcher for libraries
+const fetcher = new GitHubRegistryFetcher();
+const cache = new RegistryCache();
 
 /**
  * In-memory cache for registry and manifests
@@ -27,24 +29,21 @@ const manifestCache = new Map<string, BattleForgeLibraryManifest>();
  * Load the library registry index
  */
 export async function loadRegistry(
-  forceRefresh = false,
+  forceRefresh = false
 ): Promise<LibraryRegistry> {
   if (registryCache && !forceRefresh) {
     return registryCache;
   }
 
   try {
-    const response = await fetch(`${getRegistryBase()}/registry.json`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load registry: ${response.status}`);
-    }
-
-    const registry: LibraryRegistry = await response.json();
+    // Fetch from GitHub
+    const registry = await fetcher.fetchJson<LibraryRegistry>(
+      "libraries/registry.json"
+    );
     registryCache = registry;
 
     console.log(
-      `[LibraryRegistry] Loaded ${registry.libraries.length} libraries`,
+      `[LibraryRegistry] Loaded ${registry.libraries.length} libraries from GitHub`
     );
     return registry;
   } catch (error) {
@@ -59,34 +58,49 @@ export async function loadRegistry(
  */
 export async function loadLibraryManifest(
   libraryId: string,
-  forceRefresh = false,
+  forceRefresh = false
 ): Promise<BattleForgeLibraryManifest | null> {
   if (manifestCache.has(libraryId) && !forceRefresh) {
     return manifestCache.get(libraryId)!;
   }
 
-  try {
-    const response = await fetch(`${getRegistryBase()}/${libraryId}/library.json`);
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.warn(`[LibraryRegistry] Library not found: ${libraryId}`);
-        return null;
-      }
-      throw new Error(`Failed to load manifest: ${response.status}`);
+  // Check IndexedDB cache first (reuse registry cache for library manifests)
+  if (!forceRefresh) {
+    const cached = await cache.getLibraryManifest(libraryId);
+    if (cached) {
+      // Cast since the types are compatible
+      const manifest = cached as unknown as BattleForgeLibraryManifest;
+      manifestCache.set(libraryId, manifest);
+      console.log(`[LibraryRegistry] Using cached manifest for ${libraryId}`);
+      return manifest;
     }
+  }
 
-    const manifest: BattleForgeLibraryManifest = await response.json();
+  try {
+    // Fetch from GitHub
+    const manifest = await fetcher.fetchJson<BattleForgeLibraryManifest>(
+      `libraries/${libraryId}/library.json`
+    );
     manifestCache.set(libraryId, manifest);
 
+    // Cache in IndexedDB
+    await cache.setLibraryManifest(
+      libraryId,
+      manifest as unknown as Parameters<typeof cache.setLibraryManifest>[1]
+    );
+
     console.log(
-      `[LibraryRegistry] Loaded manifest for ${manifest.name} v${manifest.version}`,
+      `[LibraryRegistry] Loaded manifest for ${manifest.name} v${manifest.version}`
     );
     return manifest;
   } catch (error) {
+    if (error instanceof Error && error.message.includes("404")) {
+      console.warn(`[LibraryRegistry] Library not found: ${libraryId}`);
+      return null;
+    }
     console.error(
       `[LibraryRegistry] Failed to load manifest for ${libraryId}:`,
-      error,
+      error
     );
     return null;
   }
@@ -104,14 +118,14 @@ export async function getLibraries(): Promise<LibraryRegistryEntry[]> {
  * Filter libraries by platform compatibility
  */
 export async function getLibrariesForPlatform(
-  platformId: PlatformId,
+  platformId: PlatformId
 ): Promise<LibraryRegistryEntry[]> {
   const registry = await loadRegistry();
 
   return registry.libraries.filter(
     (lib) =>
       lib.platforms.includes(platformId) ||
-      lib.platforms.includes("*" as PlatformId),
+      lib.platforms.includes("*" as PlatformId)
   );
 }
 
@@ -120,7 +134,7 @@ export async function getLibrariesForPlatform(
  */
 export async function getCompatibleLibraries(
   platformId: PlatformId,
-  architecture: Architecture,
+  architecture: Architecture
 ): Promise<LibraryRegistryEntry[]> {
   const registry = await loadRegistry();
 
@@ -151,7 +165,7 @@ export async function getCompatibleLibraries(
  * Search libraries by name or tags
  */
 export async function searchLibraries(
-  query: string,
+  query: string
 ): Promise<LibraryRegistryEntry[]> {
   const registry = await loadRegistry();
   const queryLower = query.toLowerCase();
@@ -180,19 +194,29 @@ export async function searchLibraries(
  * Get a library by ID
  */
 export async function getLibraryById(
-  libraryId: string,
+  libraryId: string
 ): Promise<LibraryRegistryEntry | null> {
   const registry = await loadRegistry();
   return registry.libraries.find((lib) => lib.id === libraryId) || null;
 }
 
 /**
- * Clear the registry cache
+ * Clear the registry cache (in-memory only)
  */
 export function clearRegistryCache(): void {
   registryCache = null;
   manifestCache.clear();
-  console.log("[LibraryRegistry] Cache cleared");
+  console.log("[LibraryRegistry] Memory cache cleared");
+}
+
+/**
+ * Clear all caches (in-memory and IndexedDB)
+ */
+export async function clearAllCaches(): Promise<void> {
+  registryCache = null;
+  manifestCache.clear();
+  await cache.clear();
+  console.log("[LibraryRegistry] All caches cleared");
 }
 
 /**
@@ -208,9 +232,14 @@ export function getArchPortablePath(arch: Architecture): string {
     "cortex-m4f": "ARM_CM4F",
     "cortex-m7": "ARM_CM7",
     "cortex-m7f": "ARM_CM7",
+    "cortex-m23": "ARM_CM23",
+    "cortex-m33": "ARM_CM33",
+    "cortex-m55": "ARM_CM55",
     "xtensa-lx6": "XTENSA_LX6",
     "xtensa-lx7": "XTENSA_LX7",
     riscv32: "RISCV32",
+    riscv32imc: "RISCV32",
+    riscv32imac: "RISCV32",
   };
 
   return archMap[arch] || arch;

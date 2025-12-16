@@ -4,6 +4,14 @@ import { useEffect, useRef, useCallback } from "react";
 import { WasmManager } from "../wasm";
 import type { UpdateNotification } from "../wasm/types";
 
+// Format version with "v" prefix only if it looks like a version number
+function formatVersion(version: string): string {
+  if (/^\d/.test(version)) {
+    return `v${version}`;
+  }
+  return version;
+}
+
 /**
  * Hook to show a toast when compiler updates are available
  * @param showToast - Function to show a toast notification
@@ -32,7 +40,7 @@ export function useCompilerUpdateToast(
       showToast({
         type: "warning",
         title: "Compiler Update Available",
-        message: `${update.id}: v${update.currentVersion} → v${update.availableVersion}`,
+        message: `${update.id}: ${formatVersion(update.currentVersion)} → ${formatVersion(update.availableVersion)}`,
         duration: 10000,
         action: onOpenWasmManager
           ? { label: "Update Now", onClick: onOpenWasmManager }
@@ -52,15 +60,11 @@ export function useCompilerUpdateToast(
   }, [showToast, onOpenWasmManager]);
 
   useEffect(() => {
-    // Check for updates on mount
+    // Check for updates on mount (toast is shown via event subscription)
     const checkAndNotify = async () => {
       try {
-        const updates = await WasmManager.checkForUpdates();
-        if (updates.length > 0 && !hasShownToast.current) {
-          showUpdateToast(updates);
-          hasShownToast.current = true;
-          lastNotificationCount.current = updates.length;
-        }
+        await WasmManager.checkForUpdates();
+        // Toast is shown via the "update_available" event subscription below
       } catch (e) {
         console.error("[useCompilerUpdateToast] Failed to check updates:", e);
       }
@@ -72,14 +76,18 @@ export function useCompilerUpdateToast(
     // Subscribe to update events
     const unsubscribe = WasmManager.subscribe((event) => {
       if (event.type === "update_available") {
-        // Only show toast if we have new notifications
-        if (event.notifications.length > lastNotificationCount.current) {
+        // Only show toast once per mount and if we have new notifications
+        if (!hasShownToast.current && event.notifications.length > 0) {
           showUpdateToast(event.notifications);
+          hasShownToast.current = true;
           lastNotificationCount.current = event.notifications.length;
         }
       } else if (event.type === "download_complete") {
-        // Reset when user updates
+        // Reset when user updates so we can show new notifications later
         lastNotificationCount.current = Math.max(0, lastNotificationCount.current - 1);
+        if (lastNotificationCount.current === 0) {
+          hasShownToast.current = false;
+        }
       }
     });
 

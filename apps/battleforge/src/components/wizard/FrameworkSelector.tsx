@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { BoardManifest } from "../../lib/registry/types";
 import type { FrameworkOption } from "./types";
-import { withBasePath } from "../../lib/utils/basePath";
+import { GitHubRegistryFetcher } from "../../lib/registry/GitHubRegistryFetcher";
 
 interface FrameworkSelectorProps {
   board: BoardManifest;
@@ -43,12 +43,10 @@ export function FrameworkSelector({
 
     const loadFrameworks = async () => {
       try {
-        const response = await fetch(withBasePath("/boards/frameworks.json"));
-        if (response.ok) {
-          const data = await response.json();
-          frameworksCache = data;
-          setFrameworksData(data);
-        }
+        const fetcher = new GitHubRegistryFetcher();
+        const data = await fetcher.fetchJson<FrameworksData>("frameworks.json");
+        frameworksCache = data;
+        setFrameworksData(data);
       } catch (err) {
         console.warn("Failed to load frameworks.json:", err);
       } finally {

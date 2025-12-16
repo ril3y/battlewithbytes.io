@@ -412,13 +412,16 @@ async function registerCompilerAsInstalled(): Promise<void> {
     const compiler = manifest.compilers?.find((c: { id: string }) => c.id === "clang-arm");
 
     if (compiler) {
+      // Support both v1 (version, hash) and v2 (fullVersion, hashes.compressed) formats
+      const version = compiler.fullVersion || compiler.version || compiler.softwareVersion || "";
+      const hash = compiler.hashes?.compressed || compiler.hash || "";
       await wasmCache.setMetadataOnly(
         "clang-arm",
-        compiler.version,
-        compiler.hash,
+        version,
+        hash,
         compiler.size,
       );
-      console.log("[EmscriptenClang] Registered clang-arm as installed");
+      console.log(`[EmscriptenClang] Registered clang-arm v${version} as installed`);
     }
   } catch (err) {
     console.warn("[EmscriptenClang] Failed to register compiler:", err);

@@ -10,7 +10,7 @@ import type {
   FrameworkSupport,
   FrameworkId,
 } from "../lib/platform/types";
-import { withBasePath } from "../lib/utils/basePath";
+import { GitHubRegistryFetcher } from "../lib/registry/GitHubRegistryFetcher";
 
 interface PlatformSelectorModalProps {
   isOpen: boolean;
@@ -97,25 +97,33 @@ export function PlatformSelectorModal({
     setLoading(true);
     setError(null);
     try {
-      // Load lean registry from submodule
-      const response = await fetch(withBasePath("/boards/registry.json"));
-      if (!response.ok) throw new Error("Failed to load platform registry");
-      const leanRegistry = await response.json();
+      // Load registry from GitHub
+      const fetcher = new GitHubRegistryFetcher();
+      const registryData = await fetcher.fetchJson<{
+        version: string;
+        platforms: Array<{ id: string; configPath: string; boardsPath: string }>;
+      }>("registry.json");
 
       // Load platform.json for each platform to build full registry
       const platforms: PlatformEntry[] = await Promise.all(
-        (leanRegistry.platforms || []).map(
-          async (p: { id: string; configPath: string; boardsPath: string }) => {
+        (registryData.platforms || []).map(
+          async (p) => {
             try {
-              const configResponse = await fetch(withBasePath(`/boards/${p.configPath}`));
-              if (!configResponse.ok) {
-                throw new Error(`Failed to load platform config: ${p.id}`);
-              }
-              const config = await configResponse.json();
+              // Fetch platform config from GitHub
+              const config = await fetcher.fetchJson<{
+                id?: string;
+                name?: string;
+                description?: string;
+                vendor?: string;
+                icon?: string;
+                color?: string;
+                website?: string;
+                families?: string[];
+              }>(p.configPath);
 
               return {
-                id: config.id || p.id,
-                name: config.name || p.id,
+                id: p.id,
+                name: config.name || p.id.toUpperCase(),
                 description: config.description,
                 manufacturer: config.vendor,
                 icon: config.icon,
@@ -130,7 +138,7 @@ export function PlatformSelectorModal({
                 id: p.id,
                 name: p.id.toUpperCase(),
                 families: [],
-                supported: false,
+                supported: true, // Still supported, just missing config
               } as PlatformEntry;
             }
           },
@@ -138,7 +146,7 @@ export function PlatformSelectorModal({
       );
 
       const registry: PlatformRegistry = {
-        version: leanRegistry.version,
+        version: registryData.version,
         platforms,
       };
 
@@ -156,14 +164,13 @@ export function PlatformSelectorModal({
     const basePlatform = (platform as unknown as { platform?: string }).platform || platform.id.split("-")[0];
     const familyIds = platform.families || [(platform as unknown as { family?: string }).family || platform.id.split("-")[1]];
 
+    const fetcher = new GitHubRegistryFetcher();
+
     // Load frameworks.json for display metadata
     let frameworksData: Record<string, { name: string; description: string; supported: boolean }> = {};
     try {
-      const fwResponse = await fetch(withBasePath("/boards/frameworks.json"));
-      if (fwResponse.ok) {
-        const fwJson = await fwResponse.json();
-        frameworksData = fwJson.frameworks || {};
-      }
+      const fwJson = await fetcher.fetchJson<{ frameworks?: Record<string, { name: string; description: string; supported: boolean }> }>("frameworks.json");
+      frameworksData = fwJson.frameworks || {};
     } catch {
       console.warn("Failed to load frameworks.json");
     }
@@ -173,11 +180,9 @@ export function PlatformSelectorModal({
       const cacheKey = `${platform.id}/${familyId}`;
       if (!families.has(cacheKey)) {
         try {
-          const response = await fetch(
-            withBasePath(`/boards/platforms/${basePlatform}/${familyId}/manifest.json`),
-          );
-          if (response.ok) {
-            const manifest = await response.json();
+          // Fetch manifest from GitHub (try v2 first, then v1)
+          const manifest = await fetcher.fetchPlatformManifestByFamily(basePlatform, familyId);
+          if (manifest) {
 
             // Transform manifest frameworks object to FrameworkSupport array
             let frameworkSupports: FrameworkSupport[] = [];
@@ -210,25 +215,26 @@ export function PlatformSelectorModal({
             }
 
             // Transform manifest to PlatformFamily format
+            // Use type assertions since registry types differ from platform types
             const familyData: PlatformFamily = {
               id: manifest.family || familyId,
               name: manifest.name,
               description: manifest.description,
-              architecture: manifest.architecture,
-              devices: manifest.devices || [],
+              architecture: manifest.architecture as unknown as import("../lib/platform/types").Architecture,
+              devices: (manifest.devices || []) as unknown as import("../lib/platform/types").DeviceEntry[],
               headers: {
                 url: manifest.headers?.url || "",
-                size: manifest.headers?.size || 0,
-                checksum: manifest.headers?.hash || manifest.headers?.checksum || "",
+                size: 0, // Size not available in registry manifest
+                checksum: manifest.headers?.hash || "",
                 includes: manifest.headers?.includes || [],
               },
-              libs: manifest.libs || {
-                architecture: manifest.architecture,
+              libs: {
+                architecture: manifest.architecture as unknown as import("../lib/platform/types").Architecture,
                 required: [],
                 optional: [],
               },
-              compilerFlags: manifest.build?.compilerFlags || manifest.compilerFlags || [],
-              linkerFlags: manifest.build?.linkerFlags || manifest.linkerFlags || [],
+              compilerFlags: manifest.build?.compilerFlags || [],
+              linkerFlags: manifest.build?.linkerFlags || [],
               frameworks: frameworkSupports.length > 0 ? frameworkSupports : undefined,
             };
             setFamilies((prev) => new Map(prev).set(cacheKey, familyData));

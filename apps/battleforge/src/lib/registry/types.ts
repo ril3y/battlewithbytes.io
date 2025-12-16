@@ -55,6 +55,86 @@ export interface LibraryIndexEntry {
 }
 
 // ============================================================================
+// Memory and Linker Configuration Types
+// ============================================================================
+
+/**
+ * Memory region definition for linker script generation
+ */
+export interface MemoryRegion {
+  /** Memory origin address (hex string, e.g., "0x08000000") */
+  origin: string;
+  /** Memory attributes: r=read, w=write, x=execute */
+  attr: "rx" | "rwx" | "rw";
+  /** Optional description */
+  description?: string;
+}
+
+/**
+ * Platform-level memory configuration
+ * Defines the memory map layout for an architecture/platform
+ */
+export interface PlatformMemoryConfig {
+  /** Memory regions with their origins and attributes */
+  regions: {
+    /** Flash memory region */
+    FLASH: MemoryRegion;
+    /** Main RAM region */
+    RAM: MemoryRegion;
+    /** Optional secondary RAM regions (e.g., RP2040 SCRATCH_X/Y) */
+    [key: string]: MemoryRegion | undefined;
+  };
+  /** Stack configuration */
+  stack?: {
+    /** Stack end symbol (e.g., "_estack") */
+    endSymbol?: string;
+    /** Minimum stack size in bytes */
+    minSize?: number;
+  };
+  /** Heap configuration */
+  heap?: {
+    /** Minimum heap size in bytes */
+    minSize?: number;
+  };
+}
+
+/**
+ * Platform-level linker configuration
+ */
+export interface PlatformLinkerConfig {
+  /** Entry point function name */
+  entry: string;
+  /** Linker script template to use (architecture-based) */
+  template: "arm-cortex-m" | "arm-cortex-m0" | "arm-cortex-m4f" | "rp2040" | "xtensa-esp32";
+  /** Additional sections to include */
+  additionalSections?: string[];
+}
+
+/**
+ * Device-level memory sizes
+ */
+export interface DeviceMemorySizes {
+  /** Flash size in bytes */
+  FLASH: number;
+  /** RAM size in bytes */
+  RAM: number;
+  /** Additional region sizes (e.g., SCRATCH_X, PSRAM) */
+  [key: string]: number | undefined;
+}
+
+/**
+ * Board-level memory overrides (for known variants with different flash/ram)
+ */
+export interface BoardMemoryOverride {
+  /** Flash size override in bytes */
+  FLASH?: number;
+  /** RAM size override in bytes */
+  RAM?: number;
+  /** Notes about the override (e.g., "Most STM32F103C8 chips have 128KB flash") */
+  note?: string;
+}
+
+// ============================================================================
 // Platform Manifest Types
 // ============================================================================
 
@@ -71,6 +151,12 @@ export interface PlatformManifest {
     hash: string | null;
     includes?: string[];
   };
+
+  /** Memory configuration for linker script generation */
+  memory?: PlatformMemoryConfig;
+
+  /** Linker configuration */
+  linker?: PlatformLinkerConfig;
 
   devices: DeviceDefinition[];
 
@@ -106,7 +192,10 @@ export interface DeviceDefinition {
   psram?: number;
   frequency: number;
   defines?: string[];
+  /** Legacy: reference to external linker script file */
   linkerScript?: string;
+  /** Memory sizes for linker script generation */
+  memorySizes?: DeviceMemorySizes;
 }
 
 export interface SoftDeviceDefinition {
@@ -151,6 +240,9 @@ export interface BoardManifest {
     ram: number;
     ramAvailable?: number;
   };
+
+  /** Memory overrides for linker script generation (e.g., STM32F103C8 with 128KB) */
+  memoryOverride?: BoardMemoryOverride;
 
   build: {
     frequency: number;
@@ -298,11 +390,11 @@ export interface BoardDocumentation {
   /** Board schematic PDF URL */
   schematic?: string;
   /** Vendor product page */
-  productPage?: string;
+  product?: string;
   /** Pinout diagram URL */
   pinout?: string;
-  /** Additional guides/tutorials */
-  guides?: string[];
+  /** Additional guide/tutorial URL */
+  guide?: string;
 }
 
 // ============================================================================

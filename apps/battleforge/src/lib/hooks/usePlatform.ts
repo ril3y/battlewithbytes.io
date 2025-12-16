@@ -10,7 +10,6 @@ import type {
   ToolchainState,
   LoadingProgress,
 } from "../platform/types";
-import { loadHeadersFromRegistry } from "../platform/HeaderLoader";
 import { getPlatformManager } from "../platform/PlatformManager";
 
 interface UsePlatformOptions {
@@ -91,18 +90,13 @@ export function usePlatform(options: UsePlatformOptions = {}): UsePlatformReturn
       });
 
       try {
-        const headers = await loadHeadersFromRegistry(
+        const platformManager = getPlatformManager();
+        const headers = await platformManager.loadHeaders(
           platform.platformId,
           platform.familyId,
           (progress) => {
-            let stage: "ready" | "error" | "downloading" | "warning" =
-              "downloading";
-            if (progress.stage === "ready") stage = "ready";
-            else if (progress.stage === "error") stage = "error";
-            else if (progress.stage === "warning") stage = "warning";
-
             updateToolchain("headers", {
-              stage,
+              stage: progress.stage,
               message: progress.message,
               current: progress.current || 0,
               total: progress.total || 0,

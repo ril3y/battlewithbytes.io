@@ -79,9 +79,9 @@ export function ExamplePicker({
             {board.chip.architecture} • {board.vendor}
           </div>
         </div>
-        {board.documentation?.productPage && (
+        {board.documentation?.product && (
           <a
-            href={board.documentation.productPage}
+            href={board.documentation.product}
             target="_blank"
             rel="noopener noreferrer"
             className="docs-link"

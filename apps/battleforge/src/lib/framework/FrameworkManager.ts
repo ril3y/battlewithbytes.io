@@ -7,7 +7,7 @@
 
 import type { FrameworkId, Framework } from "../platform/types";
 import { FrameworkCache } from "./FrameworkCache";
-import { withBasePath } from "../utils/basePath";
+import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
 
 const cache = new FrameworkCache();
 
@@ -114,6 +114,7 @@ async function decompressGzip(compressed: Uint8Array): Promise<Uint8Array> {
 
 export class FrameworkManager {
   private frameworkCache: Map<string, Framework> = new Map();
+  private fetcher = new GitHubRegistryFetcher();
 
   /**
    * Load framework definition from JSON
@@ -130,17 +131,10 @@ export class FrameworkManager {
       return cached;
     }
 
-    // Fetch framework definition from server
+    // Fetch framework definition from GitHub
     try {
-      const url = withBasePath(`/boards/platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`);
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        console.error(`[FrameworkManager] Framework not found: ${url}`);
-        return null;
-      }
-
-      const framework = (await response.json()) as Framework;
+      const path = `platforms/${platformId}/${familyId}/frameworks/${frameworkId}.json`;
+      const framework = await this.fetcher.fetchJson<Framework>(path);
 
       // Store in memory cache
       this.frameworkCache.set(cacheKey, framework);
@@ -200,13 +194,16 @@ export class FrameworkManager {
       }
     }
 
-    // Download core files
+    // Download core files from GitHub
     onProgress?.({
       stage: "downloading",
       message: "Downloading framework core files...",
     });
 
-    const response = await fetch(withBasePath(`/boards/platforms/${coreUrl}`));
+    // Build GitHub URL for framework core files
+    const coreFilePath = coreUrl.startsWith("platforms/") ? coreUrl : `platforms/${coreUrl}`;
+    const githubUrl = this.fetcher.getBaseUrl() + "/" + coreFilePath;
+    const response = await fetch(githubUrl);
     if (!response.ok) {
       throw new Error(
         `Failed to download framework core files: ${response.status}`,

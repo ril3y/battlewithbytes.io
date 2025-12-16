@@ -173,10 +173,14 @@ export type Architecture =
   | "cortex-m4f"
   | "cortex-m7"
   | "cortex-m7f"
+  | "cortex-m23"
   | "cortex-m33" // nRF53
+  | "cortex-m55"
   | "xtensa-lx6" // ESP32
   | "xtensa-lx7" // ESP32-S2/S3
-  | "riscv32"; // ESP32-C3
+  | "riscv32" // ESP32-C3
+  | "riscv32imc"
+  | "riscv32imac";
 
 /**
  * Architecture-specific configuration
@@ -232,12 +236,24 @@ export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
     float: "hard",
     libPath: "cortex-m7f",
   },
+  "cortex-m23": {
+    target: "thumbv8m.base-none-eabi",
+    cpu: "cortex-m23",
+    libPath: "cortex-m23",
+  },
   "cortex-m33": {
     target: "thumbv8m.main-none-eabihf",
     cpu: "cortex-m33",
     fpu: "fpv5-sp-d16",
     float: "hard",
     libPath: "cortex-m33",
+  },
+  "cortex-m55": {
+    target: "thumbv8.1m.main-none-eabihf",
+    cpu: "cortex-m55",
+    fpu: "fpv5-d16",
+    float: "hard",
+    libPath: "cortex-m55",
   },
   "xtensa-lx6": {
     target: "xtensa-esp32-elf",
@@ -253,6 +269,16 @@ export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
     target: "riscv32-unknown-elf",
     cpu: "generic-rv32",
     libPath: "riscv32",
+  },
+  riscv32imc: {
+    target: "riscv32-unknown-elf",
+    cpu: "generic-rv32",
+    libPath: "riscv32imc",
+  },
+  riscv32imac: {
+    target: "riscv32-unknown-elf",
+    cpu: "generic-rv32",
+    libPath: "riscv32imac",
   },
 };
 
@@ -439,61 +465,9 @@ export interface PlatformManifestV2 {
 }
 
 /**
- * Platform Manifest v1 format (legacy)
+ * Platform Manifest type (v2 only)
  */
-export interface PlatformManifestV1 {
-  $schema?: string;
-  platform: string;
-  family: string;
-  name: string;
-  description?: string;
-  architecture: Architecture;
-  version: string;
-
-  headers: {
-    url?: string;
-    source?: string;
-    ref?: string;
-    files?: string[];
-    hash?: string;
-    includes?: string[];
-    cmsis?: {
-      source: string;
-      ref?: string;
-      files?: string[];
-    };
-  };
-
-  devices: Array<{
-    id: string;
-    name: string;
-    flash: number;
-    ram: number;
-    frequency: number;
-    defines?: string[];
-    linkerScript?: string;
-  }>;
-
-  build?: {
-    compilerFlags?: string[];
-    linkerFlags?: string[];
-    defines?: string[];
-  };
-
-  frameworks?: Record<string, unknown>;
-}
-
-/**
- * Union type for either manifest version
- */
-export type PlatformManifest = PlatformManifestV1 | PlatformManifestV2;
-
-/**
- * Type guard to check if manifest is v2
- */
-export function isManifestV2(manifest: PlatformManifest): manifest is PlatformManifestV2 {
-  return "schemaVersion" in manifest && manifest.schemaVersion === "2.0.0";
-}
+export type PlatformManifest = PlatformManifestV2;
 
 /**
  * Fetched source files for a device
