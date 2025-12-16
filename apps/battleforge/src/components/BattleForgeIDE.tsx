@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { VFSProvider, useVFS } from "../lib/vfs/VFSContext";
 import { useProject } from "../lib/project/ProjectContext";
 import { ToastProvider, useToast } from "./Toast";
@@ -98,6 +98,7 @@ function BattleForgeIDEContent() {
     hasUnsavedChanges,
     deleteDirectory,
     hasDirectory,
+    getEditableFiles,
   } = useVFS();
   const {
     currentProject,
@@ -108,6 +109,10 @@ function BattleForgeIDEContent() {
   // Editor state
   const [editorContent, setEditorContent] = useState("");
   const [projectInitialized, setProjectInitialized] = useState(false);
+
+  // Track previous active file to save content when switching files
+  const previousActiveFileRef = useRef<string | null>(null);
+  const editorContentRef = useRef<string>("");
 
   // Modal states
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
@@ -331,23 +336,47 @@ function BattleForgeIDEContent() {
   }, [currentProject?.libraries]);
 
   // Sync editor content with VFS when active file changes
+  // Also save previous file's content before loading new file
   useEffect(() => {
-    if (state.activeFile) {
-      const file = getFile(state.activeFile);
-      if (file) {
-        if (typeof file.content === "string") {
-          setEditorContent(file.content);
-        } else if (file.content instanceof Uint8Array) {
-          const textContent = new TextDecoder().decode(file.content);
-          setEditorContent(textContent);
+    // Save previous file's content to VFS before switching
+    const prevFile = previousActiveFileRef.current;
+    if (prevFile && editorContentRef.current) {
+      const prevFileData = getFile(prevFile);
+      // Only save if the file is editable (user files, not headers)
+      if (prevFileData?.editable) {
+        const prevContent = typeof prevFileData.content === "string"
+          ? prevFileData.content
+          : new TextDecoder().decode(prevFileData.content);
+        // Only update if content actually changed
+        if (editorContentRef.current !== prevContent) {
+          updateFile(prevFile, editorContentRef.current);
         }
       }
     }
-  }, [state.activeFile, getFile]);
 
-  // Editor change handler
+    // Load new file's content
+    if (state.activeFile) {
+      const file = getFile(state.activeFile);
+      if (file) {
+        let content: string;
+        if (typeof file.content === "string") {
+          content = file.content;
+        } else {
+          content = new TextDecoder().decode(file.content);
+        }
+        setEditorContent(content);
+        editorContentRef.current = content;
+      }
+    }
+
+    // Update the ref to current active file
+    previousActiveFileRef.current = state.activeFile;
+  }, [state.activeFile, getFile, updateFile]);
+
+  // Editor change handler - also updates ref for access in effects
   const handleEditorChange = useCallback((newContent: string) => {
     setEditorContent(newContent);
+    editorContentRef.current = newContent;
   }, []);
 
   // File select handler
@@ -476,6 +505,20 @@ function BattleForgeIDEContent() {
 
     setIsCompiling(true);
     log("Starting compilation...", "info");
+
+    // Auto-save current editor content to VFS before compiling
+    if (state.activeFile && editorContentRef.current) {
+      const currentFile = getFile(state.activeFile);
+      if (currentFile?.editable) {
+        const currentContent = typeof currentFile.content === "string"
+          ? currentFile.content
+          : new TextDecoder().decode(currentFile.content);
+        if (editorContentRef.current !== currentContent) {
+          updateFile(state.activeFile, editorContentRef.current);
+          log(`Auto-saved ${state.activeFile}`, "info");
+        }
+      }
+    }
 
     try {
       const defaultFlags = [
@@ -868,49 +911,51 @@ void _fini(void) {
     log("Will support UART bootloader protocols for various MCUs", "info");
   };
 
-  // Save handler
+  // Save handler - saves ALL editable files from VFS to project storage
   const handleSave = useCallback(async () => {
-    if (state.activeFile && currentProject) {
-      const file = getFile(state.activeFile);
-      if (file) {
-        updateFile(state.activeFile, editorContent);
-        markFileSaved(state.activeFile);
+    if (!currentProject) {
+      log("No project open to save", "warning");
+      return;
+    }
 
-        const updatedFiles = currentProject.files.map((f) => {
-          if (f.path === state.activeFile) {
-            return { ...f, content: editorContent };
-          }
-          return f;
-        });
-
-        const fileExists = currentProject.files.some(
-          (f) => f.path === state.activeFile
-        );
-        if (!fileExists && file.editable) {
-          updatedFiles.push({
-            path: state.activeFile,
-            content: editorContent,
-            editable: true,
-          });
-        }
-
-        try {
-          await saveProjectToStorage({ files: updatedFiles });
-          log(`Saved ${state.activeFile}`, "success");
-        } catch (error) {
-          log(`Failed to save: ${error}`, "error");
-        }
+    // First, sync current editor content to VFS
+    if (state.activeFile && editorContentRef.current) {
+      const activeFileData = getFile(state.activeFile);
+      if (activeFileData?.editable) {
+        updateFile(state.activeFile, editorContentRef.current);
       }
+    }
+
+    // Get all editable files from VFS
+    const editableFiles = getEditableFiles();
+
+    // Convert to ProjectFile format
+    const updatedFiles = editableFiles.map((f) => ({
+      path: f.path,
+      content: f.content,
+      editable: true,
+    }));
+
+    // Mark all files as saved in VFS
+    for (const file of editableFiles) {
+      markFileSaved(file.path);
+    }
+
+    try {
+      await saveProjectToStorage({ files: updatedFiles });
+      log(`Saved ${updatedFiles.length} file(s)`, "success");
+    } catch (error) {
+      log(`Failed to save: ${error}`, "error");
     }
   }, [
     state.activeFile,
-    editorContent,
     getFile,
     updateFile,
     markFileSaved,
     log,
     currentProject,
     saveProjectToStorage,
+    getEditableFiles,
   ]);
 
   // Check if current file has unsaved modifications

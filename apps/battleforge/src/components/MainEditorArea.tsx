@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { EditorPanel } from "./EditorPanel";
 import { FileTabs } from "./FileTabs";
 import { HexViewer } from "./HexViewer";
@@ -42,6 +42,18 @@ export function MainEditorArea({
     binaryContent[3] === 0x46
   );
 
+  // Generate a unique key for binary content to force DisassemblyPanel re-render
+  // Uses size + first/last bytes as a simple hash
+  const binaryContentKey = useMemo(() => {
+    if (!binaryContent || binaryContent.length === 0) return "empty";
+    const len = binaryContent.length;
+    const first = binaryContent.slice(0, Math.min(8, len));
+    const last = binaryContent.slice(Math.max(0, len - 8));
+    const hash = Array.from(first).concat(Array.from(last))
+      .reduce((acc, b) => (acc * 31 + b) >>> 0, len);
+    return `${len}-${hash}`;
+  }, [binaryContent]);
+
   return (
     <div className="editor-area">
       <FileTabs />
@@ -68,7 +80,7 @@ export function MainEditorArea({
             {/* Content */}
             <div className="viewer-content">
               {binaryViewMode === "disasm" && isElfFile ? (
-                <DisassemblyPanel data={binaryContent} filename={activeFile} />
+                <DisassemblyPanel key={binaryContentKey} data={binaryContent} filename={activeFile} />
               ) : (
                 <HexViewer data={binaryContent} filename={activeFile} />
               )}
