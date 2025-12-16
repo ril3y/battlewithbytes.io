@@ -19,6 +19,47 @@ import { CapstoneArmMode } from "./types";
 let capstoneWasm: CapstoneModule | null = null;
 let loadPromise: Promise<CapstoneModule> | null = null;
 
+// Type for the Capstone module factory
+type CapstoneModuleFactory = (options: Record<string, unknown>) => Promise<CapstoneModule>;
+
+/**
+ * Load the Capstone JS file and extract the module factory
+ * The JS file defines CapstoneModule as a global factory function
+ */
+async function loadCapstoneScript(jsPath: string): Promise<CapstoneModuleFactory> {
+  // Check if already loaded globally
+  if (typeof (globalThis as { CapstoneModule?: CapstoneModuleFactory }).CapstoneModule === "function") {
+    return (globalThis as { CapstoneModule: CapstoneModuleFactory }).CapstoneModule;
+  }
+
+  // Fetch the JS code
+  const response = await fetch(jsPath);
+  if (!response.ok) {
+    throw new Error(`Failed to load Capstone JS: ${response.statusText}`);
+  }
+
+  const jsCode = await response.text();
+
+  // Execute the JS code to define CapstoneModule
+  // The file structure is: var CapstoneModule = (() => { ... return factory; })();
+  // We need to execute it and capture CapstoneModule
+  const executeModule = new Function(`
+    ${jsCode}
+    return typeof CapstoneModule !== 'undefined' ? CapstoneModule : null;
+  `);
+
+  const factory = executeModule() as CapstoneModuleFactory | null;
+
+  if (typeof factory !== "function") {
+    throw new Error("Failed to load Capstone: CapstoneModule is not a function");
+  }
+
+  // Store globally for reuse
+  (globalThis as { CapstoneModule?: CapstoneModuleFactory }).CapstoneModule = factory;
+
+  return factory;
+}
+
 /**
  * Internal Capstone module interface (from Emscripten)
  */
@@ -84,20 +125,9 @@ export async function loadCapstoneModule(
         message: "Loading Capstone disassembler...",
       });
 
-      // Load the JS module
-      // Note: In a browser environment, we'd use dynamic import or script injection
-      // For now, we assume the module is pre-loaded or available globally
-      const response = await fetch(jsPath);
-      if (!response.ok) {
-        throw new Error(`Failed to load Capstone JS: ${response.statusText}`);
-      }
-
-      const jsCode = await response.text();
-
-      // Create a module factory from the JS code
-      const moduleFactory = new Function(`return ${jsCode}`)() as (
-        options: Record<string, unknown>
-      ) => Promise<CapstoneModule>;
+      // Load the JS module via script injection
+      // The Capstone JS file defines CapstoneModule as a factory function
+      const moduleFactory = await loadCapstoneScript(jsPath);
 
       // Load WASM
       const wasmResponse = await fetch(wasmPath);
