@@ -27,7 +27,11 @@
     "wasm:build:unicorn": "node scripts/build-remote.js unicorn",
     "wasm:build:tools": "node scripts/build-remote.js capstone unicorn",
     "wasm:build:all": "node scripts/build-remote.js all",
-    "wasm:build:check": "node scripts/build-remote.js --check"
+    "wasm:build:check": "node scripts/build-remote.js --check",
+    "wasm:release": "node scripts/wasm-release.js",
+    "wasm:release:tools": "node scripts/wasm-release.js --tools-only",
+    "wasm:release:compilers": "node scripts/wasm-release.js --compilers-only",
+    "wasm:release:dry-run": "node scripts/wasm-release.js --dry-run"
   },
   "dependencies": {
     "@battlewithbytes/tailwind-config": "workspace:^",

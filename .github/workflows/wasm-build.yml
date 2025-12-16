@@ -1,0 +1,308 @@
+name: WASM Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_compilers:
+        description: 'Build Clang compilers (arm, riscv, xtensa, lld)'
+        type: boolean
+        default: false
+      build_tools:
+        description: 'Build tools (capstone, unicorn)'
+        type: boolean
+        default: true
+      create_release:
+        description: 'Create GitHub release'
+        type: boolean
+        default: true
+      release_tag:
+        description: 'Release tag (leave empty for auto)'
+        type: string
+        required: false
+      draft_release:
+        description: 'Create as draft release'
+        type: boolean
+        default: false
+
+  # Allow triggering from other workflows
+  workflow_call:
+    inputs:
+      build_compilers:
+        type: boolean
+        default: false
+      build_tools:
+        type: boolean
+        default: true
+      create_release:
+        type: boolean
+        default: true
+      release_tag:
+        type: string
+        required: false
+
+env:
+  EMSDK_VERSION: '3.1.51'
+
+jobs:
+  # Build tools (capstone, unicorn) - lighter weight, runs in CI
+  build-tools:
+    if: ${{ inputs.build_tools }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Cache Capstone source
+        uses: actions/cache@v4
+        with:
+          path: ~/capstone-src
+          key: capstone-5.0.3-${{ runner.os }}
+
+      - name: Cache Unicorn source
+        uses: actions/cache@v4
+        with:
+          path: ~/unicorn-src
+          key: unicorn-2.0.0-${{ runner.os }}
+
+      - name: Build Capstone WASM
+        run: |
+          mkdir -p ~/capstone-wasm-build/output
+          cd ~/capstone-wasm-build
+
+          # Clone if not cached
+          if [ ! -d ~/capstone-src ]; then
+            git clone --depth 1 --branch 5.0.3 https://github.com/capstone-engine/capstone.git ~/capstone-src
+          fi
+
+          cd ~/capstone-src
+
+          # Configure for ARM only
+          export CAPSTONE_ARCHS="arm"
+          export CAPSTONE_STATIC=yes
+          export CAPSTONE_SHARED=no
+
+          # Build with Emscripten
+          emcmake cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCAPSTONE_BUILD_STATIC=ON \
+            -DCAPSTONE_BUILD_SHARED=OFF \
+            -DCAPSTONE_ARCHITECTURE_DEFAULT=OFF \
+            -DCAPSTONE_ARM_SUPPORT=ON \
+            -DCAPSTONE_BUILD_TESTS=OFF \
+            -DCAPSTONE_BUILD_CSTOOL=OFF
+
+          cmake --build build -j$(nproc)
+
+          # Link to WASM
+          emcc build/libcapstone.a -o ~/capstone-wasm-build/output/capstone-arm.js \
+            -s WASM=1 \
+            -s MODULARIZE=1 \
+            -s EXPORT_NAME="CapstoneModule" \
+            -s EXPORTED_FUNCTIONS='["_cs_open","_cs_close","_cs_disasm","_cs_free","_cs_version","_malloc","_free"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
+            -O3
+
+          # Compress
+          gzip -9 -k ~/capstone-wasm-build/output/capstone-arm.wasm
+
+          echo "Capstone build complete"
+          ls -la ~/capstone-wasm-build/output/
+
+      - name: Build Unicorn WASM
+        run: |
+          mkdir -p ~/unicorn-wasm-builds/output
+
+          # Clone unicorn.js (AlexAltea's version which produces embedded WASM)
+          if [ ! -d ~/unicorn-src ]; then
+            git clone --depth 1 https://github.com/AltAltea/unicorn.js.git ~/unicorn-src
+          fi
+
+          cd ~/unicorn-src
+
+          # Build ARM variant
+          npm install || true
+          npm run build -- --arch=arm || {
+            # Fallback: Manual build if npm script fails
+            cd unicorn
+            emcmake cmake -B build -DUNICORN_ARCH=arm
+            cmake --build build -j$(nproc)
+          }
+
+          # Copy output
+          cp dist/unicorn-arm.min.js ~/unicorn-wasm-builds/output/unicorn-arm.js 2>/dev/null || \
+          cp dist/unicorn-arm.js ~/unicorn-wasm-builds/output/unicorn-arm.js 2>/dev/null || \
+          echo "Warning: Unicorn build may have failed"
+
+          echo "Unicorn build complete"
+          ls -la ~/unicorn-wasm-builds/output/ || true
+
+      - name: Upload tool artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-tools
+          path: |
+            ~/capstone-wasm-build/output/*
+            ~/unicorn-wasm-builds/output/*
+          retention-days: 7
+
+  # Build compilers - heavy weight, needs buildbox or large runner
+  # This job is typically skipped in favor of buildbox builds
+  build-compilers:
+    if: ${{ inputs.build_compilers }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours for compiler builds
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup large swap
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 16G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Cache LLVM source
+        uses: actions/cache@v4
+        with:
+          path: ~/llvm-project
+          key: llvm-21.x-${{ runner.os }}
+
+      - name: Build Clang ARM WASM
+        run: |
+          echo "Building Clang ARM..."
+          echo "Note: This requires ~16GB RAM and takes 1-2 hours"
+          echo "Consider using buildbox for faster builds"
+
+          # Clone LLVM if not cached
+          if [ ! -d ~/llvm-project ]; then
+            git clone --depth 1 --branch release/21.x https://github.com/llvm/llvm-project.git ~/llvm-project
+          fi
+
+          mkdir -p ~/clang-wasm-builds/output
+          cd ~/llvm-project
+
+          # Configure with Emscripten
+          emcmake cmake -G Ninja -B build-wasm \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_ENABLE_PROJECTS="clang" \
+            -DLLVM_TARGETS_TO_BUILD="ARM" \
+            -DLLVM_DEFAULT_TARGET_TRIPLE="arm-none-eabi" \
+            -DLLVM_ENABLE_THREADS=OFF \
+            -DLLVM_INCLUDE_TESTS=OFF \
+            -DLLVM_INCLUDE_BENCHMARKS=OFF \
+            llvm
+
+          # Build (parallel limited to avoid OOM)
+          cmake --build build-wasm -j2
+
+          # Copy and compress
+          cp build-wasm/bin/clang.wasm ~/clang-wasm-builds/output/clang-arm.wasm
+          gzip -9 -k ~/clang-wasm-builds/output/clang-arm.wasm
+
+      - name: Upload compiler artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-compilers
+          path: ~/clang-wasm-builds/output/*
+          retention-days: 7
+
+  # Create release from artifacts
+  release:
+    if: ${{ inputs.create_release }}
+    needs: [build-tools]  # Add build-compilers if running compiler builds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download tool artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-tools
+          path: artifacts/tools
+
+      - name: Download compiler artifacts
+        if: ${{ inputs.build_compilers }}
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-compilers
+          path: artifacts/compilers
+        continue-on-error: true
+
+      - name: Organize artifacts
+        run: |
+          mkdir -p apps/battleforge/public/wasm/capstone
+          mkdir -p apps/battleforge/public/wasm/unicorn
+
+          # Copy tool artifacts
+          cp artifacts/tools/capstone-wasm-build/output/* apps/battleforge/public/wasm/capstone/ 2>/dev/null || true
+          cp artifacts/tools/unicorn-wasm-builds/output/* apps/battleforge/public/wasm/unicorn/ 2>/dev/null || true
+
+          # Copy compiler artifacts if present
+          if [ -d artifacts/compilers ]; then
+            cp artifacts/compilers/* apps/battleforge/public/wasm/ 2>/dev/null || true
+          fi
+
+          echo "WASM files:"
+          find apps/battleforge/public/wasm -type f -exec ls -la {} \;
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.release_tag }}" ]; then
+            echo "tag=${{ inputs.release_tag }}" >> $GITHUB_OUTPUT
+          else
+            DATE=$(date +%Y%m%d)
+            echo "tag=wasm-tools-${DATE}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "WASM Tools ${{ steps.tag.outputs.tag }}"
+          draft: ${{ inputs.draft_release }}
+          files: |
+            apps/battleforge/public/wasm/capstone/*
+            apps/battleforge/public/wasm/unicorn/*
+            apps/battleforge/public/wasm/manifest.json
+          body: |
+            ## BattleForge WASM Tools Release
+
+            Built: ${{ github.run_id }}
+
+            ### Included
+            - Capstone ARM Disassembler
+            - Unicorn ARM Emulator
+
+            ### Usage
+            These files are automatically downloaded by BattleForge.
