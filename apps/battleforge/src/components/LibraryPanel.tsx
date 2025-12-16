@@ -2,12 +2,18 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useLibraryManager } from "../lib/hooks/useLibraryManager";
+import {
+  searchPlatformIO,
+  type PlatformIOLibrary,
+} from "../lib/library/adapters/PlatformIOAdapter";
 import type {
   LibraryRegistryEntry,
   PlatformId,
   FrameworkId,
   Architecture,
 } from "../lib/library";
+
+type LibrarySource = "curated" | "platformio";
 
 interface LibraryPanelProps {
   platformId?: PlatformId;
@@ -45,6 +51,9 @@ export function LibraryPanel({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"browse" | "installed">("browse");
+  const [librarySource, setLibrarySource] = useState<LibrarySource>("curated");
+  const [platformIOLibraries, setPlatformIOLibraries] = useState<PlatformIOLibrary[]>([]);
+  const [isSearchingPlatformIO, setIsSearchingPlatformIO] = useState(false);
 
   // Load registry libraries on mount and when platform/framework changes
   useEffect(() => {
@@ -52,12 +61,36 @@ export function LibraryPanel({
   }, [platformId, frameworkId, loadRegistryLibraries]);
 
   const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) {
-      loadRegistryLibraries(platformId, frameworkId);
+    if (librarySource === "curated") {
+      if (!searchQuery.trim()) {
+        loadRegistryLibraries(platformId, frameworkId);
+      } else {
+        await searchRegistryLibraries(searchQuery);
+      }
     } else {
-      await searchRegistryLibraries(searchQuery);
+      // PlatformIO search
+      if (!searchQuery.trim()) {
+        setPlatformIOLibraries([]);
+        return;
+      }
+      setIsSearchingPlatformIO(true);
+      try {
+        const results = await searchPlatformIO({
+          query: searchQuery,
+          platformId,
+          frameworkId,
+          limit: 25,
+          sortBy: "relevance",
+        });
+        setPlatformIOLibraries(results);
+      } catch (err) {
+        console.error("[LibraryPanel] PlatformIO search error:", err);
+        setPlatformIOLibraries([]);
+      } finally {
+        setIsSearchingPlatformIO(false);
+      }
     }
-  }, [searchQuery, platformId, frameworkId, loadRegistryLibraries, searchRegistryLibraries]);
+  }, [searchQuery, platformId, frameworkId, librarySource, loadRegistryLibraries, searchRegistryLibraries]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -196,6 +229,55 @@ export function LibraryPanel({
             overflow: "hidden",
           }}
         >
+          {/* Source Toggle */}
+          <div
+            style={{
+              display: "flex",
+              padding: "8px",
+              gap: "4px",
+              borderBottom: "1px solid var(--border-color, #333)",
+            }}
+          >
+            <button
+              onClick={() => setLibrarySource("curated")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                backgroundColor:
+                  librarySource === "curated" ? "#0369a1" : "transparent",
+                border:
+                  librarySource === "curated"
+                    ? "1px solid #0ea5e9"
+                    : "1px solid var(--border-color, #444)",
+                borderRadius: "4px",
+                color: librarySource === "curated" ? "white" : "inherit",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              BattleForge Curated
+            </button>
+            <button
+              onClick={() => setLibrarySource("platformio")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                backgroundColor:
+                  librarySource === "platformio" ? "#7c3aed" : "transparent",
+                border:
+                  librarySource === "platformio"
+                    ? "1px solid #a78bfa"
+                    : "1px solid var(--border-color, #444)",
+                borderRadius: "4px",
+                color: librarySource === "platformio" ? "white" : "inherit",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              PlatformIO Community
+            </button>
+          </div>
+
           {/* Search Input */}
           <div style={{ padding: "8px", display: "flex", gap: "8px" }}>
             <input
@@ -203,7 +285,11 @@ export function LibraryPanel({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search libraries..."
+              placeholder={
+                librarySource === "curated"
+                  ? "Search curated libraries..."
+                  : "Search PlatformIO (14k+ libraries)..."
+              }
               style={{
                 flex: 1,
                 padding: "6px 10px",
@@ -216,18 +302,19 @@ export function LibraryPanel({
             />
             <button
               onClick={handleSearch}
-              disabled={isLoadingRegistry}
+              disabled={isLoadingRegistry || isSearchingPlatformIO}
               style={{
                 padding: "6px 12px",
-                backgroundColor: "var(--button-bg, #0ea5e9)",
+                backgroundColor:
+                  librarySource === "platformio" ? "#7c3aed" : "var(--button-bg, #0ea5e9)",
                 border: "none",
                 borderRadius: "4px",
                 color: "white",
-                cursor: isLoadingRegistry ? "wait" : "pointer",
-                opacity: isLoadingRegistry ? 0.5 : 1,
+                cursor: isLoadingRegistry || isSearchingPlatformIO ? "wait" : "pointer",
+                opacity: isLoadingRegistry || isSearchingPlatformIO ? 0.5 : 1,
               }}
             >
-              {isLoadingRegistry ? "Loading..." : "Search"}
+              {isLoadingRegistry || isSearchingPlatformIO ? "Loading..." : "Search"}
             </button>
           </div>
 
@@ -277,27 +364,57 @@ export function LibraryPanel({
 
           {/* Results */}
           <div style={{ flex: 1, overflow: "auto", padding: "8px" }}>
-            {registryLibraries.length === 0 && !isLoadingRegistry && (
-              <div
-                style={{
-                  color: "var(--text-secondary, #888)",
-                  textAlign: "center",
-                  padding: "20px",
-                }}
-              >
-                {searchQuery ? "No libraries found" : "No libraries available"}
-              </div>
+            {/* Curated Libraries */}
+            {librarySource === "curated" && (
+              <>
+                {registryLibraries.length === 0 && !isLoadingRegistry && (
+                  <div
+                    style={{
+                      color: "var(--text-secondary, #888)",
+                      textAlign: "center",
+                      padding: "20px",
+                    }}
+                  >
+                    {searchQuery ? "No libraries found" : "No libraries available"}
+                  </div>
+                )}
+                {registryLibraries.map((lib) => (
+                  <RegistryLibraryCard
+                    key={lib.id}
+                    library={lib}
+                    isInstalled={isLibraryInstalled(lib.id)}
+                    onInstall={() => handleInstall(lib)}
+                    isInstalling={isInstalling}
+                    hasArchitecture={!!architecture}
+                  />
+                ))}
+              </>
             )}
-            {registryLibraries.map((lib) => (
-              <RegistryLibraryCard
-                key={lib.id}
-                library={lib}
-                isInstalled={isLibraryInstalled(lib.id)}
-                onInstall={() => handleInstall(lib)}
-                isInstalling={isInstalling}
-                hasArchitecture={!!architecture}
-              />
-            ))}
+
+            {/* PlatformIO Libraries */}
+            {librarySource === "platformio" && (
+              <>
+                {platformIOLibraries.length === 0 && !isSearchingPlatformIO && (
+                  <div
+                    style={{
+                      color: "var(--text-secondary, #888)",
+                      textAlign: "center",
+                      padding: "20px",
+                    }}
+                  >
+                    {searchQuery
+                      ? "No libraries found. Try different keywords."
+                      : "Enter a search term to find libraries on PlatformIO."}
+                  </div>
+                )}
+                {platformIOLibraries.map((lib) => (
+                  <PlatformIOLibraryCard
+                    key={lib.id}
+                    library={lib}
+                  />
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}
@@ -524,6 +641,172 @@ function RegistryLibraryCard({
               ? "Installing..."
               : "Install"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Library card for PlatformIO community libraries (read-only/info display)
+function PlatformIOLibraryCard({ library }: { library: PlatformIOLibrary }) {
+  const formatDownloads = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  return (
+    <div
+      style={{
+        padding: "12px",
+        marginBottom: "8px",
+        backgroundColor: "var(--card-bg, #252526)",
+        borderRadius: "4px",
+        border: "1px solid #5b21b6",
+        borderLeft: "3px solid #7c3aed",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontWeight: "bold" }}>{library.name}</span>
+            <span
+              style={{
+                fontSize: "10px",
+                padding: "1px 4px",
+                backgroundColor: "#5b21b6",
+                color: "#c4b5fd",
+                borderRadius: "2px",
+              }}
+            >
+              PlatformIO
+            </span>
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "var(--text-secondary, #888)",
+              margin: "4px 0",
+              display: "flex",
+              gap: "12px",
+            }}
+          >
+            <span>v{library.version}</span>
+            <span>by {library.author}</span>
+            <span title="Monthly downloads">
+              {formatDownloads(library.downloads)} downloads
+            </span>
+          </div>
+          <div
+            style={{ fontSize: "12px", lineHeight: "1.4", marginTop: "4px" }}
+          >
+            {library.description}
+          </div>
+          {/* Keywords */}
+          {library.keywords.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px",
+                marginTop: "8px",
+              }}
+            >
+              {library.keywords.slice(0, 4).map((keyword) => (
+                <span
+                  key={keyword}
+                  style={{
+                    padding: "2px 6px",
+                    backgroundColor: "var(--tag-bg, #333)",
+                    borderRadius: "3px",
+                    fontSize: "10px",
+                    color: "var(--text-secondary, #888)",
+                  }}
+                >
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          )}
+          {/* Platform badges */}
+          {library.platforms.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px",
+                marginTop: "6px",
+              }}
+            >
+              {library.platforms.map((platform) => (
+                <span
+                  key={platform}
+                  style={{
+                    padding: "2px 6px",
+                    backgroundColor: "var(--platform-bg, #1e3a5f)",
+                    borderRadius: "3px",
+                    fontSize: "10px",
+                    color: "var(--accent-color, #0ea5e9)",
+                  }}
+                >
+                  {platform}
+                </span>
+              ))}
+            </div>
+          )}
+          {/* Framework badges */}
+          {library.frameworks.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px",
+                marginTop: "4px",
+              }}
+            >
+              {library.frameworks.map((framework) => (
+                <span
+                  key={framework}
+                  style={{
+                    padding: "2px 6px",
+                    backgroundColor: "#064e3b",
+                    borderRadius: "3px",
+                    fontSize: "10px",
+                    color: "#10b981",
+                  }}
+                >
+                  {framework}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Info button linking to PlatformIO */}
+        {library.homepage && (
+          <a
+            href={library.homepage}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "6px 12px",
+              backgroundColor: "#5b21b6",
+              border: "none",
+              borderRadius: "4px",
+              color: "white",
+              fontSize: "12px",
+              textDecoration: "none",
+              marginLeft: "12px",
+              flexShrink: 0,
+            }}
+          >
+            View
+          </a>
+        )}
       </div>
     </div>
   );
