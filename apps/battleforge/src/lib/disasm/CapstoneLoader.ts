@@ -334,6 +334,7 @@ export async function createCapstoneInstance(
 
 /**
  * Create a disassembler factory for common architectures
+ * Uses the capstone.js wrapper API
  */
 export async function createDisassemblerFactory(
   options?: CapstoneLoadOptions
@@ -341,7 +342,7 @@ export async function createDisassemblerFactory(
   const csModule = await loadCapstoneModule(options);
 
   const createInstance = (arch: CapstoneArch, mode: number): CapstoneInstance => {
-    // Inline implementation without async
+    // Inline implementation using capstone.js wrapper API
     const handlePtr = csModule._malloc(4);
     let handle = 0;
 
@@ -350,16 +351,17 @@ export async function createDisassemblerFactory(
         if (handle !== 0) {
           this.close();
         }
-        const err = csModule._cs_open(a, m, handlePtr);
+        const err = csModule._cs_open_js(a, m, handlePtr);
         if (err !== 0) {
-          throw new Error(`Failed to open Capstone: ${csModule.UTF8ToString(csModule._cs_strerror(err))}`);
+          const errMsgPtr = csModule._cs_strerror_js(err);
+          throw new Error(`Failed to open Capstone: ${csModule.UTF8ToString(errMsgPtr)}`);
         }
-        handle = csModule.HEAP32[handlePtr / 4];
+        handle = csModule.getValue(handlePtr, "i32");
       },
 
       close(): void {
         if (handle !== 0) {
-          csModule._cs_close(handlePtr);
+          csModule._cs_close_js(handlePtr);
           handle = 0;
         }
       },
@@ -369,63 +371,58 @@ export async function createDisassemblerFactory(
 
         const codePtr = csModule._malloc(code.length);
         csModule.HEAPU8.set(code, codePtr);
-        const insnPtrPtr = csModule._malloc(4);
         const instructions: DisassembledInstruction[] = [];
 
         try {
-          const numInsns = csModule._cs_disasm(
-            handle, codePtr, code.length, BigInt(address), count, insnPtrPtr
+          // Split 64-bit address into low and high 32-bit parts
+          const addressLo = address >>> 0;
+          const addressHi = Math.floor(address / 0x100000000) >>> 0;
+
+          const numInsns = csModule._cs_disasm_js(
+            handle, codePtr, code.length, addressLo, addressHi, count
           );
 
           if (numInsns > 0) {
-            const insnPtr = csModule.HEAPU32[insnPtrPtr / 4];
-            const INSN_SIZE = 240;
-
+            // Use JS wrapper accessor functions
             for (let i = 0; i < numInsns; i++) {
-              const base = insnPtr + i * INSN_SIZE;
-              const id = csModule.HEAPU32[base / 4];
-              const addrLow = csModule.HEAPU32[(base + 8) / 4];
-              const size = csModule.HEAPU8[base + 16] | (csModule.HEAPU8[base + 17] << 8);
+              const insnAddress = csModule._cs_insn_address(i);
+              const size = csModule._cs_insn_size(i);
+              const id = csModule._cs_insn_id(i);
+
+              const mnemonicPtr = csModule._cs_insn_mnemonic(i);
+              const mnemonic = csModule.UTF8ToString(mnemonicPtr);
+
+              const opStrPtr = csModule._cs_insn_op_str(i);
+              const opStr = csModule.UTF8ToString(opStrPtr);
+
+              const bytesPtr = csModule._cs_insn_bytes(i);
               const bytes = new Uint8Array(size);
-              for (let j = 0; j < size && j < 24; j++) {
-                bytes[j] = csModule.HEAPU8[base + 18 + j];
+              for (let j = 0; j < size; j++) {
+                bytes[j] = csModule.HEAPU8[bytesPtr + j];
               }
-              let mnemonic = "";
-              for (let j = 0; j < 32; j++) {
-                const c = csModule.HEAPU8[base + 42 + j];
-                if (c === 0) break;
-                mnemonic += String.fromCharCode(c);
-              }
-              let opStr = "";
-              for (let j = 0; j < 160; j++) {
-                const c = csModule.HEAPU8[base + 74 + j];
-                if (c === 0) break;
-                opStr += String.fromCharCode(c);
-              }
-              instructions.push({ address: addrLow, bytes, mnemonic, opStr, size, id });
+
+              instructions.push({ address: insnAddress, bytes, mnemonic, opStr, size, id });
             }
-            csModule._cs_free(insnPtr, numInsns);
+            csModule._cs_free_js();
           }
         } finally {
           csModule._free(codePtr);
-          csModule._free(insnPtrPtr);
         }
 
         return instructions;
       },
 
       getError(): string | null {
-        if (handle === 0) return null;
-        const err = csModule._cs_errno(handle);
-        return err === 0 ? null : csModule.UTF8ToString(csModule._cs_strerror(err));
+        // JS wrapper doesn't expose cs_errno directly
+        return null;
       },
 
       getVersion(): string {
         const majorPtr = csModule._malloc(4);
         const minorPtr = csModule._malloc(4);
-        csModule._cs_version(majorPtr, minorPtr);
-        const major = csModule.HEAP32[majorPtr / 4];
-        const minor = csModule.HEAP32[minorPtr / 4];
+        csModule._cs_version_js(majorPtr, minorPtr);
+        const major = csModule.getValue(majorPtr, "i32");
+        const minor = csModule.getValue(minorPtr, "i32");
         csModule._free(majorPtr);
         csModule._free(minorPtr);
         return `${major}.${minor}`;
