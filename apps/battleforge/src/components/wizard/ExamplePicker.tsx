@@ -2,21 +2,58 @@
 
 import { useState, useMemo } from "react";
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
+import { PROJECT_TEMPLATES } from "../../lib/project/templates";
+import type { ProjectTemplate } from "../../lib/project/types";
 
 interface ExamplePickerProps {
   board: BoardManifest;
-  selectedExample: BoardExample | null;
-  onSelect: (example: BoardExample | null) => void;
+  selectedFramework: string | null;
+  selectedExample: BoardExample | ProjectTemplate | null;
+  onSelect: (example: BoardExample | ProjectTemplate | null) => void;
 }
 
 export function ExamplePicker({
   board,
+  selectedFramework,
   selectedExample,
   onSelect,
 }: ExamplePickerProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const examples = board.examples || [];
+  // Get board-specific examples
+  const boardExamples = board.examples || [];
+
+  // Get framework-compatible templates from PROJECT_TEMPLATES
+  const frameworkTemplates = useMemo(() => {
+    if (!selectedFramework) return [];
+
+    return PROJECT_TEMPLATES.filter((template) => {
+      // Skip blank template - we show our own blank option
+      if (template.id === "blank") return false;
+
+      // Match framework
+      if (template.framework && template.framework !== selectedFramework) {
+        return false;
+      }
+
+      // Check architecture compatibility if template has requirements
+      if (template.architectureRequirements) {
+        return template.architectureRequirements.includes(
+          board.chip.architecture as any
+        );
+      }
+
+      // If no framework specified, show for native framework
+      if (!template.framework && selectedFramework === "native") {
+        return true;
+      }
+
+      return template.framework === selectedFramework;
+    });
+  }, [selectedFramework, board.chip.architecture]);
+
+  // Combine board examples and framework templates
+  const examples = boardExamples;
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -197,9 +234,27 @@ export function ExamplePicker({
             )}
           </button>
         ))}
+
+        {/* Framework templates from PROJECT_TEMPLATES */}
+        {frameworkTemplates.map((template) => (
+          <button
+            key={template.id}
+            className={`example-card template ${selectedExample && "id" in selectedExample && selectedExample.id === template.id ? "selected" : ""}`}
+            onClick={() => onSelect(template)}
+          >
+            <div className="example-icon template-icon">
+              <span className="template-emoji">{template.icon || "📄"}</span>
+            </div>
+            <div className="example-header">
+              <div className="example-name">{template.name}</div>
+              <span className="template-badge">Template</span>
+            </div>
+            <div className="example-desc">{template.description}</div>
+          </button>
+        ))}
       </div>
 
-      {examples.length === 0 && (
+      {examples.length === 0 && frameworkTemplates.length === 0 && (
         <div className="no-examples">
           <p>No examples available for this board yet.</p>
           <p className="hint">You can still create a blank project.</p>
@@ -425,6 +480,45 @@ export function ExamplePicker({
           background: rgba(255, 255, 255, 0.05);
           color: #888;
           border-radius: 4px;
+        }
+
+        .example-card.template {
+          border-color: #3b82f6;
+        }
+
+        .example-card.template:hover {
+          border-color: #60a5fa;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .example-card.template.selected {
+          border-color: #60a5fa;
+          background: linear-gradient(
+            180deg,
+            rgba(59, 130, 246, 0.15) 0%,
+            rgba(59, 130, 246, 0.05) 100%
+          );
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .template-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .template-emoji {
+          font-size: 1.5rem;
+        }
+
+        .template-badge {
+          font-size: 0.6rem;
+          padding: 2px 6px;
+          background: rgba(59, 130, 246, 0.2);
+          color: #60a5fa;
+          border-radius: 3px;
+          text-transform: uppercase;
+          font-weight: 600;
         }
 
         .no-examples {
