@@ -61,29 +61,45 @@ async function loadCapstoneScript(jsPath: string): Promise<CapstoneModuleFactory
 }
 
 /**
- * Internal Capstone module interface (from Emscripten)
+ * Internal Capstone module interface (from capstone.js wrapper)
+ * This uses a JavaScript wrapper API, not raw Emscripten exports
  */
 interface CapstoneModule {
-  _cs_open(arch: number, mode: number, handlePtr: number): number;
-  _cs_close(handlePtr: number): number;
-  _cs_disasm(
+  // Core API (JS wrapper functions)
+  _cs_open_js(arch: number, mode: number, handlePtr: number): number;
+  _cs_close_js(handlePtr: number): number;
+  _cs_option_js(handle: number, type: number, value: number): number;
+  _cs_disasm_js(
     handle: number,
     codePtr: number,
     codeSize: number,
-    address: bigint,
-    count: number,
-    insnPtr: number
+    addressLo: number,
+    addressHi: number,
+    count: number
   ): number;
-  _cs_free(insn: number, count: number): void;
-  _cs_errno(handle: number): number;
-  _cs_strerror(code: number): number;
-  _cs_version(major: number, minor: number): number;
+  _cs_free_js(): void;
+  _cs_strerror_js(code: number): number;
+  _cs_version_js(majorPtr: number, minorPtr: number): number;
+
+  // Instruction accessors (by index after disasm)
+  _cs_insn_address(idx: number): number;
+  _cs_insn_size(idx: number): number;
+  _cs_insn_mnemonic(idx: number): number;
+  _cs_insn_op_str(idx: number): number;
+  _cs_insn_bytes(idx: number): number;
+  _cs_insn_id(idx: number): number;
+
+  // Memory management
   _malloc(size: number): number;
   _free(ptr: number): void;
+
+  // Emscripten runtime
   HEAPU8: Uint8Array;
   HEAP32: Int32Array;
   HEAPU32: Uint32Array;
   UTF8ToString(ptr: number): string;
+  getValue(ptr: number, type: string): number;
+  setValue(ptr: number, value: number, type: string): void;
 }
 
 /**
@@ -181,6 +197,7 @@ export async function loadCapstoneModule(
 
 /**
  * Create a Capstone disassembler instance
+ * Uses the capstone.js wrapper API
  */
 export async function createCapstoneInstance(
   options?: CapstoneLoadOptions
@@ -197,18 +214,19 @@ export async function createCapstoneInstance(
         this.close();
       }
 
-      const err = csModule._cs_open(arch, mode, handlePtr);
+      const err = csModule._cs_open_js(arch, mode, handlePtr);
       if (err !== 0) {
-        const errMsg = csModule.UTF8ToString(csModule._cs_strerror(err));
+        const errMsgPtr = csModule._cs_strerror_js(err);
+        const errMsg = csModule.UTF8ToString(errMsgPtr);
         throw new Error(`Failed to open Capstone: ${errMsg}`);
       }
 
-      handle = csModule.HEAP32[handlePtr / 4];
+      handle = csModule.getValue(handlePtr, "i32");
     },
 
     close(): void {
       if (handle !== 0) {
-        csModule._cs_close(handlePtr);
+        csModule._cs_close_js(handlePtr);
         handle = 0;
       }
     },
@@ -226,64 +244,42 @@ export async function createCapstoneInstance(
       const codePtr = csModule._malloc(code.length);
       csModule.HEAPU8.set(code, codePtr);
 
-      // Allocate instruction pointer storage
-      const insnPtrPtr = csModule._malloc(4);
-
       const instructions: DisassembledInstruction[] = [];
 
       try {
-        const numInsns = csModule._cs_disasm(
+        // Split 64-bit address into low and high 32-bit parts
+        const addressLo = address >>> 0; // Lower 32 bits
+        const addressHi = Math.floor(address / 0x100000000) >>> 0; // Upper 32 bits
+
+        const numInsns = csModule._cs_disasm_js(
           handle,
           codePtr,
           code.length,
-          BigInt(address),
-          count,
-          insnPtrPtr
+          addressLo,
+          addressHi,
+          count
         );
 
         if (numInsns > 0) {
-          const insnPtr = csModule.HEAPU32[insnPtrPtr / 4];
-
-          // Parse instruction structures
-          // Capstone cs_insn struct layout (approximate):
-          // - id: uint32 (offset 0)
-          // - address: uint64 (offset 8)
-          // - size: uint16 (offset 16)
-          // - bytes[24]: (offset 18)
-          // - mnemonic[32]: (offset 42)
-          // - op_str[160]: (offset 74)
-          const INSN_SIZE = 240; // Approximate size of cs_insn
-
+          // Use the JS wrapper accessor functions to get instruction data
           for (let i = 0; i < numInsns; i++) {
-            const base = insnPtr + i * INSN_SIZE;
+            const insnAddress = csModule._cs_insn_address(i);
+            const size = csModule._cs_insn_size(i);
+            const id = csModule._cs_insn_id(i);
 
-            const id = csModule.HEAPU32[base / 4];
-            // Read address as two 32-bit values (little endian)
-            const addrLow = csModule.HEAPU32[(base + 8) / 4];
-            const addrHigh = csModule.HEAPU32[(base + 12) / 4];
-            const insnAddress = addrLow + addrHigh * 0x100000000;
-            const size = csModule.HEAPU8[base + 16] | (csModule.HEAPU8[base + 17] << 8);
+            // Get mnemonic string
+            const mnemonicPtr = csModule._cs_insn_mnemonic(i);
+            const mnemonic = csModule.UTF8ToString(mnemonicPtr);
 
-            // Read bytes
+            // Get operand string
+            const opStrPtr = csModule._cs_insn_op_str(i);
+            const opStr = csModule.UTF8ToString(opStrPtr);
+
+            // Get bytes
+            const bytesPtr = csModule._cs_insn_bytes(i);
             const bytes = new Uint8Array(size);
-            for (let j = 0; j < size && j < 24; j++) {
-              bytes[j] = csModule.HEAPU8[base + 18 + j];
-            }
-
-            // Read mnemonic (null-terminated string)
-            let mnemonic = "";
-            for (let j = 0; j < 32; j++) {
-              const c = csModule.HEAPU8[base + 42 + j];
-              if (c === 0) break;
-              mnemonic += String.fromCharCode(c);
-            }
-
-            // Read op_str (null-terminated string)
-            let opStr = "";
-            for (let j = 0; j < 160; j++) {
-              const c = csModule.HEAPU8[base + 74 + j];
-              if (c === 0) break;
-              opStr += String.fromCharCode(c);
+            for (let j = 0; j < size; j++) {
+              bytes[j] = csModule.HEAPU8[bytesPtr + j];
             }
 
             instructions.push({
@@ -296,30 +292,27 @@ export async function createCapstoneInstance(
             });
           }
 
-          // Free the instruction array
-          csModule._cs_free(insnPtr, numInsns);
+          // Free the instruction array (no arguments in JS wrapper)
+          csModule._cs_free_js();
         }
       } finally {
         csModule._free(codePtr);
-        csModule._free(insnPtrPtr);
       }
 
       return instructions;
     },
 
     getError(): string | null {
-      if (handle === 0) return null;
-      const err = csModule._cs_errno(handle);
-      if (err === 0) return null;
-      return csModule.UTF8ToString(csModule._cs_strerror(err));
+      // JS wrapper doesn't expose cs_errno directly
+      return null;
     },
 
     getVersion(): string {
       const majorPtr = csModule._malloc(4);
       const minorPtr = csModule._malloc(4);
-      csModule._cs_version(majorPtr, minorPtr);
-      const major = csModule.HEAP32[majorPtr / 4];
-      const minor = csModule.HEAP32[minorPtr / 4];
+      csModule._cs_version_js(majorPtr, minorPtr);
+      const major = csModule.getValue(majorPtr, "i32");
+      const minor = csModule.getValue(minorPtr, "i32");
       csModule._free(majorPtr);
       csModule._free(minorPtr);
       return `${major}.${minor}`;
