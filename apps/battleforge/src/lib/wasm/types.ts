@@ -2,10 +2,77 @@
  * WASM Manager Types
  *
  * Type definitions for the multi-compiler WASM management system.
- * Supports clang-arm, clang-riscv, and clang-xtensa compilers.
+ * Supports compilers, linkers, disassemblers, and emulators.
  */
 
 import type { Architecture } from "../platform/types";
+
+// ============================================================================
+// Tool Categories
+// ============================================================================
+
+/**
+ * Categories of WASM tools managed by the package manager
+ */
+export type ToolCategory = "compiler" | "linker" | "disassembler" | "emulator";
+
+/**
+ * State of any WASM tool
+ */
+export type ToolState =
+  | "not_installed"
+  | "downloading"
+  | "installed"
+  | "update_available"
+  | "error";
+
+/**
+ * Unified tool info for UI display across all categories
+ */
+export interface ToolInfo {
+  id: string;
+  category: ToolCategory;
+  name: string;
+  description: string;
+  state: ToolState;
+
+  // Version info (from available manifest)
+  available?: {
+    fullVersion: string;
+    softwareVersion: string;
+    releaseVersion: string;
+    size: number;
+    sizeCompressed?: number;
+    architectures?: string[];
+    features?: string[];
+  };
+
+  // Installed info (from cache)
+  installed?: {
+    version: string;
+    hash: string;
+    installedAt: number;
+    size: number;
+    lastUsed?: number;
+  };
+
+  // Download progress (if downloading)
+  downloadProgress?: DownloadProgress;
+}
+
+// ============================================================================
+// Tool-specific Identifiers
+// ============================================================================
+
+/**
+ * Available disassembler identifiers
+ */
+export type DisassemblerId = "capstone-arm" | "yaxpeax-arm";
+
+/**
+ * Available emulator identifiers
+ */
+export type EmulatorId = "unicorn-arm";
 
 // ============================================================================
 // Compiler Identifiers
@@ -175,6 +242,7 @@ export interface WasmManifest {
   compilers: AvailableCompiler[];
   linkers?: AvailableLinker[];
   disassemblers?: AvailableDisassembler[];
+  emulators?: AvailableEmulator[];
   meta?: {
     cdnBaseUrl?: string;
     fallbackBaseUrl?: string;
@@ -239,6 +307,35 @@ export interface AvailableDisassembler {
   features?: string[];
 }
 
+/**
+ * Available emulator from manifest
+ */
+export interface AvailableEmulator {
+  id: string;
+  name: string;
+  description?: string;
+  status?: "stable" | "beta" | "deprecated";
+
+  softwareVersion: string;
+  releaseVersion: string;
+  fullVersion: string;
+
+  files: {
+    wasm: string;
+    wasmGz?: string;
+    js: string;
+    api?: string;
+  };
+  size: number;
+  sizeCompressed?: number;
+  hashes: {
+    compressed: string;
+    uncompressed?: string;
+  };
+  supportedCpus: string[];
+  hooks: string[];
+}
+
 // ============================================================================
 // Storage & Cache
 // ============================================================================
@@ -268,6 +365,21 @@ export interface StorageStats {
     size: number;
     version: string;
   }>;
+  linkers?: Array<{
+    id: string;
+    size: number;
+    version: string;
+  }>;
+  disassemblers?: Array<{
+    id: string;
+    size: number;
+    version: string;
+  }>;
+  emulators?: Array<{
+    id: string;
+    size: number;
+    version: string;
+  }>;
 }
 
 // ============================================================================
@@ -278,7 +390,7 @@ export interface StorageStats {
  * Update notification for UI
  */
 export interface UpdateNotification {
-  type: "compiler" | "headers" | "libs";
+  type: ToolCategory | "headers" | "libs";
   id: string;
   currentVersion: string;
   availableVersion: string;

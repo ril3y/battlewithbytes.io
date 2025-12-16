@@ -13,13 +13,17 @@ import type {
   DownloadProgress,
   WasmManifest,
   AvailableCompiler,
+  AvailableDisassembler,
+  AvailableEmulator,
   InstalledCompiler,
   UpdateNotification,
   StorageStats,
   WasmManagerEvent,
   WasmManagerEventListener,
+  ToolInfo,
+  ToolCategory,
 } from "./types";
-import { ARCHITECTURE_COMPILER_MAP, getCompilerForArchitecture } from "./types";
+import { getCompilerForArchitecture } from "./types";
 import {
   loadManifest,
   downloadCompiler,
@@ -420,6 +424,155 @@ class WasmManagerService {
   async getBaseUrl(): Promise<string> {
     const manifest = await this.getManifest();
     return manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
+  }
+
+  // ============================================================================
+  // Disassembler Methods
+  // ============================================================================
+
+  /**
+   * Get all available disassemblers
+   */
+  async getAvailableDisassemblers(): Promise<AvailableDisassembler[]> {
+    const manifest = await this.getManifest();
+    return manifest.disassemblers || [];
+  }
+
+  // ============================================================================
+  // Emulator Methods
+  // ============================================================================
+
+  /**
+   * Get all available emulators
+   */
+  async getAvailableEmulators(): Promise<AvailableEmulator[]> {
+    const manifest = await this.getManifest();
+    return manifest.emulators || [];
+  }
+
+  // ============================================================================
+  // Unified Tool Methods (for Package Manager UI)
+  // ============================================================================
+
+  /**
+   * Get all tools (compilers, linkers, disassemblers, emulators) as unified ToolInfo
+   * Used by the WASM Package Manager UI
+   */
+  async getAllToolInfos(): Promise<ToolInfo[]> {
+    const manifest = await this.getManifest();
+    const installed = await listInstalled();
+    const tools: ToolInfo[] = [];
+
+    // Add compilers
+    for (const compiler of manifest.compilers) {
+      const installedCompiler = installed.find((c) => c.id === compiler.id);
+      const availableHash = compiler.hashes?.compressed || compiler.hash;
+
+      let state: ToolInfo["state"] = "not_installed";
+      if (installedCompiler) {
+        state =
+          availableHash && installedCompiler.hash !== availableHash
+            ? "update_available"
+            : "installed";
+      }
+      if (this.downloadPromises.has(compiler.id as CompilerId)) {
+        state = "downloading";
+      }
+
+      tools.push({
+        id: compiler.id,
+        category: "compiler" as ToolCategory,
+        name: compiler.name,
+        description: compiler.description || "",
+        state,
+        available: {
+          fullVersion: compiler.fullVersion,
+          softwareVersion: compiler.softwareVersion,
+          releaseVersion: compiler.releaseVersion,
+          size: compiler.size,
+          sizeCompressed: compiler.size,
+          architectures: compiler.architectures,
+        },
+        installed: installedCompiler
+          ? {
+              version:
+                installedCompiler.version || installedCompiler.fullVersion || "",
+              hash: installedCompiler.hash,
+              installedAt: installedCompiler.installedAt,
+              size: installedCompiler.size,
+              lastUsed: installedCompiler.lastUsed,
+            }
+          : undefined,
+        downloadProgress: this.downloadProgress.get(compiler.id as CompilerId),
+      });
+    }
+
+    // Add linkers
+    for (const linker of manifest.linkers || []) {
+      tools.push({
+        id: linker.id,
+        category: "linker" as ToolCategory,
+        name: linker.name,
+        description: linker.description || "",
+        state: "not_installed", // TODO: Track linker installation state
+        available: {
+          fullVersion: linker.fullVersion,
+          softwareVersion: linker.softwareVersion,
+          releaseVersion: linker.releaseVersion,
+          size: linker.size,
+          architectures: linker.architectures,
+        },
+      });
+    }
+
+    // Add disassemblers
+    for (const disasm of manifest.disassemblers || []) {
+      tools.push({
+        id: disasm.id,
+        category: "disassembler" as ToolCategory,
+        name: disasm.name,
+        description: disasm.description || "",
+        state: "not_installed", // TODO: Track disassembler installation state
+        available: {
+          fullVersion: disasm.fullVersion,
+          softwareVersion: disasm.softwareVersion,
+          releaseVersion: disasm.releaseVersion,
+          size: disasm.size,
+          sizeCompressed: disasm.sizeCompressed,
+          architectures: disasm.architectures,
+          features: disasm.features,
+        },
+      });
+    }
+
+    // Add emulators
+    for (const emu of manifest.emulators || []) {
+      tools.push({
+        id: emu.id,
+        category: "emulator" as ToolCategory,
+        name: emu.name,
+        description: emu.description || "",
+        state: "not_installed", // TODO: Track emulator installation state
+        available: {
+          fullVersion: emu.fullVersion,
+          softwareVersion: emu.softwareVersion,
+          releaseVersion: emu.releaseVersion,
+          size: emu.size,
+          sizeCompressed: emu.sizeCompressed,
+          architectures: emu.supportedCpus,
+        },
+      });
+    }
+
+    return tools;
+  }
+
+  /**
+   * Get tools filtered by category
+   */
+  async getToolsByCategory(category: ToolCategory): Promise<ToolInfo[]> {
+    const tools = await this.getAllToolInfos();
+    return tools.filter((t) => t.category === category);
   }
 }
 
