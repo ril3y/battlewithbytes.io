@@ -21,39 +21,110 @@ interface ElfSection {
   offset: number;
   size: number;
   address: number;
+  flags: number;
   data: Uint8Array;
 }
 
-function parseElf(data: Uint8Array): { textSection: ElfSection | null; entryPoint: number } {
+// ELF machine types
+const EM_ARM = 40;
+const EM_RISCV = 243;
+const EM_XTENSA = 94;
+
+// ELF section flags
+const SHF_EXECINSTR = 0x4;
+
+type ElfArch = "arm" | "riscv" | "xtensa" | "unknown";
+
+interface ElfParseResult {
+  textSection: ElfSection | null;
+  entryPoint: number;
+  isThumb: boolean;
+  architecture: ElfArch;
+  error?: string;
+}
+
+function parseElf(data: Uint8Array): ElfParseResult {
   // Check ELF magic
   if (data[0] !== 0x7f || data[1] !== 0x45 || data[2] !== 0x4c || data[3] !== 0x46) {
-    return { textSection: null, entryPoint: 0 };
+    return {
+      textSection: null,
+      entryPoint: 0,
+      isThumb: true,
+      architecture: "unknown",
+      error: "Not a valid ELF file (invalid magic bytes)"
+    };
   }
 
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const is32bit = data[4] === 1;
   const isLittleEndian = data[5] === 1;
 
+  // Check for 64-bit ELF - not supported
   if (!is32bit) {
-    console.warn("64-bit ELF not supported for disassembly");
-    return { textSection: null, entryPoint: 0 };
+    return {
+      textSection: null,
+      entryPoint: 0,
+      isThumb: true,
+      architecture: "unknown",
+      error: "64-bit ELF files are not supported. Please use a 32-bit ARM binary."
+    };
+  }
+
+  // Check endianness - we only support little-endian for ARM/RISC-V
+  if (!isLittleEndian) {
+    return {
+      textSection: null,
+      entryPoint: 0,
+      isThumb: true,
+      architecture: "unknown",
+      error: "Big-endian ELF files are not supported. Please use a little-endian binary."
+    };
   }
 
   // Read ELF header (32-bit)
-  const entryPoint = view.getUint32(0x18, isLittleEndian);
+  const e_machine = view.getUint16(0x12, isLittleEndian);
+  const rawEntryPoint = view.getUint32(0x18, isLittleEndian);
   const shOffset = view.getUint32(0x20, isLittleEndian);
   const shEntSize = view.getUint16(0x2e, isLittleEndian);
   const shNum = view.getUint16(0x30, isLittleEndian);
   const shStrIndex = view.getUint16(0x32, isLittleEndian);
 
+  // Validate architecture
+  let architecture: ElfArch;
+  switch (e_machine) {
+    case EM_ARM:
+      architecture = "arm";
+      break;
+    case EM_RISCV:
+      architecture = "riscv";
+      break;
+    case EM_XTENSA:
+      architecture = "xtensa";
+      break;
+    default:
+      return {
+        textSection: null,
+        entryPoint: 0,
+        isThumb: true,
+        architecture: "unknown",
+        error: `Unsupported architecture (e_machine=${e_machine}). Only ARM (40), RISC-V (243), and Xtensa (94) are supported.`
+      };
+  }
+
+  // For ARM: check entry point LSB for Thumb mode
+  // In ARM ELF files, LSB of entry point is set to 1 for Thumb mode
+  const isThumb = architecture === "arm" && (rawEntryPoint & 1) === 1;
+  const entryPoint = rawEntryPoint & ~1; // Clear LSB for actual address
+
   if (shOffset === 0 || shNum === 0) {
-    return { textSection: null, entryPoint };
+    return { textSection: null, entryPoint, isThumb, architecture };
   }
 
   // Read section headers
   const sections: Array<{
     nameOffset: number;
     type: number;
+    flags: number;
     addr: number;
     offset: number;
     size: number;
@@ -64,6 +135,7 @@ function parseElf(data: Uint8Array): { textSection: ElfSection | null; entryPoin
     sections.push({
       nameOffset: view.getUint32(base + 0, isLittleEndian),
       type: view.getUint32(base + 4, isLittleEndian),
+      flags: view.getUint32(base + 8, isLittleEndian),
       addr: view.getUint32(base + 12, isLittleEndian),
       offset: view.getUint32(base + 16, isLittleEndian),
       size: view.getUint32(base + 20, isLittleEndian),
@@ -73,7 +145,7 @@ function parseElf(data: Uint8Array): { textSection: ElfSection | null; entryPoin
   // Get string table for section names
   const strSection = sections[shStrIndex];
   if (!strSection) {
-    return { textSection: null, entryPoint };
+    return { textSection: null, entryPoint, isThumb, architecture };
   }
 
   const getString = (offset: number): string => {
@@ -85,24 +157,31 @@ function parseElf(data: Uint8Array): { textSection: ElfSection | null; entryPoin
     return str;
   };
 
-  // Find .text section
+  // Find .text section - must be executable (SHF_EXECINSTR)
   for (const section of sections) {
     const name = getString(section.nameOffset);
     if (name === ".text" && section.size > 0) {
+      // Verify section is executable
+      if (!(section.flags & SHF_EXECINSTR)) {
+        console.warn("[DisassemblyPanel] .text section found but not marked as executable");
+      }
       return {
         textSection: {
           name,
           offset: section.offset,
           size: section.size,
           address: section.addr,
+          flags: section.flags,
           data: data.slice(section.offset, section.offset + section.size),
         },
         entryPoint,
+        isThumb,
+        architecture,
       };
     }
   }
 
-  return { textSection: null, entryPoint };
+  return { textSection: null, entryPoint, isThumb, architecture };
 }
 
 // Syntax highlighting colors (matching BattleMagic)
@@ -170,20 +249,27 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
       setError(null);
 
       try {
-        // Parse ELF to get .text section
-        const { textSection } = parseElf(data);
+        // Parse ELF to get .text section and architecture info
+        const elfResult = parseElf(data);
 
-        if (!textSection) {
+        // Check for ELF parsing errors
+        if (elfResult.error && !elfResult.textSection) {
+          setError(elfResult.error);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!elfResult.textSection) {
           // If not ELF or no .text, try disassembling as raw binary from start
           setError("Could not find .text section in ELF. Showing raw binary disassembly.");
           // For raw binary, assume it starts at 0x08000000 (common for STM32)
           setBaseAddress(0x08000000);
         } else {
-          setBaseAddress(textSection.address);
+          setBaseAddress(elfResult.textSection.address);
         }
 
-        const codeData = textSection?.data || data;
-        const startAddr = textSection?.address || 0x08000000;
+        const codeData = elfResult.textSection?.data || data;
+        const startAddr = elfResult.textSection?.address || 0x08000000;
 
         // Dynamically import Capstone loader
         const { createDisassemblerFactory } = await import("../lib/disasm/CapstoneLoader");
@@ -192,7 +278,30 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
           onProgress: (p) => console.log("[Disasm]", p.message),
         });
 
-        const disasm = factory.createArmThumb();
+        if (cancelled) return;
+
+        // Select appropriate disassembler based on architecture and mode
+        let disasm;
+        switch (elfResult.architecture) {
+          case "arm":
+            // Use Thumb mode if detected from entry point, otherwise default to Thumb for Cortex-M
+            disasm = elfResult.isThumb ? factory.createArmThumb() : factory.createArm();
+            console.log(`[Disasm] Using ARM ${elfResult.isThumb ? "Thumb" : "ARM"} mode`);
+            break;
+          case "riscv":
+            disasm = factory.createRiscv32();
+            console.log("[Disasm] Using RISC-V 32-bit mode");
+            break;
+          case "xtensa":
+            // Xtensa not yet supported in Capstone - fall back to ARM Thumb
+            console.warn("[Disasm] Xtensa architecture not yet supported, falling back to ARM Thumb");
+            disasm = factory.createArmThumb();
+            break;
+          default:
+            // Default to ARM Thumb for raw binaries (most common for embedded)
+            disasm = factory.createArmThumb();
+            console.log("[Disasm] Unknown architecture, defaulting to ARM Thumb");
+        }
 
         if (cancelled) return;
 
