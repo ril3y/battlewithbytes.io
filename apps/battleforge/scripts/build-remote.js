@@ -257,6 +257,7 @@ async function runBuild(compiler) {
 
 /**
  * Download build output
+ * Tries compressed file first, falls back to uncompressed
  */
 async function downloadOutput(compiler) {
   const config = CONFIG.compilers[compiler];
@@ -278,22 +279,54 @@ async function downloadOutput(compiler) {
   const remotePath = `${remoteBuildDir}/${config.outputDir}/${config.output}`;
   const localPath = path.join(localDir, config.output);
 
-  await scpFrom(remotePath, localPath);
-
-  // Get file info
-  const stats = fs.statSync(localPath);
-  logSuccess(`Downloaded ${config.output} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
-
-  // Also download the uncompressed version for hash calculation
-  const wasmFile = config.output.replace('.gz', '');
-  const remoteWasmPath = `${remoteBuildDir}/${config.outputDir}/${wasmFile}`;
-  const localWasmPath = path.join(localDir, wasmFile);
+  let downloadedPath = localPath;
+  let downloadedFile = config.output;
 
   try {
-    await scpFrom(remoteWasmPath, localWasmPath);
-    logInfo(`Also downloaded uncompressed ${wasmFile}`);
+    await scpFrom(remotePath, localPath);
+    const stats = fs.statSync(localPath);
+    logSuccess(`Downloaded ${config.output} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
   } catch {
-    logWarning(`Uncompressed ${wasmFile} not available`);
+    // If compressed file doesn't exist, try uncompressed
+    if (config.output.endsWith('.gz')) {
+      const uncompressedFile = config.output.replace('.gz', '');
+      const remoteUncompressed = `${remoteBuildDir}/${config.outputDir}/${uncompressedFile}`;
+      const localUncompressed = path.join(localDir, uncompressedFile);
+
+      logWarning(`${config.output} not found, trying ${uncompressedFile}...`);
+
+      try {
+        await scpFrom(remoteUncompressed, localUncompressed);
+        const stats = fs.statSync(localUncompressed);
+        logSuccess(`Downloaded ${uncompressedFile} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+        downloadedPath = localUncompressed;
+        downloadedFile = uncompressedFile;
+
+        // Compress it locally
+        logInfo(`Compressing ${uncompressedFile}...`);
+        const { execSync } = require('child_process');
+        execSync(`gzip -9 -f -k "${localUncompressed}"`, { stdio: 'pipe' });
+        logSuccess(`Created ${config.output}`);
+      } catch (err) {
+        logWarning(`Could not download ${uncompressedFile}: ${err.message}`);
+      }
+    } else {
+      throw new Error(`Failed to download ${config.output}`);
+    }
+  }
+
+  // Also download uncompressed version if we got compressed
+  if (downloadedFile.endsWith('.gz')) {
+    const wasmFile = config.output.replace('.gz', '');
+    const remoteWasmPath = `${remoteBuildDir}/${config.outputDir}/${wasmFile}`;
+    const localWasmPath = path.join(localDir, wasmFile);
+
+    try {
+      await scpFrom(remoteWasmPath, localWasmPath);
+      logInfo(`Also downloaded uncompressed ${wasmFile}`);
+    } catch {
+      logWarning(`Uncompressed ${wasmFile} not available`);
+    }
   }
 
   // Download additional files (JS glue code, API wrappers)
@@ -310,22 +343,42 @@ async function downloadOutput(compiler) {
     }
   }
 
-  return localPath;
+  return downloadedPath;
 }
 
 /**
  * Get SHA256 hash of remote file
+ * Tries compressed file first, then uncompressed
  */
 async function getRemoteHash(compiler) {
   const config = CONFIG.compilers[compiler];
   const remoteBuildDir = config.remoteBuildDir || CONFIG.remoteBuildDir;
   const remotePath = `${remoteBuildDir}/${config.outputDir}/${config.output}`;
 
-  const { stdout } = await ssh(`sha256sum ${remotePath}`, { silent: true });
-  const hash = stdout.split(' ')[0];
-
-  logInfo(`SHA256: ${hash}`);
-  return hash;
+  // Try the expected file first
+  try {
+    const { stdout } = await ssh(`sha256sum ${remotePath}`, { silent: true });
+    const hash = stdout.split(' ')[0];
+    logInfo(`SHA256: ${hash}`);
+    return hash;
+  } catch {
+    // If compressed file doesn't exist, try uncompressed
+    if (config.output.endsWith('.gz')) {
+      const uncompressedPath = remotePath.replace('.gz', '');
+      logWarning(`${config.output} not found, trying uncompressed version...`);
+      try {
+        const { stdout } = await ssh(`sha256sum ${uncompressedPath}`, { silent: true });
+        const hash = stdout.split(' ')[0];
+        logInfo(`SHA256 (uncompressed): ${hash}`);
+        return hash;
+      } catch {
+        logWarning(`Could not hash ${compiler} output - file may not exist`);
+        return 'pending';
+      }
+    }
+    logWarning(`Could not hash ${compiler} output`);
+    return 'pending';
+  }
 }
 
 /**
