@@ -37,6 +37,13 @@ interface MainRegistry {
     version: string;
     category: string;
     path: string;
+    // Optional fields from enriched registry
+    description?: string;
+    author?: string;
+    license?: string;
+    platforms?: string[];
+    frameworks?: string[];
+    tags?: string[];
   }>;
 }
 
@@ -54,17 +61,18 @@ export async function loadRegistry(
     // Fetch main registry.json which contains libraries array
     const mainRegistry = await fetcher.fetchJson<MainRegistry>("registry.json");
 
-    // Transform to LibraryRegistry format
+    // Transform to LibraryRegistry format, preserving enriched data
     const libraryEntries: LibraryRegistryEntry[] = mainRegistry.libraries.map((lib) => ({
       id: lib.id,
       name: lib.name,
       version: lib.version,
-      description: `${lib.name} library`,
+      description: lib.description || `${lib.name} library`,
       category: lib.category as LibraryRegistryEntry["category"],
-      platforms: ["stm32", "esp32", "nrf", "rp2040"] as PlatformId[], // All platforms for now
-      tags: [lib.category],
-      author: "BattleForge",
-      license: "MIT",
+      platforms: (lib.platforms || ["stm32", "esp32", "nrf", "rp2040"]) as PlatformId[],
+      frameworks: lib.frameworks as FrameworkId[] | undefined,
+      tags: lib.tags || [lib.category],
+      author: lib.author || "Unknown",
+      license: lib.license || "Proprietary",
       manifestPath: lib.path,
     }));
 
