@@ -116,9 +116,9 @@ export async function loadLibraryManifest(
   }
 
   try {
-    // Fetch from GitHub
+    // Fetch from GitHub - note: manifest files are named manifest.json
     const manifest = await fetcher.fetchJson<BattleForgeLibraryManifest>(
-      `libraries/${libraryId}/library.json`
+      `libraries/${libraryId}/manifest.json`
     );
     manifestCache.set(libraryId, manifest);
 
