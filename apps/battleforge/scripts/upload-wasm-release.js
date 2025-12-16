@@ -33,6 +33,8 @@ const CONFIG = {
     'clang_xtensa/*.js',
     'capstone/*.wasm',
     'capstone/*.js',
+    'unicorn/*.wasm',
+    'unicorn/*.js',
     'manifest.json',
   ],
 };
