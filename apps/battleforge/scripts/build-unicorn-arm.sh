@@ -247,16 +247,26 @@ process_output() {
     log_info "Built files:"
     ls -la "${dist_dir}/"
 
-    # Copy main files
-    if [ -f "${dist_dir}/unicorn.min.js" ]; then
+    # Copy ARM-specific build (with embedded WASM) - prioritize this
+    if [ -f "${dist_dir}/unicorn-arm.min.js" ]; then
+        cp "${dist_dir}/unicorn-arm.min.js" "${OUTPUT_DIR}/${OUTPUT_JS}"
+        log_info "Copied unicorn-arm.min.js -> ${OUTPUT_JS}"
+    elif [ -f "${dist_dir}/unicorn-arm.js" ]; then
+        cp "${dist_dir}/unicorn-arm.js" "${OUTPUT_DIR}/${OUTPUT_JS}"
+        log_info "Copied unicorn-arm.js -> ${OUTPUT_JS}"
+    elif [ -f "${dist_dir}/unicorn.min.js" ]; then
+        # Fallback to generic build
         cp "${dist_dir}/unicorn.min.js" "${OUTPUT_DIR}/${OUTPUT_JS}"
         log_info "Copied unicorn.min.js -> ${OUTPUT_JS}"
+        log_warning "Using generic unicorn.min.js - ARM-specific build not found"
     elif [ -f "${dist_dir}/unicorn.js" ]; then
         cp "${dist_dir}/unicorn.js" "${OUTPUT_DIR}/${OUTPUT_JS}"
         log_info "Copied unicorn.js -> ${OUTPUT_JS}"
+    else
+        log_error "No unicorn JS file found in dist/"
     fi
 
-    # Find and copy WASM file if separate
+    # Find and copy WASM file if separate (not needed for unicorn-arm.min.js)
     if [ -f "${dist_dir}/unicorn.wasm" ]; then
         cp "${dist_dir}/unicorn.wasm" "${OUTPUT_DIR}/${OUTPUT_WASM}"
         log_info "Copied unicorn.wasm -> ${OUTPUT_WASM}"
@@ -264,11 +274,6 @@ process_output() {
         # Compress WASM
         log_info "Compressing WASM..."
         gzip -9 -f -k "${OUTPUT_DIR}/${OUTPUT_WASM}"
-    fi
-
-    # Also check for combined JS+WASM (older emscripten style)
-    if [ -f "${dist_dir}/unicorn-arm.js" ]; then
-        cp "${dist_dir}/unicorn-arm.js" "${OUTPUT_DIR}/${OUTPUT_JS}"
     fi
 
     log_success "Output files processed"

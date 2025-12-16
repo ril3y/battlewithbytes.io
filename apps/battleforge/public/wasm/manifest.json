@@ -158,10 +158,10 @@
       "files": {
         "js": "unicorn/unicorn-arm.js"
       },
-      "size": 88000,
+      "size": 2295726,
       "embeddedWasm": true,
       "hashes": {
-        "compressed": "sha256:pending"
+        "compressed": "sha256:ca7decee2e9d321a1d94aea7b52cf46f4f7c333104457b3efc907e1273cc75b6"
       },
       "supportedCpus": [
         "cortex-m0",
