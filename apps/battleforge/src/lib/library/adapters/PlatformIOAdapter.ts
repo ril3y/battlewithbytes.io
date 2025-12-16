@@ -37,16 +37,8 @@ const PLATFORM_ID_REVERSE_MAP: Record<string, PlatformId> = {
   espressif8266: "esp32", // Map ESP8266 to ESP32 category
 };
 
-/**
- * Map BattleForge framework IDs to PlatformIO framework names
- */
-const FRAMEWORK_ID_MAP: Record<FrameworkId, string> = {
-  arduino: "arduino",
-  native: "cmsis", // Native maps closest to CMSIS
-  espidf: "espidf",
-  zephyr: "zephyr",
-  mbed: "mbed",
-};
+// Framework ID mapping (used for client-side filtering)
+// PlatformIO framework names: arduino, espidf, zephyr, mbed, cmsis, stm32cube, libopencm3, spl
 
 /**
  * PlatformIO search options
@@ -137,26 +129,10 @@ export async function searchPlatformIO(
   options: PlatformIOSearchOptions
 ): Promise<PlatformIOLibrary[]> {
   try {
-    // Build search query parts
-    const queryParts: string[] = [`type:"library"`, options.query];
-
-    // Add platform filter if specified
-    if (options.platformId) {
-      const pioPlatform = PLATFORM_ID_MAP[options.platformId];
-      if (pioPlatform) {
-        queryParts.push(`platforms:${pioPlatform}`);
-      }
-    }
-
-    // Add framework filter if specified
-    if (options.frameworkId) {
-      const pioFramework = FRAMEWORK_ID_MAP[options.frameworkId];
-      if (pioFramework) {
-        queryParts.push(`frameworks:${pioFramework}`);
-      }
-    }
-
-    const searchQuery = queryParts.join(" ");
+    // Build search query - keep it simple, just the search term
+    // Platform/framework filtering is done client-side on the results
+    // because the PlatformIO API query syntax can be strict
+    const searchQuery = `type:"library" ${options.query}`;
     const limit = options.limit || 20;
 
     // Build URL with sorting

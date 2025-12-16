@@ -8,6 +8,7 @@ import type {
   BoardManifest,
   BoardExample,
 } from "../../lib/registry/types";
+import type { ProjectTemplate } from "../../lib/project/types";
 
 export type WizardStep = "platform" | "board" | "framework" | "example" | "details";
 
@@ -23,7 +24,7 @@ export interface WizardState {
   selectedPlatformId: string | null;
   selectedBoard: BoardManifest | null;
   selectedFramework: string | null;
-  selectedExample: BoardExample | null;
+  selectedExample: BoardExample | ProjectTemplate | null;
   projectName: string;
   projectDescription: string;
 }

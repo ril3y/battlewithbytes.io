@@ -426,6 +426,7 @@ int main(void) {
           {state.currentStep === "example" && state.selectedBoard && (
             <ExamplePicker
               board={state.selectedBoard}
+              selectedFramework={state.selectedFramework}
               selectedExample={state.selectedExample}
               onSelect={handleExampleSelect}
             />
