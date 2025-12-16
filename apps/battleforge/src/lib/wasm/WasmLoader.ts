@@ -16,6 +16,9 @@ import { WasmCache } from "./WasmCache";
 
 const cache = new WasmCache();
 
+// Export cache instance for use by other modules
+export { cache as wasmCache };
+
 /**
  * Decompress gzip data using DecompressionStream API
  */

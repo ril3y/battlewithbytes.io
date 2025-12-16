@@ -512,9 +512,8 @@ class WasmManagerService {
 
     // Cache with the disassembler's hash
     const hash = disasm.hashes?.compressed || "unknown";
-    await import("./WasmCache").then((m) =>
-      m.WasmCache.setWasm(id, data, disasm.fullVersion, hash)
-    );
+    const { wasmCache } = await import("./WasmLoader");
+    await wasmCache.setWasm(id as CompilerId, data, disasm.fullVersion, hash);
 
     onProgress?.({
       stage: "ready",
@@ -585,9 +584,8 @@ class WasmManagerService {
 
     // Cache with the emulator's hash
     const hash = emu.hashes?.compressed || "unknown";
-    await import("./WasmCache").then((m) =>
-      m.WasmCache.setWasm(id, data, emu.fullVersion, hash)
-    );
+    const { wasmCache } = await import("./WasmLoader");
+    await wasmCache.setWasm(id as CompilerId, data, emu.fullVersion, hash);
 
     onProgress?.({
       stage: "ready",
