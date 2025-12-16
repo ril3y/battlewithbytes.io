@@ -451,6 +451,164 @@ class WasmManagerService {
   }
 
   // ============================================================================
+  // Generic Tool Download Methods (for Package Manager)
+  // ============================================================================
+
+  /**
+   * Ensure a disassembler is available
+   */
+  async ensureDisassembler(
+    id: string,
+    onProgress?: (progress: DownloadProgress) => void
+  ): Promise<Uint8Array> {
+    const manifest = await this.getManifest();
+    const disasm = manifest.disassemblers?.find((d) => d.id === id);
+
+    if (!disasm) {
+      throw new Error(`Unknown disassembler: ${id}`);
+    }
+
+    // Check cache first
+    const cached = await getCachedCompiler(id as CompilerId);
+    if (cached) {
+      onProgress?.({
+        stage: "ready",
+        current: cached.length,
+        total: cached.length,
+        message: "Disassembler loaded from cache",
+        percentage: 100,
+      });
+      return cached;
+    }
+
+    // Download
+    const baseUrl = manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
+    const wasmFile = disasm.files.wasmGz || disasm.files.wasm;
+    const url = `${baseUrl}/${wasmFile}`;
+
+    onProgress?.({
+      stage: "downloading",
+      current: 0,
+      total: disasm.sizeCompressed || disasm.size,
+      message: `Downloading ${disasm.name}...`,
+      percentage: 0,
+    });
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download ${disasm.name}: ${response.statusText}`);
+    }
+
+    let data: Uint8Array;
+    if (wasmFile.endsWith(".gz")) {
+      const compressed = await response.arrayBuffer();
+      const decompressedStream = new Response(compressed).body!.pipeThrough(
+        new DecompressionStream("gzip")
+      );
+      data = new Uint8Array(await new Response(decompressedStream).arrayBuffer());
+    } else {
+      data = new Uint8Array(await response.arrayBuffer());
+    }
+
+    // Cache with the disassembler's hash
+    const hash = disasm.hashes?.compressed || "unknown";
+    await import("./WasmCache").then((m) =>
+      m.WasmCache.setWasm(id, data, disasm.fullVersion, hash)
+    );
+
+    onProgress?.({
+      stage: "ready",
+      current: data.length,
+      total: data.length,
+      message: `${disasm.name} ready`,
+      percentage: 100,
+    });
+
+    return data;
+  }
+
+  /**
+   * Ensure an emulator is available
+   */
+  async ensureEmulator(
+    id: string,
+    onProgress?: (progress: DownloadProgress) => void
+  ): Promise<Uint8Array> {
+    const manifest = await this.getManifest();
+    const emu = manifest.emulators?.find((e) => e.id === id);
+
+    if (!emu) {
+      throw new Error(`Unknown emulator: ${id}`);
+    }
+
+    // Check cache first
+    const cached = await getCachedCompiler(id as CompilerId);
+    if (cached) {
+      onProgress?.({
+        stage: "ready",
+        current: cached.length,
+        total: cached.length,
+        message: "Emulator loaded from cache",
+        percentage: 100,
+      });
+      return cached;
+    }
+
+    // Download
+    const baseUrl = manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
+    const wasmFile = emu.files.wasmGz || emu.files.wasm;
+    const url = `${baseUrl}/${wasmFile}`;
+
+    onProgress?.({
+      stage: "downloading",
+      current: 0,
+      total: emu.sizeCompressed || emu.size,
+      message: `Downloading ${emu.name}...`,
+      percentage: 0,
+    });
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download ${emu.name}: ${response.statusText}`);
+    }
+
+    let data: Uint8Array;
+    if (wasmFile.endsWith(".gz")) {
+      const compressed = await response.arrayBuffer();
+      const decompressedStream = new Response(compressed).body!.pipeThrough(
+        new DecompressionStream("gzip")
+      );
+      data = new Uint8Array(await new Response(decompressedStream).arrayBuffer());
+    } else {
+      data = new Uint8Array(await response.arrayBuffer());
+    }
+
+    // Cache with the emulator's hash
+    const hash = emu.hashes?.compressed || "unknown";
+    await import("./WasmCache").then((m) =>
+      m.WasmCache.setWasm(id, data, emu.fullVersion, hash)
+    );
+
+    onProgress?.({
+      stage: "ready",
+      current: data.length,
+      total: data.length,
+      message: `${emu.name} ready`,
+      percentage: 100,
+    });
+
+    return data;
+  }
+
+  /**
+   * Remove an installed tool (disassembler or emulator)
+   */
+  async removeTool(id: string): Promise<void> {
+    await removeCachedCompiler(id as CompilerId);
+    this.emit({ type: "storage_changed", stats: await this.getStorageStats() });
+  }
+
+  // ============================================================================
   // Unified Tool Methods (for Package Manager UI)
   // ============================================================================
 
@@ -507,14 +665,14 @@ class WasmManagerService {
       });
     }
 
-    // Add linkers
+    // Add linkers - LLD is bundled with the app, always available
     for (const linker of manifest.linkers || []) {
       tools.push({
         id: linker.id,
         category: "linker" as ToolCategory,
         name: linker.name,
-        description: linker.description || "",
-        state: "not_installed", // TODO: Track linker installation state
+        description: linker.description || "Bundled with app",
+        state: "installed", // LLD is bundled and always available
         available: {
           fullVersion: linker.fullVersion,
           softwareVersion: linker.softwareVersion,
@@ -522,17 +680,34 @@ class WasmManagerService {
           size: linker.size,
           architectures: linker.architectures,
         },
+        installed: {
+          version: linker.fullVersion,
+          hash: linker.hashes?.compressed || "",
+          installedAt: 0, // Bundled
+          size: linker.size,
+        },
       });
     }
 
-    // Add disassemblers
+    // Add disassemblers - check cache for installation state
     for (const disasm of manifest.disassemblers || []) {
+      const installedDisasm = installed.find((i) => i.id === disasm.id);
+      const availableHash = disasm.hashes?.compressed;
+
+      let disasmState: ToolInfo["state"] = "not_installed";
+      if (installedDisasm) {
+        disasmState =
+          availableHash && installedDisasm.hash !== availableHash
+            ? "update_available"
+            : "installed";
+      }
+
       tools.push({
         id: disasm.id,
         category: "disassembler" as ToolCategory,
         name: disasm.name,
         description: disasm.description || "",
-        state: "not_installed", // TODO: Track disassembler installation state
+        state: disasmState,
         available: {
           fullVersion: disasm.fullVersion,
           softwareVersion: disasm.softwareVersion,
@@ -542,17 +717,36 @@ class WasmManagerService {
           architectures: disasm.architectures,
           features: disasm.features,
         },
+        installed: installedDisasm
+          ? {
+              version: installedDisasm.version || installedDisasm.fullVersion || "",
+              hash: installedDisasm.hash,
+              installedAt: installedDisasm.installedAt,
+              size: installedDisasm.size,
+            }
+          : undefined,
       });
     }
 
-    // Add emulators
+    // Add emulators - check cache for installation state
     for (const emu of manifest.emulators || []) {
+      const installedEmu = installed.find((i) => i.id === emu.id);
+      const availableHash = emu.hashes?.compressed;
+
+      let emuState: ToolInfo["state"] = "not_installed";
+      if (installedEmu) {
+        emuState =
+          availableHash && installedEmu.hash !== availableHash
+            ? "update_available"
+            : "installed";
+      }
+
       tools.push({
         id: emu.id,
         category: "emulator" as ToolCategory,
         name: emu.name,
         description: emu.description || "",
-        state: "not_installed", // TODO: Track emulator installation state
+        state: emuState,
         available: {
           fullVersion: emu.fullVersion,
           softwareVersion: emu.softwareVersion,
@@ -561,6 +755,14 @@ class WasmManagerService {
           sizeCompressed: emu.sizeCompressed,
           architectures: emu.supportedCpus,
         },
+        installed: installedEmu
+          ? {
+              version: installedEmu.version || installedEmu.fullVersion || "",
+              hash: installedEmu.hash,
+              installedAt: installedEmu.installedAt,
+              size: installedEmu.size,
+            }
+          : undefined,
       });
     }
 

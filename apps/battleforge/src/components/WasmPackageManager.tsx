@@ -77,24 +77,42 @@ export function WasmPackageManager({ isOpen, onClose }: WasmPackageManagerProps)
   );
 
   const handleInstall = useCallback(async (tool: ToolInfo) => {
-    if (tool.category !== "compiler") {
-      // For now, only compilers are fully supported
-      alert(`${tool.category} installation coming soon!`);
-      return;
-    }
-
     setDownloadingTools((prev) => new Set(prev).add(tool.id));
 
     try {
-      await WasmManager.ensureCompiler(tool.id as "clang-arm" | "clang-riscv" | "clang-xtensa", (progress) => {
+      const progressHandler = (progress: DownloadProgress) => {
         setDownloadProgress((prev) => new Map(prev).set(tool.id, progress));
-      });
+      };
+
+      // Route to appropriate install method based on category
+      switch (tool.category) {
+        case "compiler":
+          await WasmManager.ensureCompiler(
+            tool.id as "clang-arm" | "clang-riscv" | "clang-xtensa",
+            progressHandler
+          );
+          break;
+        case "disassembler":
+          await WasmManager.ensureDisassembler(tool.id, progressHandler);
+          break;
+        case "emulator":
+          await WasmManager.ensureEmulator(tool.id, progressHandler);
+          break;
+        case "linker":
+          // Linkers are bundled with compilers, no separate install needed
+          alert("Linkers are installed automatically with compilers.");
+          return;
+        default:
+          alert(`Unknown tool category: ${tool.category}`);
+          return;
+      }
 
       // Refresh tools list
       const allTools = await WasmManager.getAllToolInfos();
       setTools(allTools);
     } catch (e) {
       console.error("Install failed:", e);
+      alert(`Install failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setDownloadingTools((prev) => {
         const next = new Set(prev);
@@ -110,18 +128,24 @@ export function WasmPackageManager({ isOpen, onClose }: WasmPackageManagerProps)
   }, []);
 
   const handleUninstall = useCallback(async (tool: ToolInfo) => {
-    if (tool.category !== "compiler") {
+    if (tool.category === "linker") {
+      alert("Linkers cannot be uninstalled separately from compilers.");
       return;
     }
 
     if (!confirm(`Remove ${tool.name}?`)) return;
 
     try {
-      await WasmManager.removeCompiler(tool.id as "clang-arm" | "clang-riscv" | "clang-xtensa");
+      if (tool.category === "compiler") {
+        await WasmManager.removeCompiler(tool.id as "clang-arm" | "clang-riscv" | "clang-xtensa");
+      } else {
+        await WasmManager.removeTool(tool.id);
+      }
       const allTools = await WasmManager.getAllToolInfos();
       setTools(allTools);
     } catch (e) {
       console.error("Uninstall failed:", e);
+      alert(`Uninstall failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   }, []);
 

@@ -11,10 +11,9 @@ interface ToolbarPanelProps {
   onSave?: () => void;
   onCloseProject?: () => void;
   onEditProject?: () => void;
-  onToggleConsole?: () => void;
+  onOpenWasmTools?: () => void;
   isLoading?: boolean;
   compilerReady?: boolean;
-  showConsole?: boolean;
   canSave?: boolean;
   hasBuildArtifacts?: boolean;
 }
@@ -27,10 +26,9 @@ export function ToolbarPanel({
   onSave,
   onCloseProject,
   onEditProject,
-  onToggleConsole: _onToggleConsole,
+  onOpenWasmTools,
   isLoading,
   compilerReady,
-  showConsole: _showConsole,
   canSave,
   hasBuildArtifacts,
 }: ToolbarPanelProps) {
@@ -94,6 +92,7 @@ export function ToolbarPanel({
         Save
       </button>
       <div style={{ flex: 1 }} />
+      <button onClick={onOpenWasmTools}>WASM Tools</button>
       <button onClick={onEditProject}>Edit Project</button>
       <button onClick={onCloseProject}>Close Project</button>
     </div>
