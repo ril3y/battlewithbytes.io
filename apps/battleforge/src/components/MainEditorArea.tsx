@@ -14,6 +14,7 @@ interface MainEditorAreaProps {
   binaryContent: Uint8Array | null;
   onEditorChange: (content: string) => void;
   onGetStarted: () => void;
+  onOpenWasmTools?: () => void;
   getVFSFiles: () => Map<
     string,
     { content: string | Uint8Array; readOnly?: boolean }
@@ -29,6 +30,7 @@ export function MainEditorArea({
   binaryContent,
   onEditorChange,
   onGetStarted,
+  onOpenWasmTools,
   getVFSFiles,
 }: MainEditorAreaProps) {
   const [binaryViewMode, setBinaryViewMode] = useState<BinaryViewMode>("hex");
@@ -80,7 +82,7 @@ export function MainEditorArea({
             {/* Content */}
             <div className="viewer-content">
               {binaryViewMode === "disasm" && isElfFile ? (
-                <DisassemblyPanel key={binaryContentKey} data={binaryContent} filename={activeFile} />
+                <DisassemblyPanel key={binaryContentKey} data={binaryContent} filename={activeFile} onOpenWasmTools={onOpenWasmTools} />
               ) : (
                 <HexViewer data={binaryContent} filename={activeFile} />
               )}

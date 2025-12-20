@@ -13,6 +13,7 @@ import type { DisassembledInstruction } from "../lib/disasm/types";
 interface DisassemblyPanelProps {
   data: Uint8Array;
   filename?: string;
+  onOpenWasmTools?: () => void;
 }
 
 // Minimal ELF parsing - just extract .text section
@@ -228,7 +229,7 @@ function formatBytes(bytes: Uint8Array): string {
 const ROW_HEIGHT = 20;
 const BUFFER_ROWS = 20;
 
-export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
+export function DisassemblyPanel({ data, filename, onOpenWasmTools }: DisassemblyPanelProps) {
   const [instructions, setInstructions] = useState<DisassembledInstruction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -426,14 +427,31 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
   }
 
   if (error && instructions.length === 0) {
+    // Check if error is related to missing Capstone
+    const isCapstoneError = error.includes("Capstone") || error.includes("Failed to load");
+
     return (
       <div className="h-full flex items-center justify-center bg-[#0a0a0a] text-red-400">
         <div className="text-center max-w-md">
           <p className="text-lg mb-2">Disassembly Error</p>
           <p className="text-sm text-gray-400">{error}</p>
-          <p className="text-xs text-gray-500 mt-4">
-            Make sure Capstone is installed via WASM Tools.
-          </p>
+          {isCapstoneError && onOpenWasmTools ? (
+            <div className="mt-4">
+              <p className="text-xs text-gray-500 mb-3">
+                The Capstone disassembler needs to be installed.
+              </p>
+              <button
+                onClick={onOpenWasmTools}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded text-sm transition-colors"
+              >
+                Open WASM Tools to Install
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 mt-4">
+              Make sure Capstone is installed via WASM Tools.
+            </p>
+          )}
         </div>
       </div>
     );

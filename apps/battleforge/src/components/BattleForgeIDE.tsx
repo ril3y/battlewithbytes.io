@@ -1143,6 +1143,7 @@ void _fini(void) {
         binaryContent={binaryContent}
         onEditorChange={handleEditorChange}
         onGetStarted={() => setIsPlatformModalOpen(true)}
+        onOpenWasmTools={() => setIsWasmToolsOpen(true)}
         getVFSFiles={getFilesForIntellisense}
       />
 

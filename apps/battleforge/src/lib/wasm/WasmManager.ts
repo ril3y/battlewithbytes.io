@@ -420,11 +420,12 @@ class WasmManagerService {
   }
 
   /**
-   * Get base URL from manifest
+   * Get base URL from manifest (with base path applied for production)
    */
   async getBaseUrl(): Promise<string> {
     const manifest = await this.getManifest();
-    return manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
+    const baseUrl = manifest.baseUrl || manifest.meta?.fallbackBaseUrl || "/wasm";
+    return withBasePath(baseUrl);
   }
 
   // ============================================================================
