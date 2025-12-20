@@ -15,6 +15,7 @@ import { FrameworkSelector } from "./FrameworkSelector";
 import { ExamplePicker } from "./ExamplePicker";
 import { ProjectDetailsForm } from "./ProjectDetailsForm";
 import { GitHubRegistryFetcher } from "../../lib/registry/GitHubRegistryFetcher";
+import { withBasePath } from "../../lib/utils/basePath";
 
 interface BoardSelectionWizardProps {
   isOpen: boolean;
@@ -86,7 +87,7 @@ export function BoardSelectionWizard({
               id: p.id,
               name: config.name || p.id.toUpperCase(),
               description: config.description || "",
-              icon: `/images/platforms/${config.icon || p.id}.svg`,
+              icon: withBasePath(`/images/platforms/${config.icon || p.id}.svg`),
               color: config.color || "#333",
               supported: true,
               boardCount,
@@ -99,7 +100,7 @@ export function BoardSelectionWizard({
               id: p.id,
               name: p.id.toUpperCase(),
               description: "",
-              icon: `/images/platforms/${p.id}.svg`,
+              icon: withBasePath(`/images/platforms/${p.id}.svg`),
               color: "#333",
               supported: true,
               boardCount: 0,
