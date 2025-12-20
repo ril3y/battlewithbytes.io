@@ -6,5 +6,6 @@
 
 export * from "./types";
 export * from "./ProjectStorage";
-export * from "./templates";
+// Templates are now loaded from data/boards/templates/ via TemplateLoader
+export * from "./TemplateLoader";
 export * from "./ProjectConfig";

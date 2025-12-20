@@ -194,93 +194,45 @@ export interface ArchitectureConfig {
 }
 
 /**
- * Map of architecture to configuration
+ * Architecture configurations - loaded from data/boards/architectures.json
+ *
+ * For new code, use the async functions from ArchitectureLoader:
+ * - getArchitectureConfig(arch) - get config for a specific architecture
+ * - getAllArchitectureConfigs() - get all configs
+ *
+ * For backwards compatibility, ARCHITECTURE_CONFIGS is still exported but
+ * requires preloadArchitectures() to be called first.
  */
-export const ARCHITECTURE_CONFIGS: Record<Architecture, ArchitectureConfig> = {
-  "cortex-m0": {
-    target: "thumbv6m-none-eabi",
-    cpu: "cortex-m0",
-    libPath: "cortex-m0",
+import { getArchitectureConfigsSync } from "./ArchitectureLoader";
+
+/**
+ * @deprecated Use getArchitectureConfig() from ArchitectureLoader instead.
+ * This synchronous access requires preloadArchitectures() to be called first.
+ */
+export const ARCHITECTURE_CONFIGS: Record<
+  Architecture,
+  ArchitectureConfig
+> = new Proxy({} as Record<Architecture, ArchitectureConfig>, {
+  get(_, prop: string) {
+    const configs = getArchitectureConfigsSync();
+    return configs[prop as Architecture];
   },
-  "cortex-m0+": {
-    target: "thumbv6m-none-eabi",
-    cpu: "cortex-m0plus",
-    libPath: "cortex-m0",
+  ownKeys() {
+    const configs = getArchitectureConfigsSync();
+    return Object.keys(configs);
   },
-  "cortex-m3": {
-    target: "thumbv7m-none-eabi",
-    cpu: "cortex-m3",
-    libPath: "cortex-m3",
+  getOwnPropertyDescriptor(_, prop: string) {
+    const configs = getArchitectureConfigsSync();
+    if (prop in configs) {
+      return {
+        enumerable: true,
+        configurable: true,
+        value: configs[prop as Architecture],
+      };
+    }
+    return undefined;
   },
-  "cortex-m4": {
-    target: "thumbv7em-none-eabi",
-    cpu: "cortex-m4",
-    libPath: "cortex-m4",
-  },
-  "cortex-m4f": {
-    target: "thumbv7em-none-eabihf",
-    cpu: "cortex-m4",
-    fpu: "fpv4-sp-d16",
-    float: "hard",
-    libPath: "cortex-m4f",
-  },
-  "cortex-m7": {
-    target: "thumbv7em-none-eabi",
-    cpu: "cortex-m7",
-    libPath: "cortex-m7",
-  },
-  "cortex-m7f": {
-    target: "thumbv7em-none-eabihf",
-    cpu: "cortex-m7",
-    fpu: "fpv5-d16",
-    float: "hard",
-    libPath: "cortex-m7f",
-  },
-  "cortex-m23": {
-    target: "thumbv8m.base-none-eabi",
-    cpu: "cortex-m23",
-    libPath: "cortex-m23",
-  },
-  "cortex-m33": {
-    target: "thumbv8m.main-none-eabihf",
-    cpu: "cortex-m33",
-    fpu: "fpv5-sp-d16",
-    float: "hard",
-    libPath: "cortex-m33",
-  },
-  "cortex-m55": {
-    target: "thumbv8.1m.main-none-eabihf",
-    cpu: "cortex-m55",
-    fpu: "fpv5-d16",
-    float: "hard",
-    libPath: "cortex-m55",
-  },
-  "xtensa-lx6": {
-    target: "xtensa-esp32-elf",
-    cpu: "esp32",
-    libPath: "esp32",
-  },
-  "xtensa-lx7": {
-    target: "xtensa-esp32s3-elf",
-    cpu: "esp32s3",
-    libPath: "esp32s3",
-  },
-  riscv32: {
-    target: "riscv32-unknown-elf",
-    cpu: "generic-rv32",
-    libPath: "riscv32",
-  },
-  riscv32imc: {
-    target: "riscv32-unknown-elf",
-    cpu: "generic-rv32",
-    libPath: "riscv32imc",
-  },
-  riscv32imac: {
-    target: "riscv32-unknown-elf",
-    cpu: "generic-rv32",
-    libPath: "riscv32imac",
-  },
-};
+});
 
 // ============================================================================
 // Loading State Types

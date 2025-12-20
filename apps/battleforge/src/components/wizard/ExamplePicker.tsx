@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
-import { PROJECT_TEMPLATES } from "../../lib/project/templates";
+import { getTemplatesForPlatform } from "../../lib/project/TemplateLoader";
 import type { ProjectTemplate } from "../../lib/project/types";
 
 interface ExamplePickerProps {
@@ -19,38 +19,62 @@ export function ExamplePicker({
   onSelect,
 }: ExamplePickerProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [frameworkTemplates, setFrameworkTemplates] = useState<ProjectTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
 
   // Get board-specific examples
   const boardExamples = board.examples || [];
 
-  // Get framework-compatible templates from PROJECT_TEMPLATES
-  const frameworkTemplates = useMemo(() => {
-    if (!selectedFramework) return [];
+  // Load framework-compatible templates from data/boards
+  useEffect(() => {
+    if (!selectedFramework) {
+      setFrameworkTemplates([]);
+      return;
+    }
 
-    return PROJECT_TEMPLATES.filter((template) => {
-      // Skip blank template - we show our own blank option
-      if (template.id === "blank") return false;
+    let cancelled = false;
+    setTemplatesLoading(true);
 
-      // Match framework
-      if (template.framework && template.framework !== selectedFramework) {
-        return false;
-      }
+    getTemplatesForPlatform(
+      board.chip.platform,
+      board.chip.family,
+      board.chip.architecture
+    )
+      .then((templates) => {
+        if (cancelled) return;
 
-      // Check architecture compatibility if template has requirements
-      if (template.architectureRequirements) {
-        return template.architectureRequirements.includes(
-          board.chip.architecture as any
-        );
-      }
+        // Filter by framework and exclude blank template
+        const filtered = templates.filter((template) => {
+          // Skip blank template - we show our own blank option
+          if (template.id === "blank") return false;
 
-      // If no framework specified, show for native framework
-      if (!template.framework && selectedFramework === "native") {
-        return true;
-      }
+          // Match framework
+          if (template.framework && template.framework !== selectedFramework) {
+            return false;
+          }
 
-      return template.framework === selectedFramework;
-    });
-  }, [selectedFramework, board.chip.architecture]);
+          // If no framework specified, show for native framework
+          if (!template.framework && selectedFramework === "native") {
+            return true;
+          }
+
+          return template.framework === selectedFramework;
+        });
+
+        setFrameworkTemplates(filtered);
+      })
+      .catch((error) => {
+        console.error("Error loading templates:", error);
+        if (!cancelled) setFrameworkTemplates([]);
+      })
+      .finally(() => {
+        if (!cancelled) setTemplatesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedFramework, board.chip.platform, board.chip.family, board.chip.architecture]);
 
   // Combine board examples and framework templates
   const examples = boardExamples;
@@ -235,7 +259,13 @@ export function ExamplePicker({
           </button>
         ))}
 
-        {/* Framework templates from PROJECT_TEMPLATES */}
+        {/* Framework templates from data/boards */}
+        {templatesLoading && (
+          <div className="example-card loading">
+            <div className="loading-spinner" />
+            <div className="example-name">Loading templates...</div>
+          </div>
+        )}
         {frameworkTemplates.map((template) => (
           <button
             key={template.id}
@@ -254,7 +284,7 @@ export function ExamplePicker({
         ))}
       </div>
 
-      {examples.length === 0 && frameworkTemplates.length === 0 && (
+      {examples.length === 0 && frameworkTemplates.length === 0 && !templatesLoading && (
         <div className="no-examples">
           <p>No examples available for this board yet.</p>
           <p className="hint">You can still create a blank project.</p>
@@ -531,6 +561,29 @@ export function ExamplePicker({
           font-size: 0.85rem;
           color: #555;
           margin-top: 8px;
+        }
+
+        .example-card.loading {
+          align-items: center;
+          justify-content: center;
+          min-height: 120px;
+          border-style: dashed;
+          border-color: #333;
+        }
+
+        .loading-spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid #333;
+          border-top-color: #00ff9d;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>

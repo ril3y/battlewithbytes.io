@@ -268,9 +268,9 @@ export class PlatformManager {
       throw new Error(`Device ${deviceId} not found in family ${familyId}`);
     }
 
-    // Import ARCHITECTURE_CONFIGS dynamically to avoid circular dependency
-    const { ARCHITECTURE_CONFIGS } = await import("./types");
-    const archConfig = ARCHITECTURE_CONFIGS[family.architecture];
+    // Load architecture config from data/boards
+    const { getArchitectureConfig } = await import("./ArchitectureLoader");
+    const archConfig = await getArchitectureConfig(family.architecture);
 
     if (!archConfig) {
       throw new Error(`Unknown architecture: ${family.architecture}`);
