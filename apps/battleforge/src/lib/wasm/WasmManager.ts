@@ -34,8 +34,9 @@ import {
   listInstalled,
   getCompilerDisplayInfo,
 } from "./WasmLoader";
+import { withBasePath } from "../utils/basePath";
 
-const MANIFEST_URL = "/data/boards/wasm/manifest.json";
+const MANIFEST_PATH = "/data/boards/wasm/manifest.json";
 const MANIFEST_CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 class WasmManagerService {
@@ -99,7 +100,7 @@ class WasmManagerService {
 
     this.manifestPromise = (async () => {
       try {
-        this.manifest = await loadManifest(MANIFEST_URL);
+        this.manifest = await loadManifest(withBasePath(MANIFEST_PATH));
         this.manifestLoadedAt = Date.now();
         this.emit({ type: "manifest_loaded", manifest: this.manifest });
 
