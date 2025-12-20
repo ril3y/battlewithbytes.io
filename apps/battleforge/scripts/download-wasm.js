@@ -225,6 +225,51 @@ function tryGhDownload(tag, destDir) {
 }
 
 /**
+ * Reorganize downloaded files into expected directory structure
+ * GitHub Releases flattens directory structure, so we need to move files
+ */
+function reorganizeFiles() {
+  const wasmDir = CONFIG.wasmDir;
+
+  // Map of flat file names to their expected locations
+  const fileMap = {
+    'clang.wasm': 'clang_arm/clang.wasm',
+    'clang.js': 'clang_arm/clang.js',
+    'lld.wasm': 'clang_arm/lld.wasm',
+    'lld.js': 'clang_arm/lld.js',
+    'clang-standalone.wasm': 'clang_arm/clang-standalone.wasm',
+    'clang-standalone.js': 'clang_arm/clang-standalone.js',
+    'llvm-ar.wasm': 'clang_arm/llvm-ar.wasm',
+    'llvm-ar.js': 'clang_arm/llvm-ar.js',
+    'llvm-objdump.wasm': 'clang_arm/llvm-objdump.wasm',
+    'llvm-objdump.js': 'clang_arm/llvm-objdump.js',
+  };
+
+  let moved = 0;
+  for (const [flatName, targetPath] of Object.entries(fileMap)) {
+    const srcPath = path.join(wasmDir, flatName);
+    const destPath = path.join(wasmDir, targetPath);
+
+    if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+      // Ensure target directory exists
+      const destDir = path.dirname(destPath);
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+
+      // Move file
+      fs.renameSync(srcPath, destPath);
+      log(`  Moved ${flatName} -> ${targetPath}`, 'dim');
+      moved++;
+    }
+  }
+
+  if (moved > 0) {
+    log(`Reorganized ${moved} files into expected structure`, 'green');
+  }
+}
+
+/**
  * Download using GitHub API (fallback)
  */
 async function apiDownload(release) {
@@ -325,6 +370,10 @@ async function main() {
     log('GitHub CLI not available, using API...', 'yellow');
     await apiDownload(release);
   }
+
+  // Reorganize flat files into expected directory structure
+  logStep('Reorganizing files');
+  reorganizeFiles();
 
   // Verify download
   logStep('Verifying download');
