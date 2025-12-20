@@ -233,6 +233,7 @@ function reorganizeFiles() {
 
   // Map of flat file names to their expected locations
   const fileMap = {
+    // Clang ARM compiler files
     'clang.wasm': 'clang_arm/clang.wasm',
     'clang.js': 'clang_arm/clang.js',
     'lld.wasm': 'clang_arm/lld.wasm',
@@ -243,6 +244,10 @@ function reorganizeFiles() {
     'llvm-ar.js': 'clang_arm/llvm-ar.js',
     'llvm-objdump.wasm': 'clang_arm/llvm-objdump.wasm',
     'llvm-objdump.js': 'clang_arm/llvm-objdump.js',
+    // Capstone disassembler files
+    'capstone-arm.wasm': 'capstone/capstone-arm.wasm',
+    'capstone-arm.js': 'capstone/capstone-arm.js',
+    'capstone-api.js': 'capstone/capstone-api.js',
   };
 
   let moved = 0;
