@@ -203,7 +203,7 @@ describe("FrameworkManager", () => {
       // Mock fetch response with readable stream
       const mockStream = {
         getReader: () => ({
-          read: vi
+          read: jest
             .fn()
             .mockResolvedValueOnce({ done: false, value: mockTarGz })
             .mockResolvedValueOnce({ done: true, value: undefined }),
@@ -221,7 +221,7 @@ describe("FrameworkManager", () => {
       // Mock DecompressionStream
       const mockDecompressedStream = {
         getReader: () => ({
-          read: vi
+          read: jest
             .fn()
             .mockResolvedValueOnce({
               done: false,
@@ -283,7 +283,7 @@ describe("FrameworkManager", () => {
 
       const mockStream = {
         getReader: () => ({
-          read: vi
+          read: jest
             .fn()
             .mockResolvedValueOnce({ done: false, value: mockTarGz })
             .mockResolvedValueOnce({ done: true, value: undefined }),
@@ -300,7 +300,7 @@ describe("FrameworkManager", () => {
 
       const mockDecompressedStream = {
         getReader: () => ({
-          read: vi
+          read: jest
             .fn()
             .mockResolvedValueOnce({
               done: false,

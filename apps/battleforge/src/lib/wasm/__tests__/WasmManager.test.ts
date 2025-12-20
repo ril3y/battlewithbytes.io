@@ -49,6 +49,7 @@ const mockIDBStore = {
 
 // Sample manifest for tests
 const mockManifest: WasmManifest = {
+  schemaVersion: "1.0.0",
   version: "1.0.0",
   lastUpdated: "2025-01-15",
   baseUrl: "/wasm",
@@ -57,12 +58,16 @@ const mockManifest: WasmManifest = {
       id: "clang-arm",
       name: "Clang ARM",
       description: "ARM Cortex-M compiler",
+      softwareVersion: "18.1.0",
+      releaseVersion: "1.0.0",
+      fullVersion: "18.1.0-r1.0.0",
       version: "18.1.0",
       files: {
         wasm: "clang_arm/clang.wasm",
         js: "clang_arm/clang.js",
       },
       size: 45000000,
+      hashes: { compressed: "sha256:abc123" },
       hash: "sha256:abc123",
       architectures: [
         "cortex-m0",
@@ -76,12 +81,16 @@ const mockManifest: WasmManifest = {
       id: "clang-riscv",
       name: "Clang RISC-V",
       description: "RISC-V compiler for ESP32-C3",
+      softwareVersion: "19.0.0",
+      releaseVersion: "1.0.0",
+      fullVersion: "19.0.0-r1.0.0",
       version: "19.0.0",
       files: {
         wasm: "clang_riscv/clang-riscv.wasm.gz",
         js: "clang_riscv/clang.js",
       },
       size: 40000000,
+      hashes: { compressed: "sha256:def456" },
       hash: "sha256:def456",
       architectures: ["riscv32"],
     },
@@ -89,12 +98,16 @@ const mockManifest: WasmManifest = {
       id: "clang-xtensa",
       name: "Clang Xtensa",
       description: "Xtensa compiler for ESP32",
+      softwareVersion: "18.1.0",
+      releaseVersion: "1.0.0-esp",
+      fullVersion: "18.1.0-esp-r1.0.0",
       version: "18.1.0-esp",
       files: {
         wasm: "clang_xtensa/clang-xtensa.wasm.gz",
         js: "clang_xtensa/clang.js",
       },
       size: 50000000,
+      hashes: { compressed: "sha256:ghi789" },
       hash: "sha256:ghi789",
       architectures: ["xtensa-lx6", "xtensa-lx7"],
     },
