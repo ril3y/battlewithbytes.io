@@ -71,8 +71,9 @@ async function loadRegistry(): Promise<TemplateRegistryEntry[]> {
   }
 
   const registry = await response.json();
-  registryCache = registry.templates || [];
-  return registryCache;
+  const templates: TemplateRegistryEntry[] = registry.templates || [];
+  registryCache = templates;
+  return templates;
 }
 
 /**

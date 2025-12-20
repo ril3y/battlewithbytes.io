@@ -28,8 +28,9 @@ type CapstoneModuleFactory = (options: Record<string, unknown>) => Promise<Capst
  */
 async function loadCapstoneScript(jsPath: string): Promise<CapstoneModuleFactory> {
   // Check if already loaded globally
-  if (typeof (globalThis as { CapstoneModule?: CapstoneModuleFactory }).CapstoneModule === "function") {
-    return (globalThis as { CapstoneModule: CapstoneModuleFactory }).CapstoneModule;
+  const globalAny = globalThis as unknown as { CapstoneModule?: CapstoneModuleFactory };
+  if (typeof globalAny.CapstoneModule === "function") {
+    return globalAny.CapstoneModule;
   }
 
   // Fetch the JS code

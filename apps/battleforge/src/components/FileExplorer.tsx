@@ -763,7 +763,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
       if (file) {
         const content = file.content;
         const blob = content instanceof Uint8Array
-          ? new Blob([content], { type: "application/octet-stream" })
+          ? new Blob([content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength) as ArrayBuffer], { type: "application/octet-stream" })
           : new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

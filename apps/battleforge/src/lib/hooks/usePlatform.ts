@@ -11,6 +11,7 @@ import type {
   LoadingProgress,
 } from "../platform/types";
 import { getPlatformManager } from "../platform/PlatformManager";
+import { loadHeadersFromRegistry, type LoadHeadersProgress } from "../platform/HeaderLoader";
 
 interface UsePlatformOptions {
   onLog?: (message: string, type: "info" | "success" | "error" | "warning") => void;
@@ -219,7 +220,7 @@ export function usePlatform(options: UsePlatformOptions = {}): UsePlatformReturn
       const headers = await loadHeadersFromRegistry(
         pendingPlatform.platformId,
         pendingPlatform.familyId,
-        (progress) => {
+        (progress: LoadHeadersProgress) => {
           updateToolchain("headers", {
             stage:
               progress.stage === "ready"
