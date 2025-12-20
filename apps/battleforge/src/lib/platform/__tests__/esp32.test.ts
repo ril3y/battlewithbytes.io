@@ -9,8 +9,22 @@ import type {
   Framework,
   DeviceEntry,
   Architecture,
+  ArchitectureConfig,
 } from "../types";
-import { ARCHITECTURE_CONFIGS } from "../types";
+
+// Mock architecture configs for tests (avoids needing async preload)
+const MOCK_ARCHITECTURE_CONFIGS: Record<string, ArchitectureConfig> = {
+  "xtensa-lx7": {
+    target: "xtensa-esp32s3-elf",
+    cpu: "esp32s3",
+    libPath: "esp32s3",
+  },
+  "riscv32": {
+    target: "riscv32-unknown-elf",
+    cpu: "generic-rv32",
+    libPath: "riscv32",
+  },
+};
 
 // Mock ESP32-S3 family data based on the created family.json
 const esp32s3Family: PlatformFamily = {
@@ -428,7 +442,7 @@ describe("ESP32-C3 Framework Support", () => {
 
 describe("Architecture Configuration", () => {
   it("should have xtensa-lx7 architecture config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS["xtensa-lx7"];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS["xtensa-lx7"];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("xtensa-esp32s3-elf");
     expect(archConfig.cpu).toBe("esp32s3");
@@ -436,7 +450,7 @@ describe("Architecture Configuration", () => {
   });
 
   it("should have riscv32 architecture config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS["riscv32"];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS["riscv32"];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("riscv32-unknown-elf");
     expect(archConfig.cpu).toBe("generic-rv32");
@@ -444,13 +458,13 @@ describe("Architecture Configuration", () => {
   });
 
   it("should match ESP32-S3 family architecture to config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS[esp32s3Family.architecture];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS[esp32s3Family.architecture];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("xtensa-esp32s3-elf");
   });
 
   it("should match ESP32-C3 family architecture to config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS[esp32c3Family.architecture];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS[esp32c3Family.architecture];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("riscv32-unknown-elf");
   });
