@@ -2,7 +2,6 @@
  * Tests for Arduino Package Index Parser
  */
 
-import { describe, it, expect } from "@jest/globals";
 import { ArduinoIndexParser, ARDUINO_INDEX_URLS } from "../ArduinoIndexParser";
 import type { ArduinoPackageIndex } from "../types";
 import { BoardsToFamilyTransformer } from "../BoardsToFamily";

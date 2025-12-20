@@ -3,7 +3,7 @@
  * Tests that correct compiler flags are generated for each platform
  */
 
-import { ARCHITECTURE_CONFIGS } from "../../platform/types";
+import { ARCHITECTURE_CONFIGS, type Architecture } from "../../platform/types";
 
 describe("Architecture Configurations", () => {
   describe("Cortex-M0+", () => {
@@ -97,35 +97,35 @@ describe("Build Flag Generation", () => {
   for (const tc of testCases) {
     describe(`${tc.platform}/${tc.family} (${tc.architecture})`, () => {
       it("should generate correct target triple", () => {
-        const config = ARCHITECTURE_CONFIGS[tc.architecture];
+        const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
         expect(config.target).toBe(tc.expectedTarget);
       });
 
       it("should generate correct CPU flag", () => {
-        const config = ARCHITECTURE_CONFIGS[tc.architecture];
+        const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
         expect(config.cpu).toBe(tc.expectedCpu);
       });
 
       if (tc.expectFpu) {
         it("should include FPU flag", () => {
-          const config = ARCHITECTURE_CONFIGS[tc.architecture];
+          const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
           expect(config.fpu).toBeDefined();
         });
       } else {
         it("should not include FPU flag", () => {
-          const config = ARCHITECTURE_CONFIGS[tc.architecture];
+          const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
           expect(config.fpu).toBeUndefined();
         });
       }
 
       if (tc.expectHardFloat) {
         it("should use hard float ABI", () => {
-          const config = ARCHITECTURE_CONFIGS[tc.architecture];
+          const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
           expect(config.float).toBe("hard");
         });
       } else {
         it("should not use hard float ABI", () => {
-          const config = ARCHITECTURE_CONFIGS[tc.architecture];
+          const config = ARCHITECTURE_CONFIGS[tc.architecture as Architecture];
           expect(config.float).toBeUndefined();
         });
       }
@@ -135,7 +135,7 @@ describe("Build Flag Generation", () => {
 
 describe("Compiler Arguments Assembly", () => {
   function assembleCompilerArgs(
-    architecture: string,
+    architecture: Architecture,
     defines: string[],
   ): string[] {
     const config = ARCHITECTURE_CONFIGS[architecture];
@@ -221,7 +221,7 @@ describe("Compiler Arguments Assembly", () => {
 
 describe("Linker Arguments Assembly", () => {
   function assembleLinkerArgs(
-    architecture: string,
+    architecture: Architecture,
     linkerScript: string,
   ): string[] {
     const config = ARCHITECTURE_CONFIGS[architecture];

@@ -110,6 +110,7 @@ describe("SourceFetcher", () => {
         name: "Test Device",
         flash: 64 * 1024,
         ram: 20 * 1024,
+        frequency: 72,
         defines: [],
         // No files property
       };
@@ -261,6 +262,7 @@ describe("SourceFetcher - Error Handling", () => {
           name: "Test",
           flash: 64 * 1024,
           ram: 20 * 1024,
+          frequency: 72,
           defines: [],
           files: {
             startup: "startup.s",
@@ -299,6 +301,7 @@ describe("SourceFetcher - Error Handling", () => {
           name: "Test",
           flash: 64 * 1024,
           ram: 20 * 1024,
+          frequency: 72,
           defines: [],
           files: {
             startup: "nonexistent_startup_file.s",
