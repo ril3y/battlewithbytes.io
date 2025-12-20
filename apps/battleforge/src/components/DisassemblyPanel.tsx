@@ -244,7 +244,12 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
 
   // Download ELF file
   const handleDownload = useCallback(() => {
-    const blob = new Blob([data], { type: "application/octet-stream" });
+    // Extract ArrayBuffer from Uint8Array (handles views correctly)
+    const arrayBuffer = data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength
+    );
+    const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
