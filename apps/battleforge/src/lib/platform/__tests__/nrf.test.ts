@@ -9,8 +9,26 @@ import type {
   FrameworkSupport,
   Framework,
   Architecture,
+  ArchitectureConfig,
 } from "../types";
-import { ARCHITECTURE_CONFIGS } from "../types";
+
+// Mock architecture configs for tests (avoids needing async preload)
+const MOCK_ARCHITECTURE_CONFIGS: Record<string, ArchitectureConfig> = {
+  "cortex-m4f": {
+    target: "thumbv7em-none-eabihf",
+    cpu: "cortex-m4",
+    fpu: "fpv4-sp-d16",
+    float: "hard",
+    libPath: "cortex-m4f",
+  },
+  "cortex-m33": {
+    target: "thumbv8m.main-none-eabihf",
+    cpu: "cortex-m33",
+    fpu: "fpv5-sp-d16",
+    float: "hard",
+    libPath: "cortex-m33",
+  },
+};
 
 // Mock nRF52 family data (matches the actual family.json structure)
 const mockNrf52Family: PlatformFamily = {
@@ -323,7 +341,7 @@ describe("nRF52 Framework Support", () => {
 
 describe("Architecture Configuration", () => {
   it("should have cortex-m4f configuration", () => {
-    const archConfig = ARCHITECTURE_CONFIGS["cortex-m4f"];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS["cortex-m4f"];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("thumbv7em-none-eabihf");
     expect(archConfig.cpu).toBe("cortex-m4");
@@ -333,7 +351,7 @@ describe("Architecture Configuration", () => {
   });
 
   it("should have cortex-m33 configuration", () => {
-    const archConfig = ARCHITECTURE_CONFIGS["cortex-m33"];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS["cortex-m33"];
     expect(archConfig).toBeDefined();
     expect(archConfig.target).toBe("thumbv8m.main-none-eabihf");
     expect(archConfig.cpu).toBe("cortex-m33");
@@ -343,13 +361,13 @@ describe("Architecture Configuration", () => {
   });
 
   it("should match nRF52 architecture to config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS[mockNrf52Family.architecture];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS[mockNrf52Family.architecture];
     expect(archConfig).toBeDefined();
     expect(archConfig.cpu).toBe("cortex-m4");
   });
 
   it("should match nRF53 architecture to config", () => {
-    const archConfig = ARCHITECTURE_CONFIGS[mockNrf53Family.architecture];
+    const archConfig = MOCK_ARCHITECTURE_CONFIGS[mockNrf53Family.architecture];
     expect(archConfig).toBeDefined();
     expect(archConfig.cpu).toBe("cortex-m33");
   });
