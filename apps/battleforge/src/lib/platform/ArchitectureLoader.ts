@@ -28,7 +28,7 @@ async function loadArchitectures(): Promise<
     return loadingPromise;
   }
 
-  loadingPromise = (async () => {
+  loadingPromise = (async (): Promise<Record<string, ArchitectureConfig>> => {
     try {
       const response = await fetch(
         withBasePath("/data/boards/architectures.json")
@@ -40,19 +40,21 @@ async function loadArchitectures(): Promise<
       }
 
       const data = await response.json();
-      architectureCache = data.architectures;
-      return architectureCache;
+      const configs: Record<string, ArchitectureConfig> = data.architectures || {};
+      architectureCache = configs;
+      return configs;
     } catch (error) {
       console.error("Error loading architecture configurations:", error);
       // Fall back to empty object - will cause errors if configs are needed
-      architectureCache = {};
-      return architectureCache;
+      const fallback: Record<string, ArchitectureConfig> = {};
+      architectureCache = fallback;
+      return fallback;
     } finally {
       loadingPromise = null;
     }
   })();
 
-  return loadingPromise;
+  return loadingPromise as Promise<Record<string, ArchitectureConfig>>;
 }
 
 /**

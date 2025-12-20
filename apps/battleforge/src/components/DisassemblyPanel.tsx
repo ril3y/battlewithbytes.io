@@ -248,7 +248,7 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
     const arrayBuffer = data.buffer.slice(
       data.byteOffset,
       data.byteOffset + data.byteLength
-    );
+    ) as ArrayBuffer;
     const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

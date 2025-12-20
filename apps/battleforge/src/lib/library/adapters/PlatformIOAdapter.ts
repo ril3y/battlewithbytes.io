@@ -23,6 +23,10 @@ const PLATFORM_ID_MAP: Record<PlatformId, string> = {
   esp32: "espressif32",
   nrf: "nordicnrf52",
   rp2040: "raspberrypi",
+  samd: "atmelsam",
+  avr: "atmelavr",
+  ch32: "wch",
+  gd32: "gd32",
 };
 
 /**

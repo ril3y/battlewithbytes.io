@@ -1,10 +1,11 @@
 "use client";
 
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
+import type { ProjectTemplate } from "../../lib/project/types";
 
 interface ProjectDetailsFormProps {
   board: BoardManifest;
-  example: BoardExample | null;
+  example: BoardExample | ProjectTemplate | null;
   projectName: string;
   projectDescription: string;
   onNameChange: (name: string) => void;

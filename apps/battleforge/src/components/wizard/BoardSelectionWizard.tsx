@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { Project } from "../../lib/project/types";
+import type { Project, ProjectTemplate } from "../../lib/project/types";
 import type {
   BoardManifest,
   BoardIndexEntry,
@@ -202,7 +202,7 @@ export function BoardSelectionWizard({
     }));
   }, []);
 
-  const handleExampleSelect = useCallback((example: BoardExample | null) => {
+  const handleExampleSelect = useCallback((example: BoardExample | ProjectTemplate | null) => {
     setState((prev) => ({
       ...prev,
       selectedExample: example,
