@@ -230,7 +230,7 @@ export interface DownloadProgress {
 // ============================================================================
 
 /**
- * WASM Version Manifest - served from /wasm/manifest.json
+ * WASM Version Manifest - served from /data/boards/wasm/manifest.json
  */
 export interface WasmManifest {
   $schema?: string;

@@ -400,7 +400,7 @@ export async function loadClangModule(
 async function registerCompilerAsInstalled(): Promise<void> {
   try {
     const basePath = getBasePath();
-    const manifestUrl = `${basePath}/wasm/manifest.json`;
+    const manifestUrl = `${basePath}/data/boards/wasm/manifest.json`;
 
     const response = await fetch(manifestUrl);
     if (!response.ok) {
