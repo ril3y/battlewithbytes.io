@@ -53,7 +53,7 @@ async function decompressGzip(compressed: Uint8Array): Promise<Uint8Array> {
  * Supports both v1 (legacy) and v2 (dual versioning) manifest formats
  */
 export async function loadManifest(
-  manifestUrl: string = "/wasm/manifest.json",
+  manifestUrl: string = "/data/boards/wasm/manifest.json",
 ): Promise<WasmManifest> {
   const response = await fetch(manifestUrl);
   if (!response.ok) {

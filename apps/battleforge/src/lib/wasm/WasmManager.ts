@@ -35,7 +35,7 @@ import {
   getCompilerDisplayInfo,
 } from "./WasmLoader";
 
-const MANIFEST_URL = "/wasm/manifest.json";
+const MANIFEST_URL = "/data/boards/wasm/manifest.json";
 const MANIFEST_CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 class WasmManagerService {
