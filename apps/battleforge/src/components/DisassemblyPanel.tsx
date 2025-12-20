@@ -233,12 +233,56 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [baseAddress, setBaseAddress] = useState(0);
+  const [endAddress, setEndAddress] = useState(0);
   const [showBytes, setShowBytes] = useState(true);
+  const [gotoAddress, setGotoAddress] = useState("");
 
   // Virtual scrolling state
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
+
+  // Download ELF file
+  const handleDownload = useCallback(() => {
+    const blob = new Blob([data], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "firmware.elf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [data, filename]);
+
+  // Go to address
+  const handleGotoAddress = useCallback(() => {
+    if (!gotoAddress.trim()) return;
+    const addr = parseInt(gotoAddress.replace(/^0x/i, ""), 16);
+    if (isNaN(addr)) return;
+
+    // Find instruction at or near this address
+    const idx = instructions.findIndex((inst) => inst.address >= addr);
+    if (idx >= 0 && containerRef.current) {
+      containerRef.current.scrollTop = idx * ROW_HEIGHT - containerHeight / 2;
+    }
+    setGotoAddress("");
+  }, [gotoAddress, instructions, containerHeight]);
+
+  // Copy disassembly to clipboard
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const handleCopyDisassembly = useCallback(() => {
+    const lines = instructions.map((inst) => {
+      const addr = formatAddress(inst.address);
+      const bytes = formatBytes(inst.bytes).padEnd(12);
+      return `${addr}  ${bytes}  ${inst.mnemonic.padEnd(8)} ${inst.opStr}`;
+    });
+    const text = lines.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    });
+  }, [instructions]);
 
   // Load and disassemble
   useEffect(() => {
@@ -313,6 +357,11 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
         if (cancelled) return;
 
         setInstructions(result);
+        // Calculate end address from last instruction
+        if (result.length > 0) {
+          const lastInst = result[result.length - 1];
+          setEndAddress(lastInst.address + lastInst.bytes.length);
+        }
         setIsLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -388,26 +437,70 @@ export function DisassemblyPanel({ data, filename }: DisassemblyPanelProps) {
   return (
     <div className="h-full flex flex-col bg-[#0a0a0a] text-gray-200 font-mono text-xs">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#111] border-b border-gray-800">
+      <div className="flex items-center justify-between px-3 py-2 bg-[#111] border-b border-gray-800 flex-wrap gap-2">
         <div className="flex items-center gap-4">
           {filename && <span className="text-green-400">{filename}</span>}
           <span className="text-gray-500">
             {instructions.length.toLocaleString()} instructions
           </span>
           <span className="text-gray-500">
-            Base: {formatAddress(baseAddress)}
+            {formatAddress(baseAddress)} - {formatAddress(endAddress)}
+          </span>
+          <span className="text-gray-600 text-[10px]">
+            ({(endAddress - baseAddress).toLocaleString()} bytes)
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1 text-gray-400 cursor-pointer">
+        <div className="flex items-center gap-3">
+          {/* Go to address */}
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              placeholder="Go to 0x..."
+              value={gotoAddress}
+              onChange={(e) => setGotoAddress(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleGotoAddress()}
+              className="w-28 px-2 py-1 bg-[#1a1a1a] border border-gray-700 rounded text-gray-300 text-xs focus:border-green-500 focus:outline-none"
+            />
+            <button
+              onClick={handleGotoAddress}
+              className="px-2 py-1 bg-[#222] border border-gray-600 rounded text-gray-400 text-xs hover:bg-[#333] hover:text-green-400"
+            >
+              Go
+            </button>
+          </div>
+          {/* Show bytes toggle */}
+          <label className="flex items-center gap-1 text-gray-400 cursor-pointer text-xs">
             <input
               type="checkbox"
               checked={showBytes}
               onChange={(e) => setShowBytes(e.target.checked)}
               className="accent-green-500"
             />
-            Show bytes
+            Bytes
           </label>
+          {/* Copy disassembly button */}
+          <button
+            onClick={handleCopyDisassembly}
+            className="flex items-center gap-1 px-2 py-1 bg-[#222] border border-gray-600 rounded text-gray-400 text-xs hover:bg-[#333] hover:text-green-400"
+            title="Copy disassembly to clipboard"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            </svg>
+            {copyStatus === "copied" ? "Copied!" : "Copy"}
+          </button>
+          {/* Download button */}
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1 px-2 py-1 bg-[#222] border border-gray-600 rounded text-gray-400 text-xs hover:bg-[#333] hover:text-green-400"
+            title="Download ELF file"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Download
+          </button>
         </div>
       </div>
 

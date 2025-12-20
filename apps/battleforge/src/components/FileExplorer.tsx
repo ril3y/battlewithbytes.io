@@ -214,6 +214,7 @@ function ContextMenu({
   onNewFolder,
   onRename,
   onDelete,
+  onDownload,
 }: {
   state: ContextMenuState;
   onClose: () => void;
@@ -221,6 +222,7 @@ function ContextMenu({
   onNewFolder: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onDownload: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -259,6 +261,11 @@ function ContextMenu({
       {state.nodeId && (
         <>
           <div className="menu-divider" />
+          {!state.isFolder && (
+            <button className="menu-item" onClick={onDownload}>
+              <span className="menu-icon">⬇️</span> Download
+            </button>
+          )}
           <button
             className="menu-item"
             onClick={onRename}
@@ -750,6 +757,27 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     closeContextMenu();
   }, [contextMenu.nodeId, deleteFile, closeContextMenu]);
 
+  const handleDownload = useCallback(() => {
+    if (contextMenu.nodeId && !contextMenu.isFolder) {
+      const file = getFile(contextMenu.nodeId);
+      if (file) {
+        const content = file.content;
+        const blob = content instanceof Uint8Array
+          ? new Blob([content], { type: "application/octet-stream" })
+          : new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    }
+    closeContextMenu();
+  }, [contextMenu.nodeId, contextMenu.isFolder, getFile, closeContextMenu]);
+
   const _handleRenameSubmit = useCallback(
     (oldPath: string, newName: string) => {
       if (renameFile) {
@@ -844,6 +872,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
         onNewFolder={handleNewFolder}
         onRename={handleRename}
         onDelete={handleDelete}
+        onDownload={handleDownload}
       />
 
       {/* New File Dialog */}
