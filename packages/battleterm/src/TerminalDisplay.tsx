@@ -229,7 +229,7 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
       const terminal = terminalRef.current;
 
       // Only update options that can be changed after construction
-      terminal.options.cursorBlink = isConnected && options.cursorBlink;
+      // Note: cursorBlink is always false - this is a display-only terminal
       terminal.options.cursorStyle = options.cursorStyle;
       terminal.options.fontFamily = options.fontFamily;
       terminal.options.fontSize = options.fontSize;
@@ -238,7 +238,7 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();
       }
-    }, [options, isConnected]);
+    }, [options]);
 
     // Expose methods via ref
     useImperativeHandle(

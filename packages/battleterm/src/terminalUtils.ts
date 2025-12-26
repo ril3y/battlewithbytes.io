@@ -150,13 +150,13 @@ export function getXtermOptions(options: TerminalOptions) {
   return {
     fontFamily: options.fontFamily,
     fontSize: options.fontSize,
-    cursorBlink: options.cursorBlink,
+    cursorBlink: false, // No cursor in display-only terminal
     cursorStyle: options.cursorStyle,
     scrollback: options.scrollback,
     theme,
     allowTransparency: true,
     convertEol: true, // Convert \n to \r\n for proper line handling
-    disableStdin: false,
+    disableStdin: true, // Display only - input handled by TerminalInput
     // rendererType removed - deprecated in xterm.js v5+
   };
 }
