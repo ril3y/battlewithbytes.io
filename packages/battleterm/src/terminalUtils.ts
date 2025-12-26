@@ -155,7 +155,7 @@ export function getXtermOptions(options: TerminalOptions) {
     scrollback: options.scrollback,
     theme,
     allowTransparency: true,
-    convertEol: false, // Keep raw data to preserve ANSI escape sequences
+    convertEol: true, // Convert \n to \r\n for proper line handling
     disableStdin: false,
     // rendererType removed - deprecated in xterm.js v5+
   };

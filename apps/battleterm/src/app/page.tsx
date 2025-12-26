@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Script from "next/script";
 import { generateToolSchema } from "@/lib/utils/seo";
+import { withBasePath } from "@/lib/utils/basePath";
 
 const SerialTerminal = dynamic(() => import("@battlewithbytes/battleterm"), {
   ssr: false,
@@ -33,7 +34,7 @@ export default function SerialTerminalPage() {
 
       {/* BattleTerm Component - full height minus padding */}
       <div style={{ height: "calc(100vh - 2rem)" }}>
-        <SerialTerminal isStandalone={true} logo="/battleterm.png" />
+        <SerialTerminal isStandalone={true} logo={withBasePath("/battleterm.png")} />
       </div>
     </main>
   );
