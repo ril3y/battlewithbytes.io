@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "BattleTerm - Browser Serial Terminal",
   description: "Free browser-based serial terminal for Arduino, ESP32, Raspberry Pi & embedded devices. Professional serial communication tool with ANSI colors, hex view, macros, and command history. No installation required.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/battleterm.png",
+    apple: "/battleterm.png",
+  },
 };
 
 export default function SerialTerminalLayout({

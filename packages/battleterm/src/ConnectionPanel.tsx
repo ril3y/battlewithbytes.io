@@ -43,7 +43,7 @@ export default function ConnectionPanel({
       <div className="flex items-center gap-4 flex-wrap">
         {/* Logo */}
         {logo && (
-          <img src={logo} alt="BattleTerm" className="h-16 w-16" />
+          <img src={logo} alt="BattleTerm" className="h-24 w-24" />
         )}
         <div className="flex gap-3 items-center">
           {!isConnected ? (
