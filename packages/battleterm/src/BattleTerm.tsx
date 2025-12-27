@@ -128,6 +128,9 @@ export default function SerialTerminal({
   const txPausedRef = useRef(false);
   const pendingDataRef = useRef<Uint8Array[]>([]);
 
+  // Buffer overrun warning rate limiting
+  const lastOverrunWarningRef = useRef<number>(0);
+
   // Load last config on mount
   useEffect(() => {
     const lastConfig = loadLastConfig();
@@ -329,12 +332,19 @@ export default function SerialTerminal({
             if (readError instanceof Error) {
               if (readError.name === "BufferOverrunError" ||
                   readError.message.includes("BufferOverrun") ||
-                  readError.message.includes("buffer overrun")) {
-                // Log warning but continue reading - this is recoverable
-                console.warn("Serial buffer overrun - some data may have been lost");
-                terminalRef.current?.writeln(
-                  "\x1b[33m⚠ Buffer overrun - some data may have been lost\x1b[0m"
-                );
+                  readError.message.includes("buffer overrun") ||
+                  readError.message.includes("flow control")) {
+                // Rate-limit warnings to once per 2 seconds
+                const now = Date.now();
+                if (now - lastOverrunWarningRef.current > 2000) {
+                  lastOverrunWarningRef.current = now;
+                  console.warn("Serial buffer overrun - some data may have been lost");
+                  terminalRef.current?.writeln(
+                    "\x1b[33m⚠ Buffer overrun - try enabling hardware flow control in settings\x1b[0m"
+                  );
+                }
+                // Small delay to let buffer recover
+                await new Promise(resolve => setTimeout(resolve, 10));
                 continue; // Try to keep reading
               }
             }
@@ -526,50 +536,69 @@ export default function SerialTerminal({
 
   // Disconnect from serial port
   const handleDisconnect = useCallback(async () => {
-    try {
-      isReading.current = false;
+    // Stop reading immediately
+    isReading.current = false;
 
-      if (terminalState.reader) {
-        await terminalState.reader.cancel();
-      }
-
-      if (terminalState.writer) {
-        terminalState.writer.releaseLock();
-      }
-
-      if (terminalState.port) {
-        await closeSerialPort(terminalState.port);
-      }
-
-      // Clear LED timeouts
-      if (rxLedTimeout.current) {
-        clearTimeout(rxLedTimeout.current);
-        rxLedTimeout.current = null;
-      }
-      if (txLedTimeout.current) {
-        clearTimeout(txLedTimeout.current);
-        txLedTimeout.current = null;
-      }
-      setRxActive(false);
-      setTxActive(false);
-
-      // Clear XON/XOFF state
-      txPausedRef.current = false;
-      pendingDataRef.current = [];
-
-      setTerminalState({
-        isConnected: false,
-        port: null,
-        reader: null,
-        writer: null,
-        bytesReceived: 0,
-        bytesSent: 0,
-        connectionTime: 0,
-        error: null,
-      });
-    } catch (error) {
-      console.error("Disconnect error:", error);
+    // Clear LED timeouts first (sync operation)
+    if (rxLedTimeout.current) {
+      clearTimeout(rxLedTimeout.current);
+      rxLedTimeout.current = null;
     }
+    if (txLedTimeout.current) {
+      clearTimeout(txLedTimeout.current);
+      txLedTimeout.current = null;
+    }
+    setRxActive(false);
+    setTxActive(false);
+
+    // Clear XON/XOFF state
+    txPausedRef.current = false;
+    pendingDataRef.current = [];
+
+    // Try to cancel reader (with timeout to prevent hanging)
+    if (terminalState.reader) {
+      try {
+        await Promise.race([
+          terminalState.reader.cancel(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+        ]);
+      } catch (e) {
+        console.warn('Reader cancel failed or timed out:', e);
+      }
+    }
+
+    // Release writer lock
+    if (terminalState.writer) {
+      try {
+        terminalState.writer.releaseLock();
+      } catch (e) {
+        console.warn('Writer release failed:', e);
+      }
+    }
+
+    // Close port
+    if (terminalState.port) {
+      try {
+        await Promise.race([
+          closeSerialPort(terminalState.port),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+        ]);
+      } catch (e) {
+        console.warn('Port close failed or timed out:', e);
+      }
+    }
+
+    // Always update state, even if cleanup had issues
+    setTerminalState({
+      isConnected: false,
+      port: null,
+      reader: null,
+      writer: null,
+      bytesReceived: 0,
+      bytesSent: 0,
+      connectionTime: 0,
+      error: null,
+    });
   }, [terminalState]);
 
   // Terminal controls
