@@ -34,7 +34,7 @@ import {
   listInstalled,
   getCompilerDisplayInfo,
 } from "./WasmLoader";
-import { withBasePath } from "../utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 const MANIFEST_PATH = "/data/boards/wasm/manifest.json";
 const MANIFEST_CACHE_TTL = 1000 * 60 * 30; // 30 minutes

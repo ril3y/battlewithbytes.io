@@ -15,7 +15,7 @@ import { FrameworkSelector } from "./FrameworkSelector";
 import { ExamplePicker } from "./ExamplePicker";
 import { ProjectDetailsForm } from "./ProjectDetailsForm";
 import { GitHubRegistryFetcher } from "../../lib/registry/GitHubRegistryFetcher";
-import { withBasePath } from "../../lib/utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 interface BoardSelectionWizardProps {
   isOpen: boolean;

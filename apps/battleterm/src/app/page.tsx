@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Script from "next/script";
 import { generateToolSchema } from "@/lib/utils/seo";
-import { withBasePath } from "@/lib/utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 const SerialTerminal = dynamic(() => import("@battlewithbytes/battleterm"), {
   ssr: false,

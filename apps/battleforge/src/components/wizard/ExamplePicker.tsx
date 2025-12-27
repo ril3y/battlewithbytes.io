@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
 import { getTemplatesForPlatform } from "../../lib/project/TemplateLoader";
 import type { ProjectTemplate } from "../../lib/project/types";
-import { withBasePath } from "../../lib/utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 function resolveImagePath(path: string | undefined): string | undefined {
   if (!path) return undefined;

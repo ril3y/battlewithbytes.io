@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { withBasePath } from "@battlewithbytes/utils";
 import MessageLog from "./MessageLog";
 import FilterPanel from "./FilterPanel";
 import BoardInfoPanel from "./BoardInfoPanel";
@@ -1052,7 +1053,7 @@ export default function UCANMonitor({}: UCANMonitorProps) {
         <div className="max-w-[1920px] mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Image
-              src="/ucanlogo.png"
+              src={withBasePath("/ucanlogo.png")}
               alt="uCAN Logo"
               width={92}
               height={92}

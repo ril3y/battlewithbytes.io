@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { BoardIndexEntry } from "../../lib/registry/types";
-import { withBasePath } from "../../lib/utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 interface BoardBrowserProps {
   boards: BoardIndexEntry[];

@@ -5,7 +5,7 @@
  * declares global variables that can't be redeclared.
  */
 
-import { getBasePath } from "../utils/basePath";
+import { getBasePath } from "@battlewithbytes/utils";
 
 export interface LldExecutionResult {
   success: boolean;
