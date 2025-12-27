@@ -9,6 +9,13 @@ import type {
   ParsedSerialData,
 } from "./serialTerminal.types";
 
+// Web Serial API only supports these hardware flow control options
+type FlowControlType = "none" | "hardware";
+
+// XON/XOFF control characters
+export const XON = 0x11; // DC1 - resume transmission
+export const XOFF = 0x13; // DC3 - pause transmission
+
 /**
  * Check if Web Serial API is supported in the browser
  */
@@ -45,12 +52,17 @@ export async function openSerialPort(
   config: SerialConfig,
 ): Promise<void> {
   try {
+    // XON/XOFF is software flow control - use "none" for Web Serial API
+    // The actual XON/XOFF handling is done in BattleTerm.tsx
+    const hwFlowControl: FlowControlType =
+      config.flowControl === "hardware" ? "hardware" : "none";
+
     await port.open({
       baudRate: config.baudRate,
       dataBits: config.dataBits,
       stopBits: config.stopBits,
       parity: config.parity,
-      flowControl: config.flowControl,
+      flowControl: hwFlowControl,
       bufferSize: config.bufferSize,
     });
   } catch (error) {
@@ -288,8 +300,8 @@ export function validateSerialConfig(config: Partial<SerialConfig>): string[] {
   }
 
   if (config.flowControl !== undefined) {
-    if (!["none", "hardware"].includes(config.flowControl)) {
-      errors.push("Flow control must be none or hardware");
+    if (!["none", "hardware", "xon-xoff"].includes(config.flowControl)) {
+      errors.push("Flow control must be none, hardware, or xon-xoff");
     }
   }
 
