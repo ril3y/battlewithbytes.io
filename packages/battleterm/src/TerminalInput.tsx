@@ -13,7 +13,13 @@ import React, {
   useEffect,
   KeyboardEvent,
   ChangeEvent,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
+
+export interface TerminalInputRef {
+  focus: () => void;
+}
 
 export interface TerminalInputProps {
   isConnected: boolean;
@@ -21,15 +27,22 @@ export interface TerminalInputProps {
   placeholder?: string;
 }
 
-export default function TerminalInput({
+const TerminalInput = forwardRef<TerminalInputRef, TerminalInputProps>(({
   isConnected,
   onCommand,
   placeholder = "Type a command and press Enter...",
-}: TerminalInputProps) {
+}, ref) => {
   const [input, setInput] = useState("");
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Expose focus method via ref
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus();
+    },
+  }), []);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -148,4 +161,8 @@ export default function TerminalInput({
       />
     </div>
   );
-}
+});
+
+TerminalInput.displayName = "TerminalInput";
+
+export default TerminalInput;

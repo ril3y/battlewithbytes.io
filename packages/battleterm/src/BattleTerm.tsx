@@ -10,7 +10,7 @@ import ConnectionPanel from "./ConnectionPanel";
 import ConfigurationModal from "./ConfigurationModal";
 import HelpModal from "./HelpModal";
 import TerminalDisplay, { TerminalDisplayRef } from "./TerminalDisplay";
-import TerminalInput from "./TerminalInput";
+import TerminalInput, { TerminalInputRef } from "./TerminalInput";
 import TerminalContextMenu from "./TerminalContextMenu";
 import StatusBar from "./StatusBar";
 import VersionChecker from "./VersionChecker";
@@ -52,6 +52,9 @@ export default function SerialTerminal({
 }: SerialTerminalProps) {
   // Terminal reference
   const terminalRef = useRef<TerminalDisplayRef>(null);
+
+  // Input reference for focusing
+  const inputRef = useRef<TerminalInputRef>(null);
 
   // Line number counter
   const lineNumberRef = useRef<number>(1);
@@ -642,6 +645,7 @@ export default function SerialTerminal({
       <div
         className={`bg-black ${isStandalone ? "flex-1 min-h-0 overflow-hidden" : ""}`}
         onContextMenu={handleContextMenu}
+        onClick={() => inputRef.current?.focus()}
       >
         <TerminalDisplay
           ref={terminalRef}
@@ -653,6 +657,7 @@ export default function SerialTerminal({
       {/* Terminal Input Area - Fixed at Bottom */}
       <div className="flex-shrink-0">
         <TerminalInput
+          ref={inputRef}
           isConnected={terminalState.isConnected}
           onCommand={handleCommand}
         />
