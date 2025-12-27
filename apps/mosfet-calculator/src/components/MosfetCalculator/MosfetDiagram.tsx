@@ -23,7 +23,7 @@ export default function MosfetDiagram({
       <div className="mosfet-diagram">
         {mosfetType === "n-channel" ? (
           <div className="relative w-full h-64 bg-black/30 rounded-lg p-4">
-            <svg viewBox="0 0 300 200" className="w-full h-full">
+            <svg viewBox="0 0 300 210" className="w-full h-full">
               {/* VCC Connection */}
               <line
                 x1="150"
