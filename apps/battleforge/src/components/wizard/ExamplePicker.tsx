@@ -4,6 +4,12 @@ import { useState, useMemo, useEffect } from "react";
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
 import { getTemplatesForPlatform } from "../../lib/project/TemplateLoader";
 import type { ProjectTemplate } from "../../lib/project/types";
+import { withBasePath } from "../../lib/utils/basePath";
+
+function resolveImagePath(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+  return path.startsWith('/') ? withBasePath(path) : path;
+}
 
 interface ExamplePickerProps {
   board: BoardManifest;
@@ -118,7 +124,7 @@ export function ExamplePicker({
       <div className="board-summary">
         <div className="board-thumb">
           {board.assets?.thumbnail ? (
-            <img src={board.assets.thumbnail} alt={board.name} />
+            <img src={resolveImagePath(board.assets.thumbnail)} alt={board.name} />
           ) : (
             <div className="board-icon">
               <svg
