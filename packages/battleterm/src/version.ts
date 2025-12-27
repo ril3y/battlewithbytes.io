@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = "1.2.2";
-export const VERSION_DATE = "2025-10-24";
-export const VERSION_NAME = "Serial Connection Fix";
+export const VERSION = "1.3.0";
+export const VERSION_DATE = "2025-12-26";
+export const VERSION_NAME = "Flow Control & UX Improvements";
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.3.0",
+    date: "2025-12-26",
+    name: "Flow Control & UX Improvements",
+    changes: [
+      "✨  Added XON/XOFF software flow control support",
+      "🔧  Fixed line ending display (no more staircase effect)",
+      "🖼️  Larger logo and proper favicon for browser tab",
+      "🎯  Click terminal to focus input - no more cursor stealing",
+      "⚡  Faster startup animation",
+      "🔒  Terminal display is now read-only (input in command box only)",
+    ],
+  },
   {
     version: "1.2.2",
     date: "2025-10-24",

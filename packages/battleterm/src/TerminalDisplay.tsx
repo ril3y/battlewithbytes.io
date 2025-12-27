@@ -116,46 +116,46 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
         const changelog = getLatestChangelog();
         const changelogLines = formatChangelogForTerminal(changelog, 5);
 
-        // Typewriter text with delays and varied colors
+        // Typewriter text with delays and varied colors (faster animation)
         const typewriterText = [
-          { text: "\x1b[1;33m  Getting Started:\x1b[0m", delay: 500 },
+          { text: "\x1b[1;33m  Getting Started:\x1b[0m", delay: 150 },
           {
             text: "\x1b[0;36m  • Click the \x1b[1;32mConnect\x1b[0;36m button above to select your serial port\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
           {
             text: "\x1b[0;36m  • Configure baud rate and settings via the \x1b[1;35m⚙\x1b[0;36m icon\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
           {
             text: "\x1b[0;36m  • Use \x1b[1;33m↑/↓\x1b[0;36m arrows for command history\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
-          { text: "", delay: 50 },
+          { text: "", delay: 20 },
           ...changelogLines.map((line, idx) => ({
             text: line,
-            delay: idx === 0 ? 300 : 80,
+            delay: idx === 0 ? 100 : 30,
           })),
-          { text: "", delay: 50 },
-          { text: "\x1b[1;32m  Quick Features:\x1b[0m", delay: 200 },
+          { text: "", delay: 20 },
+          { text: "\x1b[1;32m  Quick Features:\x1b[0m", delay: 80 },
           {
             text: "\x1b[0;35m  ◆ \x1b[0;37mANSI colors\x1b[0;90m  ◆ \x1b[0;37mHex view\x1b[0;90m  ◆ \x1b[0;37mCommand history\x1b[0;90m  ◆ \x1b[0;37mCopy/paste\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
           {
             text: "\x1b[0;35m  ◆ \x1b[0;37mDownload logs\x1b[0;90m  ◆ \x1b[0;37mTimestamps\x1b[0;90m  ◆ \x1b[0;37mTX/RX indicators\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
-          { text: "", delay: 50 },
+          { text: "", delay: 20 },
           {
             text: "\x1b[2;32m  ► Ready. Click \x1b[1;32mConnect\x1b[2;32m to begin...\x1b[0m",
-            delay: 80,
+            delay: 30,
           },
         ];
 
         let bannerIndex = 0;
 
-        // Scroll in banner
+        // Scroll in banner (fast)
         const scrollInterval = setInterval(() => {
           if (bannerIndex < bannerLines.length) {
             terminal.writeln(bannerLines[bannerIndex]);
@@ -178,12 +178,12 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
               }
             };
 
-            // Start typewriter with initial delay
-            const initialTimeout = setTimeout(writeNextLine, 300);
+            // Start typewriter with minimal delay
+            const initialTimeout = setTimeout(writeNextLine, 100);
             (terminal as TerminalWithAnimation).__scrollInterval =
               initialTimeout;
           }
-        }, 80);
+        }, 25);
 
         // Handle window resize
         const handleResize = () => {
