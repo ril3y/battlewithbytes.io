@@ -10,7 +10,7 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/battleterm.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
@@ -25,7 +25,7 @@
       "url": "/",
       "icons": [
         {
-          "src": "/favicon.png",
+          "src": "/battleterm.png",
           "sizes": "128x128"
         }
       ]
