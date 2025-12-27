@@ -2,15 +2,15 @@
   "name": "BattleTerm - Browser Serial Terminal",
   "short_name": "BattleTerm",
   "description": "Professional browser-based serial terminal for Arduino, ESP32, Raspberry Pi & embedded devices. ANSI colors, hex view, macros, command history.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#22c55e",
   "orientation": "any",
-  "scope": "/",
+  "scope": ".",
   "icons": [
     {
-      "src": "/battleterm.png",
+      "src": "battleterm.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
@@ -22,10 +22,10 @@
       "name": "Open BattleTerm",
       "short_name": "Terminal",
       "description": "Open the serial terminal",
-      "url": "/",
+      "url": ".",
       "icons": [
         {
-          "src": "/battleterm.png",
+          "src": "battleterm.png",
           "sizes": "128x128"
         }
       ]
