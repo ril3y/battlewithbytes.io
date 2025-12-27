@@ -89,7 +89,7 @@ export default function SerialTerminal({
 
   // UI state
   const [showTimestamps, setShowTimestamps] = useState(false);
-  const [autoScroll] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("ascii");
 
@@ -709,6 +709,8 @@ export default function SerialTerminal({
           rxActive={rxActive}
           txActive={txActive}
           isStandalone={isStandalone}
+          autoScroll={autoScroll}
+          onAutoScrollToggle={() => setAutoScroll((prev) => !prev)}
         />
       </div>
 
