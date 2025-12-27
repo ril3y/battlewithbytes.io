@@ -4,6 +4,9 @@ const nextConfig = {
   basePath: process.env.NODE_ENV === 'production' ? '/tools/battlemagic' : '',
   assetPrefix: process.env.NODE_ENV === 'production' ? '/tools/battlemagic' : '',
   reactStrictMode: false,
+  images: {
+    unoptimized: true, // Required for static export compatibility
+  },
   transpilePackages: [
     '@battlewithbytes/battlemagic-core',
     '@battlewithbytes/battlemagic-analyzer',
