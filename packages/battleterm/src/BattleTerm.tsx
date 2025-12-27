@@ -673,7 +673,7 @@ export default function SerialTerminal({
 
       {/* Terminal Display with Context Menu */}
       <div
-        className={`bg-black ${isStandalone ? "flex-1 min-h-0 overflow-hidden" : ""}`}
+        className={`bg-black flex-1 min-h-0 overflow-hidden ${isStandalone ? "relative" : ""}`}
         onContextMenu={handleContextMenu}
         onMouseUp={() => {
           // Only focus input if no text is selected (allow text selection)
