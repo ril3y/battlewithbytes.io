@@ -17,6 +17,8 @@ export default function StatusBar({
   rxActive = false,
   txActive = false,
   isStandalone = false,
+  autoScroll = true,
+  onAutoScrollToggle,
 }: StatusBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-black/50 border-t border-gray-800 font-mono text-xs text-gray-400">
@@ -77,8 +79,21 @@ export default function StatusBar({
         </div>
       )}
 
+      {/* Auto-scroll checkbox */}
+      <div className="ml-auto flex items-center gap-2">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoScroll}
+            onChange={onAutoScrollToggle}
+            className="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 text-green-500 focus:ring-green-500 focus:ring-offset-0 cursor-pointer"
+          />
+          <span className="text-gray-400 hover:text-gray-300">Auto-scroll</span>
+        </label>
+      </div>
+
       {/* Activity Indicator (TX/RX LEDs) */}
-      <div className="ml-auto">
+      <div>
         {isConnected && (
           <ActivityIndicator rxActive={rxActive} txActive={txActive} />
         )}

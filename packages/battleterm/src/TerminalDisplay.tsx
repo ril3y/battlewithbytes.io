@@ -76,6 +76,14 @@ const TerminalDisplay = forwardRef<TerminalDisplayRef, TerminalDisplayProps>(
         terminal.open(containerRef.current);
         fitAddon.fit();
 
+        // Block all keyboard input to terminal (it's display-only)
+        // This prevents paste and typing from going directly to terminal
+        terminal.attachCustomKeyEventHandler(() => {
+          // Return false to prevent xterm.js from handling any key events
+          // All input should go through the TerminalInput component
+          return false;
+        });
+
         // Handle user input (for raw data mode if needed)
         if (onData) {
           terminal.onData((data) => {

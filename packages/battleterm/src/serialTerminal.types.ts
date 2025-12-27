@@ -137,6 +137,8 @@ export interface StatusBarProps {
   rxActive?: boolean;
   txActive?: boolean;
   isStandalone?: boolean;
+  autoScroll?: boolean;
+  onAutoScrollToggle?: () => void;
 }
 
 export interface AdvancedControlsProps {
