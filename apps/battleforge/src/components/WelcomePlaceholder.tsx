@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { withBasePath } from "../lib/utils/basePath";
 
 interface WelcomePlaceholderProps {
   onGetStarted: () => void;
@@ -12,7 +13,7 @@ export function WelcomePlaceholder({ onGetStarted }: WelcomePlaceholderProps) {
       <div className="welcome-content">
         <div className="welcome-logo">
           <Image
-            src="/battleforge.png"
+            src={withBasePath("/battleforge.png")}
             alt="BattleForge Logo"
             width={120}
             height={120}

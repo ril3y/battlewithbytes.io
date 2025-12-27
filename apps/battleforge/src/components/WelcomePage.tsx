@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { withBasePath } from "../lib/utils/basePath";
 
 interface WelcomePageProps {
   onCreateProject: () => void;
@@ -46,7 +47,7 @@ export function WelcomePage({
         <div className="welcome-hero">
           <div className="welcome-logo">
             <Image
-              src="/battleforge.png"
+              src={withBasePath("/battleforge.png")}
               alt="BattleForge Logo"
               width={160}
               height={160}
