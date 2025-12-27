@@ -332,19 +332,16 @@ export default function SerialTerminal({
             if (readError instanceof Error) {
               if (readError.name === "BufferOverrunError" ||
                   readError.message.includes("BufferOverrun") ||
-                  readError.message.includes("buffer overrun") ||
-                  readError.message.includes("flow control")) {
+                  readError.message.includes("buffer overrun")) {
                 // Rate-limit warnings to once per 2 seconds
                 const now = Date.now();
                 if (now - lastOverrunWarningRef.current > 2000) {
                   lastOverrunWarningRef.current = now;
                   console.warn("Serial buffer overrun - some data may have been lost");
                   terminalRef.current?.writeln(
-                    "\x1b[33m⚠ Buffer overrun - try enabling hardware flow control in settings\x1b[0m"
+                    "\x1b[33m⚠ Buffer overrun - some data may have been lost\x1b[0m"
                   );
                 }
-                // Small delay to let buffer recover
-                await new Promise(resolve => setTimeout(resolve, 10));
                 continue; // Try to keep reading
               }
             }
