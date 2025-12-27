@@ -107,7 +107,7 @@ export default function ToolsPage() {
             <Link
               key={tool.id}
               href={tool.href}
-              className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1 block no-underline hover:no-underline"
+              className="bg-black/50 border border-gray-800 rounded-lg overflow-hidden hover:border-green-400/50 transition-all duration-300 transform hover:-translate-y-1 block !no-underline hover:!no-underline"
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -118,15 +118,15 @@ export default function ToolsPage() {
                     <Image
                       src={tool.logo}
                       alt={`${tool.name} logo`}
-                      width={48}
-                      height={48}
+                      width={96}
+                      height={96}
                       className="rounded"
                     />
                   )}
                 </div>
                 <h3 className="text-xl font-bold mb-3">{tool.name}</h3>
                 <p className="text-gray-400 mb-4">{tool.description}</p>
-                <span className="text-green-400 font-mono text-sm hover:underline">
+                <span className="text-green-400 font-mono text-sm">
                   Open tool →
                 </span>
               </div>

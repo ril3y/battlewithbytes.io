@@ -5,6 +5,7 @@ import "../styles/dropcap.css";
 import "../styles/prism-theme.css";
 import ClientQuakeTerminalWrapper from "@/components/ClientQuakeTerminalWrapper";
 import StandaloneWrapper from "@/components/StandaloneWrapper";
+import GoatCounter from "@/components/GoatCounter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
+        <GoatCounter />
         <StandaloneWrapper>{children}</StandaloneWrapper>
         <ClientQuakeTerminalWrapper />
       </body>
