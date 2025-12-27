@@ -171,7 +171,7 @@ export const DEFAULT_SERIAL_CONFIG: SerialConfig = {
   stopBits: 1,
   parity: "none",
   flowControl: "none",
-  bufferSize: 65536, // Increased from 8192 to prevent buffer overrun on high-throughput devices
+  bufferSize: 262144, // 256KB - large buffer to handle USB-serial chips with internal buffering
 };
 
 export const DEFAULT_TERMINAL_OPTIONS: TerminalOptions = {
