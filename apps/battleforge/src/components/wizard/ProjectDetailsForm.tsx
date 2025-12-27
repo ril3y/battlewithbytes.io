@@ -2,6 +2,12 @@
 
 import type { BoardManifest, BoardExample } from "../../lib/registry/types";
 import type { ProjectTemplate } from "../../lib/project/types";
+import { withBasePath } from "../../lib/utils/basePath";
+
+function resolveImagePath(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+  return path.startsWith('/') ? withBasePath(path) : path;
+}
 
 interface ProjectDetailsFormProps {
   board: BoardManifest;
@@ -58,9 +64,9 @@ export function ProjectDetailsForm({
       <div className="board-info-card">
         <div className="board-image">
           {board.assets?.image ? (
-            <img src={board.assets.image} alt={board.name} />
+            <img src={resolveImagePath(board.assets.image)} alt={board.name} />
           ) : board.assets?.thumbnail ? (
-            <img src={board.assets.thumbnail} alt={board.name} />
+            <img src={resolveImagePath(board.assets.thumbnail)} alt={board.name} />
           ) : (
             <div className="placeholder">
               <svg

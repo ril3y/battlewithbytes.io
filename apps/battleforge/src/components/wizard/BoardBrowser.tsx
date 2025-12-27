@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { BoardIndexEntry } from "../../lib/registry/types";
+import { withBasePath } from "../../lib/utils/basePath";
 
 interface BoardBrowserProps {
   boards: BoardIndexEntry[];
@@ -145,7 +146,7 @@ export function BoardBrowser({ boards, onSelect }: BoardBrowserProps) {
               <div className="board-thumbnail">
                 {board.thumbnail ? (
                   <img
-                    src={board.thumbnail}
+                    src={board.thumbnail.startsWith('/') ? withBasePath(board.thumbnail) : board.thumbnail}
                     alt={board.name}
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
