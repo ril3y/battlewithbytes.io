@@ -317,7 +317,29 @@ export default function SerialTerminal({
 
       try {
         while (port.readable && isReading.current) {
-          const { value, done } = await reader.read();
+          let value: Uint8Array | undefined;
+          let done: boolean;
+
+          try {
+            const result = await reader.read();
+            value = result.value;
+            done = result.done;
+          } catch (readError) {
+            // Handle transient errors like BufferOverrunError
+            if (readError instanceof Error) {
+              if (readError.name === "BufferOverrunError" ||
+                  readError.message.includes("BufferOverrun") ||
+                  readError.message.includes("buffer overrun")) {
+                // Log warning but continue reading - this is recoverable
+                console.warn("Serial buffer overrun - some data may have been lost");
+                terminalRef.current?.writeln(
+                  "\x1b[33m⚠ Buffer overrun - some data may have been lost\x1b[0m"
+                );
+                continue; // Try to keep reading
+              }
+            }
+            throw readError; // Re-throw non-recoverable errors
+          }
 
           if (done || !value) {
             break;
@@ -361,42 +383,49 @@ export default function SerialTerminal({
             });
             terminalRef.current?.write(hexStr + " ");
           } else {
-            // ASCII mode: process text with line buffering
-            // Add to buffer
-            lineBufferRef.current += parsed.text;
+            // ASCII mode: display data immediately
+            // Only use line buffering when timestamps or line numbers are enabled
+            if (showTimestamps || showLineNumbers) {
+              // Buffer-based processing for formatted output
+              lineBufferRef.current += parsed.text;
 
-            // Split into lines
-            const lines = lineBufferRef.current.split("\n");
+              // Split into lines
+              const lines = lineBufferRef.current.split("\n");
 
-            // Keep last incomplete line in buffer
-            lineBufferRef.current = lines.pop() || "";
+              // Keep last incomplete line in buffer
+              lineBufferRef.current = lines.pop() || "";
 
-            // Process complete lines
-            if (lines.length > 0) {
-              const output =
-                lines
-                  .map((line) => {
-                    let processedLine = line;
+              // Process complete lines with formatting
+              if (lines.length > 0) {
+                const output =
+                  lines
+                    .map((line) => {
+                      let processedLine = line;
 
-                    // Add timestamp to each complete line
-                    if (showTimestamps) {
-                      processedLine = formatWithTimestamp(
-                        processedLine,
-                        parsed.timestamp,
-                      );
-                    }
+                      // Add timestamp to each complete line
+                      if (showTimestamps) {
+                        processedLine = formatWithTimestamp(
+                          processedLine,
+                          parsed.timestamp,
+                        );
+                      }
 
-                    // Add line number to each complete line
-                    if (showLineNumbers) {
-                      const lineNum = lineNumberRef.current++;
-                      processedLine = `\x1b[2;90m${String(lineNum).padStart(4, " ")}|\x1b[0m ${processedLine}`;
-                    }
+                      // Add line number to each complete line
+                      if (showLineNumbers) {
+                        const lineNum = lineNumberRef.current++;
+                        processedLine = `\x1b[2;90m${String(lineNum).padStart(4, " ")}|\x1b[0m ${processedLine}`;
+                      }
 
-                    return processedLine;
-                  })
-                  .join("\n") + "\n"; // Add back the newline
+                      return processedLine;
+                    })
+                    .join("\n") + "\n"; // Add back the newline
 
-              terminalRef.current?.write(output);
+                terminalRef.current?.write(output);
+              }
+            } else {
+              // No formatting needed - write directly for real-time display
+              // This ensures prompts without newlines appear immediately
+              terminalRef.current?.write(parsed.text);
             }
           }
 
@@ -469,6 +498,10 @@ export default function SerialTerminal({
 
       connectionStartTime.current = Date.now();
 
+      // Start reading IMMEDIATELY to minimize buffer overrun window
+      // Don't await - let it run in background
+      readFromPort(port, reader);
+
       setTerminalState({
         isConnected: true,
         port,
@@ -479,9 +512,6 @@ export default function SerialTerminal({
         connectionTime: Date.now(),
         error: null,
       });
-
-      // Start reading
-      readFromPort(port, reader);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setTerminalState((prev) => ({
