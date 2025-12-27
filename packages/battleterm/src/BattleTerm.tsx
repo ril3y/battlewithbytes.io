@@ -645,7 +645,13 @@ export default function SerialTerminal({
       <div
         className={`bg-black ${isStandalone ? "flex-1 min-h-0 overflow-hidden" : ""}`}
         onContextMenu={handleContextMenu}
-        onClick={() => inputRef.current?.focus()}
+        onMouseUp={() => {
+          // Only focus input if no text is selected (allow text selection)
+          const selection = terminalRef.current?.getSelection() || "";
+          if (!selection) {
+            inputRef.current?.focus();
+          }
+        }}
       >
         <TerminalDisplay
           ref={terminalRef}

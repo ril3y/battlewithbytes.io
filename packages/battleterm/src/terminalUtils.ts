@@ -145,7 +145,14 @@ export const TERMINAL_THEMES = {
  * Get xterm.js terminal options from our TerminalOptions
  */
 export function getXtermOptions(options: TerminalOptions) {
-  const theme = TERMINAL_THEMES[options.theme] || TERMINAL_THEMES.default;
+  const baseTheme = TERMINAL_THEMES[options.theme] || TERMINAL_THEMES.default;
+
+  // Override cursor to be invisible (display-only terminal)
+  const theme = {
+    ...baseTheme,
+    cursor: "transparent",
+    cursorAccent: "transparent",
+  };
 
   return {
     fontFamily: options.fontFamily,
