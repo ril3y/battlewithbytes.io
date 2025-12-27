@@ -9,7 +9,7 @@ export interface SerialConfig {
   dataBits: 7 | 8;
   stopBits: 1 | 2;
   parity: "none" | "even" | "odd";
-  flowControl: "none" | "hardware";
+  flowControl: "none" | "hardware" | "xon-xoff";
   bufferSize?: number;
 }
 

@@ -35,6 +35,8 @@ import {
   formatDataForSend,
   parseSerialData,
   bytesToHex,
+  XON,
+  XOFF,
 } from "./serialUtils";
 import { downloadTerminalLog, formatWithTimestamp } from "./terminalUtils";
 import { saveLastConfig, loadLastConfig } from "./configManager";
@@ -119,6 +121,10 @@ export default function SerialTerminal({
   const rxLedTimeout = useRef<NodeJS.Timeout | null>(null);
   const txLedTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // XON/XOFF software flow control state
+  const txPausedRef = useRef(false);
+  const pendingDataRef = useRef<Uint8Array[]>([]);
+
   // Load last config on mount
   useEffect(() => {
     const lastConfig = loadLastConfig();
@@ -190,6 +196,20 @@ export default function SerialTerminal({
           sendOptions.lineEnding,
           sendOptions.sendAsHex,
         );
+
+        // Handle XON/XOFF flow control - queue data if paused
+        if (serialConfig.flowControl === "xon-xoff" && txPausedRef.current) {
+          pendingDataRef.current.push(bytes);
+          // Show queued indicator
+          if (sendOptions.localEcho) {
+            const echoText = sendOptions.sendAsHex
+              ? `[TX HEX QUEUED] ${command}`
+              : `> ${command} (queued - flow control)`;
+            terminalRef.current?.writeln(`\x1b[33m${echoText}\x1b[0m`);
+          }
+          return;
+        }
+
         await terminalState.writer.write(bytes);
 
         // Local echo
@@ -229,7 +249,7 @@ export default function SerialTerminal({
         }));
       }
     },
-    [terminalState, sendOptions, autoScroll],
+    [terminalState, sendOptions, autoScroll, serialConfig.flowControl],
   );
 
   // Keyboard shortcuts (Ctrl+C to copy, Ctrl+V to paste)
@@ -267,6 +287,22 @@ export default function SerialTerminal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [terminalState.isConnected, handleCommand]);
 
+  // Flush pending data when XON received (software flow control)
+  const flushPendingData = useCallback(async () => {
+    if (!terminalState.writer || pendingDataRef.current.length === 0) return;
+
+    try {
+      while (pendingDataRef.current.length > 0 && !txPausedRef.current) {
+        const data = pendingDataRef.current.shift();
+        if (data) {
+          await terminalState.writer.write(data);
+        }
+      }
+    } catch (error) {
+      console.error("Error flushing pending data:", error);
+    }
+  }, [terminalState.writer]);
+
   // Read from serial port
   const readFromPort = useCallback(
     async (
@@ -284,8 +320,33 @@ export default function SerialTerminal({
             break;
           }
 
+          // Handle XON/XOFF software flow control
+          let filteredValue = value;
+          if (serialConfig.flowControl === "xon-xoff") {
+            const filtered: number[] = [];
+            for (let i = 0; i < value.length; i++) {
+              const byte = value[i];
+              if (byte === XOFF) {
+                // Pause transmission
+                txPausedRef.current = true;
+              } else if (byte === XON) {
+                // Resume transmission and flush pending data
+                txPausedRef.current = false;
+                flushPendingData();
+              } else {
+                filtered.push(byte);
+              }
+            }
+            filteredValue = new Uint8Array(filtered);
+          }
+
+          // Skip if all bytes were flow control characters
+          if (filteredValue.length === 0) {
+            continue;
+          }
+
           // Parse and display data
-          const parsed = parseSerialData(value);
+          const parsed = parseSerialData(filteredValue);
 
           // In hex mode, show only raw hex bytes (no text processing)
           // Use ref instead of state for real-time mode switching
@@ -369,7 +430,7 @@ export default function SerialTerminal({
         isReading.current = false;
       }
     },
-    [showTimestamps, autoScroll, showLineNumbers],
+    [showTimestamps, autoScroll, showLineNumbers, serialConfig.flowControl, flushPendingData],
   );
 
   // Connect to serial port
@@ -390,6 +451,8 @@ export default function SerialTerminal({
       terminalRef.current?.stopAnimation();
       lineNumberRef.current = 1; // Reset line counter for new connection
       lineBufferRef.current = ""; // Clear line buffer for new connection
+      txPausedRef.current = false; // Reset XON/XOFF state
+      pendingDataRef.current = []; // Clear any pending data
 
       const port = await requestSerialPort();
       await openSerialPort(port, serialConfig);
@@ -456,6 +519,10 @@ export default function SerialTerminal({
       }
       setRxActive(false);
       setTxActive(false);
+
+      // Clear XON/XOFF state
+      txPausedRef.current = false;
+      pendingDataRef.current = [];
 
       setTerminalState({
         isConnected: false,

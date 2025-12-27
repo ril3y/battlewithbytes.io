@@ -179,7 +179,10 @@ export default function ConfigurationPanel({
               onChange={(e) =>
                 onChange({
                   ...config,
-                  flowControl: e.target.value as "none" | "hardware",
+                  flowControl: e.target.value as
+                    | "none"
+                    | "hardware"
+                    | "xon-xoff",
                 })
               }
               className="w-full px-3 py-2 bg-black border border-gray-700 rounded text-white font-mono text-sm"
@@ -187,6 +190,7 @@ export default function ConfigurationPanel({
             >
               <option value="none">None</option>
               <option value="hardware">Hardware (RTS/CTS)</option>
+              <option value="xon-xoff">Software (XON/XOFF)</option>
             </select>
           </div>
 
