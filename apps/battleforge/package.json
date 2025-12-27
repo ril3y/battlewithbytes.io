@@ -36,6 +36,7 @@
   "dependencies": {
     "@battlewithbytes/tailwind-config": "workspace:^",
     "@battlewithbytes/tsconfig": "workspace:^",
+    "@battlewithbytes/utils": "workspace:^",
     "@monaco-editor/react": "^4.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",

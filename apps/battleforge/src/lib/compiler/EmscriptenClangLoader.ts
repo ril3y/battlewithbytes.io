@@ -5,7 +5,7 @@
  * declares global variables that can't be redeclared.
  */
 
-import { getBasePath } from "../utils/basePath";
+import { getBasePath } from "@battlewithbytes/utils";
 import { WasmCache } from "../wasm/WasmCache";
 
 // Singleton cache instance for registering HTTP-loaded compilers
@@ -27,17 +27,31 @@ export interface ClangExecutionResult {
   outputFiles: Map<string, Uint8Array>;
 }
 
-let initialLoadDone = false;
+export type CompilerArch = "arm" | "xtensa" | "riscv";
+
+// Track which compilers have been verified
+const initialLoadDone: Record<CompilerArch, boolean> = {
+  arm: false,
+  xtensa: false,
+  riscv: false,
+};
 
 /**
  * Execute Clang in an isolated iframe
+ * @param args - Clang command line arguments
+ * @param files - Files to write to the virtual filesystem
+ * @param onStdout - Callback for stdout output
+ * @param onStderr - Callback for stderr output
+ * @param arch - Target architecture: "arm" (default), "xtensa" (ESP32/S2/S3), or "riscv" (ESP32-C3/C6/H2)
  */
 export async function executeClang(
   args: string[],
   files: Record<string, string | Uint8Array>,
   onStdout?: (text: string) => void,
   onStderr?: (text: string) => void,
+  arch: CompilerArch = "arm",
 ): Promise<ClangExecutionResult> {
+  const compilerDir = `clang_${arch}`;
   return new Promise((resolve, reject) => {
     // Create iframe for isolation
     const iframe = document.createElement("iframe");
@@ -132,7 +146,7 @@ export async function executeClang(
         _clangArgs: ${JSON.stringify(args)},
 
         locateFile: function(path) {
-          var url = "${baseUrl}/wasm/clang_arm/" + path;
+          var url = "${baseUrl}/wasm/${compilerDir}/" + path;
           console.log('[clang] locateFile:', path, '->', url);
           return url;
         },
@@ -312,8 +326,8 @@ export async function executeClang(
 
     // Now load clang.js - use absolute URL
     const script = iframeWindow.document.createElement("script");
-    script.src = `${baseUrl}/wasm/clang_arm/clang.js`;
-    console.log("[EmscriptenClang] Loading script:", script.src);
+    script.src = `${baseUrl}/wasm/${compilerDir}/clang.js`;
+    console.log("[EmscriptenClang] Loading script:", script.src, "(arch:", arch, ")");
 
     script.onload = () => {
       console.log("[EmscriptenClang] Script loaded successfully");
@@ -333,31 +347,35 @@ export async function executeClang(
 
 /**
  * Load the Clang module (initial verification)
+ * @param onProgress - Callback for load progress
+ * @param arch - Target architecture: "arm" (default), "xtensa", or "riscv"
  */
 export async function loadClangModule(
   onProgress?: (progress: LoadProgress) => void,
+  arch: CompilerArch = "arm",
 ): Promise<void> {
-  if (initialLoadDone) {
-    onProgress?.({ stage: "ready", progress: 100, message: "Compiler ready" });
+  if (initialLoadDone[arch]) {
+    onProgress?.({ stage: "ready", progress: 100, message: `Compiler ready (${arch})` });
     return;
   }
 
+  const archName = arch === "arm" ? "ARM" : arch === "xtensa" ? "Xtensa" : "RISC-V";
   onProgress?.({
     stage: "downloading",
     progress: 0,
-    message: "Loading Clang compiler...",
+    message: `Loading Clang ${archName} compiler...`,
   });
 
   try {
     onProgress?.({
       stage: "instantiating",
       progress: 50,
-      message: "Initializing Clang...",
+      message: `Initializing Clang ${archName}...`,
     });
 
-    const result = await executeClang(["--version"], {});
+    const result = await executeClang(["--version"], {}, undefined, undefined, arch);
 
-    console.log("[EmscriptenClang] Version check result:", {
+    console.log(`[EmscriptenClang] Version check result (${arch}):`, {
       exitCode: result.exitCode,
       stdout: result.stdout,
       stderr: result.stderr,
@@ -367,16 +385,16 @@ export async function loadClangModule(
     // Check both stdout and stderr for clang output
     const combinedOutput = (result.stdout + result.stderr).toLowerCase();
     if (combinedOutput.includes("clang") || result.exitCode === 0) {
-      initialLoadDone = true;
+      initialLoadDone[arch] = true;
 
       // Register the compiler as installed in WasmCache
       // This syncs the HTTP-loaded compiler with the WasmManagerPanel
-      await registerCompilerAsInstalled();
+      await registerCompilerAsInstalled(arch);
 
       onProgress?.({
         stage: "ready",
         progress: 100,
-        message: "Clang compiler ready",
+        message: `Clang ${archName} compiler ready`,
       });
     } else {
       throw new Error(
@@ -397,7 +415,8 @@ export async function loadClangModule(
  * Register the compiler as installed in WasmCache
  * Fetches manifest to get version/hash/size info
  */
-async function registerCompilerAsInstalled(): Promise<void> {
+async function registerCompilerAsInstalled(arch: CompilerArch = "arm"): Promise<void> {
+  const compilerId = `clang-${arch}`;
   try {
     const basePath = getBasePath();
     const manifestUrl = `${basePath}/data/boards/wasm/manifest.json`;
@@ -409,19 +428,19 @@ async function registerCompilerAsInstalled(): Promise<void> {
     }
 
     const manifest = await response.json();
-    const compiler = manifest.compilers?.find((c: { id: string }) => c.id === "clang-arm");
+    const compiler = manifest.compilers?.find((c: { id: string }) => c.id === compilerId);
 
     if (compiler) {
       // Support both v1 (version, hash) and v2 (fullVersion, hashes.compressed) formats
       const version = compiler.fullVersion || compiler.version || compiler.softwareVersion || "";
       const hash = compiler.hashes?.compressed || compiler.hash || "";
       await wasmCache.setMetadataOnly(
-        "clang-arm",
+        compilerId,
         version,
         hash,
         compiler.size,
       );
-      console.log(`[EmscriptenClang] Registered clang-arm v${version} as installed`);
+      console.log(`[EmscriptenClang] Registered ${compilerId} v${version} as installed`);
     }
   } catch (err) {
     console.warn("[EmscriptenClang] Failed to register compiler:", err);
@@ -432,11 +451,12 @@ async function registerCompilerAsInstalled(): Promise<void> {
 /**
  * Get compiler version
  */
-export async function getClangVersion(): Promise<string> {
+export async function getClangVersion(arch: CompilerArch = "arm"): Promise<string> {
+  const archName = arch === "arm" ? "ARM" : arch === "xtensa" ? "Xtensa" : "RISC-V";
   try {
-    const result = await executeClang(["--version"], {});
+    const result = await executeClang(["--version"], {}, undefined, undefined, arch);
     const lines = result.stdout.split("\n");
-    return lines[0] || "Clang ARM";
+    return lines[0] || `Clang ${archName}`;
   } catch (error) {
     console.error("[EmscriptenClang] Failed to get version:", error);
     return "Unknown version";
@@ -444,8 +464,20 @@ export async function getClangVersion(): Promise<string> {
 }
 
 /**
- * Check if initial load completed
+ * Check if initial load completed for given architecture
  */
-export function isClangLoaded(): boolean {
-  return initialLoadDone;
+export function isClangLoaded(arch: CompilerArch = "arm"): boolean {
+  return initialLoadDone[arch];
+}
+
+/**
+ * Get the compiler architecture for a given platform
+ */
+export function getCompilerArchForPlatform(platformId: string): CompilerArch {
+  // ESP32 uses Xtensa (ESP32, ESP32-S2, ESP32-S3) or RISC-V (ESP32-C3, ESP32-C6, ESP32-H2)
+  if (platformId === "esp32") {
+    return "xtensa"; // Default to Xtensa for ESP32 family
+  }
+  // ARM platforms: STM32, nRF52, RP2040
+  return "arm";
 }

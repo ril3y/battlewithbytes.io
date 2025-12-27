@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { withBasePath } from "../lib/utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 
 interface WelcomePageProps {
   onCreateProject: () => void;

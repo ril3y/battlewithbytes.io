@@ -13,6 +13,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import "@/app/battlemagic.css";
 import Image from "next/image";
 import Link from "next/link";
+import { withBasePath } from "@battlewithbytes/utils";
 import { GdbClient, GdbClientCallbacks } from "../lib/gdb/GdbClient";
 import { ConnectionState, Target, StopReply } from "../lib/gdb/types";
 import { XrefProvider } from "../lib/context/XrefContext";
@@ -1209,7 +1210,7 @@ export default function BattleMagicMonitor() {
           <div className="bg-gray-900 border-b border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <Image
-                src="/battlemagiclogo.png"
+                src={withBasePath("/battlemagiclogo.png")}
                 alt="BattleMagic Logo"
                 width={60}
                 height={60}

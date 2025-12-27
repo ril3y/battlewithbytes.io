@@ -5,7 +5,7 @@
  * Provides backwards-compatible access to ARCHITECTURE_CONFIGS.
  */
 
-import { withBasePath } from "../utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 import type { Architecture, ArchitectureConfig } from "./types";
 
 /**

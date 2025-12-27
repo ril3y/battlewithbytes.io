@@ -5,7 +5,7 @@
  * Templates are defined in manifest.json files with source files referenced by sourcePath.
  */
 
-import { withBasePath } from "../utils/basePath";
+import { withBasePath } from "@battlewithbytes/utils";
 import type { ProjectTemplate, ProjectFile } from "./types";
 import type { Architecture, FrameworkId } from "../platform/types";
 
