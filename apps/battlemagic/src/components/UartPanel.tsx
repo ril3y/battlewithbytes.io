@@ -8,10 +8,11 @@
  */
 
 import React, { useState, useRef, useEffect } from "react";
+import { useLogStore } from "../lib/stores/LogStore";
 
 interface UartPanelProps {
   isConnected: boolean;
-  output: string[];
+  output?: string[];
   onSendData: (data: string) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -28,12 +29,17 @@ export default function UartPanel({
   const [inputData, setInputData] = useState("");
   const outputRef = useRef<HTMLDivElement>(null);
 
+  // Subscribe to logs from store
+  const uartLogs = useLogStore((state) => state.uartLogs);
+  // Use props output if provided (legacy), otherwise use store logs
+  const displayLogs = output || uartLogs.map(l => l.text);
+
   // Auto-scroll output
   useEffect(() => {
     if (autoscroll && outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [output, autoscroll]);
+  }, [displayLogs, autoscroll]);
 
   const handleSend = () => {
     if (!inputData.trim()) return;
@@ -80,11 +86,10 @@ export default function UartPanel({
           )}
           <button
             onClick={() => setAutoscroll(!autoscroll)}
-            className={`px-3 py-1 text-xs rounded border transition-colors ${
-              autoscroll
-                ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
-                : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
-            }`}
+            className={`px-3 py-1 text-xs rounded border transition-colors ${autoscroll
+              ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
+              : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+              }`}
             title={autoscroll ? "Disable auto-scroll" : "Enable auto-scroll"}
           >
             {autoscroll ? "Auto-scroll" : "Locked"}
@@ -97,7 +102,7 @@ export default function UartPanel({
         ref={outputRef}
         className="flex-1 overflow-auto p-4 font-mono text-sm bg-black"
       >
-        {output.length === 0 ? (
+        {displayLogs.length === 0 ? (
           <div className="text-gray-400">
             <div className="mb-4">
               <span className="text-green-400">BattleMagic UART Monitor</span>
@@ -120,7 +125,7 @@ export default function UartPanel({
           </div>
         ) : (
           <div className="text-gray-300 space-y-0">
-            {output.map((line, index) => (
+            {displayLogs.map((line, index) => (
               <div
                 key={index}
                 className="whitespace-pre-wrap break-words font-mono"

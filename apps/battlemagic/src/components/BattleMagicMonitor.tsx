@@ -54,6 +54,7 @@ import { usePanelLayout } from "./BattleMagicMonitor/hooks/usePanelLayout";
 import { useDebugState } from "./BattleMagicMonitor/hooks/useDebugState";
 import { useProjectState } from "./BattleMagicMonitor/hooks/useProjectState";
 import { useAnalysisState } from "./BattleMagicMonitor/hooks/useAnalysisState";
+import { useGdbOrchestrator } from "./BattleMagicMonitor/hooks/useGdbOrchestrator";
 
 // Resizable divider component
 function ResizableDivider({ onMouseDown }: { onMouseDown: () => void }) {
@@ -131,6 +132,8 @@ export default function BattleMagicMonitor() {
     addGdbOutput: gdb.addGdbOutput,
   });
   const analysis = useAnalysisState();
+
+  const orchestrator = useGdbOrchestrator(gdb, uart, debug, project, isClient);
 
   // Ensure we're on the client side before rendering serial-dependent components
   // Run only once on mount
@@ -292,214 +295,12 @@ export default function BattleMagicMonitor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  // GDB Connection handlers
-  const handleConnectGdb = useCallback(async () => {
-    if (!gdb.gdbClient || !isClient) return;
+  // GDB and UART handlers are now managed by useGdbOrchestrator
 
-    // If already connected or connecting, disconnect first
-    if (gdb.gdbState !== ConnectionState.DISCONNECTED) {
-      gdb.addGdbOutput("[Disconnecting existing connection...]");
-      try {
-        await gdb.gdbClient.disconnect();
-      } catch (error) {
-        gdb.addGdbOutput(`[Disconnect failed: ${error}]`);
-      }
-      // Give it a moment to fully disconnect
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    try {
-      // Always show port selection dialog
-      gdb.addGdbOutput("[Select Black Magic GDB port from the dialog]");
-      const port = await navigator.serial.requestPort({
-        filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }],
-      });
-
-      if (!port) {
-        gdb.addGdbOutput("[Connection cancelled]");
-        return;
-      }
-
-      gdb.addGdbOutput("[Connecting to GDB port...]");
-      await gdb.gdbClient.connect(port, { baudRate: uart.baudRate });
-      gdb.addGdbOutput("[GDB Connected successfully]");
-
-      // Save the port info for reference
-      const portInfo = port.getInfo();
-      saveGdbPort({
-        vendorId: portInfo.usbVendorId,
-        productId: portInfo.usbProductId,
-      });
-
-      // Get version info
-      try {
-        const version = await gdb.gdbClient.getVersion();
-        gdb.setBmpVersion(version);
-        gdb.addGdbOutput(`[BMP Version] ${version.firmware}`);
-      } catch (error) {
-        gdb.addGdbOutput(`[Version query failed: ${error}]`);
-      }
-    } catch (error) {
-      gdb.addGdbOutput(`[Connection failed: ${error}]`);
-    }
-  }, [gdb, isClient, uart.baudRate]);
-
-  const handleDisconnectGdb = useCallback(async () => {
-    if (!gdb.gdbClient || !gdb.gdbClient.isConnected()) return;
-
-    try {
-      await gdb.gdbClient.disconnect();
-      gdb.setTargets([]);
-      gdb.addGdbOutput("[GDB Disconnected]");
-    } catch (error) {
-      gdb.addGdbOutput(`[GDB Disconnect failed: ${error}]`);
-    }
-  }, [gdb]);
-
-  // UART data reader
-  const readUartData = useCallback(
-    async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          // Decode and add to UART output
-          const text = new TextDecoder().decode(value);
-          uart.addUartOutput(text);
-        }
-      } catch (error) {
-        console.error("UART read error:", error);
-        uart.addUartOutput(`[UART read error: ${error}]`);
-      } finally {
-        reader.releaseLock();
-      }
-    },
-    [uart],
-  );
-
-  // UART Connection handlers
-  const handleConnectUart = useCallback(async () => {
-    if (!isClient) return;
-
-    try {
-      gdb.addGdbOutput("[Select Black Magic UART port from the dialog]");
-      const port = await navigator.serial.requestPort({
-        filters: [{ usbVendorId: 0x1d50, usbProductId: 0x6018 }],
-      });
-
-      if (!port) {
-        gdb.addGdbOutput("[UART connection cancelled]");
-        return;
-      }
-
-      // Open the port (default 115200 baud for UART)
-      await port.open({ baudRate: 115200 });
-      uart.setUartPort(port);
-      uart.setUartConnected(true);
-      gdb.addGdbOutput("[UART Connected]");
-      uart.addUartOutput("[UART Connected - Ready to receive data]");
-
-      // Save the port info for reference
-      const portInfo = port.getInfo();
-      saveUartPort({
-        vendorId: portInfo.usbVendorId,
-        productId: portInfo.usbProductId,
-      });
-
-      // Set up reader for UART data
-      if (port.readable) {
-        const reader = port.readable.getReader();
-        uart.setUartReader(reader);
-        readUartData(reader);
-      }
-    } catch (error) {
-      gdb.addGdbOutput(`[UART connection failed: ${error}]`);
-      uart.addUartOutput(`[UART connection failed: ${error}]`);
-    }
-  }, [isClient, gdb, uart, readUartData]);
-
-  const handleDisconnectUart = useCallback(async () => {
-    if (!uart.uartPort) return;
-
-    try {
-      // Close the reader first
-      if (uart.uartReader) {
-        try {
-          await uart.uartReader.cancel();
-          uart.uartReader.releaseLock();
-        } catch (error) {
-          console.error("Error releasing reader:", error);
-        }
-        uart.setUartReader(null);
-      }
-
-      // Close the port
-      await uart.uartPort.close();
-      uart.setUartPort(null);
-      uart.setUartConnected(false);
-      gdb.addGdbOutput("[UART Disconnected]");
-      uart.addUartOutput("[UART Disconnected]");
-    } catch (error) {
-      gdb.addGdbOutput(`[UART disconnect failed: ${error}]`);
-      uart.addUartOutput(`[UART disconnect failed: ${error}]`);
-    }
-  }, [uart, gdb]);
 
   // Debug panel handlers - Define these first before they're used in other handlers
-  const handleRefreshRegisters = useCallback(async () => {
-    if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
+  // Debug handlers managed by orchestrator
 
-    try {
-      const regs = await gdb.gdbClient.getFormattedRegisters();
-      const regValues: RegisterValue[] = Array.from(regs.entries()).map(
-        ([name, value]) => ({
-          name,
-          value,
-          size: 32, // ARM debug.registers are 32-bit
-        }),
-      );
-
-      debug.setRegisters(regValues);
-
-      // Update PC for disassembly view
-      const pc = regs.get("pc");
-      if (pc !== undefined) {
-        debug.setProgramCounter(pc);
-      }
-
-      gdb.addGdbOutput("[Registers refreshed]");
-    } catch (error) {
-      const errorMsg = String(error);
-      if (
-        errorMsg.includes("EFF") ||
-        errorMsg.includes("Failed to read debug.registers")
-      ) {
-        gdb.addGdbOutput(
-          "[Cannot read debug.registers - target may be running. Try halting first.]",
-        );
-      } else {
-        gdb.addGdbOutput(`[Failed to read registers: ${error}]`);
-      }
-    }
-  }, [gdb, debug]);
-
-  const handleRefreshStack = useCallback(async () => {
-    if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
-
-    try {
-      const frames = await gdb.gdbClient.getBacktrace();
-      const stackData: StackFrame[] = frames.map((frame) => ({
-        level: frame.level,
-        address: frame.address,
-        function: frame.function,
-      }));
-      debug.setStackFrames(stackData);
-      gdb.addGdbOutput("[Stack refreshed]");
-    } catch (error) {
-      gdb.addGdbOutput(`[Failed to read stack: ${error}]`);
-    }
-  }, [gdb, debug]);
 
   const handleReadMemory = useCallback(
     async (address: number, length: number): Promise<Uint8Array | null> => {
@@ -536,164 +337,8 @@ export default function BattleMagicMonitor() {
   );
 
   // Target control handlers
-  const handleScanTargets = useCallback(async () => {
-    if (!gdb.gdbClient) return;
+  // Target control handlers managed by orchestrator
 
-    try {
-      gdb.addGdbOutput("> monitor swdp_scan");
-      const result = await gdb.gdbClient.scanSwd();
-      gdb.setTargets(result.targets);
-      gdb.addGdbOutput(`[Found ${result.targets.length} target(s)]`);
-      if (result.voltage !== null) {
-        gdb.addGdbOutput(`[Target voltage: ${result.voltage.toFixed(2)}V]`);
-      }
-      result.targets.forEach((t) => {
-        gdb.addGdbOutput(`  ${t.id}: ${t.description}`);
-      });
-      project.setLastUpdate(new Date());
-    } catch (error) {
-      gdb.addGdbOutput(`[Scan failed: ${error}]`);
-    }
-  }, [gdb.gdbClient, gdb.addGdbOutput]);
-
-  const handleHalt = useCallback(async () => {
-    if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
-    try {
-      gdb.addGdbOutput("> Ctrl+C (interrupt)");
-      await gdb.gdbClient.halt();
-      gdb.addGdbOutput("[Target halted]");
-      debug.setExecutionState("stopped");
-      project.setLastUpdate(new Date());
-
-      // Auto-refresh panels after halt
-      try {
-        const regs = await gdb.gdbClient.getFormattedRegisters();
-        const regValues: RegisterValue[] = Array.from(regs.entries()).map(
-          ([name, value]) => ({
-            name,
-            value,
-            size: 32,
-          }),
-        );
-        debug.setRegisters(regValues);
-        const pc = regs.get("pc");
-        if (pc !== undefined) debug.setProgramCounter(pc);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh registers: ${error}]`);
-      }
-
-      try {
-        const frames = await gdb.gdbClient.getBacktrace();
-        const stackData: StackFrame[] = frames.map((frame) => ({
-          level: frame.level,
-          address: frame.address,
-          function: frame.function,
-        }));
-        debug.setStackFrames(stackData);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh stack: ${error}]`);
-      }
-    } catch (error) {
-      gdb.addGdbOutput(`[Halt failed: ${error}]`);
-    }
-  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput]);
-
-  const handleRun = useCallback(async () => {
-    if (!gdb.gdbClient) return;
-    try {
-      gdb.addGdbOutput("> continue");
-      gdb.addGdbOutput("[Target running...]");
-      debug.setExecutionState("running");
-      project.setLastUpdate(new Date());
-      gdb.gdbClient.continue();
-    } catch (error) {
-      gdb.addGdbOutput(`[Run failed: ${error}]`);
-    }
-  }, [gdb.gdbClient, gdb.addGdbOutput]);
-
-  const handleReset = useCallback(async () => {
-    if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
-    try {
-      gdb.addGdbOutput("> monitor reset");
-      await gdb.gdbClient.reset();
-      gdb.addGdbOutput("[Target reset]");
-
-      // Auto-refresh panels after reset
-      try {
-        const regs = await gdb.gdbClient.getFormattedRegisters();
-        const regValues: RegisterValue[] = Array.from(regs.entries()).map(
-          ([name, value]) => ({
-            name,
-            value,
-            size: 32,
-          }),
-        );
-        debug.setRegisters(regValues);
-        const pc = regs.get("pc");
-        if (pc !== undefined) debug.setProgramCounter(pc);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh registers: ${error}]`);
-      }
-
-      try {
-        const frames = await gdb.gdbClient.getBacktrace();
-        const stackData: StackFrame[] = frames.map((frame) => ({
-          level: frame.level,
-          address: frame.address,
-          function: frame.function,
-        }));
-        debug.setStackFrames(stackData);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh stack: ${error}]`);
-      }
-    } catch (error) {
-      gdb.addGdbOutput(`[Reset failed: ${error}]`);
-    }
-  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput]);
-
-  const handleStep = useCallback(async () => {
-    if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED) return;
-    try {
-      gdb.addGdbOutput("> stepi");
-      debug.setExecutionState("stepping");
-      await gdb.gdbClient.step();
-      gdb.addGdbOutput("[Stepped one instruction]");
-      debug.setExecutionState("stopped");
-      project.setLastUpdate(new Date());
-
-      // Auto-refresh panels after step
-      try {
-        const regs = await gdb.gdbClient.getFormattedRegisters();
-        const regValues: RegisterValue[] = Array.from(regs.entries()).map(
-          ([name, value]) => ({
-            name,
-            value,
-            size: 32,
-          }),
-        );
-        debug.setRegisters(regValues);
-        const pc = regs.get("pc");
-        if (pc !== undefined) debug.setProgramCounter(pc);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh registers: ${error}]`);
-      }
-
-      try {
-        const frames = await gdb.gdbClient.getBacktrace();
-        const stackData: StackFrame[] = frames.map((frame) => ({
-          level: frame.level,
-          address: frame.address,
-          function: frame.function,
-        }));
-        debug.setStackFrames(stackData);
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to refresh stack: ${error}]`);
-      }
-    } catch (error) {
-      gdb.addGdbOutput(`[Step failed: ${error}]`);
-      debug.setExecutionState("stopped");
-    }
-  }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput]);
 
   // Note: Version check and port management now handled by menu/toolbar
 
@@ -1054,8 +699,8 @@ export default function BattleMagicMonitor() {
       !hasAutoRefreshedRef.current
     ) {
       hasAutoRefreshedRef.current = true;
-      handleRefreshRegisters();
-      handleRefreshStack();
+      orchestrator.handleRefreshRegisters();
+      orchestrator.handleRefreshStack();
     } else if (gdb.gdbState !== ConnectionState.ATTACHED) {
       // Reset flag when disconnected
       hasAutoRefreshedRef.current = false;
@@ -1231,11 +876,11 @@ export default function BattleMagicMonitor() {
                   projectName={project.projectName}
                   hasUnsavedChanges={project.hasUnsavedChanges}
                   autoSaveEnabled={project.autoSaveEnabled}
-                  onNew={handleNewProject}
-                  onSave={handleSaveProject}
-                  onLoad={handleLoadProject}
-                  onAutoSaveToggle={handleAutoSaveToggle}
-                  onEditMetadata={handleEditMetadata}
+                  onNew={project.handleNewProject}
+                  onSave={project.handleSaveProject}
+                  onLoad={project.handleLoadProject}
+                  onAutoSaveToggle={project.handleSetAutoSave}
+                  onEditMetadata={project.handleUpdateMetadata}
                 />
               )}
               <Link
@@ -1250,11 +895,11 @@ export default function BattleMagicMonitor() {
           {/* Menu Bar - IDA Pro style with integrated connection controls */}
           {isClient && (
             <MenuBar
-              onNewProject={handleNewProject}
-              onSaveProject={handleSaveProject}
-              onExportProject={handleExportProject}
-              onLoadProject={handleLoadProject}
-              onDisconnect={handleDisconnectGdb}
+              onNewProject={project.handleNewProject}
+              onSaveProject={project.handleSaveProject}
+              onExportProject={project.handleExportProject}
+              onLoadProject={project.handleLoadProject}
+              onDisconnect={orchestrator.handleDisconnectGdb}
               onViewToggle={handleViewToggle}
               onToolSelect={handleToolSelect}
               activeView={panels.activeRightPanel}
@@ -1266,10 +911,10 @@ export default function BattleMagicMonitor() {
               onImportDatabase={handleImportDatabase}
               gdbState={gdb.gdbState}
               uartConnected={uart.uartConnected}
-              onConnectGdb={handleConnectGdb}
-              onDisconnectGdb={handleDisconnectGdb}
-              onConnectUart={handleConnectUart}
-              onDisconnectUart={handleDisconnectUart}
+              onConnectGdb={orchestrator.handleConnectGdb}
+              onDisconnectGdb={orchestrator.handleDisconnectGdb}
+              onConnectUart={orchestrator.handleConnectUart}
+              onDisconnectUart={orchestrator.handleDisconnectUart}
             />
           )}
 
@@ -1279,16 +924,16 @@ export default function BattleMagicMonitor() {
               gdbState={gdb.gdbState}
               targetAttached={targetAttached}
               uartConnected={uart.uartConnected}
-              onConnectGdb={handleConnectGdb}
-              onDisconnectGdb={handleDisconnectGdb}
-              onConnectUart={handleConnectUart}
-              onDisconnectUart={handleDisconnectUart}
-              onScanTargets={handleScanTargets}
-              onHalt={handleHalt}
-              onRun={handleRun}
-              onStep={handleStep}
-              onReset={handleReset}
-              onRefreshRegisters={handleRefreshRegisters}
+              onConnectGdb={orchestrator.handleConnectGdb}
+              onDisconnectGdb={orchestrator.handleDisconnectGdb}
+              onConnectUart={orchestrator.handleConnectUart}
+              onDisconnectUart={orchestrator.handleDisconnectUart}
+              onStep={orchestrator.handleStep}
+              onHalt={orchestrator.handleHalt}
+              onRun={orchestrator.handleRun}
+              onReset={orchestrator.handleReset}
+              onScanTargets={orchestrator.handleScanTargets}
+              onRefreshRegisters={orchestrator.handleRefreshRegisters}
               onRefreshMemory={async () => {
                 project.setLastUpdate(new Date());
               }}
@@ -1322,8 +967,8 @@ export default function BattleMagicMonitor() {
                           registers={debug.registers}
                           stackFrames={debug.stackFrames}
                           programCounter={debug.programCounter}
-                          onRefreshRegisters={handleRefreshRegisters}
-                          onRefreshStack={handleRefreshStack}
+                          onRefreshRegisters={orchestrator.handleRefreshRegisters}
+                          onRefreshStack={orchestrator.handleRefreshStack}
                           onReadMemory={handleReadMemory}
                           onOutput={gdb.addGdbOutput}
                           breakpoints={debug.breakpointAddresses}
@@ -1373,9 +1018,8 @@ export default function BattleMagicMonitor() {
                     {panels.activeRightPanel === "uart" && (
                       <UartPanel
                         isConnected={uart.uartConnected}
-                        output={uart.uartOutput}
-                        onConnect={handleConnectUart}
-                        onDisconnect={handleDisconnectUart}
+                        onConnect={orchestrator.handleConnectUart}
+                        onDisconnect={orchestrator.handleDisconnectUart}
                         onSendData={async (data: string) => {
                           if (!uart.uartPort?.writable) return;
                           try {
@@ -1492,7 +1136,6 @@ export default function BattleMagicMonitor() {
                         <div className="flex-1 overflow-hidden">
                           <GdbPanel
                             gdbClient={gdb.gdbClient}
-                            output={gdb.gdbOutput}
                             targets={gdb.targets}
                             onAttachTarget={async (targetId) => {
                               if (!gdb.gdbClient) return;
@@ -1562,7 +1205,7 @@ export default function BattleMagicMonitor() {
                                 gdb.addGdbOutput(`[Attach failed: ${error}]`);
                               }
                             }}
-                            onScanSwd={handleScanTargets}
+                            onScanSwd={orchestrator.handleScanTargets}
                             onClearOutput={gdb.clearGdbOutput}
                             onOutput={gdb.addGdbOutput}
                             onClearAllBreakpoints={handleClearAllBreakpoints}

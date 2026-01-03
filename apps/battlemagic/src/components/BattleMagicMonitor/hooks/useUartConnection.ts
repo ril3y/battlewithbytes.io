@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { useLogStore } from "../../../lib/stores/LogStore";
 
 export interface UartConnectionState {
   // State
@@ -34,15 +35,16 @@ export function useUartConnection(
   const [uartPort, setUartPort] = useState<SerialPort | null>(null);
   const [uartReader, setUartReader] =
     useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
-  const [uartOutput, setUartOutput] = useState<string[]>([]);
   const [baudRate, setBaudRate] = useState(initialBaudRate);
 
+  const { addUartLog, clearUartLogs } = useLogStore.getState();
+
   const addUartOutput = useCallback((message: string) => {
-    setUartOutput((prev) => [...prev, message]);
+    addUartLog(message);
   }, []);
 
   const clearUartOutput = useCallback(() => {
-    setUartOutput([]);
+    clearUartLogs();
   }, []);
 
   return {
@@ -50,7 +52,7 @@ export function useUartConnection(
     uartConnected,
     uartPort,
     uartReader,
-    uartOutput,
+    uartOutput: [], // Logs are managed by LogStore
     baudRate,
 
     // Setters

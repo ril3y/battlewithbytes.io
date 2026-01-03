@@ -35,6 +35,14 @@ export interface ProjectState {
   setHasUnsavedChanges: (hasChanges: boolean) => void;
   setAutoSaveEnabled: (enabled: boolean) => void;
   setLastUpdate: (date: Date) => void;
+
+  // Handlers
+  handleNewProject: () => void;
+  handleSaveProject: () => void;
+  handleLoadProject: (file: File) => Promise<void>;
+  handleExportProject: () => void;
+  handleSetAutoSave: (enabled: boolean) => void;
+  handleUpdateMetadata: (name: string, description: string) => void;
 }
 
 export function useProjectState(
@@ -114,6 +122,43 @@ export function useProjectState(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Handlers
+  const handleNewProject = () => {
+    if (projectManagerRef.current) {
+      projectManagerRef.current.newProject();
+    }
+  };
+
+  const handleSaveProject = () => {
+    if (projectManagerRef.current) {
+      projectManagerRef.current.saveProject();
+    }
+  };
+
+  const handleLoadProject = async (file: File) => {
+    if (projectManagerRef.current) {
+      await projectManagerRef.current.loadFromFile(file);
+    }
+  };
+
+  const handleExportProject = () => {
+    if (projectManagerRef.current) {
+      projectManagerRef.current.exportProject();
+    }
+  };
+
+  const handleSetAutoSave = (enabled: boolean) => {
+    if (projectManagerRef.current) {
+      projectManagerRef.current.setAutoSave(enabled);
+    }
+  };
+
+  const handleUpdateMetadata = (name: string, description: string) => {
+    if (projectManagerRef.current) {
+      projectManagerRef.current.updateMetadata(name, description);
+    }
+  };
+
   return {
     // State
     projectManager: projectManagerRef.current,
@@ -127,5 +172,13 @@ export function useProjectState(
     setHasUnsavedChanges,
     setAutoSaveEnabled,
     setLastUpdate,
+
+    // Handlers
+    handleNewProject,
+    handleSaveProject,
+    handleLoadProject,
+    handleExportProject,
+    handleSetAutoSave,
+    handleUpdateMetadata,
   };
 }
