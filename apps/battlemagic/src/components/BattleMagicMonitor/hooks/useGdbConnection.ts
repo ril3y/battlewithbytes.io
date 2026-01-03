@@ -7,6 +7,7 @@
 import { useState, useRef, useCallback } from "react";
 import { GdbClient } from "../../../lib/gdb/GdbClient";
 import { ConnectionState, Target, BmpVersion } from "../../../lib/gdb/types";
+import { useLogStore } from "../../../lib/stores/LogStore";
 
 export interface GdbConnectionState {
   // State
@@ -35,7 +36,10 @@ export function useGdbConnection(): GdbConnectionState {
     ConnectionState.DISCONNECTED,
   );
   const [targets, setTargets] = useState<Target[]>([]);
-  const [gdbOutput, setGdbOutput] = useState<string[]>([]);
+  // Use LogStore for output management
+  const { addGdbLog, clearGdbLogs } = useLogStore.getState();
+
+  // State
   const [bmpVersion, setBmpVersion] = useState<BmpVersion | null>(null);
   const [currentTarget, setCurrentTarget] = useState<Target | null>(null);
 
@@ -56,11 +60,11 @@ export function useGdbConnection(): GdbConnectionState {
     }
 
     lastOutputRef.current = { text: message, timestamp: now };
-    setGdbOutput((prev) => [...prev, message]);
+    addGdbLog(message);
   }, []);
 
   const clearGdbOutput = useCallback(() => {
-    setGdbOutput([]);
+    clearGdbLogs();
     lastOutputRef.current = null;
   }, []);
 
@@ -69,7 +73,7 @@ export function useGdbConnection(): GdbConnectionState {
     gdbClient,
     gdbState,
     targets,
-    gdbOutput,
+    gdbOutput: [], // Logs are now managed by LogStore
     bmpVersion,
     currentTarget,
 

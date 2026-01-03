@@ -11,10 +11,11 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { GdbClient } from "../lib/gdb/GdbClient";
 import { Target, ConnectionState } from "../lib/gdb/types";
 import DebugControlToolbar, { ExecutionState } from "./DebugControlToolbar";
+import { useLogStore } from "../lib/stores/LogStore";
 
 interface GdbPanelProps {
   gdbClient: GdbClient | null;
-  output: string[];
+  output?: string[];
   targets: Target[];
   onAttachTarget: (targetId: number) => void;
   onScanSwd?: () => void;
@@ -56,14 +57,19 @@ export default function GdbPanel({
   const [selectedText, setSelectedText] = useState("");
   const outputRef = useRef<HTMLDivElement>(null);
 
+  // Subscribe to logs from store
+  const gdbLogs = useLogStore((state) => state.gdbLogs);
+  // Use props output if provided (legacy), otherwise use store logs
+  const displayLogs = output || gdbLogs.map(l => l.text);
+
   const isConnected = gdbClient?.isConnected() || false;
   const isAttached = gdbClient?.getState() === ConnectionState.ATTACHED;
 
   // Track execution state based on output
   useEffect(() => {
-    if (output.length === 0) return;
+    if (displayLogs.length === 0) return;
 
-    const lastLine = output[output.length - 1].toLowerCase();
+    const lastLine = displayLogs[displayLogs.length - 1].toLowerCase();
 
     // Detect execution state changes from output
     if (
@@ -88,14 +94,14 @@ export default function GdbPanel({
     ) {
       setExecutionState(ExecutionState.RUNNING);
     }
-  }, [output]);
+  }, [displayLogs]);
 
   // Auto-scroll output
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [output]);
+  }, [displayLogs]); // Update scroll when logs change
 
   const handleCommandExecuted = useCallback((command: string) => {
     // Map command execution to state changes
@@ -453,7 +459,7 @@ export default function GdbPanel({
           }
         }}
       >
-        {output.length === 0 ? (
+        {displayLogs.length === 0 ? (
           <div className="text-gray-400">
             <div className="mb-4">
               <span className="text-green-400">BattleMagic GDB Interface</span>
@@ -467,7 +473,7 @@ export default function GdbPanel({
           </div>
         ) : (
           <div className="text-gray-300 space-y-1">
-            {output.map((line, index) => (
+            {displayLogs.map((line, index) => (
               <div key={index} className="whitespace-pre-wrap break-words">
                 {line}
               </div>
@@ -516,7 +522,7 @@ export default function GdbPanel({
             <button
               onClick={async () => {
                 try {
-                  const allText = output.join("\n");
+                  const allText = displayLogs.join("\n");
                   await navigator.clipboard.writeText(allText);
                   setShowContextMenu(false);
                 } catch (err) {
