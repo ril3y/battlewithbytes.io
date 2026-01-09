@@ -19,6 +19,7 @@ import React, {
 
 export interface TerminalInputRef {
   focus: () => void;
+  insertText: (text: string) => void;
 }
 
 export interface TerminalInputProps {
@@ -37,9 +38,13 @@ const TerminalInput = forwardRef<TerminalInputRef, TerminalInputProps>(({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Expose focus method via ref
+  // Expose focus and insertText methods via ref
   useImperativeHandle(ref, () => ({
     focus: () => {
+      inputRef.current?.focus();
+    },
+    insertText: (text: string) => {
+      setInput((prev) => prev + text);
       inputRef.current?.focus();
     },
   }), []);

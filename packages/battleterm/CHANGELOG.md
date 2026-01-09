@@ -2,6 +2,20 @@
 
 All notable changes to BattleTerm will be documented in this file.
 
+## [1.4.0] - 2025-01-09 - Escape Key & Paste Fix
+
+### Added
+
+- ⌨️ Escape key now sends ESC character (0x1B) to serial port when connected
+- 💡 Visual feedback "SEND --> [ESC]" displayed in terminal when ESC is sent
+- 🔒 ESC only sends when connected and no modals are open
+
+### Fixed
+
+- 🐛 Fixed paste (Ctrl+V) sending text directly to serial port instead of input bar
+- 🐛 Fixed context menu paste also bypassing the input bar
+- ✨ Pasted text now appears in send bar for review before sending
+
 ## [1.2.2] - 2025-10-24 - Serial Connection Fix
 
 ### Fixed
