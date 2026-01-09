@@ -12,7 +12,8 @@ import type {
 // Web Serial API only supports these hardware flow control options
 type FlowControlType = "none" | "hardware";
 
-// XON/XOFF control characters
+// Control characters
+export const ESC = 0x1b; // Escape character
 export const XON = 0x11; // DC1 - resume transmission
 export const XOFF = 0x13; // DC3 - pause transmission
 

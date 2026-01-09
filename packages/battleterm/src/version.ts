@@ -2,9 +2,9 @@
  * BattleTerm Version and Changelog
  */
 
-export const VERSION = "1.3.0";
-export const VERSION_DATE = "2025-12-26";
-export const VERSION_NAME = "Flow Control & UX Improvements";
+export const VERSION = "1.4.0";
+export const VERSION_DATE = "2025-01-09";
+export const VERSION_NAME = "Escape Key & Paste Fix";
 
 export interface ChangelogEntry {
   version: string;
@@ -14,6 +14,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.4.0",
+    date: "2025-01-09",
+    name: "Escape Key & Paste Fix",
+    changes: [
+      "⌨️  Escape key sends ESC character (0x1B) to serial port",
+      "💡  Visual feedback shows SENT --> [ESC] in terminal",
+      "🐛  Fixed paste sending directly to port instead of input bar",
+      "🔒  ESC only sends when connected with no modals open",
+    ],
+  },
   {
     version: "1.3.0",
     date: "2025-12-26",
