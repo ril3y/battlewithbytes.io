@@ -35,6 +35,7 @@ import {
   formatDataForSend,
   parseSerialData,
   bytesToHex,
+  ESC,
   XON,
   XOFF,
 } from "./serialUtils";
@@ -64,6 +65,9 @@ export default function SerialTerminal({
 
   // View mode ref for real-time access in read loop
   const viewModeRef = useRef<ViewMode>("ascii");
+
+  // Auto-scroll ref for real-time access in read loop
+  const autoScrollRef = useRef<boolean>(true);
 
   // Configuration state
   const [serialConfig, setSerialConfig] = useState<SerialConfig>(
@@ -152,6 +156,11 @@ export default function SerialTerminal({
   useEffect(() => {
     viewModeRef.current = viewMode;
   }, [viewMode]);
+
+  // Keep autoScrollRef in sync with autoScroll state
+  useEffect(() => {
+    autoScrollRef.current = autoScroll;
+  }, [autoScroll]);
 
   // Update stats periodically
   useEffect(() => {
@@ -242,7 +251,7 @@ export default function SerialTerminal({
           txLedTimeout.current = null;
         }, 100);
 
-        if (autoScroll) {
+        if (autoScrollRef.current) {
           terminalRef.current?.scrollToBottom();
         }
       } catch (error) {
@@ -258,7 +267,7 @@ export default function SerialTerminal({
     [terminalState, sendOptions, autoScroll, serialConfig.flowControl],
   );
 
-  // Keyboard shortcuts (Ctrl+C to copy, Ctrl+V to paste)
+  // Keyboard shortcuts (Ctrl+C to copy, Ctrl+V to paste, Escape to send ESC)
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       // Ctrl+C - Copy selection
@@ -273,17 +282,49 @@ export default function SerialTerminal({
           }
         }
       }
-      // Ctrl+V - Paste
+      // Ctrl+V - Paste into input bar
       else if (e.ctrlKey && e.key === "v" && !e.shiftKey) {
         if (terminalState.isConnected) {
           e.preventDefault();
           try {
             const text = await navigator.clipboard.readText();
             if (text) {
-              await handleCommand(text);
+              inputRef.current?.insertText(text);
             }
           } catch (error) {
             console.error("Paste failed:", error);
+          }
+        }
+      }
+      // Escape - Send ESC character to serial port (only when connected and no modals open)
+      else if (e.key === "Escape") {
+        const anyModalOpen = showConfigModal || showHelpModal || contextMenuPosition !== null;
+        if (terminalState.isConnected && terminalState.writer && !anyModalOpen) {
+          e.preventDefault();
+          try {
+            const escByte = new Uint8Array([ESC]);
+            await terminalState.writer.write(escByte);
+
+            // Visual feedback in terminal (one line per press)
+            terminalRef.current?.writeln("\x1b[33mSENT --> [ESC]\x1b[0m");
+
+            // Update byte count and trigger TX LED
+            setTerminalState((prev) => ({
+              ...prev,
+              bytesSent: prev.bytesSent + 1,
+            }));
+
+            // Blink TX LED
+            if (txLedTimeout.current) {
+              clearTimeout(txLedTimeout.current);
+            }
+            setTxActive(true);
+            txLedTimeout.current = setTimeout(() => {
+              setTxActive(false);
+              txLedTimeout.current = null;
+            }, 100);
+          } catch (error) {
+            console.error("Send ESC failed:", error);
           }
         }
       }
@@ -291,7 +332,7 @@ export default function SerialTerminal({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [terminalState.isConnected, handleCommand]);
+  }, [terminalState.isConnected, terminalState.writer, handleCommand, showConfigModal, showHelpModal, contextMenuPosition]);
 
   // Flush pending data when XON received (software flow control)
   const flushPendingData = useCallback(async () => {
@@ -331,8 +372,8 @@ export default function SerialTerminal({
             // Handle transient errors like BufferOverrunError
             if (readError instanceof Error) {
               if (readError.name === "BufferOverrunError" ||
-                  readError.message.includes("BufferOverrun") ||
-                  readError.message.includes("buffer overrun")) {
+                readError.message.includes("BufferOverrun") ||
+                readError.message.includes("buffer overrun")) {
                 // Rate-limit warnings to once per 2 seconds
                 const now = Date.now();
                 if (now - lastOverrunWarningRef.current > 2000) {
@@ -436,7 +477,7 @@ export default function SerialTerminal({
             }
           }
 
-          if (autoScroll) {
+          if (autoScrollRef.current) {
             terminalRef.current?.scrollToBottom();
           }
 
@@ -641,12 +682,12 @@ export default function SerialTerminal({
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
-        await handleCommand(text);
+        inputRef.current?.insertText(text);
       }
     } catch (error) {
       console.error("Paste failed:", error);
     }
-  }, [terminalState.isConnected, handleCommand]);
+  }, [terminalState.isConnected]);
 
   // Toggle view mode
   const handleViewModeToggle = useCallback(() => {
