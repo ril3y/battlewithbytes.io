@@ -1581,18 +1581,6 @@ namespace std {
 }
 #endif
 `,
-          "/libc/functional": `#ifndef _FUNCTIONAL_
-#define _FUNCTIONAL_
-namespace std {
-  template<class T> struct less { bool operator()(const T& a, const T& b) const { return a < b; } };
-  template<class T> struct greater { bool operator()(const T& a, const T& b) const { return a > b; } };
-  template<class T> struct equal_to { bool operator()(const T& a, const T& b) const { return a == b; } };
-  template<class T> struct not_equal_to { bool operator()(const T& a, const T& b) const { return a != b; } };
-  template<class T> struct plus { T operator()(const T& a, const T& b) const { return a + b; } };
-  template<class T> struct minus { T operator()(const T& a, const T& b) const { return a - b; } };
-}
-#endif
-`,
           "/libc/utility": `#ifndef _UTILITY_
 #define _UTILITY_
 namespace std {
