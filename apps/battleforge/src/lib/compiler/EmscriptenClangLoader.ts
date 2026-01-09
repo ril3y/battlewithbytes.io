@@ -7,6 +7,7 @@
 
 import { getBasePath } from "@battlewithbytes/utils";
 import { WasmCache } from "../wasm/WasmCache";
+import type { CompilerId } from "../wasm/types";
 
 // Singleton cache instance for registering HTTP-loaded compilers
 const wasmCache = new WasmCache();
@@ -435,7 +436,7 @@ async function registerCompilerAsInstalled(arch: CompilerArch = "arm"): Promise<
       const version = compiler.fullVersion || compiler.version || compiler.softwareVersion || "";
       const hash = compiler.hashes?.compressed || compiler.hash || "";
       await wasmCache.setMetadataOnly(
-        compilerId,
+        compilerId as CompilerId,
         version,
         hash,
         compiler.size,
