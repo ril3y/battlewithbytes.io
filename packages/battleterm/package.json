@@ -1,6 +1,6 @@
 {
   "name": "@battlewithbytes/battleterm",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Web-based serial terminal with ANSI support and PWA capabilities",
   "private": false,
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rimraf dist"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
