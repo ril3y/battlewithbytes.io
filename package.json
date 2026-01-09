@@ -15,7 +15,7 @@
     "lint": "turbo run lint",
     "lint:rust": "turbo run lint:rust",
     "type-check": "echo 'Type checking is done during build'",
-    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "clean": "turbo run clean && rimraf node_modules .turbo",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:rust": "cargo fmt --all",
     "build:web": "turbo run build --filter=@battlewithbytes/web",
@@ -28,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "prettier": "^3.1.1",
+    "rimraf": "^6.1.2",
     "turbo": "latest"
   },
   "engines": {
