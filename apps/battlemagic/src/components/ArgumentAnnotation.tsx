@@ -20,7 +20,7 @@ export function ArgumentAnnotation({
     return null;
   }
 
-  const argsStr = annotation.args.map(([_idx, val]) => val).join(", ");
+  const argsStr = annotation.args.map((pair) => pair[1]).join(", ");
 
   return (
     <span className={`text-gray-500 text-xs ${className || ""}`}>

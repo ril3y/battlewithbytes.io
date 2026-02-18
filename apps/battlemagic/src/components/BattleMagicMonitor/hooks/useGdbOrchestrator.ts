@@ -1,9 +1,8 @@
 
 import { useCallback } from "react";
-import { ConnectionState, Target } from "../../../lib/gdb/types";
+import { ConnectionState } from "../../../lib/gdb/types";
 import { RegisterValue } from "../../RegistersPanel";
 import { StackFrame } from "../../StackPanel";
-import { Breakpoint } from "../../BreakpointsManager";
 import { saveGdbPort, saveUartPort } from "../../../utils/deviceStorage";
 
 // Import types from other hooks

@@ -25,6 +25,6 @@ export function generateToolSchema(
       price: "0",
       priceCurrency: "USD",
     },
-    url: `https://battlewithbytes.io/tools/serial-terminal${url}`,
+    url: `https://battlewithbytes.io/tools/battleterm${url}`,
   };
 }

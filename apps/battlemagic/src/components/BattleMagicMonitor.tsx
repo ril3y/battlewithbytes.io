@@ -15,7 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { withBasePath } from "@battlewithbytes/utils";
 import { GdbClient, GdbClientCallbacks } from "../lib/gdb/GdbClient";
-import { ConnectionState, Target, StopReply } from "../lib/gdb/types";
+import { ConnectionState, StopReply } from "../lib/gdb/types";
 import { XrefProvider } from "../lib/context/XrefContext";
 import { useAnalysisOptional } from "../lib/context/AnalysisContext";
 import { useFirmwareOptional } from "../lib/context/FirmwareContext";
@@ -39,7 +39,6 @@ import XrefPanel from "./XrefPanel";
 import { FirmwareDumpWorkflow } from "./FirmwareDumpWorkflow";
 import { ChipDatabaseSettings } from "./ChipDatabaseSettings";
 import AnalysisProgressModal from "./AnalysisProgressModal";
-import { saveGdbPort, saveUartPort } from "../utils/deviceStorage";
 import { MemoryRegion } from "../lib/memory/MemoryMapParser";
 import { ProjectProvider } from "../lib/context/ProjectContext";
 import { detectArchitecture } from "../lib/wasmAnalyzer";
@@ -138,7 +137,6 @@ export default function BattleMagicMonitor() {
   // Run only once on mount
   useEffect(() => {
     setIsClient(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize GDB client
@@ -521,20 +519,6 @@ export default function BattleMagicMonitor() {
     [gdb.addGdbOutput],
   );
 
-  // Vector table navigation handler
-  const handleNavigateToAddress = useCallback(
-    (address: number) => {
-      // Switch to debugger view
-      panels.setActiveRightPanel("debugger");
-      // Set the program counter to the target address for navigation
-      debug.setProgramCounter(address);
-      gdb.addGdbOutput(
-        `[Navigation] Jumping to address 0x${address.toString(16).toUpperCase()}`,
-      );
-    },
-    [gdb.addGdbOutput],
-  );
-
   // Project management handlers
   const updateProjectState = useCallback(() => {
     const projectManager = project.projectManager;
@@ -569,98 +553,6 @@ export default function BattleMagicMonitor() {
   useEffect(() => {
     updateProjectState();
   }, [updateProjectState]);
-
-  const handleNewProject = useCallback(() => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    const newProjectData = projectManager.newProject();
-    project.setProjectName(newProjectData.metadata.name);
-    uart.setBaudRate(newProjectData.gdbSettings.baudRate);
-    setSelectedMemoryMapCpu(newProjectData.memoryMap.selectedCpu);
-    setCustomMemoryRegions(newProjectData.memoryMap.customRegions);
-    debug.setBreakpoints(newProjectData.breakpoints);
-    project.setHasUnsavedChanges(false);
-    gdb.addGdbOutput("[New project created]");
-  }, [project, uart, debug, gdb]);
-
-  const handleSaveProject = useCallback(async () => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    try {
-      // Update project state with current values
-      updateProjectState();
-
-      // Save project (localStorage + auto-save MDB via AnalysisContext)
-      await projectManager.saveProject();
-
-      // Also trigger MDB save if analysis context is available
-      if (analysisContext) {
-        await analysisContext.saveToDatabase();
-        gdb.addGdbOutput("[Save] Analysis data saved to database");
-      }
-
-      gdb.addGdbOutput("[Save] Project saved successfully");
-    } catch (error) {
-      gdb.addGdbOutput(`[Save] Failed to save project: ${error}`);
-    }
-  }, [updateProjectState, analysisContext, gdb.addGdbOutput]);
-
-  const handleExportProject = useCallback(() => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    try {
-      // Update project state before export
-      updateProjectState();
-
-      // Export project file (download)
-      projectManager.exportProject();
-
-      gdb.addGdbOutput("[Export] Project file downloaded");
-    } catch (error) {
-      gdb.addGdbOutput(`[Export] Failed to export project: ${error}`);
-    }
-  }, [updateProjectState, gdb.addGdbOutput]);
-
-  const handleLoadProject = useCallback(
-    async (file: File) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      try {
-        await projectManager.loadFromFile(file);
-        // State will be updated by the onProjectLoaded callback
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to load project: ${error}]`);
-      }
-    },
-    [project, gdb],
-  );
-
-  const handleAutoSaveToggle = useCallback(
-    (enabled: boolean) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      projectManager.setAutoSave(enabled);
-    },
-    [project],
-  );
-
-  const handleEditMetadata = useCallback(
-    (name: string, description: string) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      projectManager.updateMetadata(name, description);
-      project.setProjectName(name);
-      project.setHasUnsavedChanges(true);
-      gdb.addGdbOutput(`[Project renamed: ${name}]`);
-    },
-    [project, gdb],
-  );
 
   // Database operation handlers
   const handleExportDatabase = useCallback(async () => {
