@@ -370,33 +370,3 @@ export function parseHexString(hexString: string): Uint8Array | null {
   return new Uint8Array(bytes);
 }
 
-/**
- * Calculate CRC8 (used in some CAN protocols)
- */
-export function calculateCRC8(data: Uint8Array): number {
-  let crc = 0;
-
-  for (let i = 0; i < data.length; i++) {
-    crc ^= data[i];
-
-    for (let j = 0; j < 8; j++) {
-      if (crc & 0x80) {
-        crc = (crc << 1) ^ 0x07;
-      } else {
-        crc = crc << 1;
-      }
-    }
-  }
-
-  return crc & 0xff;
-}
-
-/**
- * Batch parse multiple lines
- */
-export function parseMultipleLines(lines: string): ProtocolMessage[] {
-  return lines
-    .split("\n")
-    .map((line) => parseProtocolLine(line))
-    .filter((msg): msg is ProtocolMessage => msg !== null);
-}
