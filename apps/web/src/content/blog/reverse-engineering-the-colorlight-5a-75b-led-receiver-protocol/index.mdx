@@ -1,0 +1,400 @@
+---
+title: "Reverse Engineering the ColorLight 5A-75B LED Receiver Protocol"
+slug: "reverse-engineering-the-colorlight-5a-75b-led-receiver-protocol"
+date: "2026-01-07"
+excerpt: "A deep dive into reverse engineering the proprietary Ethernet protocol used by ColorLight LED receiver cards, from raw DLL disassembly to complete protocol documentation."
+tags: ["Reverse Engineering", "ida", "ghidra", "leds"]
+author: "ril3y"
+coverImage: "/images/blog/reverse-engineering-the-colorlight-5a-75b-led-receiver-protocol/cover.png"
+enabled: false
+---
+
+import DropCap from '../../../components/DropCap'
+
+<DropCap>
+The ColorLight 5A-75B is a $15 LED receiver card that can drive thousands of pixels. The catch? Configuration requires proprietary Windows software. This post documents how we reverse engineered the entire protocol and built an open-source Linux driver. No Windows required.
+</DropCap>
+
+**The result:** [github.com/ril3y/zmatrix](https://github.com/ril3y/zmatrix) - A complete Python driver for Linux.
+
+## The Target
+
+ColorLight receiver cards communicate over raw Ethernet (no IP layer) using a proprietary protocol. The official `LEDVISION` software runs only on Windows and provides no documentation. Our goal: understand the protocol well enough to build custom tooling.
+
+**Target files:**
+```
+C:\Program Files (x86)\ColorLight\LEDSetting\
+├── CLTDevice.dll    # Device configuration, file parsing
+├── CLTNic.dll       # Raw Ethernet via WinPcap
+└── *.rcvbp          # Saved configuration files
+```
+
+## Tools and Setup
+
+| Tool | Purpose |
+|------|---------|
+| **IDA Pro** | Disassembly, export to .asm files |
+| **Ghidra** | Decompilation, cross-references |
+| **Python** | Binary diff scripts, file parsing |
+| **Hex editor** | .rcvbp file inspection |
+
+First step: export full disassembly from IDA for text searching:
+
+```
+CLTDevice.dll.asm  (1.4M lines)
+CLTNic.dll.asm     (200K lines)
+```
+
+This lets us `grep` through assembly - faster than clicking around in a GUI.
+
+---
+
+## Step 1: Find the Network Layer
+
+Start with `CLTNic.dll` since it handles network I/O. Search for WinPcap imports:
+
+```bash
+grep -n "pcap_" CLTNic.dll.asm
+```
+
+```asm
+; CLTNic.dll.asm - WinPcap imports
+5290:   call    ds:pcap_sendqueue_alloc
+5312:   call    ds:pcap_sendqueue_queue
+5340:   call    ds:pcap_sendqueue_transmit
+```
+
+This confirms raw Ethernet frames via WinPcap. Now find where frames are built.
+
+### Finding the Brightness Packet Builder
+
+Search for functions that build packets. We found `sub_10003460` in CLTNic.dll:
+
+```asm
+; CLTNic.dll.asm:5617 - sub_10003460 (Brightness packet builder)
+sub_10003460    proc near
+
+var_78  = byte ptr -78h
+var_74  = dword ptr -74h
+var_70  = dword ptr -70h
+
+        push    ebp
+        mov     ebp, esp
+        sub     esp, 78h
+
+        ; Build destination MAC: 11:22:33:44:55:66
+        mov     [ebp+var_70], 44332211h
+        mov     [ebp+var_6C], 22226655h
+
+        ; Build source MAC: 22:22:33:44:55:66
+        mov     [ebp+var_68], 66554433h
+
+        ; Set packet type at offset 0x2E
+        mov     [ebp+var_44], 0Ah        ; 0x0A = Brightness command!
+
+        ; Brightness value at offset 0x32
+        mov     al, [ebx+0A0h]
+        mov     [ebp+var_40], al         ; Brightness 0-255
+
+sub_10003460    endp
+```
+
+**Key discovery:** Fixed MAC addresses, packet type `0x0A` = brightness.
+
+### Mapping the Frame Structure
+
+By analyzing multiple packet builders, we mapped the complete frame:
+
+```
+Offset  Size  Field               Value
+------  ----  -----               -----
+0x00    6     Dst MAC             11:22:33:44:55:66
+0x06    6     Src MAC             22:22:33:44:55:66
+0x0C    2     EtherType           0x0880
+0x0E    16    Controller Address  (from discovery)
+0x1E    8     Sync Pattern        55 66 11 22 33 44 55 66
+0x26    1     Packet Type         Command identifier
+0x27+   var   Payload             Type-specific
+```
+
+---
+
+## Step 2: The VHDL Goldmine
+
+While grepping through `CLTDevice.dll.asm`, we found something unexpected:
+
+```bash
+grep -n "elsif x = " CLTDevice.dll.asm | head -20
+```
+
+```asm
+; CLTDevice.dll.asm:675229
+push    offset aElsifX38ThenP0 ; "\t\telsif x = 38 then P0_RXD <= X\"73\""
+
+; CLTDevice.dll.asm:675235
+push    offset aElsifX38ThenP0_0 ; "\t\telsif x = 38 then P0_RXD <= X\"76\""
+```
+
+**VHDL testbench code embedded in the DLL!** These are templates for generating FPGA test vectors:
+
+```vhdl
+-- Found in CLTDevice.dll string table
+elsif x = 38 then P0_RXD <= X"02";  -- 02 = control area
+elsif x = 38 then P0_RXD <= X"03";  -- 03 = routing table
+elsif x = 38 then P0_RXD <= X"05";  -- 05 = basic parameter
+elsif x = 38 then P0_RXD <= X"76";  -- 76 = gamma table
+elsif x = 42 then P0_RXD <= X"00";  -- 00 = 8bit color
+elsif x = 42 then P0_RXD <= X"02";  -- 02 = 10bit color
+elsif x = 42 then P0_RXD <= X"04";  -- 04 = 12bit color
+elsif x = 43 then P0_RXD <= X"02";  -- 02 = HDR mode
+elsif x = 43 then P0_RXD <= X"03";  -- 03 = HLG mode
+```
+
+This is the **FPGA's own documentation** of expected packet formats. `x = 38` corresponds to offset `0x26` in the frame (packet type byte). The 5A-75B has an onboard FPGA that parses these packets - and ColorLight left the test specs in the production binary.
+
+### Why This Matters
+
+The VHDL revealed:
+- Exact byte positions for every field
+- All packet type codes (0x02, 0x03, 0x05, 0x73, 0x76, 0x83, etc.)
+- Color depth encoding (offset 0x2A: 0x00/0x02/0x04 for 8/10/12-bit)
+- HDR/HLG mode flags
+
+**No FPGA tools needed** - the receiver comes pre-flashed. Configuration is purely packet-based.
+
+---
+
+## Step 3: Config File Analysis
+
+LEDVISION saves configurations to `.rcvbp` files. Hex inspection showed zlib signatures:
+
+```python
+import zlib
+
+def read_rcvbp(filename):
+    with open(filename, 'rb') as f:
+        header = f.read(32)      # 32-byte header
+        compressed = f.read()
+
+    data = zlib.decompress(compressed)
+    print(f"Decompressed: {len(data)} bytes")  # ~61KB
+    return data
+```
+
+### Differential Analysis
+
+The key technique: change ONE setting in LEDVISION, save, compare binaries.
+
+```python
+def diff_configs(file1, file2):
+    d1 = read_rcvbp(file1)
+    d2 = read_rcvbp(file2)
+
+    for i in range(min(len(d1), len(d2))):
+        if d1[i] != d2[i]:
+            print(f"0x{i:04X}: {d1[i]:3d} -> {d2[i]:3d}")
+```
+
+**Test files created:**
+
+| Filename | Changed Setting | Result |
+|----------|-----------------|--------|
+| `brightness1.rcvbp` | Brightness = 1 | Offset `0xE983` = 0x01 |
+| `brightness6.rcvbp` | Brightness = 6 | Offset `0xE983` = 0x06 |
+| `bottomup.rcvbp` | Cascade = Bottom→Top | Offset `0x40` = 0x03 |
+| `toptobottom.rcvbp` | Cascade = Top→Bottom | Offset `0x40` = 0x02 |
+| `grayscale18bit.rcvbp` | Grayscale = 18bit+ | Offset `0xE99E` = 0x81 |
+
+After 20+ test files, we had a complete field map.
+
+---
+
+## Step 4: Finding Function Names
+
+Exported DLL functions gave us entry points. Search for receiver-related exports:
+
+```bash
+grep -n "CLTReceiver" CLTDevice.dll.asm
+```
+
+```asm
+; CLTDevice.dll.asm:564053
+; Exported entry 824. _CLTReceiverDetectAndGetRcvInfo@8
+; __stdcall CLTReceiverDetectAndGetRcvInfo(x, x)
+public _CLTReceiverDetectAndGetRcvInfo@8
+_CLTReceiverDetectAndGetRcvInfo@8 proc near
+        mov     eax, [ecx+43Ch]     ; vtable offset 0x43C
+        push    edi
+        push    esi
+        call    eax                  ; Call discovery method
+```
+
+**Key functions discovered:**
+
+| Function | Address | Purpose |
+|----------|---------|---------|
+| `CLTReceiverDetectAll` | 0x10153100 | Broadcast discovery |
+| `CLTReceiverDetectAndGetRcvInfo` | 0x101531B0 | Get receiver details |
+| `CLTReceiverSendCmdParam` | 0x10153200 | Send config packets |
+| `CLTReceiverSaveBasicParamFromFile` | 0x10152F80 | Load .rcvbp file |
+
+### Port Configuration Structure
+
+Found the port structure by searching for XML field names:
+
+```bash
+grep -n "GroupFlag" CLTDevice.dll.asm
+```
+
+```asm
+; CLTDevice.dll.asm:164147 (sub_1005E140)
+push    offset aGroupflag ; "GroupFlag"
+...
+; CLTDevice.dll.asm:1436466
+aGroupflag      db 'GroupFlag',0
+```
+
+Tracing `sub_1005E140` revealed:
+- `ValidPortCount` at struct offset `+0x30F4`
+- Port array at `+0x3115`
+- 40 bytes per port (32-byte name + 8-byte flags)
+
+---
+
+## Step 5: Flash Save vs Volatile
+
+Critical finding: two different "save" packet types.
+
+```bash
+grep -n "0x1B\|0x2B" CLTDevice.dll.asm
+```
+
+```asm
+; Packet type 0x1B - Write to RAM (volatile)
+mov     byte ptr [ebp+var_44], 1Bh
+
+; Packet type 0x2B - Write to FLASH (persistent)
+mov     byte ptr [ebp+var_44], 2Bh
+```
+
+**If you use 0x1B, your config is lost on power cycle!**
+
+---
+
+## Complete Protocol Reference
+
+### Packet Types
+
+| Code | Name | Description |
+|------|------|-------------|
+| 0x02 | CARDAREA | Control area |
+| 0x03 | BASICROUTE | Port routing |
+| 0x05 | BASICPARAM | Basic parameters |
+| 0x07 | DISCOVERY | Discovery request |
+| 0x08 | DISCOVERY_RESP | Discovery response |
+| 0x0A | BRIGHTNESS | Brightness control |
+| 0x1B | EEPROM_WRITE | Write to RAM (volatile) |
+| 0x2B | EEPROM_SAVE | Write to flash (persistent) |
+| 0x55 | PIXEL_DATA | Pixel stream |
+| 0x76 | GAMATABLE | Gamma table |
+
+### Config File Field Map
+
+| Offset | Size | Field | Notes |
+|--------|------|-------|-------|
+| 0x04 | 1 | Module Width | pixels |
+| 0x05 | 1 | Module Height | pixels |
+| 0x20 | 4 | Gamma | IEEE 754 float |
+| 0x24 | 1 | Scan Mode | 4/8/16/32 |
+| 0x2C-0x2E | 3 | White Balance RGB | 0-255 each |
+| 0x40 | 1 | Cascade Direction | 0-3 |
+| 0xB2 | 4 | MinOE Timing | float, controls brightness |
+| 0xC4 | 2 | Cabinet Width | little-endian |
+| 0xC6 | 2 | Cabinet Height | little-endian |
+| 0xE983 | 1 | Brightness Level | 1-16 |
+| 0xE99E | 1 | Grayscale Mode | 0x07/0x81/0x85 |
+
+---
+
+## Using the Driver
+
+The reverse engineering work resulted in [zmatrix](https://github.com/ril3y/zmatrix), a complete Python driver for Linux.
+
+### Installation
+
+```bash
+git clone https://github.com/ril3y/zmatrix
+cd zmatrix
+pip install -r requirements.txt
+```
+
+### Basic Usage
+
+```bash
+# Display panel info
+sudo python colorlight.py -i eth0 --info
+
+# Show test pattern
+sudo python colorlight.py -i eth0 --test
+
+# Configure a 2x2 panel grid (128x64 total)
+sudo python colorlight.py -i eth0 \
+    --panels-x 2 --panels-y 2 \
+    --panel-width 64 --panel-height 32 \
+    --configure
+
+# Display an image
+sudo python colorlight.py -i eth0 \
+    -W 128 -H 64 \
+    --image myimage.png
+
+# Save configuration to flash (survives power cycle)
+sudo python colorlight.py -i eth0 --save-flash
+```
+
+### Python API
+
+```python
+from colorlight import ColorLight5A75B
+
+# Initialize driver
+panel = ColorLight5A75B(interface='eth0')
+
+# Discover receivers on network
+receivers = panel.discover()
+print(f"Found {len(receivers)} receivers")
+
+# Set brightness (0-255)
+panel.set_brightness(128)
+
+# Send pixel data (numpy array)
+import numpy as np
+pixels = np.zeros((64, 128, 3), dtype=np.uint8)
+pixels[:, :, 0] = 255  # Red
+panel.send_pixels(pixels)
+```
+
+---
+
+## Lessons Learned
+
+**Grep is your friend.** Exporting full disassembly to text files lets you search across millions of lines instantly. Finding "GroupFlag" or "elsif x = 38" would take hours clicking through a GUI.
+
+**Differential analysis works.** Change one thing, compare binaries. Repeat. We mapped 25+ config fields this way in a few hours.
+
+**Debug artifacts survive.** The VHDL testbench code was never stripped from the production DLL. It gave us the exact protocol spec without any guessing.
+
+**Volatility matters.** Packet 0x1B vs 0x2B was a crucial distinction that wasn't obvious until we traced the flash write path.
+
+**FPGA doesn't mean complexity.** Despite finding FPGA code, the receiver firmware is pre-flashed. All configuration is packet-based - no bitstream compilation needed.
+
+---
+
+## Resources
+
+- **Driver:** [github.com/ril3y/zmatrix](https://github.com/ril3y/zmatrix)
+- **Protocol Notes:** Full field map in the repo's `docs/` folder
+- **Ghidra:** [ghidra-sre.org](https://ghidra-sre.org/)
+- **IDA Pro:** [hex-rays.com](https://hex-rays.com/)
+
+The 5A-75B is a capable piece of hardware. Now it speaks Linux.
