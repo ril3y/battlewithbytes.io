@@ -7,10 +7,7 @@ export const dynamic = "force-static";
 export const dynamicParams = false;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://ril3y.github.io/battlewithbytes.io"
-      : "https://battlewithbytes.io";
+  const baseUrl = "https://battlewithbytes.io";
 
   // Core pages
   const routes = [
