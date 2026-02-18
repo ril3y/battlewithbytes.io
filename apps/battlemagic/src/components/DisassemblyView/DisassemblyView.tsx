@@ -170,7 +170,7 @@ export default function DisassemblyView({
           return;
         }
 
-        // Disassemble the data (supports both Capstone async and ArmDisassembler sync)
+        // Disassemble the data (WasmDisassembler async, ArmDisassembler sync fallback)
         let instructions: DisassembledInstruction[];
         try {
           const disasmResult = disassembler.current.disassemble(
