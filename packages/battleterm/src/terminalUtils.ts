@@ -6,47 +6,9 @@
 import type { TerminalOptions } from "./serialTerminal.types";
 
 /**
- * ANSI color codes
- */
-export const ANSI_COLORS = {
-  reset: "\x1b[0m",
-  bright: "\x1b[1m",
-  dim: "\x1b[2m",
-  underscore: "\x1b[4m",
-  blink: "\x1b[5m",
-  reverse: "\x1b[7m",
-  hidden: "\x1b[8m",
-
-  // Foreground colors
-  fg: {
-    black: "\x1b[30m",
-    red: "\x1b[31m",
-    green: "\x1b[32m",
-    yellow: "\x1b[33m",
-    blue: "\x1b[34m",
-    magenta: "\x1b[35m",
-    cyan: "\x1b[36m",
-    white: "\x1b[37m",
-    gray: "\x1b[90m",
-  },
-
-  // Background colors
-  bg: {
-    black: "\x1b[40m",
-    red: "\x1b[41m",
-    green: "\x1b[42m",
-    yellow: "\x1b[43m",
-    blue: "\x1b[44m",
-    magenta: "\x1b[45m",
-    cyan: "\x1b[46m",
-    white: "\x1b[47m",
-  },
-};
-
-/**
  * Terminal theme configurations
  */
-export const TERMINAL_THEMES = {
+const TERMINAL_THEMES = {
   default: {
     background: "#000000",
     foreground: "#ffffff",
@@ -176,45 +138,6 @@ export function formatWithTimestamp(text: string, timestamp: string): string {
 }
 
 /**
- * Format hex data with ASCII sidebar (like hex editors)
- */
-export function formatHexWithAscii(
-  bytes: Uint8Array,
-  bytesPerLine: number = 16,
-): string {
-  const lines: string[] = [];
-
-  for (let i = 0; i < bytes.length; i += bytesPerLine) {
-    const lineBytes = bytes.slice(i, i + bytesPerLine);
-    const offset = i.toString(16).padStart(8, "0");
-
-    // Hex representation
-    const hex = Array.from(lineBytes)
-      .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
-      .join(" ");
-    const hexPadded = hex.padEnd(bytesPerLine * 3 - 1, " ");
-
-    // ASCII representation
-    const ascii = Array.from(lineBytes)
-      .map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : "."))
-      .join("");
-
-    lines.push(`${offset}  ${hexPadded}  |${ascii}|`);
-  }
-
-  return lines.join("\n");
-}
-
-/**
- * Escape HTML special characters for safe display
- */
-export function escapeHtml(text: string): string {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-/**
  * Format duration in milliseconds to human-readable string
  */
 export function formatDuration(milliseconds: number): string {
@@ -229,20 +152,6 @@ export function formatDuration(milliseconds: number): string {
     return `${minutes}m ${seconds % 60}s`;
   }
   return `${seconds}s`;
-}
-
-/**
- * Detect if data contains ANSI escape codes
- */
-export function containsAnsiCodes(text: string): boolean {
-  return /\x1b\[[0-9;]*m/.test(text);
-}
-
-/**
- * Strip ANSI escape codes from text
- */
-export function stripAnsiCodes(text: string): string {
-  return text.replace(/\x1b\[[0-9;]*m/g, "");
 }
 
 /**
@@ -263,100 +172,3 @@ export function downloadTerminalLog(content: string, filename?: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Parse command history from localStorage
- */
-export function getCommandHistory(maxItems: number = 50): string[] {
-  try {
-    const history = localStorage.getItem("serial-terminal-history");
-    if (!history) return [];
-
-    const parsed = JSON.parse(history);
-    return Array.isArray(parsed) ? parsed.slice(0, maxItems) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Save command to history
- */
-export function saveCommandToHistory(
-  command: string,
-  maxItems: number = 50,
-): void {
-  try {
-    const history = getCommandHistory(maxItems);
-
-    // Remove duplicate if exists
-    const filtered = history.filter((cmd) => cmd !== command);
-
-    // Add to beginning
-    const updated = [command, ...filtered].slice(0, maxItems);
-
-    localStorage.setItem("serial-terminal-history", JSON.stringify(updated));
-  } catch (error) {
-    console.error("Failed to save command history:", error);
-  }
-}
-
-/**
- * Clear command history
- */
-export function clearCommandHistory(): void {
-  try {
-    localStorage.removeItem("serial-terminal-history");
-  } catch (error) {
-    console.error("Failed to clear command history:", error);
-  }
-}
-
-/**
- * Check if character is a control character
- */
-export function isControlCharacter(charCode: number): boolean {
-  return (charCode >= 0 && charCode <= 31) || charCode === 127;
-}
-
-/**
- * Get printable representation of control character
- */
-export function getControlCharName(charCode: number): string {
-  const controlChars: { [key: number]: string } = {
-    0: "NUL",
-    1: "SOH",
-    2: "STX",
-    3: "ETX",
-    4: "EOT",
-    5: "ENQ",
-    6: "ACK",
-    7: "BEL",
-    8: "BS",
-    9: "TAB",
-    10: "LF",
-    11: "VT",
-    12: "FF",
-    13: "CR",
-    14: "SO",
-    15: "SI",
-    16: "DLE",
-    17: "DC1",
-    18: "DC2",
-    19: "DC3",
-    20: "DC4",
-    21: "NAK",
-    22: "SYN",
-    23: "ETB",
-    24: "CAN",
-    25: "EM",
-    26: "SUB",
-    27: "ESC",
-    28: "FS",
-    29: "GS",
-    30: "RS",
-    31: "US",
-    127: "DEL",
-  };
-
-  return controlChars[charCode] || `[${charCode}]`;
-}

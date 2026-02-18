@@ -295,19 +295,6 @@ export function protocolToCANMessage(
 }
 
 /**
- * Format CAN ID for display
- */
-export function formatCANId(canId: number, isExtended: boolean): string {
-  if (isExtended) {
-    // 29-bit extended ID (8 hex digits)
-    return `0x${canId.toString(16).toUpperCase().padStart(8, "0")}`;
-  } else {
-    // 11-bit standard ID (3 hex digits)
-    return `0x${canId.toString(16).toUpperCase().padStart(3, "0")}`;
-  }
-}
-
-/**
  * Format data bytes for display
  */
 export function formatDataBytes(

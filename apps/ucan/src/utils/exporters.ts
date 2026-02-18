@@ -5,7 +5,8 @@
  */
 
 import { CANMessage, BusStatistics, ExportConfig } from "../types";
-import { formatCANId, formatDataBytes } from "../core/canProtocol";
+import { formatDataBytes } from "../core/canProtocol";
+import { formatCANId } from "./formatters";
 
 /**
  * Export messages to CSV format
