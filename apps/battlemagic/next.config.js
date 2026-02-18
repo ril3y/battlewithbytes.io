@@ -10,7 +10,6 @@ const nextConfig = {
   transpilePackages: [
     '@battlewithbytes/battlemagic-core',
     '@battlewithbytes/battlemagic-analyzer',
-    '@battlewithbytes/battlemagic-ui',
     'battlemagic-analyzer'
   ],
   webpack: (config, { isServer }) => {
