@@ -482,7 +482,7 @@ export const useWireMapperStore = create<WireMapperState>((set, get) => {
 
     setMode: (mode: AppMode) =>
       set((state) => ({
-        settings: { ...state.settings, mode },
+        settings: { ...state.settings, connectionMode: mode },
       })),
 
     clearProject: () => {
