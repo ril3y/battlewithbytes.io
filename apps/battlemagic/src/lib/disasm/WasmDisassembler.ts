@@ -2,11 +2,10 @@
  * WASM-based ARM/Thumb Disassembler
  *
  * Provides high-performance disassembly using Rust/WASM (yaxpeax-arm).
- * This is a drop-in replacement for CapstoneDisassembler with 97% smaller size (155KB vs 5.2MB).
  *
  * Architecture:
  * - Uses battlemagic-core Rust WASM module (yaxpeax-arm)
- * - Implements same interface as ArmDisassembler/CapstoneDisassembler for compatibility
+ * - Implements same interface as ArmDisassembler for compatibility
  * - Handles ARM Cortex-M Thumb/Thumb-2 and full ARM instruction sets
  * - Detects branch instructions and calculates targets
  * - Fast initialization and execution

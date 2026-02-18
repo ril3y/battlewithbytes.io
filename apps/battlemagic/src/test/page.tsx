@@ -401,8 +401,8 @@ export default function BattleMagicTestPage() {
             <div className="text-sm text-blue-200">
               <strong>ℹ️ Info:</strong> This page tests the Rust/WASM
               integration with a proof-of-concept ARM Thumb disassembler. The
-              current implementation is simplified - real Capstone integration
-              will be added in Phase 2.
+              current implementation uses the Rust/WASM disassembler (yaxpeax-arm)
+              with ArmDisassembler as fallback.
             </div>
           </div>
         </div>

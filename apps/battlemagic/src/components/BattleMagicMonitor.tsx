@@ -36,7 +36,6 @@ import ProjectMenu from "./ProjectMenu";
 import DebuggerView from "./DebuggerView";
 import AnalysisPanel, { AnalysisResults } from "./AnalysisPanel";
 import XrefPanel from "./XrefPanel";
-// import VectorTablePanel from './VectorTablePanel'; // TODO: Fix this import
 import { FirmwareDumpWorkflow } from "./FirmwareDumpWorkflow";
 import { ChipDatabaseSettings } from "./ChipDatabaseSettings";
 import AnalysisProgressModal from "./AnalysisProgressModal";
@@ -1060,11 +1059,6 @@ export default function BattleMagicMonitor() {
                         }}
                       />
                     )}
-                    {/* panels.activeRightPanel === 'vector-table' && (
-                  <VectorTablePanel
-                    onNavigateToAddress={handleNavigateToAddress}
-                  />
-                ) */}
                     {panels.activeRightPanel === "chip-settings" && (
                       <ChipDatabaseSettings
                         onClose={() => panels.setActiveRightPanel("debugger")}
