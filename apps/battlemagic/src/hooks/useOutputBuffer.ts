@@ -85,7 +85,6 @@ export function useOutputBuffer(options: UseOutputBufferOptions = {}) {
    * Get formatted output strings
    */
   const getFormattedOutput = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _ = version; // Depend on version to recalculate
 
     return buffer.toArray().map((entry) => {
@@ -107,7 +106,6 @@ export function useOutputBuffer(options: UseOutputBufferOptions = {}) {
    * Get raw output entries
    */
   const getOutputEntries = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _ = version; // Depend on version to recalculate
     return buffer.toArray();
   }, [buffer, version]);

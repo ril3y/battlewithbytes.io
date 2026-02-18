@@ -31,7 +31,6 @@ interface ErrorMessage {
 }
 
 type WorkerMessage = AnalyzeMessage;
-type WorkerResponse = ProgressMessage | ResultMessage | ErrorMessage;
 
 // WASM instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

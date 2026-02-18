@@ -13,8 +13,8 @@ interface FunctionRenameModalProps {
 export default function FunctionRenameModal({
   isOpen,
   onClose,
-  onSubmit,
-  address,
+  onSubmit: _onSubmit,
+  address: _address,
   currentName,
 }: FunctionRenameModalProps) {
   if (!isOpen) return null;

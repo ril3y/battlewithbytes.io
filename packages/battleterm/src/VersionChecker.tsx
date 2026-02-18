@@ -26,7 +26,7 @@ export default function VersionChecker() {
     // Check for updates every 30 minutes
     const checkForUpdates = async () => {
       try {
-        const response = await fetch("/tools/serial-terminal", {
+        const response = await fetch("/tools/battleterm", {
           cache: "no-store",
           headers: { "Cache-Control": "no-cache" },
         });

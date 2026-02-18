@@ -146,7 +146,7 @@ export class BasicBlockAnalyzer {
    */
   private classifyBlocks(
     blocks: BasicBlock[],
-    allInstructions: DisassembledInstruction[],
+    _allInstructions: DisassembledInstruction[],
   ): void {
     // Mark entry block
     if (blocks.length > 0) {

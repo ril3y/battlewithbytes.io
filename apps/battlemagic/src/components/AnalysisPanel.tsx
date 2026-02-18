@@ -242,7 +242,7 @@ export default function AnalysisPanel({
               force: false,
             });
           }
-        } catch (error) {
+        } catch (_error) {
           onOutput?.(
             "[Analysis] Auto-detection failed, using fallback configuration",
           );

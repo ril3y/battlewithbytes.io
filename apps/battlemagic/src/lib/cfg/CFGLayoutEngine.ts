@@ -283,8 +283,8 @@ export class CFGLayoutEngine {
     from: BlockLayout,
     to: BlockLayout,
     type: EdgeType,
-    fromBlock: BasicBlock,
-    cfg: ControlFlowGraph,
+    _fromBlock: BasicBlock,
+    _cfg: ControlFlowGraph,
   ): EdgeLayout {
     // Calculate edge color
     const color = this.getEdgeColor(type);

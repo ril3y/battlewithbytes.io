@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import type { FunctionInfo, ArgAnnotation, Comment, BatchQueryResult } from '../lib/context/AnalysisContext';
+import type { FunctionInfo, Comment, BatchQueryResult } from '../lib/context/AnalysisContext';
 import type { XrefResult } from '../lib/wasmAnalyzer';
 import type { CommentType } from '../lib/db/AnalysisDatabase';
 
@@ -234,7 +234,7 @@ describe('Batch Query Performance', () => {
 
     // Measure batch query
     const batchStart = performance.now();
-    const batchResult = batchQuery(addresses, functions, xrefsTo, xrefsFrom, comments);
+    batchQuery(addresses, functions, xrefsTo, xrefsFrom, comments);
     const batchTime = performance.now() - batchStart;
 
     console.log(`\n=== Large Dataset Performance (1000 addresses) ===`);
@@ -304,7 +304,7 @@ describe('Batch Query Performance', () => {
 
     // Batch approach: 256 Map.get() calls (one per address, but all in one function)
     let batchQueryCount = 0;
-    const batchResult = batchQuery(addresses, functions, xrefsTo, xrefsFrom, comments);
+    batchQuery(addresses, functions, xrefsTo, xrefsFrom, comments);
     // Internally, batchQuery makes addresses.length lookups per map (256 × 4 = 1024)
     // But it's a single function call from the caller's perspective
     batchQueryCount = 1; // Single batch query call
