@@ -10,7 +10,7 @@ type ErrorHandler = (error: Error) => void;
 
 export class MockSerialTransport {
   private port: SerialPort | null = null;
-  private isConnected = false;
+  private _connected = false;
   private isReading = false;
   private dataHandlers: DataHandler[] = [];
   private errorHandlers: ErrorHandler[] = [];
@@ -19,7 +19,7 @@ export class MockSerialTransport {
 
   constructor() {
     this.port = null;
-    this.isConnected = false;
+    this._connected = false;
   }
 
   static isSupported(): boolean {
@@ -37,30 +37,34 @@ export class MockSerialTransport {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async connect(port: SerialPort, config: SerialConfig = {}): Promise<void> {
     this.port = port;
-    this.isConnected = true;
+    this._connected = true;
     this.isReading = true;
     this.startReading();
   }
 
   async disconnect(): Promise<void> {
     this.isReading = false;
-    this.isConnected = false;
+    this._connected = false;
     this.port = null;
   }
 
+  isConnected(): boolean {
+    return this._connected;
+  }
+
   isConnectedStatus(): boolean {
-    return this.isConnected;
+    return this._connected;
   }
 
   async send(data: string): Promise<void> {
-    if (!this.isConnected) {
+    if (!this._connected) {
       throw new Error("Not connected to a port");
     }
     this.sentData.push(data);
   }
 
   async sendBytes(data: Uint8Array): Promise<void> {
-    if (!this.isConnected) {
+    if (!this._connected) {
       throw new Error("Not connected to a port");
     }
     const text = new TextDecoder().decode(data);

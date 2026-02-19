@@ -24,9 +24,10 @@ describe('Comment Persistence', () => {
   });
 
   it('should save and retrieve a single comment', async () => {
+    const address = 0x08000100;
     const comment: DbComment = {
-      id: '0x08000100_standard',
-      address: 0x08000100,
+      id: `${address}_standard`,
+      address,
       text: 'This is a test comment',
       comment_type: 'standard',
       timestamp: Date.now(),
@@ -34,7 +35,7 @@ describe('Comment Persistence', () => {
 
     await db.saveComment(comment);
 
-    const retrieved = await db.getComment(0x08000100, 'standard');
+    const retrieved = await db.getComment(address, 'standard');
     expect(retrieved).not.toBeNull();
     expect(retrieved?.text).toBe('This is a test comment');
     expect(retrieved?.comment_type).toBe('standard');
