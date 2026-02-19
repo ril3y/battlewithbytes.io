@@ -167,54 +167,54 @@ jobs:
   #         fi
   #         echo "WASM size OK: $(($SIZE / 1024))KB"
 
-  # Deploy preview (for PRs)
-  deploy-preview:
-    name: Deploy Preview
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    needs: build-and-test
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: packages/battlemagic-core
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.14.4
-
-      - name: Install wasm-pack
-        run: cargo install wasm-pack
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build (production)
-        run: pnpm run build
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-          NODE_ENV: production
-
-      - name: Deploy to Vercel Preview
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: ${{ secrets.VERCEL_TEAM_ID }}
+  # Deploy preview (disabled - Vercel secrets not configured)
+  # deploy-preview:
+  #   name: Deploy Preview
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
+  #   needs: build-and-test
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         targets: wasm32-unknown-unknown
+  #
+  #     - name: Cache Rust dependencies
+  #       uses: Swatinem/rust-cache@v2
+  #       with:
+  #         workspaces: packages/battlemagic-core
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #
+  #     - name: Setup pnpm
+  #       uses: pnpm/action-setup@v2
+  #       with:
+  #         version: 9.14.4
+  #
+  #     - name: Install wasm-pack
+  #       run: cargo install wasm-pack
+  #
+  #     - name: Install dependencies
+  #       run: pnpm install --frozen-lockfile
+  #
+  #     - name: Build (production)
+  #       run: pnpm run build
+  #       env:
+  #         TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  #         TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  #         NODE_ENV: production
+  #
+  #     - name: Deploy to Vercel Preview
+  #       uses: amondnet/vercel-action@v25
+  #       with:
+  #         vercel-token: ${{ secrets.VERCEL_TOKEN }}
+  #         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+  #         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+  #         scope: ${{ secrets.VERCEL_TEAM_ID }}

@@ -30,11 +30,11 @@ interface ToolbarProps {
 export default function Toolbar({
   gdbState,
   targetAttached,
-  uartConnected = false,
-  onConnectGdb,
-  onDisconnectGdb,
-  onConnectUart,
-  onDisconnectUart,
+  uartConnected: _uartConnected = false,
+  onConnectGdb: _onConnectGdb,
+  onDisconnectGdb: _onDisconnectGdb,
+  onConnectUart: _onConnectUart,
+  onDisconnectUart: _onDisconnectUart,
   onScanTargets,
   onHalt,
   onRun,
@@ -46,7 +46,7 @@ export default function Toolbar({
   const gdbConnected =
     gdbState === ConnectionState.CONNECTED ||
     gdbState === ConnectionState.ATTACHED;
-  const isConnecting = gdbState === ConnectionState.CONNECTING;
+  const _isConnecting = gdbState === ConnectionState.CONNECTING;
 
   const ToolbarButton = ({
     icon,

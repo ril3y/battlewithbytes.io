@@ -92,6 +92,5 @@ jobs:
         run: pnpm run test
         env:
           TURBO_CACHE_DIR: .turbo
-        continue-on-error: true
 
       # Turbo cache is automatically saved by actions/cache on cache miss

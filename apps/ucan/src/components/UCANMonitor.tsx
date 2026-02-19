@@ -40,7 +40,7 @@ import {
 import { SerialBridge } from "../core/serialBridge";
 import { protocolToCANMessage } from "../core/canProtocol";
 import { MessageBuffer, StatisticsEngine } from "../core/messageBuffer";
-import { exportMessages, exportStatsSummary } from "../utils/exporters";
+import { exportMessages } from "../utils/exporters";
 import { saveLastDevice } from "../utils/deviceStorage";
 import { importCSVFile } from "../utils/csvImporter";
 import { DefinitionManager } from "../overlays/decoder/definitionManager";
@@ -737,14 +737,6 @@ export default function UCANMonitor({}: UCANMonitorProps) {
 
     input.click();
   }, [displayOptions.paused, updateMessagesAndStats]);
-
-  /**
-   * Export statistics
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleExportStats = () => {
-    exportStatsSummary(stats);
-  };
 
   /**
    * Send CAN message

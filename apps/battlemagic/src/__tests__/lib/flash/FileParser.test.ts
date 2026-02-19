@@ -30,14 +30,15 @@ describe("FileParser", () => {
 
       const result = await FileParser.parseFile(file);
 
-      expect(result.segments.length).toBe(2);
+      // Contiguous records are merged into a single segment
+      expect(result.segments.length).toBe(1);
       expect(result.segments[0].address).toBe(0x0000);
-      expect(result.segments[1].address).toBe(0x0010);
+      expect(result.segments[0].data.length).toBe(32);
     });
 
     it("should handle extended linear address records", async () => {
       const hexContent =
-        ":020000040008F2\n" +
+        ":020000040800F2\n" +
         ":10000000000102030405060708090A0B0C0D0E7B\n" +
         ":00000001FF";
       const file = new File([hexContent], "test.hex", { type: "text/plain" });
@@ -45,7 +46,7 @@ describe("FileParser", () => {
       const result = await FileParser.parseFile(file);
 
       expect(result.segments.length).toBeGreaterThan(0);
-      // Extended address should be applied to subsequent records
+      // Extended address 0x0800 => base address 0x08000000
       expect(result.segments[0].address).toBe(0x08000000);
     });
 
@@ -171,9 +172,9 @@ describe("FileParser", () => {
     it("should parse S3 data record (32-bit address)", async () => {
       const srecContent =
         "S00F000068747470733A2F2F7777772E61\n" +
-        "S3177AF00011223344556677889900112233443396\n" +
+        "S3097AF0000011223344E2\n" +
         "S5030001FB\n" +
-        "S7057AF00000F8";
+        "S7057AF0000090";
       const file = new File([srecContent], "test.s37", {
         type: "text/plain",
       });
@@ -270,9 +271,9 @@ describe("FileParser", () => {
       const hex = FileParser.toIntelHex(data);
 
       expect(hex).toContain(":");
-      expect(hex).toContain("04"); // Record length
-      expect(hex).toContain("00000000"); // Address
-      expect(hex).toContain("00"); // Record type (data)
+      expect(hex).toContain(":04"); // Record length
+      expect(hex).toContain("0000"); // Address
+      expect(hex).toContain("01020304"); // Data bytes
     });
 
     it("should handle extended addresses in HEX generation", () => {
@@ -296,7 +297,8 @@ describe("FileParser", () => {
 
       for (const line of lines) {
         if (line.length > 0) {
-          expect(line).toMatch(/^:[0-9A-F]{2}[0-9A-F]{8}[0-9A-F]{2}/);
+          // Intel HEX format: :LLAAAATT[DD...]CC
+          expect(line).toMatch(/^:[0-9A-F]{2}[0-9A-F]{4}[0-9A-F]{2}/);
         }
       }
     });
@@ -308,8 +310,8 @@ describe("FileParser", () => {
       const srec = FileParser.toSRecord(data);
 
       expect(srec).toContain("S0"); // Header
-      expect(srec).toContain("S1"); // Data record (16-bit address)
-      expect(srec).toContain("S9"); // Start address
+      expect(srec).toContain("S3"); // Data record (32-bit address, default)
+      expect(srec).toContain("S7"); // Start address (32-bit)
     });
 
     it("should use 32-bit addressing for S-records by default", () => {
@@ -356,7 +358,7 @@ describe("FileParser", () => {
 
       expect(commands.length).toBe(1);
       expect(commands[0]).toContain("vFlashWrite");
-      expect(commands[0]).toContain("08000000");
+      expect(commands[0]).toContain("8000000");
       expect(commands[0]).toContain("01020304");
     });
 
@@ -377,8 +379,8 @@ describe("FileParser", () => {
       const commands = FileParser.segmentsToFlashCommands(segments);
 
       expect(commands.length).toBe(2);
-      expect(commands[0]).toContain("08000000");
-      expect(commands[1]).toContain("08000100");
+      expect(commands[0]).toContain("8000000");
+      expect(commands[1]).toContain("8000100");
     });
   });
 
@@ -398,8 +400,8 @@ describe("FileParser", () => {
       const baseAddress = 0x20000000;
       const hexString = FileParser.toIntelHex(data, baseAddress);
 
-      // Verify the hex contains the address
-      expect(hexString).toContain("020000040002"); // Extended address 0x0002
+      // Verify the hex contains extended linear address record for 0x2000
+      expect(hexString).toContain("020000042000");
     });
   });
 });

@@ -23,6 +23,7 @@ import type {
 } from "../lib/cfg/types";
 import { drawGraphBlockNode } from "./ControlFlowGraphView/GraphBlockNode";
 import { useXref } from "../lib/context/XrefContext";
+import { SlideOutMenu } from "./SlideOutMenu";
 
 interface ControlFlowGraphViewProps {
   instructions: DisassembledInstruction[];
@@ -74,6 +75,8 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
   });
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<EdgeLayout | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{
     block: BasicBlock;
     x: number;
@@ -551,6 +554,74 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     [layout, transform],
   );
 
+  // Helper to calculate distance from point to line segment
+  const distToSegment = (
+    px: number,
+    py: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+  ) => {
+    const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    if (l2 === 0) return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    const distSq =
+      (px - (x1 + t * (x2 - x1))) ** 2 + (py - (y1 + t * (y2 - y1))) ** 2;
+    return Math.sqrt(distSq);
+  };
+
+  // Helper to calculate distance from point to bezier curve (approx)
+  const distToBezier = (
+    px: number,
+    py: number,
+    p0h: { x: number; y: number },
+    p1h: { x: number; y: number },
+    p2h: { x: number; y: number },
+    p3h: { x: number; y: number },
+  ) => {
+    let minDist = Infinity;
+    const steps = 20;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const mt = 1 - t;
+      const x = mt * mt * mt * p0h.x + 3 * mt * mt * t * p1h.x + 3 * mt * t * t * p2h.x + t * t * t * p3h.x;
+      const y = mt * mt * mt * p0h.y + 3 * mt * mt * t * p1h.y + 3 * mt * t * t * p2h.y + t * t * t * p3h.y;
+      const d = Math.sqrt((px - x) ** 2 + (py - y) ** 2);
+      if (d < minDist) minDist = d;
+    }
+    return minDist;
+  };
+
+  const getEdgeAtPosition = useCallback(
+    (canvasX: number, canvasY: number): EdgeLayout | null => {
+      if (!layout) return null;
+
+      const graphX = (canvasX - transform.offsetX) / transform.scale;
+      const graphY = (canvasY - transform.offsetY) / transform.scale;
+      const HIT_THRESHOLD = 5 / transform.scale; // 5px tolerance scaled
+
+      for (const edge of layout.edges) {
+        const { points } = edge;
+        if (points.length === 2) {
+          // Straight line
+          if (distToSegment(graphX, graphY, points[0].x, points[0].y, points[1].x, points[1].y) < HIT_THRESHOLD) {
+            return edge;
+          }
+        } else if (points.length === 4) {
+          // Bezier
+          if (distToBezier(graphX, graphY, points[0], points[1], points[2], points[3]) < HIT_THRESHOLD) {
+            return edge;
+          }
+        }
+      }
+      return null;
+    },
+    [layout, transform]
+  );
+
+
   // Handle mouse move
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -596,7 +667,7 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
     [isPanning, lastPanPos, getBlockAtPosition, cfg],
   );
 
-  // Handle mouse down (start panning)
+  // Handle mouse down (select or start panning)
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const canvas = canvasRef.current;
@@ -618,6 +689,28 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
           if (block && onAddressClick) {
             onAddressClick(block.startAddress);
           }
+          // Select block and open menu
+          setSelectedBlock(blockId);
+          setSelectedEdge(null);
+          setIsMenuOpen(true);
+        } else {
+          // Check for edge click
+          const edge = getEdgeAtPosition(x, y);
+          if (edge) {
+            setSelectedEdge(edge);
+            setSelectedBlock(null);
+            setIsMenuOpen(true);
+          } else {
+            // Clicked on empty space (pan)
+            setIsPanning(true);
+            setLastPanPos({ x, y });
+            // Don't close menu automatically if they just want to pan, 
+            // but usually clicking background clears selection
+            if (!isMenuOpen) {
+              setSelectedBlock(null);
+              setSelectedEdge(null);
+            }
+          }
         }
       } else if (e.button === 2) {
         // Right click
@@ -638,7 +731,7 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
         }
       }
     },
-    [getBlockAtPosition, cfg, onAddressClick, isAnalyzed],
+    [getBlockAtPosition, getEdgeAtPosition, cfg, onAddressClick, isAnalyzed, isMenuOpen],
   );
 
   // Handle mouse up (stop panning)
@@ -1024,6 +1117,152 @@ export const ControlFlowGraphView: React.FC<ControlFlowGraphViewProps> = ({
           </button>
         </div>
       )}
+      {/* Slide Out Menu */}
+      <SlideOutMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        title={
+          selectedBlock ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-blue-500" />
+              Block Details: {selectedBlock}
+            </span>
+          ) : selectedEdge ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-purple-500" />
+              Edge Details
+            </span>
+          ) : "Details"
+        }
+      >
+        {selectedBlock && cfg && (
+          <div className="space-y-4">
+            {(() => {
+              const block = cfg.blocks.get(selectedBlock);
+              if (!block) return null;
+              const xrefs = blockXrefInfo.get(selectedBlock);
+
+              return (
+                <>
+                  <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                    <div className="text-xs text-slate-400 mb-1">Address Range</div>
+                    <div className="font-mono text-green-400">
+                      0x{block.startAddress.toString(16).toUpperCase()} - 0x{block.endAddress.toString(16).toUpperCase()}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                    <div className="text-xs text-slate-400 mb-1">Properties</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Type: <span className="text-amber-400">{block.type}</span></div>
+                      <div>Size: <span className="text-slate-200">{block.endAddress - block.startAddress} bytes</span></div>
+                      <div>Instrs: <span className="text-cyan-400">{block.instructions.length}</span></div>
+                    </div>
+                  </div>
+
+                  {xrefs && (
+                    <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                      <div className="text-xs text-slate-400 mb-1">References</div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Incoming Calls:</span>
+                          <span className="text-blue-400">{xrefs.incomingCalls}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Incoming Branches:</span>
+                          <span className="text-green-400">{xrefs.incomingBranches}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Outgoing Calls:</span>
+                          <span className="text-blue-400">{xrefs.outgoingCalls}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Outgoing Branches:</span>
+                          <span className="text-green-400">{xrefs.outgoingBranches}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="text-xs text-slate-400 mb-2">Instructions</div>
+                    <div className="space-y-1 font-mono text-xs bg-black/50 p-2 rounded max-h-60 overflow-y-auto">
+                      {block.instructions.map(inst => (
+                        <div key={inst.address} className="flex gap-4 hover:bg-slate-800/50 p-0.5 rounded">
+                          <span className="text-slate-500">0x{inst.address.toString(16)}</span>
+                          <span className="text-yellow-100">{inst.mnemonic} {inst.operands}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {selectedEdge && cfg && (
+          <div className="space-y-4">
+            {(() => {
+              const fromBlock = cfg.blocks.get(selectedEdge.from);
+              const toBlock = cfg.blocks.get(selectedEdge.to);
+              const style = getEdgeStyleForXref(selectedEdge);
+
+              return (
+                <>
+                  <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                    <div className="text-xs text-slate-400 mb-1">Connection Type</div>
+                    <div className="font-bold text-lg" style={{ color: style.color }}>
+                      {style.label ? style.label.toUpperCase() : "UNKNOWN"}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {selectedEdge.isBackEdge ? "(Back Edge / Loop)" : "(Forward Edge)"}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                      <div className="text-xs text-slate-400 mb-1">Source Block</div>
+                      <div className="font-mono text-blue-400 cursor-pointer hover:underline"
+                        onClick={() => {
+                          setSelectedBlock(selectedEdge.from);
+                          setSelectedEdge(null);
+                        }}>
+                        {selectedEdge.from}
+                      </div>
+                      {fromBlock && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          0x{fromBlock.startAddress.toString(16)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-center">
+                      <div className="text-slate-500">↓</div>
+                    </div>
+
+                    <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                      <div className="text-xs text-slate-400 mb-1">Target Block</div>
+                      <div className="font-mono text-green-400 cursor-pointer hover:underline"
+                        onClick={() => {
+                          setSelectedBlock(selectedEdge.to);
+                          setSelectedEdge(null);
+                        }}>
+                        {selectedEdge.to}
+                      </div>
+                      {toBlock && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          0x{toBlock.startAddress.toString(16)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+      </SlideOutMenu>
     </div>
   );
 };

@@ -92,21 +92,9 @@ export async function closeSerialPort(port: SerialPort): Promise<void> {
 }
 
 /**
- * Write data to a serial port
- */
-export async function writeToPort(
-  writer: WritableStreamDefaultWriter<Uint8Array>,
-  data: string | Uint8Array,
-): Promise<void> {
-  const encoder = new TextEncoder();
-  const bytes = typeof data === "string" ? encoder.encode(data) : data;
-  await writer.write(bytes);
-}
-
-/**
  * Convert line ending type to actual characters
  */
-export function getLineEndingChars(lineEnding: LineEnding): string {
+function getLineEndingChars(lineEnding: LineEnding): string {
   switch (lineEnding) {
     case "cr":
       return "\r";
@@ -204,53 +192,6 @@ export function bytesToHex(
 }
 
 /**
- * Convert hex string to bytes
- */
-export function hexToBytes(hexString: string): Uint8Array {
-  const cleaned = hexString.replace(/[^0-9a-fA-F]/g, "");
-  if (cleaned.length % 2 !== 0) {
-    throw new Error("Invalid hex string length");
-  }
-
-  const bytes = new Uint8Array(cleaned.length / 2);
-  for (let i = 0; i < cleaned.length; i += 2) {
-    bytes[i / 2] = parseInt(cleaned.substr(i, 2), 16);
-  }
-  return bytes;
-}
-
-/**
- * Format bytes as ASCII with non-printable characters replaced
- */
-export function bytesToAscii(
-  bytes: Uint8Array,
-  placeholder: string = ".",
-): string {
-  return Array.from(bytes)
-    .map((byte) => {
-      // Printable ASCII range
-      if (byte >= 32 && byte <= 126) {
-        return String.fromCharCode(byte);
-      }
-      return placeholder;
-    })
-    .join("");
-}
-
-/**
- * Calculate transfer rate in bytes per second
- */
-export function calculateTransferRate(
-  bytes: number,
-  startTime: number,
-  endTime: number = Date.now(),
-): number {
-  const durationSeconds = (endTime - startTime) / 1000;
-  if (durationSeconds <= 0) return 0;
-  return Math.round(bytes / durationSeconds);
-}
-
-/**
  * Format bytes to human-readable string
  */
 export function formatBytes(bytes: number): string {
@@ -270,58 +211,3 @@ export function formatTransferRate(bytesPerSecond: number): string {
   return `${formatBytes(bytesPerSecond)}/s`;
 }
 
-/**
- * Validate serial configuration
- */
-export function validateSerialConfig(config: Partial<SerialConfig>): string[] {
-  const errors: string[] = [];
-
-  if (config.baudRate !== undefined) {
-    if (config.baudRate <= 0 || !Number.isInteger(config.baudRate)) {
-      errors.push("Baud rate must be a positive integer");
-    }
-  }
-
-  if (config.dataBits !== undefined) {
-    if (config.dataBits !== 7 && config.dataBits !== 8) {
-      errors.push("Data bits must be 7 or 8");
-    }
-  }
-
-  if (config.stopBits !== undefined) {
-    if (config.stopBits !== 1 && config.stopBits !== 2) {
-      errors.push("Stop bits must be 1 or 2");
-    }
-  }
-
-  if (config.parity !== undefined) {
-    if (!["none", "even", "odd"].includes(config.parity)) {
-      errors.push("Parity must be none, even, or odd");
-    }
-  }
-
-  if (config.flowControl !== undefined) {
-    if (!["none", "hardware", "xon-xoff"].includes(config.flowControl)) {
-      errors.push("Flow control must be none, hardware, or xon-xoff");
-    }
-  }
-
-  return errors;
-}
-
-/**
- * Get port info as a readable string
- */
-export function getPortInfo(port: SerialPort): string {
-  const info = port.getInfo();
-  const parts: string[] = [];
-
-  if (info.usbVendorId) {
-    parts.push(`VID: 0x${info.usbVendorId.toString(16).padStart(4, "0")}`);
-  }
-  if (info.usbProductId) {
-    parts.push(`PID: 0x${info.usbProductId.toString(16).padStart(4, "0")}`);
-  }
-
-  return parts.length > 0 ? parts.join(", ") : "Unknown device";
-}

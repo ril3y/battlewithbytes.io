@@ -5,7 +5,8 @@
  */
 
 import { CANMessage, BusStatistics, ExportConfig } from "../types";
-import { formatCANId, formatDataBytes } from "../core/canProtocol";
+import { formatDataBytes } from "../core/canProtocol";
+import { formatCANId } from "./formatters";
 
 /**
  * Export messages to CSV format
@@ -221,59 +222,3 @@ export function exportMessages(
   downloadFile(content, filename, mimeType);
 }
 
-/**
- * Export statistics summary
- */
-export function exportStatsSummary(stats: BusStatistics): void {
-  const summary = {
-    exportDate: new Date().toISOString(),
-    statistics: {
-      rxCount: stats.rxCount,
-      txCount: stats.txCount,
-      errorCount: stats.errorCount,
-      totalMessages: stats.rxCount + stats.txCount,
-      messagesPerSecond: stats.messagesPerSecond,
-      busLoad: stats.busLoad,
-      uptimeMs: stats.uptime,
-      uptimeFormatted: formatUptime(stats.uptime),
-    },
-    perIdStatistics: Array.from(stats.perIdStats.values())
-      .sort((a, b) => b.count - a.count)
-      .map((idStat) => ({
-        canId: formatCANId(idStat.canId, idStat.canId > 0x7ff),
-        canIdDecimal: idStat.canId,
-        count: idStat.count,
-        percentage:
-          ((idStat.count / (stats.rxCount + stats.txCount)) * 100).toFixed(2) +
-          "%",
-        lastSeen: idStat.lastSeen.toISOString(),
-        frequency: idStat.frequency.toFixed(2) + " msg/s",
-        averageIntervalMs: idStat.averageInterval.toFixed(2) + " ms",
-      })),
-  };
-
-  const content = JSON.stringify(summary, null, 2);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const filename = `ucan-stats-${timestamp}.json`;
-
-  downloadFile(content, filename, "application/json");
-}
-
-/**
- * Format uptime in human-readable format
- */
-function formatUptime(uptimeMs: number): string {
-  const seconds = Math.floor(uptimeMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  const parts: string[] = [];
-
-  if (days > 0) parts.push(`${days}d`);
-  if (hours % 24 > 0) parts.push(`${hours % 24}h`);
-  if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
-  if (seconds % 60 > 0) parts.push(`${seconds % 60}s`);
-
-  return parts.join(" ") || "0s";
-}

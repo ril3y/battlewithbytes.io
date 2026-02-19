@@ -44,6 +44,11 @@ function generateBlogData() {
             const fileContent = fs.readFileSync(mdxPath, 'utf-8');
             const { data: frontmatter } = matter(fileContent);
 
+            // Skip disabled/draft posts
+            if (frontmatter.enabled === false) {
+              return;
+            }
+
             // Basic validation
             if (!frontmatter.title || !frontmatter.date || !frontmatter.excerpt) {
               console.warn(`Skipping ${dir}: Missing required frontmatter (title, date, excerpt).`);

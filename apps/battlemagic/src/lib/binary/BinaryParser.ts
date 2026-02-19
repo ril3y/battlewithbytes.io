@@ -597,7 +597,6 @@ export abstract class BinaryParser {
     return headers;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async extractSections(
     _sectionHeaders: SectionHeader[],
   ): Promise<SectionInfo[]> {
@@ -606,7 +605,6 @@ export abstract class BinaryParser {
     return [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async parseSymbolTable(
     _sectionHeaders: SectionHeader[],
   ): Promise<SymbolInfo[]> {

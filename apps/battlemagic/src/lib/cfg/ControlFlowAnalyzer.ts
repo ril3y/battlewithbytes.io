@@ -241,7 +241,7 @@ export class ControlFlowAnalyzer {
     header: string,
     backedge: string,
     path: string[],
-    cfg: ControlFlowGraph,
+    _cfg: ControlFlowGraph,
   ): Loop | null {
     // Find all blocks in loop body
     const headerIndex = path.indexOf(header);
