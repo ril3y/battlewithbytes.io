@@ -15,6 +15,7 @@ import InteractiveCodeBlock from "./interactive/InteractiveCodeBlock";
 import TooltipText from "./TooltipText";
 import I2CDetectOutput from "./interactive/I2CDetectOutput";
 import { useMDXComponents } from "../../mdx-components";
+import GiscusComments from "./GiscusComments";
 
 // Import Prism core styles
 import "prismjs/themes/prism-tomorrow.css";
@@ -247,6 +248,9 @@ export default function BlogPost({ content, metadata }: BlogPostProps) {
         <span className="mx-2">•</span>
         <time dateTime={metadata.date}>{formattedDate}</time>
       </div>
+
+      {/* Comments */}
+      <GiscusComments />
     </article>
   );
 }
