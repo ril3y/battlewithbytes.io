@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Block, ConnectionPoint } from '../../lib/core/types';
+import type { Block, ConnectionPoint, PinoutLayout } from '../../lib/core/types';
 import { layoutPinout, type PinPosition } from '../../lib/pinout';
 
 interface ConnectorPinoutViewProps {
@@ -13,8 +13,8 @@ interface ConnectorPinoutViewProps {
    * For a left-hand connector in the bus modal, labels go on the right; vice versa.
    */
   labelSide?: 'left' | 'right';
-  /** Optional title shown above the connector */
-  title?: string;
+  /** Override the block.pinout for this rendering pass. */
+  layoutOverride?: PinoutLayout;
 }
 
 const PIN_RADIUS = 9;
@@ -33,48 +33,40 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
   selectedPinId,
   onPinClick,
   labelSide = 'right',
-  title,
+  layoutOverride,
 }) => {
   const { positions, width, height, byId } = useMemo(() => {
-    const result = layoutPinout(block.connectionPoints, block.pinout);
+    const result = layoutPinout(block.connectionPoints, layoutOverride ?? block.pinout);
     const map = new Map<string, PinPosition>();
     result.positions.forEach((p) => map.set(p.pinId, p));
     return { ...result, byId: map };
-  }, [block.connectionPoints, block.pinout]);
+  }, [block.connectionPoints, block.pinout, layoutOverride]);
 
-  const headerHeight = title ? 28 : 0;
-  const totalHeight = height + headerHeight;
+  // Reserve horizontal room for the longest label so labels never overflow
+  // the SVG when the layout scales up. ~7 SVG units per character at our text size.
+  const maxLabelChars = block.connectionPoints.reduce(
+    (n, p) => Math.max(n, (p.label || '').length, 8),
+    8
+  );
+  const labelPad = maxLabelChars * 7 + 16;
+  const totalWidth = width + labelPad * 2;
 
   return (
     <svg
-      viewBox={`0 0 ${Math.max(1, width)} ${Math.max(1, totalHeight)}`}
+      viewBox={`0 0 ${Math.max(1, totalWidth)} ${Math.max(1, height)}`}
       style={{
         width: '100%',
-        height: '100%',
-        maxHeight: '70vh',
+        height: 'auto',
+        maxHeight: '60vh',
         display: 'block',
       }}
       preserveAspectRatio="xMidYMid meet"
     >
-      {title && (
-        <text
-          x={width / 2}
-          y={18}
-          textAnchor="middle"
-          fontFamily="Roboto Mono, monospace"
-          fontSize={12}
-          fill="#00ffa0"
-          letterSpacing={1.5}
-        >
-          {title.toUpperCase()}
-        </text>
-      )}
-
       {/* Connector body — a soft outline so the pins read as one connector */}
       <rect
-        x={6}
-        y={6 + headerHeight}
-        width={Math.max(1, width - 12)}
+        x={labelPad - 4}
+        y={6}
+        width={Math.max(1, width + 8)}
         height={Math.max(1, height - 12)}
         rx={8}
         ry={8}
@@ -91,8 +83,8 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
         const fill = isHighlighted ? pin.color || '#888' : '#222';
         const stroke = isSelected ? '#00ffa0' : isHighlighted ? '#fff' : '#444';
 
-        const cx = pos.x;
-        const cy = pos.y + headerHeight;
+        const cx = pos.x + labelPad;
+        const cy = pos.y;
         const labelX = labelSide === 'right' ? cx + PIN_RADIUS + 6 : cx - PIN_RADIUS - 6;
         const labelAnchor = labelSide === 'right' ? 'start' : 'end';
 

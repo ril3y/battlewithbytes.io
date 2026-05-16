@@ -1,8 +1,17 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { Block, ConnectionPoint, Wire } from '../../lib/core/types';
+import type { Block, ConnectionPoint, PinoutLayout, Wire } from '../../lib/core/types';
 import { MODAL_OVERLAY_STYLE } from '../../lib/core/styles';
 import { ConnectorPinoutView, getPinCenterInContainer } from './ConnectorPinoutView';
 import { PinDetailPanel } from './PinDetailPanel';
+
+/** Pick a sensible rectangle (rows × cols) for N pins. */
+function autoRectangleLayout(pinCount: number): PinoutLayout {
+  if (pinCount <= 0) return { shape: 'rectangle', rows: 1, cols: 1 };
+  // Prefer wider than tall — e.g. 6 -> 3x2, 9 -> 3x3, 12 -> 4x3.
+  const cols = Math.ceil(Math.sqrt(pinCount));
+  const rows = Math.ceil(pinCount / cols);
+  return { shape: 'rectangle', rows, cols };
+}
 
 interface BusPinoutModalProps {
   /** The wire whose endpoint is a bus port — clicking the wire (or a context-menu item) triggered the modal. */
@@ -303,14 +312,17 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
           )}
 
           {/* Internal connector pinout (the bus port side) */}
-          <div ref={internalWrapRef} style={{ position: 'relative', zIndex: 1 }}>
+          <div ref={internalWrapRef} style={{ position: 'relative', zIndex: 1, maxWidth: 480 }}>
+            <div style={{ fontSize: 10, letterSpacing: 1.5, color: '#00ffa0', marginBottom: 8 }}>
+              {`${busPortEnd.block.label} · INTERNAL`.toUpperCase()}
+            </div>
             <ConnectorPinoutView
               block={internalBlock}
               highlightedPinIds={highlightedInternalPinIds.size ? highlightedInternalPinIds : undefined}
               selectedPinId={selectedPinId}
               onPinClick={handlePinClick}
               labelSide="right"
-              title={`${busPortEnd.block.label} (internal)`}
+              layoutOverride={autoRectangleLayout(internalBlock.connectionPoints.length)}
             />
             <div style={{ marginTop: 8, fontSize: 10, color: '#666' }}>
               {assigningWireId
@@ -320,7 +332,7 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
           </div>
 
           {/* Destination side — stacked, one mini-pinout per destination block */}
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 480 }}>
             {siblings.map((s) => {
               if (!s.destBlock || !s.destPin) {
                 return (
@@ -356,6 +368,7 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
                   <ConnectorPinoutView
                     block={destOnlyBlock}
                     labelSide="left"
+                    layoutOverride={{ shape: 'rectangle', rows: 1, cols: 1 }}
                   />
                 </div>
               );
