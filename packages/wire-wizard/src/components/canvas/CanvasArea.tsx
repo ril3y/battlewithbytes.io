@@ -34,6 +34,7 @@ import { BlockCreationModal } from '../ui/BlockCreationModal';
 import { BusNameModal } from '../ui/BusNameModal';
 import { ComponentPicker } from '../ui/ComponentPicker';
 import { ComponentConfigModal } from '../ui/ComponentConfigModal';
+import { BusPinoutModal } from '../pinout/BusPinoutModal';
 
 interface CanvasAreaProps {
     /**
@@ -58,6 +59,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
         updateBlock: contextUpdateBlock,
         removeBlock: contextRemoveBlock,
         updateConnectionPoint: contextUpdateConnectionPoint,
+        updateWire: contextUpdateWire,
         getGlobalPosition,
         saveToHistory, undo, redo
     } = useDiagram();
@@ -104,7 +106,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
         contextMenu, openContextMenu, closeContextMenu,
         openBlockModal, closeBlockModal, showBlockModal,
         editingBusName, startEditingBusName, updateEditingBusName, stopEditingBusName,
-        toggleBusWireExpanded, stopPlacement
+        toggleBusWireExpanded, stopPlacement,
+        pinoutWireId, openPinoutForWire, closePinout
     } = useInteraction();
 
     const {
@@ -316,6 +319,16 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
       () => (contextMenu?.wireId ? wires.find(w => w.id === contextMenu.wireId) : undefined),
       [contextMenu?.wireId, wires],
     );
+    const ctxWireIsBusPort = useMemo(() => {
+      if (!ctxCurrentWire) return false;
+      const checkEnd = (blockId?: string, pointId?: string) => {
+        if (!blockId || !pointId) return false;
+        const block = blocks.find(b => b.id === blockId);
+        return !!block?.connectionPoints.find(p => p.id === pointId && p.isBusPort);
+      };
+      return checkEnd(ctxCurrentWire.fromBlockId, ctxCurrentWire.fromPointId)
+          || checkEnd(ctxCurrentWire.toBlockId, ctxCurrentWire.toPointId);
+    }, [ctxCurrentWire, blocks]);
     const ctxNets = useMemo(() => getNetsFromWires(wires), [wires]);
     const ctxAvailableGauges = useMemo(() => getAvailableGauges(), []);
 
@@ -585,6 +598,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
                 setWires(wires.map(w => w.id === wid ? { ...w, wireGauge: gauge ?? undefined } : w));
                 saveToHistory();
               }}
+              wireIsBusPort={ctxWireIsBusPort}
+              onOpenPinout={(wid) => openPinoutForWire(wid)}
             />
             {!readOnly && <FloatingAddButton onClick={() => openBlockModal()} />}
             <BlockCreationModal showModal={showBlockModal} onClose={() => closeBlockModal()} onCreate={(data) => {
@@ -621,6 +636,38 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
                 initialName={getBlockForEdit?.label}
                 existingConnectionPoints={getBlockForEdit?.connectionPoints}
             />
+            {(() => {
+                if (!pinoutWireId) return null;
+                const wire = wires.find((w) => w.id === pinoutWireId);
+                if (!wire) return null;
+                const findBusPortEnd = (w: Wire): { blockId: string; pointId: string } | null => {
+                    const tryEnd = (bid?: string, pid?: string) => {
+                        if (!bid || !pid) return null;
+                        const block = blocks.find((b) => b.id === bid);
+                        if (!block) return null;
+                        const pin = block.connectionPoints.find((p) => p.id === pid && p.isBusPort);
+                        return pin ? { blockId: bid, pointId: pid } : null;
+                    };
+                    return tryEnd(w.fromBlockId, w.fromPointId) ?? tryEnd(w.toBlockId, w.toPointId);
+                };
+                const bp = findBusPortEnd(wire);
+                if (!bp) return null;
+                const siblings = wires.filter((w) =>
+                    (w.fromBlockId === bp.blockId && w.fromPointId === bp.pointId) ||
+                    (w.toBlockId === bp.blockId && w.toPointId === bp.pointId)
+                );
+                return (
+                    <BusPinoutModal
+                        wire={wire}
+                        blocks={blocks}
+                        siblingsAtBusPort={siblings}
+                        updateConnectionPoint={contextUpdateConnectionPoint}
+                        updateWire={contextUpdateWire}
+                        saveToHistory={saveToHistory}
+                        onClose={closePinout}
+                    />
+                );
+            })()}
         </div>
     );
 };

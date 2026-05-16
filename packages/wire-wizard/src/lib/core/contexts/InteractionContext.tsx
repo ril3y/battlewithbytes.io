@@ -63,6 +63,11 @@ interface InteractionContextValue {
   openComponentPicker: () => void;
   closeComponentPicker: () => void;
 
+  // Bus-port pinout drill-in modal — keyed by the wire whose endpoint is a bus port
+  pinoutWireId: string | null;
+  openPinoutForWire: (wireId: string) => void;
+  closePinout: () => void;
+
   // Connection point editing
   editingPoint: ConnectionPoint | null;
   setEditingPoint: (point: ConnectionPoint | null) => void;
@@ -108,6 +113,9 @@ export function InteractionProvider({ children }: InteractionProviderProps) {
 
   // Component picker
   const [showComponentPicker, setShowComponentPicker] = useState(false);
+
+  // Bus-port pinout modal
+  const [pinoutWireId, setPinoutWireId] = useState<string | null>(null);
 
   // Connection point editing
   const [editingPoint, setEditingPoint] = useState<ConnectionPoint | null>(null);
@@ -173,6 +181,14 @@ export function InteractionProvider({ children }: InteractionProviderProps) {
     setShowComponentPicker(false);
   }, []);
 
+  // Bus-port pinout modal
+  const openPinoutForWire = useCallback((wireId: string) => {
+    setPinoutWireId(wireId);
+  }, []);
+  const closePinout = useCallback(() => {
+    setPinoutWireId(null);
+  }, []);
+
   // Expanded bus wires
   const setExpandedBusWires = useCallback((wires: Set<string>) => {
     setExpandedBusWiresState(wires);
@@ -226,6 +242,7 @@ export function InteractionProvider({ children }: InteractionProviderProps) {
     setEditingPoint(null);
     setPlacementMode(false);
     setTargetBlockId(null);
+    setPinoutWireId(null);
     // Note: expandedBusWires is intentionally NOT reset - it's a persistent UI preference
   }, []);
 
@@ -263,6 +280,11 @@ export function InteractionProvider({ children }: InteractionProviderProps) {
     showComponentPicker,
     openComponentPicker,
     closeComponentPicker,
+
+    // Bus-port pinout modal
+    pinoutWireId,
+    openPinoutForWire,
+    closePinout,
 
     // Connection point editing
     editingPoint,

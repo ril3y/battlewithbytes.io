@@ -10,7 +10,6 @@ on:
       - 'apps/battlemagic/**'
       - 'apps/mosfet-calculator/**'
       - 'apps/ohms-law-calculator/**'
-      - 'apps/wirewizard/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
   workflow_dispatch:
@@ -28,7 +27,6 @@ on:
           - battlemagic
           - mosfet-calculator
           - ohms-law-calculator
-          - wirewizard
 
 concurrency:
   group: "tools-deploy"
@@ -46,7 +44,6 @@ jobs:
           - battlemagic
           - mosfet-calculator
           - ohms-law-calculator
-          - wirewizard
     steps:
       - name: Check if app should be built
         id: should-build
@@ -192,4 +189,3 @@ jobs:
           echo "  battlemagic.battlewithbytes.io → battlemagic-deployment"
           echo "  mosfet-calculator.battlewithbytes.io → mosfet-calculator-deployment"
           echo "  ohms-law-calculator.battlewithbytes.io → ohms-law-calculator-deployment"
-          echo "  wirewizard.battlewithbytes.io → wirewizard-deployment"

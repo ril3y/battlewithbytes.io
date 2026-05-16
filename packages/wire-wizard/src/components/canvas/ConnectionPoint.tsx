@@ -239,13 +239,45 @@ export const ConnectionPoint: React.FC<ConnectionPointProps> = ({
     }
   };
 
+  const busPortCount = cp.isBusPort ? (cp.internalPinIds?.length ?? 0) : 0;
+
   return (
     <g>
       {/* Selection/wire-start highlight ring */}
       {renderHighlightRing()}
 
+      {/* Bus-port ring: thicker outline around any point flagged as a bus port */}
+      {cp.isBusPort && (
+        <circle
+          cx={absoluteX}
+          cy={absoluteY}
+          r={radius + 3}
+          fill="none"
+          stroke="#00aaff"
+          strokeWidth={1.5}
+          strokeDasharray="2,2"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+
       {/* Connection point shape */}
       {renderShape()}
+
+      {/* Bus-port pin-count badge */}
+      {cp.isBusPort && busPortCount > 0 && (
+        <text
+          x={absoluteX}
+          y={absoluteY - radius - 5}
+          fill="#00aaff"
+          fontSize="8"
+          fontFamily="monospace"
+          textAnchor="middle"
+          fontWeight="bold"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          [{busPortCount}]
+        </text>
+      )}
 
       {/* Connection point label */}
       {showConnectionLabels && (

@@ -17,10 +17,6 @@
       "destination": "https://battleterm.battlewithbytes.io/:path*"
     },
     {
-      "source": "/tools/wirewizard/:path*",
-      "destination": "https://wirewizard.battlewithbytes.io/:path*"
-    },
-    {
       "source": "/tools/mosfet-calculator/:path*",
       "destination": "https://mosfet-calculator.battlewithbytes.io/:path*"
     },

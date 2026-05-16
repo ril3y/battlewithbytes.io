@@ -75,6 +75,11 @@ function libraryPointsToConnectionPoints(
     description: cp.description,
     labelOffsetX: cp.labelOffsetX,
     labelOffsetY: cp.labelOffsetY,
+    pinNumber: cp.pinNumber,
+    signalType: cp.signalType,
+    hidden: cp.hidden,
+    isBusPort: cp.isBusPort,
+    internalPinIds: cp.internalPinIds,
     isGenerated: true,
   }));
 }

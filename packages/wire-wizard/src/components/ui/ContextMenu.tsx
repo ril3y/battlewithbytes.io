@@ -21,6 +21,9 @@ interface ContextMenuProps {
   onSetNet?: (wireId: string, netName: string | null) => void;
   onSetGauge?: (wireId: string, gauge: WireGauge | null) => void;
   onSetWireLayer?: (wireId: string, layer: 'top' | 'bottom' | null) => void;
+  onOpenPinout?: (wireId: string) => void;
+  /** True when either endpoint of the right-clicked wire is a bus port. */
+  wireIsBusPort?: boolean;
   /** Existing nets in the diagram, with a representative color per net. */
   nets?: Array<{ name: string; color: string }>;
   /** Available wire gauges to pick from. */
@@ -45,6 +48,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onSetNet,
   onSetGauge,
   onSetWireLayer,
+  onOpenPinout,
+  wireIsBusPort = false,
   nets = [],
   availableGauges = [],
   currentNet = null,
@@ -111,6 +116,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     >
       {contextMenu.wireId && (
         <>
+          {onOpenPinout && wireIsBusPort && (
+            <div
+              onClick={() => {
+                onOpenPinout(contextMenu.wireId!);
+                onClose();
+              }}
+              style={itemStyle('pinout', '#00aaff')}
+              onMouseEnter={() => setHoveredItem('pinout')}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              View Pinout
+            </div>
+          )}
+
           <div
             onClick={() => {
               onRemoveWire(contextMenu.wireId!);

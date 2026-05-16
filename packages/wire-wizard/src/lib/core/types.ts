@@ -27,6 +27,22 @@ export interface WireSegmentGauge {
 
 export type ConnectionPointShape = 'circle' | 'rectangle' | 'blade' | 'ring' | 'spade';
 
+export type PinSignalType =
+  | 'power'
+  | 'ground'
+  | 'signal'
+  | 'data'
+  | 'analog'
+  | 'pwm'
+  | 'rf';
+
+export interface PinoutLayout {
+  shape: 'rectangle' | 'circle' | 'auto';
+  rows?: number;        // for rectangle layout
+  cols?: number;        // for rectangle layout
+  ringRadius?: number;  // for circle layout
+}
+
 export interface ConnectionPoint {
   id: string;
   x: number;
@@ -42,6 +58,11 @@ export interface ConnectionPoint {
   shape?: ConnectionPointShape; // Shape of the connection point (default: 'circle')
   radius?: number; // Custom radius for the connection point (default: 6)
   isGenerated?: boolean; // Flag if point was auto-generated from config
+  pinNumber?: number; // 1-based pin index for connector/pinout view
+  signalType?: PinSignalType; // Semantic role used by the pinout view
+  hidden?: boolean; // Pin exists in data + pinout view but is not rendered on the canvas
+  isBusPort?: boolean; // Wires terminating here represent cables, not single conductors
+  internalPinIds?: string[]; // For bus ports: IDs of internal (typically hidden) pins this aggregates
 }
 
 export interface Block {
@@ -68,6 +89,7 @@ export interface Block {
   locked?: boolean; // Whether the block's position is locked
   flipH?: boolean; // Mirror the block visual horizontally (connection-point x is also mirrored at toggle time)
   flipV?: boolean; // Mirror the block visual vertically
+  pinout?: PinoutLayout; // Optional connector pinout used by the bus drill-in view
 }
 
 export interface Wire {
@@ -113,6 +135,12 @@ export interface Wire {
    * - undefined → fall back to block-level: any endpoint with wiresOnTop=true lifts it above.
    */
   wireLayer?: 'top' | 'bottom';
+
+  // Bus-port wire pin assignments — set in the pinout drill-in view when
+  // this wire's endpoint is a bus port. The from/to point IDs still refer
+  // to the bus port itself; these fields say which internal pin is in use.
+  fromInternalPinId?: string;
+  toInternalPinId?: string;
 }
 
 export interface DiagramData {

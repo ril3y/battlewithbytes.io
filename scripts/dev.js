@@ -9,7 +9,6 @@ const DEFAULT_PORTS = {
   web: 5555,
   "mosfet-calculator": 5561,
   "ohms-law-calculator": 5562,
-  wirewizard: 5563,
   battleterm: 5564,
   ucan: 5565,
   battleforge: 5566,

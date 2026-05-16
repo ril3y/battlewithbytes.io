@@ -17,7 +17,6 @@ on:
           - battleforge
           - battlemagic
           - ucan
-          - wirewizard
           - mosfet-calculator
           - ohms-law-calculator
 
@@ -130,7 +129,7 @@ jobs:
           fi
 
           # Copy tool apps to /tools/ subdirectory (if built)
-          for app in battleterm battleforge battlemagic ucan wirewizard mosfet-calculator ohms-law-calculator; do
+          for app in battleterm battleforge battlemagic ucan mosfet-calculator ohms-law-calculator; do
             if [ -d "apps/$app/out" ]; then
               mkdir -p "_site/tools/$app"
               cp -r "apps/$app/out/"* "_site/tools/$app/"

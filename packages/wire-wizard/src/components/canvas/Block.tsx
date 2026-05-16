@@ -141,8 +141,8 @@ export const Block: React.FC<BlockProps> = ({
         </g>
       )}
 
-      {/* Connection points */}
-      {block.connectionPoints.map(cp => {
+      {/* Connection points (hidden pins live in pinout drill-in only) */}
+      {block.connectionPoints.filter(cp => !cp.hidden).map(cp => {
         const isPointSelected = selectedPointId === cp.id && isSelected;
         const isWireStartPoint = wireStart?.blockId === block.id && wireStart?.pointId === cp.id;
 

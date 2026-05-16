@@ -49,6 +49,16 @@ export interface ConnectionPointDefinition {
   /** Label offsets */
   labelOffsetX?: number;
   labelOffsetY?: number;
+  /** 1-based pin index for the connector/pinout view */
+  pinNumber?: number;
+  /** Semantic role used by the pinout view */
+  signalType?: 'power' | 'ground' | 'signal' | 'data' | 'analog' | 'pwm' | 'rf';
+  /** Pin exists in data + pinout view but is not rendered on the canvas */
+  hidden?: boolean;
+  /** Wires terminating here represent cables, not single conductors */
+  isBusPort?: boolean;
+  /** For bus ports: IDs of internal (typically hidden) pins this aggregates */
+  internalPinIds?: string[];
 }
 
 /**
