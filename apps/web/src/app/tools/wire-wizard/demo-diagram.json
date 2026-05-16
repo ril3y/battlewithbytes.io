@@ -1,0 +1,2412 @@
+{
+  "blocks": [
+    {
+      "id": "block_1778249852001",
+      "x": 1950,
+      "y": 250,
+      "width": 300,
+      "height": 200,
+      "label": "Left Motor",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "phase-u",
+          "x": 80,
+          "y": 75,
+          "label": "Phase U (Yellow)",
+          "color": "#ffcc00",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase U connection",
+          "isGenerated": true
+        },
+        {
+          "id": "phase-w",
+          "x": 80,
+          "y": 100,
+          "label": "Phase W (Blue)",
+          "color": "#0066ff",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase W connection",
+          "isGenerated": true
+        },
+        {
+          "id": "phase-v",
+          "x": 80,
+          "y": 125,
+          "label": "Phase V (Green)",
+          "color": "#00cc66",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase V connection",
+          "isGenerated": true
+        },
+        {
+          "id": "harness-1",
+          "x": 118,
+          "y": 160,
+          "label": "Harness 1",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 1",
+          "isGenerated": true
+        },
+        {
+          "id": "harness-2",
+          "x": 88,
+          "y": 160,
+          "label": "Harness 2",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 2",
+          "isGenerated": true
+        },
+        {
+          "id": "harness-3",
+          "x": 58,
+          "y": 160,
+          "label": "Harness 3",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 3",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 300 200",
+      "componentConfig": {
+        "hubDiameter": 120,
+        "voltage": 48,
+        "powerRating": 3000,
+        "cableColor": "#ff6600",
+        "boltCount": 6,
+        "showBolts": true
+      },
+      "componentType": "hub-motor",
+      "rotation": 0,
+      "labelOffsetX": -39.900724480467716,
+      "labelOffsetY": 141.73202861182233,
+      "flipH": true
+    },
+    {
+      "id": "block_1778249861215",
+      "x": 1550,
+      "y": -180,
+      "width": 300,
+      "height": 200,
+      "label": "Right Motor",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778249861215_pt_0",
+          "x": 80,
+          "y": 75,
+          "label": "Phase U (Yellow)",
+          "color": "#ffcc00",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase U connection",
+          "isGenerated": true,
+          "labelOffsetX": 14.910178417146186,
+          "labelOffsetY": -54.491628174957725
+        },
+        {
+          "id": "block_1778249861215_pt_1",
+          "x": 80,
+          "y": 100,
+          "label": "Phase W (Blue)",
+          "color": "#0066ff",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase W connection",
+          "isGenerated": true,
+          "labelOffsetX": -40.56864552336185,
+          "labelOffsetY": -45.56419262965279
+        },
+        {
+          "id": "block_1778249861215_pt_2",
+          "x": 80,
+          "y": 125,
+          "label": "Phase V (Green)",
+          "color": "#00cc66",
+          "shape": "circle",
+          "radius": 7,
+          "description": "Motor phase V connection",
+          "isGenerated": true,
+          "labelOffsetX": -10.344638000314518,
+          "labelOffsetY": 5.489295544830382
+        },
+        {
+          "id": "block_1778249861215_pt_3",
+          "x": 118,
+          "y": 160,
+          "label": "Harness 1",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 1",
+          "isGenerated": true,
+          "labelOffsetX": -53,
+          "labelOffsetY": 16.99999999999999
+        },
+        {
+          "id": "block_1778249861215_pt_4",
+          "x": 88,
+          "y": 160,
+          "label": "Harness 2",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 2",
+          "isGenerated": true,
+          "labelOffsetX": -2.200000000000001,
+          "labelOffsetY": 29.59999999999991
+        },
+        {
+          "id": "block_1778249861215_pt_5",
+          "x": 58,
+          "y": 160,
+          "label": "Harness 3",
+          "color": "#fff",
+          "shape": "rectangle",
+          "radius": 6,
+          "description": "Hall sensor / harness connector 3",
+          "isGenerated": true,
+          "labelOffsetX": 36.19980279667817,
+          "labelOffsetY": -20.376976070479703
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 300 200",
+      "componentConfig": {
+        "hubDiameter": 120,
+        "voltage": 48,
+        "powerRating": 3000,
+        "cableColor": "#ff6600",
+        "boltCount": 6,
+        "showBolts": true
+      },
+      "componentType": "hub-motor",
+      "rotation": 270,
+      "labelOffsetX": -39.900724480467716,
+      "labelOffsetY": 143.6426081296837,
+      "flipH": true
+    },
+    {
+      "id": "block_1778269135316",
+      "x": 1050,
+      "y": 290,
+      "width": 160,
+      "height": 200,
+      "label": "DC Contactor",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "main-1",
+          "x": 40,
+          "y": 20,
+          "label": "MAIN 1",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true
+        },
+        {
+          "id": "main-2",
+          "x": 120,
+          "y": 20,
+          "label": "MAIN 2",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true
+        },
+        {
+          "id": "coil-a1",
+          "x": 35,
+          "y": 45,
+          "label": "A1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "coil-a2",
+          "x": 125,
+          "y": 45,
+          "label": "A2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 160 200",
+      "componentConfig": {
+        "modelLabel": "MZJ-600A",
+        "amperage": 200,
+        "voltage": 48,
+        "bodyColor": "#34495e",
+        "flipHorizontal": false,
+        "scale": 1
+      },
+      "componentType": "dc-contactor",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": 8.337208156897304,
+      "labelOffsetY": 112.0351929424638
+    },
+    {
+      "id": "block_1778269148914",
+      "x": 1075,
+      "y": 320,
+      "width": 108,
+      "height": 23.400000000000002,
+      "label": "Flyback Diode",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "lug-left",
+          "x": 7.2,
+          "y": 11.700000000000001,
+          "label": "A",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 5,
+          "description": "Anode",
+          "isGenerated": true
+        },
+        {
+          "id": "lug-right",
+          "x": 100.8,
+          "y": 11.700000000000001,
+          "label": "K",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 5,
+          "description": "Cathode",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 108 23.400000000000002",
+      "componentConfig": {
+        "voltage": 600,
+        "current": 6,
+        "cathodeOnRight": true,
+        "diodeBodyColor": "#1a1a1a",
+        "terminalColor": "#cc0000",
+        "studSize": "M8",
+        "showValue": true,
+        "scale": 0.9
+      },
+      "componentType": "flyback-diode",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": 133.10224911380396,
+      "labelOffsetY": -0.20258699881583198
+    },
+    {
+      "id": "block_1778269233326",
+      "x": 1095,
+      "y": 265,
+      "width": 70,
+      "height": 15,
+      "label": "Precharge Resistor",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "lug-left",
+          "x": 4.5,
+          "y": 7.5,
+          "label": "A",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 5,
+          "description": "Ring terminal (M8)",
+          "isGenerated": true
+        },
+        {
+          "id": "lug-right",
+          "x": 65.5,
+          "y": 7.5,
+          "label": "B",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 5,
+          "description": "Ring terminal (M8)",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 70 15",
+      "componentConfig": {
+        "resistance": 100,
+        "wattage": 25,
+        "bodyColor": "#5fa8c0",
+        "terminalColor": "#cc0000",
+        "studSize": "M8",
+        "showValue": true,
+        "scale": 0.5
+      },
+      "componentType": "precharge-resistor",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -28.030969348433928,
+      "labelOffsetY": -43.915185312546484
+    },
+    {
+      "id": "block_1778269358767",
+      "x": 105,
+      "y": 130,
+      "width": 100,
+      "height": 80,
+      "label": "48V BATTERY",
+      "color": "#2a4d69",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "cp_1778269381237",
+          "x": 85,
+          "y": 65,
+          "label": "BMS-",
+          "color": "#000000",
+          "voltage": 12,
+          "labelOffsetX": -50.856175958603274,
+          "labelOffsetY": 0.3405603820352212
+        },
+        {
+          "id": "cp_1778269382112",
+          "x": 85,
+          "y": 45,
+          "label": "BAT-",
+          "color": "#616161",
+          "voltage": 12,
+          "labelOffsetX": -50.85617595860322,
+          "labelOffsetY": -1.1827017664791697
+        },
+        {
+          "id": "cp_1778269382829",
+          "x": 85,
+          "y": 10,
+          "label": "+48V",
+          "color": "#FF6B6B",
+          "voltage": 12,
+          "labelOffsetX": -44.137564024339895,
+          "labelOffsetY": -0.9319112652748345
+        }
+      ],
+      "labelOffsetX": -6.004792289869471,
+      "labelOffsetY": -65.41293435011208
+    },
+    {
+      "id": "comp_1778269526629",
+      "x": 540,
+      "y": 120,
+      "width": 160,
+      "height": 100,
+      "label": "Current Shunt",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "pwr-in",
+          "x": 40,
+          "y": 20,
+          "label": "PWR+",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "pwr-out",
+          "x": 120,
+          "y": 20,
+          "label": "PWR-",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "sense-pos",
+          "x": 40,
+          "y": 60,
+          "label": "S+",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "sense-neg",
+          "x": 120,
+          "y": 60,
+          "label": "S-",
+          "color": "#ff8800",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 160 100",
+      "componentConfig": {
+        "resistance": 75,
+        "currentRating": 500,
+        "blockColor": "#d4a574",
+        "baseColor": "#1a1a1a",
+        "showLabels": true,
+        "scale": 1
+      },
+      "componentType": "current-shunt",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": 0,
+      "labelOffsetY": 57.61800733115078
+    },
+    {
+      "id": "comp_1778269628087",
+      "x": 330,
+      "y": 115,
+      "width": 140,
+      "height": 50,
+      "label": "High Current Fuse",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "p1",
+          "x": 25,
+          "y": 25,
+          "label": "TERM1",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 7,
+          "voltage": 0,
+          "labelOffsetY": 18,
+          "isGenerated": true
+        },
+        {
+          "id": "p2",
+          "x": 115,
+          "y": 25,
+          "label": "TERM2",
+          "color": "#FF6B6B",
+          "shape": "circle",
+          "radius": 7,
+          "voltage": 0,
+          "labelOffsetY": 18,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 140 50",
+      "componentConfig": {
+        "amperage": 500,
+        "scale": 1
+      },
+      "componentType": "heavy-duty-fuse",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -0.565486868003859,
+      "labelOffsetY": -33.92921208022708
+    },
+    {
+      "id": "comp_1778270789385",
+      "x": 445,
+      "y": 335,
+      "width": 236,
+      "height": 56,
+      "label": "BATTERY NEG",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "stud-1",
+          "x": 38,
+          "y": 28,
+          "label": "S1",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "stud-2",
+          "x": 70,
+          "y": 28,
+          "label": "S2",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "stud-3",
+          "x": 102,
+          "y": 28,
+          "label": "S3",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "stud-4",
+          "x": 134,
+          "y": 28,
+          "label": "S4",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "stud-5",
+          "x": 166,
+          "y": 28,
+          "label": "S5",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "stud-6",
+          "x": 198,
+          "y": 28,
+          "label": "S6",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 236 56",
+      "componentConfig": {
+        "numberOfStuds": 6,
+        "studSize": "M8",
+        "baseColor": "#1a1a1a",
+        "currentRating": 250,
+        "showCover": false,
+        "showLabel": true,
+        "scale": 1
+      },
+      "componentType": "power-bus-bar",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": -2.5490465416828556,
+      "labelOffsetY": -40.39534514350561
+    },
+    {
+      "id": "block_1778270799378",
+      "x": 150,
+      "y": 335,
+      "width": 236,
+      "height": 56,
+      "label": "BMS NEG",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778270799378_pt_0",
+          "x": 38,
+          "y": 28,
+          "label": "S1",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270799378_pt_1",
+          "x": 70,
+          "y": 28,
+          "label": "S2",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270799378_pt_2",
+          "x": 102,
+          "y": 28,
+          "label": "S3",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270799378_pt_3",
+          "x": 134,
+          "y": 28,
+          "label": "S4",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270799378_pt_4",
+          "x": 166,
+          "y": 28,
+          "label": "S5",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270799378_pt_5",
+          "x": 198,
+          "y": 28,
+          "label": "S6",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 236 56",
+      "componentConfig": {
+        "numberOfStuds": 6,
+        "studSize": "M8",
+        "baseColor": "#1a1a1a",
+        "currentRating": 250,
+        "showCover": false,
+        "showLabel": true,
+        "scale": 1
+      },
+      "componentType": "power-bus-bar",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": -80.06196403416459,
+      "labelOffsetY": -43.98865919944842
+    },
+    {
+      "id": "block_1778270806255",
+      "x": 740,
+      "y": 280,
+      "width": 236,
+      "height": 56,
+      "label": "48V POS",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778270806255_pt_0",
+          "x": 38,
+          "y": 28,
+          "label": "S1",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270806255_pt_1",
+          "x": 70,
+          "y": 28,
+          "label": "S2",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270806255_pt_2",
+          "x": 102,
+          "y": 28,
+          "label": "S3",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270806255_pt_3",
+          "x": 134,
+          "y": 28,
+          "label": "S4",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270806255_pt_4",
+          "x": 166,
+          "y": 28,
+          "label": "S5",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778270806255_pt_5",
+          "x": 198,
+          "y": 28,
+          "label": "S6",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 236 56",
+      "componentConfig": {
+        "numberOfStuds": 6,
+        "studSize": "M8",
+        "baseColor": "#ff1414",
+        "currentRating": 250,
+        "showCover": false,
+        "showLabel": true,
+        "scale": 1
+      },
+      "componentType": "power-bus-bar",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": -2.5490465416828556,
+      "labelOffsetY": -41.422006302346404
+    },
+    {
+      "id": "block_1778278792720",
+      "x": 795,
+      "y": 395,
+      "width": 180,
+      "height": 120,
+      "label": "DC-DC Converter",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "input-pos",
+          "x": 30,
+          "y": 120,
+          "label": "48V IN+",
+          "color": "#ffcc00",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true,
+          "labelOffsetX": 11.916952446168693,
+          "labelOffsetY": -80.4394290116391,
+          "labelRotation": 270
+        },
+        {
+          "id": "input-sw",
+          "x": 60,
+          "y": 120,
+          "label": "SW IN+",
+          "color": "#00aa00",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true,
+          "labelOffsetX": 25.695928712051455,
+          "labelOffsetY": -41.709333561590654
+        },
+        {
+          "id": "ground",
+          "x": 90,
+          "y": 120,
+          "label": "GND",
+          "color": "#9aa0a6",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true,
+          "labelOffsetX": -16.385809613482024,
+          "labelOffsetY": -43.19895261736178
+        },
+        {
+          "id": "output-sw",
+          "x": 120,
+          "y": 120,
+          "label": "12V SW",
+          "color": "#cc0000",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true,
+          "labelOffsetX": -12.391768520195797,
+          "labelOffsetY": -67.90689149067293,
+          "labelRotation": 90
+        },
+        {
+          "id": "output-const",
+          "x": 150,
+          "y": 120,
+          "label": "12V CONST",
+          "color": "#0066cc",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true,
+          "labelOffsetX": 0,
+          "labelOffsetY": -15.86146370585061
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 180 120",
+      "componentConfig": {
+        "inputVoltage": 48,
+        "outputVoltage": 12,
+        "scale": 1
+      },
+      "componentType": "dc-dc-converter",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": 2.178032545061228,
+      "labelOffsetY": -52.77181477089135
+    },
+    {
+      "id": "block_1778278813126",
+      "x": 120,
+      "y": -265,
+      "width": 180,
+      "height": 180,
+      "label": "Renogy Rover MPPT",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "pv-pos",
+          "x": 20,
+          "y": 115,
+          "label": "PV+",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true,
+          "labelOffsetX": 41.81361931844805,
+          "labelOffsetY": -2.260195638835029
+        },
+        {
+          "id": "pv-neg",
+          "x": 20,
+          "y": 140,
+          "label": "PV-",
+          "color": "#9aa0a6",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true,
+          "labelOffsetX": 41.531094863593665,
+          "labelOffsetY": 0.5650489097087501
+        },
+        {
+          "id": "batt-pos",
+          "x": 160,
+          "y": 115,
+          "label": "BATT+",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true,
+          "labelOffsetX": -52.2670241480601,
+          "labelOffsetY": -2.542720093689411
+        },
+        {
+          "id": "batt-neg",
+          "x": 160,
+          "y": 140,
+          "label": "BATT-",
+          "color": "#9aa0a6",
+          "shape": "circle",
+          "radius": 6,
+          "isGenerated": true,
+          "labelOffsetX": -51.70197523835134,
+          "labelOffsetY": 0.28252445485438216
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 180 180",
+      "componentConfig": {
+        "amperage": 10,
+        "scale": 1
+      },
+      "componentType": "renogy-mppt",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": 6.309020694977647,
+      "labelOffsetY": -205.75090413535844
+    },
+    {
+      "id": "comp_1778278828850",
+      "x": -115,
+      "y": -430,
+      "width": 120,
+      "height": 180,
+      "label": "Solar Panel",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "pos",
+          "x": 30,
+          "y": 180,
+          "label": "PV+",
+          "color": "#cc0000",
+          "shape": "circle",
+          "radius": 6,
+          "voltage": 18,
+          "labelOffsetX": -0.39595137678058734,
+          "labelOffsetY": -21.676110142447413,
+          "isGenerated": true
+        },
+        {
+          "id": "neg",
+          "x": 90,
+          "y": 180,
+          "label": "PV-",
+          "color": "#000000",
+          "shape": "circle",
+          "radius": 6,
+          "voltage": 0,
+          "labelOffsetX": -1.979756883902966,
+          "labelOffsetY": -18.508499128202686,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 120 180",
+      "componentConfig": {
+        "power": 100,
+        "voltage": 18,
+        "scale": 1
+      },
+      "componentType": "solar-panel",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -1.1296954878999372,
+      "labelOffsetY": -63.26294732239813
+    },
+    {
+      "id": "block_1778279020844",
+      "x": -270,
+      "y": 240,
+      "width": 120,
+      "height": 80,
+      "label": "LED Headlight",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "drl",
+          "x": 30,
+          "y": 80,
+          "label": "BLUE (DRL)",
+          "color": "#0066cc",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "main",
+          "x": 50,
+          "y": 80,
+          "label": "RED (MAIN)",
+          "color": "#cc0000",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "ground",
+          "x": 70,
+          "y": 80,
+          "label": "BLACK (GND)",
+          "color": "#000000",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "turn",
+          "x": 90,
+          "y": 80,
+          "label": "GREEN (TURN)",
+          "color": "#00aa00",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 120 80",
+      "componentConfig": {
+        "haloColor": "#ff7700",
+        "ledCount": 5,
+        "scale": 1
+      },
+      "componentType": "led-headlight",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": 0.995223481147292,
+      "labelOffsetY": -91.8890783944546
+    },
+    {
+      "id": "block_1778279029664",
+      "x": -475,
+      "y": 240,
+      "width": 120,
+      "height": 80,
+      "label": "LED Headlight",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778279029664_pt_0",
+          "x": 30,
+          "y": 80,
+          "label": "BLUE (DRL)",
+          "color": "#0066cc",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778279029664_pt_1",
+          "x": 50,
+          "y": 80,
+          "label": "RED (MAIN)",
+          "color": "#cc0000",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778279029664_pt_2",
+          "x": 70,
+          "y": 80,
+          "label": "BLACK (GND)",
+          "color": "#000000",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778279029664_pt_3",
+          "x": 90,
+          "y": 80,
+          "label": "GREEN (TURN)",
+          "color": "#00aa00",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 120 80",
+      "componentConfig": {
+        "haloColor": "#ff7700",
+        "ledCount": 5,
+        "scale": 1
+      },
+      "componentType": "led-headlight",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -2.5118279191806323,
+      "labelOffsetY": -53.22808356263323
+    },
+    {
+      "id": "block_1778279519217",
+      "x": 1085,
+      "y": 540,
+      "width": 70,
+      "height": 70,
+      "label": "Ignition Key Switch",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "battery",
+          "x": 35,
+          "y": 0,
+          "label": "BAT",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "ignition",
+          "x": 70,
+          "y": 35,
+          "label": "IGN",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "accessory",
+          "x": 35,
+          "y": 70,
+          "label": "ACC",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "isGenerated": true
+        },
+        {
+          "id": "start",
+          "x": 0,
+          "y": 35,
+          "label": "START",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 4,
+          "labelOffsetX": 0.42659235396854456,
+          "labelOffsetY": -9.385031787305593,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 70 70",
+      "componentConfig": {
+        "position": "off",
+        "scale": 0.7
+      },
+      "componentType": "ignition-key-switch",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -3.5651977822394656,
+      "labelOffsetY": 98.0429390115877
+    },
+    {
+      "id": "block_1778279873728",
+      "x": 1575,
+      "y": 260,
+      "width": 260,
+      "height": 200,
+      "label": "Kelly KLS Controller",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "b-plus",
+          "x": 100,
+          "y": 50,
+          "label": "B+",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "phase-u",
+          "x": 60,
+          "y": 110,
+          "label": "U",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "phase-v",
+          "x": 130,
+          "y": 110,
+          "label": "V",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "phase-w",
+          "x": 200,
+          "y": 110,
+          "label": "W",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "b-minus",
+          "x": 200,
+          "y": 150,
+          "label": "B-",
+          "color": "#9aa0a6",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-1",
+          "x": 30,
+          "y": 140,
+          "label": "J1-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-2",
+          "x": 40,
+          "y": 140,
+          "label": "J1-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-3",
+          "x": 50,
+          "y": 140,
+          "label": "J1-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-4",
+          "x": 30,
+          "y": 150,
+          "label": "J1-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-5",
+          "x": 40,
+          "y": 150,
+          "label": "J1-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-6",
+          "x": 50,
+          "y": 150,
+          "label": "J1-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-7",
+          "x": 30,
+          "y": 160,
+          "label": "J1-7",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-8",
+          "x": 40,
+          "y": 160,
+          "label": "J1-8",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j1-9",
+          "x": 50,
+          "y": 160,
+          "label": "J1-9",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-1",
+          "x": 80,
+          "y": 140,
+          "label": "J2-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-2",
+          "x": 90,
+          "y": 140,
+          "label": "J2-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-3",
+          "x": 100,
+          "y": 140,
+          "label": "J2-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-4",
+          "x": 80,
+          "y": 150,
+          "label": "J2-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-5",
+          "x": 90,
+          "y": 150,
+          "label": "J2-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-6",
+          "x": 100,
+          "y": 150,
+          "label": "J2-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-7",
+          "x": 80,
+          "y": 160,
+          "label": "J2-7",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-8",
+          "x": 90,
+          "y": 160,
+          "label": "J2-8",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j2-9",
+          "x": 100,
+          "y": 160,
+          "label": "J2-9",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-1",
+          "x": 130,
+          "y": 140,
+          "label": "J3-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-2",
+          "x": 140,
+          "y": 140,
+          "label": "J3-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-3",
+          "x": 130,
+          "y": 150,
+          "label": "J3-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-4",
+          "x": 140,
+          "y": 150,
+          "label": "J3-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-5",
+          "x": 130,
+          "y": 160,
+          "label": "J3-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "j3-6",
+          "x": 140,
+          "y": 160,
+          "label": "J3-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 260 200",
+      "componentConfig": {
+        "voltage": 48,
+        "currentRating": 200,
+        "scale": 1
+      },
+      "componentType": "kelly-kls",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -2.6694645871170906,
+      "labelOffsetY": -121.98786776957931
+    },
+    {
+      "id": "block_1778280220209",
+      "x": 880,
+      "y": 800,
+      "width": 236,
+      "height": 56,
+      "label": "12V+",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778280220209_pt_0",
+          "x": 38,
+          "y": 28,
+          "label": "S1",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778280220209_pt_1",
+          "x": 70,
+          "y": 28,
+          "label": "S2",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778280220209_pt_2",
+          "x": 102,
+          "y": 28,
+          "label": "S3",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778280220209_pt_3",
+          "x": 134,
+          "y": 28,
+          "label": "S4",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778280220209_pt_4",
+          "x": 166,
+          "y": 28,
+          "label": "S5",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778280220209_pt_5",
+          "x": 198,
+          "y": 28,
+          "label": "S6",
+          "color": "#ffd84c",
+          "shape": "circle",
+          "radius": 4,
+          "currentRating": 250,
+          "description": "M8 stud",
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 236 56",
+      "componentConfig": {
+        "numberOfStuds": 6,
+        "studSize": "M8",
+        "baseColor": "#ffc800",
+        "currentRating": 250,
+        "showCover": false,
+        "showLabel": true,
+        "scale": 1
+      },
+      "componentType": "power-bus-bar",
+      "rotation": 0,
+      "wiresOnTop": false,
+      "labelOffsetX": -2.5490465416828556,
+      "labelOffsetY": -41.422006302346404
+    },
+    {
+      "id": "block_1778941214026",
+      "x": 1580,
+      "y": 795,
+      "width": 260,
+      "height": 200,
+      "label": "Kelly KLS Controller (copy)",
+      "color": "#ffffff",
+      "shape": "rectangle",
+      "connectionPoints": [
+        {
+          "id": "block_1778941214026_pt_0",
+          "x": 100,
+          "y": 50,
+          "label": "B+",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_1",
+          "x": 60,
+          "y": 110,
+          "label": "U",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_2",
+          "x": 130,
+          "y": 110,
+          "label": "V",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_3",
+          "x": 200,
+          "y": 110,
+          "label": "W",
+          "color": "#ff5252",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_4",
+          "x": 200,
+          "y": 150,
+          "label": "B-",
+          "color": "#9aa0a6",
+          "shape": "circle",
+          "radius": 8,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_5",
+          "x": 30,
+          "y": 140,
+          "label": "J1-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_6",
+          "x": 40,
+          "y": 140,
+          "label": "J1-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_7",
+          "x": 50,
+          "y": 140,
+          "label": "J1-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_8",
+          "x": 30,
+          "y": 150,
+          "label": "J1-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_9",
+          "x": 40,
+          "y": 150,
+          "label": "J1-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_10",
+          "x": 50,
+          "y": 150,
+          "label": "J1-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_11",
+          "x": 30,
+          "y": 160,
+          "label": "J1-7",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_12",
+          "x": 40,
+          "y": 160,
+          "label": "J1-8",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_13",
+          "x": 50,
+          "y": 160,
+          "label": "J1-9",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_14",
+          "x": 80,
+          "y": 140,
+          "label": "J2-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_15",
+          "x": 90,
+          "y": 140,
+          "label": "J2-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_16",
+          "x": 100,
+          "y": 140,
+          "label": "J2-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_17",
+          "x": 80,
+          "y": 150,
+          "label": "J2-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_18",
+          "x": 90,
+          "y": 150,
+          "label": "J2-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_19",
+          "x": 100,
+          "y": 150,
+          "label": "J2-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_20",
+          "x": 80,
+          "y": 160,
+          "label": "J2-7",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_21",
+          "x": 90,
+          "y": 160,
+          "label": "J2-8",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_22",
+          "x": 100,
+          "y": 160,
+          "label": "J2-9",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_23",
+          "x": 130,
+          "y": 140,
+          "label": "J3-1",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_24",
+          "x": 140,
+          "y": 140,
+          "label": "J3-2",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_25",
+          "x": 130,
+          "y": 150,
+          "label": "J3-3",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_26",
+          "x": 140,
+          "y": 150,
+          "label": "J3-4",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_27",
+          "x": 130,
+          "y": 160,
+          "label": "J3-5",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        },
+        {
+          "id": "block_1778941214026_pt_28",
+          "x": 140,
+          "y": 160,
+          "label": "J3-6",
+          "color": "#4aa3ff",
+          "shape": "circle",
+          "radius": 3,
+          "isGenerated": true
+        }
+      ],
+      "svgComponent": "generated",
+      "svgViewBox": "0 0 260 200",
+      "componentConfig": {
+        "voltage": 48,
+        "currentRating": 200,
+        "scale": 1
+      },
+      "componentType": "kelly-kls",
+      "rotation": 0,
+      "wiresOnTop": true,
+      "labelOffsetX": -2.6694645871170906,
+      "labelOffsetY": -121.98786776957931
+    }
+  ],
+  "wires": [
+    {
+      "id": "wire_1778269213543",
+      "fromBlockId": "block_1778269135316",
+      "fromPointId": "coil-a1",
+      "toBlockId": "block_1778269148914",
+      "toPointId": "lug-left",
+      "color": "#4aa3ff",
+      "bendPoints": []
+    },
+    {
+      "id": "wire_1778269215897",
+      "fromBlockId": "block_1778269135316",
+      "fromPointId": "coil-a2",
+      "toBlockId": "block_1778269148914",
+      "toPointId": "lug-right",
+      "color": "#4aa3ff",
+      "bendPoints": []
+    },
+    {
+      "id": "wire_1778269270016",
+      "fromBlockId": "block_1778269233326",
+      "fromPointId": "lug-right",
+      "toBlockId": "block_1778269135316",
+      "toPointId": "main-2",
+      "color": "#ff8800",
+      "bendPoints": [
+        {
+          "x": 1170,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "id": "wire_1778269281155",
+      "fromBlockId": "block_1778269233326",
+      "fromPointId": "lug-left",
+      "toBlockId": "block_1778269135316",
+      "toPointId": "main-1",
+      "color": "#ff8800",
+      "bendPoints": [
+        {
+          "x": 1090,
+          "y": 285
+        }
+      ]
+    },
+    {
+      "id": "wire_1778269649080",
+      "fromBlockId": "block_1778269358767",
+      "fromPointId": "cp_1778269382829",
+      "toBlockId": "comp_1778269628087",
+      "toPointId": "p1",
+      "color": "#FF6B6B",
+      "bendPoints": [],
+      "netName": "+48V",
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778269652693",
+      "fromBlockId": "comp_1778269628087",
+      "fromPointId": "p2",
+      "toBlockId": "comp_1778269526629",
+      "toPointId": "pwr-in",
+      "color": "#FF6B6B",
+      "bendPoints": [],
+      "wireGauge": "1/0 AWG",
+      "netName": "+48V",
+      "labelOffsetX": -20,
+      "labelOffsetY": 0
+    },
+    {
+      "id": "wire_1778270824965",
+      "fromBlockId": "comp_1778269526629",
+      "fromPointId": "pwr-out",
+      "toBlockId": "block_1778270806255",
+      "toPointId": "block_1778270806255_pt_0",
+      "color": "#FF6B6B",
+      "bendPoints": [
+        {
+          "x": 775,
+          "y": 140
+        }
+      ],
+      "netName": "+48V",
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778271152518",
+      "fromBlockId": "block_1778269358767",
+      "fromPointId": "cp_1778269381237",
+      "toBlockId": "block_1778270799378",
+      "toPointId": "block_1778270799378_pt_2",
+      "color": "#000000",
+      "bendPoints": [
+        {
+          "x": 250,
+          "y": 195
+        }
+      ],
+      "netName": "BMS-",
+      "wireGauge": "1/0 AWG",
+      "netNameRotation": 0,
+      "labelOffsetX": 0,
+      "labelOffsetY": 5
+    },
+    {
+      "id": "wire_1778271231662",
+      "fromBlockId": "block_1778269358767",
+      "fromPointId": "cp_1778269382112",
+      "toBlockId": "comp_1778270789385",
+      "toPointId": "stud-1",
+      "color": "#616161",
+      "bendPoints": [
+        {
+          "x": 480,
+          "y": 175
+        }
+      ],
+      "netName": "BAT-",
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778278845231",
+      "fromBlockId": "comp_1778278828850",
+      "fromPointId": "pos",
+      "toBlockId": "block_1778278813126",
+      "toPointId": "pv-pos",
+      "color": "#cc0000",
+      "bendPoints": [
+        {
+          "x": -85,
+          "y": -150
+        }
+      ],
+      "wireGauge": "14 AWG"
+    },
+    {
+      "id": "wire_1778278855102",
+      "fromBlockId": "comp_1778278828850",
+      "fromPointId": "neg",
+      "toBlockId": "block_1778278813126",
+      "toPointId": "pv-neg",
+      "color": "#000000",
+      "bendPoints": [
+        {
+          "x": -25,
+          "y": -125
+        }
+      ],
+      "wireGauge": "14 AWG"
+    },
+    {
+      "id": "wire_1778278902247",
+      "fromBlockId": "block_1778278813126",
+      "fromPointId": "batt-neg",
+      "toBlockId": "comp_1778270789385",
+      "toPointId": "stud-2",
+      "color": "#616161",
+      "bendPoints": [
+        {
+          "x": 455,
+          "y": -125
+        },
+        {
+          "x": 455,
+          "y": 5
+        },
+        {
+          "x": 515,
+          "y": 5
+        }
+      ],
+      "netName": "BAT-",
+      "wireGauge": "14 AWG"
+    },
+    {
+      "id": "wire_1778278928576",
+      "fromBlockId": "block_1778278813126",
+      "fromPointId": "batt-pos",
+      "toBlockId": "block_1778270806255",
+      "toPointId": "block_1778270806255_pt_1",
+      "color": "#FF6B6B",
+      "bendPoints": [
+        {
+          "x": 475,
+          "y": -150
+        },
+        {
+          "x": 475,
+          "y": -20
+        },
+        {
+          "x": 810,
+          "y": -20
+        }
+      ],
+      "netName": "+48V",
+      "wireGauge": "14 AWG"
+    },
+    {
+      "id": "wire_1778279358988",
+      "fromBlockId": "block_1778270806255",
+      "fromPointId": "block_1778270806255_pt_5",
+      "toBlockId": "block_1778269135316",
+      "toPointId": "main-1",
+      "color": "#FF6B6B",
+      "bendPoints": [],
+      "netName": "+48V",
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778279575133",
+      "fromBlockId": "block_1778270799378",
+      "fromPointId": "block_1778270799378_pt_5",
+      "toBlockId": "block_1778278792720",
+      "toPointId": "ground",
+      "color": "#000000",
+      "bendPoints": [
+        {
+          "x": 350,
+          "y": 615
+        },
+        {
+          "x": 885,
+          "y": 615
+        }
+      ],
+      "netName": "BMS-",
+      "wireGauge": "20 AWG"
+    },
+    {
+      "id": "wire_1778279732845",
+      "fromBlockId": "block_1778279519217",
+      "fromPointId": "battery",
+      "toBlockId": "block_1778270806255",
+      "toPointId": "block_1778270806255_pt_4",
+      "color": "#FF6B6B",
+      "bendPoints": [
+        {
+          "x": 1120,
+          "y": 520
+        },
+        {
+          "x": 1035,
+          "y": 520
+        },
+        {
+          "x": 1035,
+          "y": 365
+        },
+        {
+          "x": 905,
+          "y": 365
+        }
+      ],
+      "netName": "+48V",
+      "labelOffsetX": -10,
+      "labelOffsetY": -45
+    },
+    {
+      "id": "wire_1778279784637",
+      "fromBlockId": "block_1778278792720",
+      "fromPointId": "input-pos",
+      "toBlockId": "block_1778270806255",
+      "toPointId": "block_1778270806255_pt_0",
+      "color": "#FF6B6B",
+      "bendPoints": [
+        {
+          "x": 780,
+          "y": 515
+        }
+      ],
+      "netName": "+48V"
+    },
+    {
+      "id": "wire_1778279828256",
+      "fromBlockId": "block_1778278792720",
+      "fromPointId": "input-sw",
+      "toBlockId": "block_1778279519217",
+      "toPointId": "accessory",
+      "color": "#00aa00",
+      "bendPoints": [
+        {
+          "x": 855,
+          "y": 630
+        },
+        {
+          "x": 1120,
+          "y": 630
+        }
+      ]
+    },
+    {
+      "id": "wire_1778279884337",
+      "fromBlockId": "block_1778269135316",
+      "fromPointId": "main-2",
+      "toBlockId": "block_1778279873728",
+      "toPointId": "b-plus",
+      "color": "#ff5252",
+      "bendPoints": [],
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778279922618",
+      "fromBlockId": "block_1778279873728",
+      "fromPointId": "b-minus",
+      "toBlockId": "comp_1778270789385",
+      "toPointId": "stud-3",
+      "color": "#616161",
+      "bendPoints": [
+        {
+          "x": 1780,
+          "y": 695
+        },
+        {
+          "x": 545,
+          "y": 695
+        }
+      ],
+      "netName": "BAT-",
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778280263351",
+      "fromBlockId": "block_1778280220209",
+      "fromPointId": "block_1778280220209_pt_0",
+      "toBlockId": "block_1778278792720",
+      "toPointId": "output-sw",
+      "color": "#ffd84c",
+      "bendPoints": [],
+      "netName": "12V+",
+      "wireGauge": "16 AWG",
+      "labelOffsetX": 5,
+      "labelOffsetY": -15,
+      "netNameRotation": 90
+    },
+    {
+      "id": "wire_1778281913683",
+      "fromBlockId": "block_1778249861215",
+      "fromPointId": "block_1778249861215_pt_0",
+      "toBlockId": "block_1778279873728",
+      "toPointId": "phase-u",
+      "color": "#ffcc00",
+      "bendPoints": [
+        {
+          "x": 1630,
+          "y": -10
+        }
+      ],
+      "wireGauge": "10 AWG"
+    },
+    {
+      "id": "wire_1778281929732",
+      "fromBlockId": "block_1778249861215",
+      "fromPointId": "block_1778249861215_pt_1",
+      "toBlockId": "block_1778279873728",
+      "toPointId": "phase-w",
+      "color": "#0066ff",
+      "bendPoints": [
+        {
+          "x": 1700,
+          "y": 40
+        },
+        {
+          "x": 1665,
+          "y": 40
+        },
+        {
+          "x": 1665,
+          "y": 110
+        },
+        {
+          "x": 1770,
+          "y": 110
+        },
+        {
+          "x": 1770,
+          "y": 215
+        },
+        {
+          "x": 1855,
+          "y": 215
+        },
+        {
+          "x": 1855,
+          "y": 370
+        }
+      ],
+      "wireGauge": "10 AWG"
+    },
+    {
+      "id": "wire_1778281935672",
+      "fromBlockId": "block_1778249861215",
+      "fromPointId": "block_1778249861215_pt_2",
+      "toBlockId": "block_1778279873728",
+      "toPointId": "phase-v",
+      "color": "#00cc66",
+      "bendPoints": [
+        {
+          "x": 1725,
+          "y": 85
+        },
+        {
+          "x": 1700,
+          "y": 85
+        }
+      ],
+      "wireGauge": "10 AWG"
+    },
+    {
+      "id": "wire_1778941233167",
+      "fromBlockId": "block_1778269135316",
+      "fromPointId": "main-2",
+      "toBlockId": "block_1778941214026",
+      "toPointId": "block_1778941214026_pt_0",
+      "color": "#ff5252",
+      "bendPoints": [
+        {
+          "x": 1375,
+          "y": 310
+        },
+        {
+          "x": 1375,
+          "y": 385
+        },
+        {
+          "x": 1375,
+          "y": 845
+        }
+      ],
+      "wireGauge": "1/0 AWG"
+    },
+    {
+      "id": "wire_1778941312433",
+      "fromBlockId": "block_1778941214026",
+      "fromPointId": "block_1778941214026_pt_4",
+      "toBlockId": "comp_1778270789385",
+      "toPointId": "stud-6",
+      "color": "#616161",
+      "bendPoints": [
+        {
+          "x": 1780,
+          "y": 1140
+        },
+        {
+          "x": 635,
+          "y": 1140
+        }
+      ],
+      "netName": "BAT-",
+      "wireGauge": "1/0 AWG"
+    }
+  ],
+  "busGroups": {},
+  "version": "1.0"
+}

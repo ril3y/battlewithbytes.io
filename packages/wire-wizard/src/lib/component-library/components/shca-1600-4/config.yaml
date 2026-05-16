@@ -1,0 +1,26 @@
+# Sky High Car Audio 1600.4 (SHCA-1600.4)
+# 4-channel car-audio amplifier, top-down view modeled after the actual unit:
+# black aluminum heatsink body with cross/skull logo badge, dedicated
+# GND/REM/+12V power lugs on one end and a CH1±/CH2± bridged speaker strip
+# on the other, four RCA inputs along the signal-side edge.
+
+id: shca-1600-4
+name: Sky High 1600.4
+category: power
+description: Sky High Car Audio SHCA-1600.4 4-channel amplifier (1600W RMS)
+
+config:
+  modelLabel:
+    type: string
+    label: Model Label
+    default: 'SHCA-1600.4'
+
+  showLogo:
+    type: boolean
+    label: Show Cross Logo
+    default: true
+
+  showFanConnectors:
+    type: boolean
+    label: Show Fan Connectors
+    default: true

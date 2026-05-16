@@ -1,0 +1,67 @@
+# Flyback Diode Component Configuration
+# Inline diode assembly with ring terminals on each end. Used across DC contactor
+# coil terminals to suppress the flyback voltage spike when the coil de-energizes.
+
+id: flyback-diode
+name: Flyback Diode
+category: protection
+description: Inline ring-terminal diode assembly (used across contactor coils to suppress flyback spikes)
+
+config:
+  voltage:
+    type: select
+    label: Reverse Voltage
+    default: 600
+    options:
+      - { value: 50, label: '50V' }
+      - { value: 100, label: '100V' }
+      - { value: 200, label: '200V' }
+      - { value: 400, label: '400V' }
+      - { value: 600, label: '600V' }
+      - { value: 1000, label: '1000V' }
+    description: Maximum reverse voltage rating (PIV)
+
+  current:
+    type: select
+    label: Forward Current
+    default: 6
+    options:
+      - { value: 1, label: '1A' }
+      - { value: 3, label: '3A' }
+      - { value: 6, label: '6A' }
+      - { value: 10, label: '10A' }
+    description: Continuous forward current rating
+
+  cathodeOnRight:
+    type: boolean
+    label: Cathode on Right
+    default: true
+    description: Orientation of the diode (cathode side has the band)
+
+  diodeBodyColor:
+    type: color
+    label: Diode Body Color
+    default: '#1a1a1a'
+    description: Color of the diode body (typically black)
+
+  terminalColor:
+    type: color
+    label: Heat Shrink Color
+    default: '#cc0000'
+    description: Color of the heat shrink covering the leads
+
+  studSize:
+    type: select
+    label: Stud Size
+    default: 'M8'
+    options:
+      - { value: 'M6', label: 'M6' }
+      - { value: 'M8', label: 'M8' }
+      - { value: 'M10', label: 'M10' }
+    description: Ring terminal stud size
+
+  showValue:
+    type: boolean
+    label: Show Value
+    default: true
+    description: Display the diode rating label

@@ -1,0 +1,50 @@
+# Bus Bar Component Configuration
+# A power distribution bus bar with configurable number of connection lugs
+
+id: bus-bar
+name: Bus Bar
+category: distribution
+description: Power distribution bus bar with screw terminal lugs
+
+config:
+  numberOfLugs:
+    type: number
+    label: Number of Lugs
+    default: 4
+    min: 2
+    max: 12
+    step: 1
+    description: Number of connection points on the bus bar
+
+  screwsPerLug:
+    type: select
+    label: Screws per Lug
+    default: 2
+    options:
+      - value: 1
+        label: Single
+      - value: 2
+        label: Double
+      - value: 3
+        label: Triple
+    description: Number of screws for each lug position
+
+  barColor:
+    type: select
+    label: Bar Material
+    default: "#c0c0c0"
+    options:
+      - value: "#c0c0c0"
+        label: Silver/Aluminum
+      - value: "#d4a574"
+        label: Copper/Brass
+    description: Material color of the bus bar
+
+  lugSpacing:
+    type: number
+    label: Lug Spacing
+    default: 45
+    min: 30
+    max: 60
+    step: 5
+    description: Space between lugs in pixels

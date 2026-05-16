@@ -7,7 +7,6 @@ const LOCAL_DEV_PORTS: Record<string, number> = {
   ucan: 5565,
   battleforge: 5566,
   battlemagic: 5567,
-  wirewizard: 5563,
   "mosfet-calculator": 5561,
   "ohms-law-calculator": 5562,
 };
@@ -46,7 +45,7 @@ const tools = [
     name: "Wire Wizard",
     description:
       "Create visual pinout & wiring harness maps for electrical connectors. Define, preview, and map electrical components.",
-    href: getToolHref("wirewizard"),
+    href: getToolHref("wire-wizard"),
     logo: "/images/tools/wirewizard.png",
   },
   {

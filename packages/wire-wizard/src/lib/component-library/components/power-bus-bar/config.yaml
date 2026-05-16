@@ -1,0 +1,56 @@
+# Power Bus Bar
+# Heavy-duty marine/automotive power distribution bus bar with hex-head studs
+# and an insulating base. The kind used to common multiple battery cables to
+# a single + or - rail.
+
+id: power-bus-bar
+name: Power Bus Bar
+category: distribution
+description: Heavy-duty hex-stud bus bar for high-current battery / DC power distribution
+
+config:
+  numberOfStuds:
+    type: number
+    label: Number of Studs
+    default: 6
+    min: 2
+    max: 10
+    step: 1
+
+  studSize:
+    type: select
+    label: Stud Size
+    default: 'M8'
+    options:
+      - { value: 'M6', label: 'M6' }
+      - { value: 'M8', label: 'M8' }
+      - { value: 'M10', label: 'M10' }
+
+  baseColor:
+    type: color
+    label: Base Color
+    default: '#1a1a1a'
+    description: Insulating base color (e.g. #cc0000 for positive, #1a1a1a for negative)
+
+  currentRating:
+    type: select
+    label: Current Rating
+    default: 250
+    options:
+      - { value: 100, label: '100A' }
+      - { value: 150, label: '150A' }
+      - { value: 250, label: '250A' }
+      - { value: 500, label: '500A' }
+      - { value: 800, label: '800A' }
+
+  showCover:
+    type: boolean
+    label: Show Clear Cover
+    default: false
+    description: Render a translucent plastic cover over the studs
+
+  showLabel:
+    type: boolean
+    label: Show Rating Label
+    default: true
+    description: Display the current rating on the base
