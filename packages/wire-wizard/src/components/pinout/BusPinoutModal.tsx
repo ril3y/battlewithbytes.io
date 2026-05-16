@@ -4,10 +4,14 @@ import { MODAL_OVERLAY_STYLE } from '../../lib/core/styles';
 import { ConnectorPinoutView, getPinCenterInContainer } from './ConnectorPinoutView';
 import { PinDetailPanel } from './PinDetailPanel';
 
-/** Pick a sensible rectangle (rows × cols) for N pins. */
+/**
+ * Pinout drill-in layout: keep it tall + narrow so labels never collide.
+ * Up to 12 pins go in a single column; beyond that we add columns to
+ * avoid an overly tall view.
+ */
 function autoRectangleLayout(pinCount: number): PinoutLayout {
   if (pinCount <= 0) return { shape: 'rectangle', rows: 1, cols: 1 };
-  const cols = Math.ceil(Math.sqrt(pinCount));
+  const cols = pinCount <= 12 ? 1 : Math.ceil(pinCount / 12);
   const rows = Math.ceil(pinCount / cols);
   return { shape: 'rectangle', rows, cols };
 }
@@ -104,7 +108,10 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
     const left = layout.left;
     const right = layout.right;
 
-    // Both sides are bus ports → expand the cable into N conductors by matching pinNumber.
+    // Both sides are bus ports → one conductor per matched pin pair. Pins
+    // that exist on only one side stay visible in the pinout but aren't
+    // counted as conductors (a cable with mismatched pin counts can't carry
+    // more conductors than the smaller side).
     if (left.isBusPort && right?.isBusPort) {
       const byPinNumber = (pins: ConnectionPoint[]) => {
         const m = new Map<number, ConnectionPoint>();
@@ -113,17 +120,19 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
       };
       const leftByN = byPinNumber(left.internalPins);
       const rightByN = byPinNumber(right.internalPins);
-      const allPinNumbers = Array.from(new Set([...leftByN.keys(), ...rightByN.keys()])).sort((a, b) => a - b);
-      return allPinNumbers.map((n, i) => {
-        const lp = leftByN.get(n) ?? null;
-        const rp = rightByN.get(n) ?? null;
-        const baseColor = lp?.color || rp?.color || DEFAULT_PIN_COLORS[i % DEFAULT_PIN_COLORS.length];
+      const matchedNumbers = Array.from(leftByN.keys())
+        .filter((n) => rightByN.has(n))
+        .sort((a, b) => a - b);
+      return matchedNumbers.map((n, i) => {
+        const lp = leftByN.get(n)!;
+        const rp = rightByN.get(n)!;
+        const baseColor = lp.color || rp.color || DEFAULT_PIN_COLORS[i % DEFAULT_PIN_COLORS.length];
         return {
-          id: `${lp?.id ?? '_'}->${rp?.id ?? '_'}`,
-          leftPinId: lp?.id ?? null,
-          rightPinId: rp?.id ?? null,
+          id: `${lp.id}->${rp.id}`,
+          leftPinId: lp.id,
+          rightPinId: rp.id,
           color: baseColor,
-          label: lp?.label ?? rp?.label ?? `Pin ${n}`,
+          label: lp.label ?? rp.label ?? `Pin ${n}`,
         };
       });
     }
