@@ -30,36 +30,6 @@ export function generate(config: KellyKLSConfig = {}): GeneratorResult {
 
   const uniqueId = Math.random().toString(36).substring(2, 9);
 
-  // Generate J1 connector pins (3x3)
-  let j1Pins = '';
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      const x = 30 + col * 10;
-      const y = 140 + row * 10;
-      j1Pins += `<circle cx="${x}" cy="${y}" r="3" fill="#666" stroke="#444" stroke-width="0.5"/>`;
-    }
-  }
-
-  // Generate J2 connector pins (3x3)
-  let j2Pins = '';
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      const x = 80 + col * 10;
-      const y = 140 + row * 10;
-      j2Pins += `<circle cx="${x}" cy="${y}" r="3" fill="#666" stroke="#444" stroke-width="0.5"/>`;
-    }
-  }
-
-  // Generate J3 connector pins (2x3)
-  let j3Pins = '';
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 2; col++) {
-      const x = 130 + col * 10;
-      const y = 140 + row * 10;
-      j3Pins += `<circle cx="${x}" cy="${y}" r="3" fill="#666" stroke="#444" stroke-width="0.5"/>`;
-    }
-  }
-
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}">
       <defs>
@@ -111,20 +81,17 @@ export function generate(config: KellyKLSConfig = {}): GeneratorResult {
       <circle cx="200" cy="150" r="9" fill="url(#metal-${uniqueId})"/>
       <text x="220" y="155" font-family="Arial" font-weight="bold" font-size="12" fill="#000">B-</text>
 
-      <!-- J1 Connector -->
+      <!-- J1 Connector (DJ7091Y-2.3-21, 9-pin) — bus port marker drawn by the canvas atop this rect -->
       <rect x="20" y="130" width="40" height="45" fill="#fff" stroke="#333" rx="2"/>
       <text x="40" y="127" text-anchor="middle" font-size="8" font-family="Arial">J1</text>
-      ${j1Pins}
 
-      <!-- J2 Connector -->
+      <!-- J2 Connector (DJ7091Y-2.3-11, 9-pin) -->
       <rect x="70" y="130" width="40" height="45" fill="#fff" stroke="#333" rx="2"/>
       <text x="90" y="127" text-anchor="middle" font-size="8" font-family="Arial">J2</text>
-      ${j2Pins}
 
-      <!-- J3 Connector -->
+      <!-- Hall Connector (DJ7061Y-2.3-11, 6-pin) — plugs directly into motor hall connector -->
       <rect x="120" y="130" width="30" height="45" fill="#fff" stroke="#333" rx="2"/>
-      <text x="135" y="127" text-anchor="middle" font-size="8" font-family="Arial">J3</text>
-      ${j3Pins}
+      <text x="135" y="127" text-anchor="middle" font-size="8" font-family="Arial">Hall</text>
     </svg>
   `;
 
@@ -175,69 +142,74 @@ export function generate(config: KellyKLSConfig = {}): GeneratorResult {
       shape: 'circle',
       radius: 8,
     },
-    // J1 internal pins (3x3 = 9). Hidden on the canvas — only visible in the
-    // pinout drill-in view. Wires actually terminate at the J1 bus port below.
-    { id: 'j1-1', label: 'J1-1', x: 30, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 1, signalType: 'signal' },
-    { id: 'j1-2', label: 'J1-2', x: 40, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 2, signalType: 'signal' },
-    { id: 'j1-3', label: 'J1-3', x: 50, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 3, signalType: 'signal' },
-    { id: 'j1-4', label: 'J1-4', x: 30, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 4, signalType: 'signal' },
-    { id: 'j1-5', label: 'J1-5', x: 40, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 5, signalType: 'signal' },
-    { id: 'j1-6', label: 'J1-6', x: 50, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 6, signalType: 'signal' },
-    { id: 'j1-7', label: 'J1-7', x: 30, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 7, signalType: 'signal' },
-    { id: 'j1-8', label: 'J1-8', x: 40, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 8, signalType: 'signal' },
-    { id: 'j1-9', label: 'J1-9', x: 50, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 9, signalType: 'signal' },
-    // J2 internal pins
-    { id: 'j2-1', label: 'J2-1', x: 80, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 1, signalType: 'signal' },
-    { id: 'j2-2', label: 'J2-2', x: 90, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 2, signalType: 'signal' },
-    { id: 'j2-3', label: 'J2-3', x: 100, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 3, signalType: 'signal' },
-    { id: 'j2-4', label: 'J2-4', x: 80, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 4, signalType: 'signal' },
-    { id: 'j2-5', label: 'J2-5', x: 90, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 5, signalType: 'signal' },
-    { id: 'j2-6', label: 'J2-6', x: 100, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 6, signalType: 'signal' },
-    { id: 'j2-7', label: 'J2-7', x: 80, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 7, signalType: 'signal' },
-    { id: 'j2-8', label: 'J2-8', x: 90, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 8, signalType: 'signal' },
-    { id: 'j2-9', label: 'J2-9', x: 100, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 9, signalType: 'signal' },
-    // J3 internal pins (2x3 = 6)
-    { id: 'j3-1', label: 'J3-1', x: 130, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 1, signalType: 'signal' },
-    { id: 'j3-2', label: 'J3-2', x: 140, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 2, signalType: 'signal' },
-    { id: 'j3-3', label: 'J3-3', x: 130, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 3, signalType: 'signal' },
-    { id: 'j3-4', label: 'J3-4', x: 140, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 4, signalType: 'signal' },
-    { id: 'j3-5', label: 'J3-5', x: 130, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 5, signalType: 'signal' },
-    { id: 'j3-6', label: 'J3-6', x: 140, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 6, signalType: 'signal' },
+    // J1 (DJ7091Y-2.3-21) — 9-pin signal/power harness. Pin names from the
+    // Kelly KLS-N manual. Hidden on the canvas; visible in the pinout drill-in.
+    { id: 'j1-1', label: 'White FWD',         x: 30, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 12, signalType: 'signal', color: '#ffffff', description: 'Forward switch' },
+    { id: 'j1-2', label: 'Black GND',         x: 40, y: 140, type: 'ground', shape: 'circle', radius: 3, hidden: true, pinNumber: 6,  signalType: 'ground', color: '#000000', description: 'Ground' },
+    { id: 'j1-3', label: 'Orange REV-SW',     x: 50, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 14, signalType: 'signal', color: '#ff8800', description: 'Reverse switch' },
+    { id: 'j1-4', label: 'Blue Relay',        x: 30, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 9,  signalType: 'signal', color: '#3399ff', description: 'Main contactor relay coil' },
+    { id: 'j1-5', label: 'Yellowish 12V Brk', x: 40, y: 150, type: 'power',  shape: 'circle', radius: 3, hidden: true, pinNumber: 25, signalType: 'power',  color: '#e6e600', voltage: 12, description: '12V brake switch' },
+    { id: 'j1-6', label: 'Red 12V',           x: 50, y: 150, type: 'power',  shape: 'circle', radius: 3, hidden: true, pinNumber: 11, signalType: 'power',  color: '#ff0000', voltage: 12, description: '12V supply' },
+    { id: 'j1-7', label: 'Pink PWR',          x: 30, y: 160, type: 'power',  shape: 'circle', radius: 3, hidden: true, pinNumber: 7,  signalType: 'power',  color: '#ff66cc', description: 'Power (KSI / key-switched ignition)' },
+    { id: 'j1-8', label: 'Spare',             x: 40, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 8,  signalType: 'signal' },
+    { id: 'j1-9', label: 'Spare',             x: 50, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 10, signalType: 'signal' },
 
-    // Bus ports — one external connection point per logical connector. Wires
-    // attach here; the pinout drill-in view assigns each wire to an internal pin.
+    // J2 (DJ7091Y-2.3-11) — 9-pin throttle / brake-analog / meter harness
+    { id: 'j2-1', label: 'Raddle Temp',     x: 80,  y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 1,  signalType: 'analog', description: 'Motor / controller temp sensor' },
+    { id: 'j2-2', label: 'Green Throttle',  x: 90,  y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 3,  signalType: 'analog', color: '#00cc66', description: 'Throttle pot wiper' },
+    { id: 'j2-3', label: 'Gray Foot_SW',    x: 100, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 15, signalType: 'signal', color: '#999999', description: 'Foot pedal switch' },
+    { id: 'j2-4', label: 'D-Gray Meter',    x: 80,  y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 8,  signalType: 'signal', color: '#666666', description: 'Speed/RPM meter output' },
+    { id: 'j2-5', label: 'Black GND',       x: 90,  y: 150, type: 'ground', shape: 'circle', radius: 3, hidden: true, pinNumber: 20, signalType: 'ground', color: '#000000', description: 'Signal ground' },
+    { id: 'j2-6', label: 'Brown Brake_AN',  x: 100, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 2,  signalType: 'analog', color: '#8b4513', description: 'Analog brake input' },
+    { id: 'j2-7', label: 'Purple 5V',       x: 80,  y: 160, type: 'power',  shape: 'circle', radius: 3, hidden: true, pinNumber: 4,  signalType: 'power',  color: '#9933ff', voltage: 5, description: '5V regulated supply for throttle pot' },
+    { id: 'j2-8', label: 'Spare',           x: 90,  y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 5,  signalType: 'signal' },
+    { id: 'j2-9', label: 'Spare',           x: 100, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 6,  signalType: 'signal' },
+
+    // Hall (DJ7061Y-2.3-11) — 6-pin hall-sensor connector. Plugs directly into the motor's hall connector.
+    { id: 'hall-a',   label: 'Hall A',   x: 130, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 1, signalType: 'signal', description: 'Hall A signal' },
+    { id: 'hall-b',   label: 'Hall B',   x: 140, y: 140, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 2, signalType: 'signal', description: 'Hall B signal' },
+    { id: 'hall-c',   label: 'Hall C',   x: 130, y: 150, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 3, signalType: 'signal', description: 'Hall C signal' },
+    { id: 'hall-5v',  label: '+5V',      x: 140, y: 150, type: 'power',  shape: 'circle', radius: 3, hidden: true, pinNumber: 4, signalType: 'power',  color: '#ff0000', voltage: 5, description: 'Hall sensor supply' },
+    { id: 'hall-gnd', label: 'GND',      x: 130, y: 160, type: 'ground', shape: 'circle', radius: 3, hidden: true, pinNumber: 5, signalType: 'ground', color: '#000000', description: 'Hall sensor ground' },
+    { id: 'hall-tmp', label: 'Motor Tmp',x: 140, y: 160, type: 'signal', shape: 'circle', radius: 3, hidden: true, pinNumber: 6, signalType: 'analog', description: 'Motor temperature sensor' },
+
+    // Bus ports — sit at the visual center of each connector rectangle on the
+    // canvas. Wires attach here; the pinout drill-in view assigns each wire to an internal pin.
     {
       id: 'j1-bus',
       label: 'J1',
       x: 40,
-      y: 185,
+      y: 152,
       type: 'signal',
       shape: 'circle',
-      radius: 6,
+      radius: 8,
       isBusPort: true,
       internalPinIds: ['j1-1', 'j1-2', 'j1-3', 'j1-4', 'j1-5', 'j1-6', 'j1-7', 'j1-8', 'j1-9'],
+      description: 'DJ7091Y-2.3-21 — 9-pin signal/power harness (FWD/REV, relay, brake, KSI, 12V)',
     },
     {
       id: 'j2-bus',
       label: 'J2',
       x: 90,
-      y: 185,
+      y: 152,
       type: 'signal',
       shape: 'circle',
-      radius: 6,
+      radius: 8,
       isBusPort: true,
       internalPinIds: ['j2-1', 'j2-2', 'j2-3', 'j2-4', 'j2-5', 'j2-6', 'j2-7', 'j2-8', 'j2-9'],
+      description: 'DJ7091Y-2.3-11 — 9-pin throttle / brake-analog / meter harness',
     },
     {
-      id: 'j3-bus',
-      label: 'J3',
+      id: 'hall-bus',
+      label: 'Hall',
       x: 135,
-      y: 185,
+      y: 152,
       type: 'signal',
       shape: 'circle',
-      radius: 6,
+      radius: 8,
       isBusPort: true,
-      internalPinIds: ['j3-1', 'j3-2', 'j3-3', 'j3-4', 'j3-5', 'j3-6'],
+      internalPinIds: ['hall-a', 'hall-b', 'hall-c', 'hall-5v', 'hall-gnd', 'hall-tmp'],
+      description: 'DJ7061Y-2.3-11 — plugs directly into motor hall connector',
     },
   ];
 
