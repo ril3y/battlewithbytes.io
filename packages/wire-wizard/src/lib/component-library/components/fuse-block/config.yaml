@@ -1,0 +1,45 @@
+# Fuse Block Component Configuration
+# A multi-fuse holder with configurable positions and ratings
+
+id: fuse-block
+name: Fuse Block
+category: protection
+description: Multi-position automotive fuse block with configurable ratings
+
+config:
+  numberOfFuses:
+    type: number
+    label: Number of Fuses
+    default: 6
+    min: 2
+    max: 12
+    step: 1
+    description: Total number of fuse positions
+
+  layout:
+    type: select
+    label: Layout
+    default: single-row
+    options:
+      - value: single-row
+        label: Single Row
+      - value: double-row
+        label: Double Row (2 columns)
+    description: Arrangement of fuse positions
+
+  fuseRatings:
+    type: array
+    label: Fuse Ratings
+    default: [10, 10, 15, 15, 20, 20]
+    items:
+      type: number
+      label: Rating (A)
+      min: 1
+      max: 120
+    description: Amperage rating for each fuse position
+
+  showRatings:
+    type: boolean
+    label: Show Ratings
+    default: true
+    description: Display amperage labels below each fuse

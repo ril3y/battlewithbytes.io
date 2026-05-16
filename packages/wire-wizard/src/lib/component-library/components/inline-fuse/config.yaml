@@ -1,0 +1,37 @@
+# Inline Fuse Component Configuration
+# A single inline fuse holder with configurable rating
+
+id: inline-fuse
+name: Inline Fuse
+category: protection
+description: Inline fuse holder with customizable amperage rating
+
+config:
+  amperage:
+    type: select
+    label: Amperage
+    default: 10
+    options:
+      - value: 5
+        label: 5A (Tan)
+      - value: 10
+        label: 10A (Red)
+      - value: 15
+        label: 15A (Blue)
+      - value: 20
+        label: 20A (Yellow)
+      - value: 25
+        label: 25A (Clear)
+      - value: 30
+        label: 30A (Green)
+      - value: 35
+        label: 35A (Purple)
+      - value: 40
+        label: 40A (Orange)
+    description: Amperage rating of the fuse
+
+  wireColor:
+    type: color
+    label: Wire Color
+    default: "#e74c3c"
+    description: Color of the wire leads

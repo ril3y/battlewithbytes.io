@@ -1,0 +1,54 @@
+# Current Shunt Resistor Component Configuration
+# A precision current shunt for current measurement
+
+id: current-shunt
+name: Current Shunt
+category: measurement
+description: Precision current shunt resistor for high-current measurement
+
+config:
+  resistance:
+    type: select
+    label: Resistance/Drop
+    default: 75
+    options:
+      - value: 50
+        label: 50mV
+      - value: 75
+        label: 75mV
+      - value: 100
+        label: 100mV
+    description: Voltage drop at rated current
+
+  currentRating:
+    type: select
+    label: Current Rating
+    default: 100
+    options:
+      - value: 50
+        label: 50A
+      - value: 100
+        label: 100A
+      - value: 200
+        label: 200A
+      - value: 500
+        label: 500A
+    description: Maximum rated current
+
+  blockColor:
+    type: color
+    label: Terminal Color
+    default: "#d4a574"
+    description: Color of the terminal blocks (brass/copper)
+
+  baseColor:
+    type: color
+    label: Base Color
+    default: "#1a1a1a"
+    description: Color of the insulating base
+
+  showLabels:
+    type: boolean
+    label: Show Labels
+    default: true
+    description: Display current/voltage labels on the base

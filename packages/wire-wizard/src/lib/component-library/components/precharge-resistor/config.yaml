@@ -1,0 +1,58 @@
+# Precharge Resistor Component Configuration
+# Inline power resistor with ring terminals on each end. Used across DC contactor
+# main terminals to slowly charge the load capacitance before contacts close,
+# avoiding inrush current spikes.
+
+id: precharge-resistor
+name: Precharge Resistor
+category: protection
+description: Inline ring-terminal power resistor (used to precharge motor controller capacitors)
+
+config:
+  resistance:
+    type: number
+    label: Resistance (Ω)
+    default: 100
+    min: 1
+    max: 10000
+    step: 1
+    description: Resistance in ohms
+
+  wattage:
+    type: select
+    label: Wattage
+    default: 25
+    options:
+      - { value: 5, label: '5W' }
+      - { value: 10, label: '10W' }
+      - { value: 25, label: '25W' }
+      - { value: 50, label: '50W' }
+    description: Power dissipation rating
+
+  bodyColor:
+    type: color
+    label: Body Color
+    default: '#5fa8c0'
+    description: Color of the resistor body
+
+  terminalColor:
+    type: color
+    label: Heat Shrink Color
+    default: '#cc0000'
+    description: Color of the heat shrink covering the leads
+
+  studSize:
+    type: select
+    label: Stud Size
+    default: 'M8'
+    options:
+      - { value: 'M6', label: 'M6' }
+      - { value: 'M8', label: 'M8' }
+      - { value: 'M10', label: 'M10' }
+    description: Ring terminal stud size
+
+  showValue:
+    type: boolean
+    label: Show Value
+    default: true
+    description: Display the resistance/wattage label

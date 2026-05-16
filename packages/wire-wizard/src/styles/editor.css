@@ -1,0 +1,49 @@
+/* Wire Wizard scoped styles.
+   Tailwind directives intentionally omitted — Wire Wizard doesn't use Tailwind
+   internally (inline styles everywhere). Host apps that consume the package
+   import this file once if they want the scrollbar / animation styles. */
+
+.wire-wizard-root {
+  --bg-color: #0a0a0a;
+  --primary-stroke: #00ffa0;
+  --hover-stroke: #ffff00;
+  --wire-default: #666666;
+  --wire-highlight: #ffaa00;
+  --text-color: #ffffff;
+
+  font-family: 'Roboto Mono', monospace;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+}
+
+/* Pulse-glow animation used for some highlight states */
+@keyframes wire-wizard-pulse-glow {
+  0%   { filter: drop-shadow(0 0 5px var(--hover-stroke)); }
+  50%  { filter: drop-shadow(0 0 15px var(--hover-stroke)); }
+  100% { filter: drop-shadow(0 0 5px var(--hover-stroke)); }
+}
+
+.wire-wizard-root .pulse {
+  animation: wire-wizard-pulse-glow 2s infinite;
+}
+
+/* Scrollbar styling — scoped to the editor root so it doesn't leak. */
+.wire-wizard-root *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.wire-wizard-root *::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+.wire-wizard-root *::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+.wire-wizard-root *::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.wire-wizard-root .cyber-border {
+  border: 1px solid var(--primary-stroke);
+  box-shadow: 0 0 10px rgba(0, 255, 160, 0.3);
+}

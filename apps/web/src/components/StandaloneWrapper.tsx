@@ -22,6 +22,7 @@ export default function StandaloneWrapper({
     "/tools/ucan",
     "/tools/battlemagic",
     "/tools/battleforge",
+    "/tools/wire-wizard",
   ];
   const isFullscreenRoute = fullscreenRoutes.some((route) =>
     pathname?.startsWith(route),
