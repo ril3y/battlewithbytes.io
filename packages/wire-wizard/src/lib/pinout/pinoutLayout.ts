@@ -1,4 +1,4 @@
-import type { ConnectionPoint, PinoutLayout } from '../core/types';
+import type { ConnectionPoint, PinNumberingMode, PinoutLayout } from '../core/types';
 
 export interface PinPosition {
   pinId: string;
@@ -124,4 +124,39 @@ export function layoutPinout(
     return layoutCircle(points, pinout.ringRadius);
   }
   return layoutAuto(points);
+}
+
+/**
+ * Compute a display pin number for each pin based on the numbering mode.
+ *  - 'manual'     → use pin.pinNumber (or empty if not set)
+ *  - 'sequential' → 1..N in pin-number / array order
+ *  - 'row-col'    → R{row}C{col} derived from layout rows/cols
+ *  - 'col-row'    → C{col}R{row}
+ * Returns a Map<pinId, displayString>.
+ */
+export function applyNumberingMode(
+  points: ConnectionPoint[],
+  pinout?: PinoutLayout
+): Map<string, string> {
+  const mode: PinNumberingMode = pinout?.numberingMode ?? 'manual';
+  const ordered = orderPins(points);
+  const result = new Map<string, string>();
+  if (mode === 'manual') {
+    points.forEach((p) => {
+      if (p.pinNumber !== undefined) result.set(p.id, String(p.pinNumber));
+    });
+    return result;
+  }
+  if (mode === 'sequential') {
+    ordered.forEach((p, i) => result.set(p.id, String(i + 1)));
+    return result;
+  }
+  // Grid-based modes need rows/cols. Fall back to sqrt heuristic if not set.
+  const cols = pinout?.cols ?? Math.ceil(Math.sqrt(ordered.length));
+  ordered.forEach((p, i) => {
+    const r = Math.floor(i / cols) + 1;
+    const c = (i % cols) + 1;
+    result.set(p.id, mode === 'row-col' ? `R${r}C${c}` : `C${c}R${r}`);
+  });
+  return result;
 }

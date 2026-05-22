@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import type { Block, ConnectionPoint, PinoutLayout } from '../../lib/core/types';
-import { layoutPinout, type PinPosition } from '../../lib/pinout';
+import { applyNumberingMode, layoutPinout, type PinPosition } from '../../lib/pinout';
 
 interface ConnectorPinoutViewProps {
   block: Block;
   /** Pins to render solid; if omitted, all pins are rendered solid. */
   highlightedPinIds?: Set<string>;
   selectedPinId?: string | null;
-  onPinClick?: (pinId: string) => void;
+  /** Pin currently in "wire start" mode — gets an orange ring like the canvas. */
+  wireStartPinId?: string | null;
+  /** Receives the React click event so the parent can inspect shift/ctrl. */
+  onPinClick?: (pinId: string, e: React.MouseEvent) => void;
   /**
    * Side the connector "faces" — controls which side labels are rendered on.
    * For a left-hand connector in the bus modal, labels go on the right; vice versa.
@@ -31,15 +34,21 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
   block,
   highlightedPinIds,
   selectedPinId,
+  wireStartPinId,
   onPinClick,
   labelSide = 'right',
   layoutOverride,
 }) => {
-  const { positions, width, height, byId } = useMemo(() => {
-    const result = layoutPinout(block.connectionPoints, layoutOverride ?? block.pinout);
+  const { positions, width, height, byId, numberingMap } = useMemo(() => {
+    const effectivePinout = layoutOverride ?? block.pinout;
+    const result = layoutPinout(block.connectionPoints, effectivePinout);
     const map = new Map<string, PinPosition>();
     result.positions.forEach((p) => map.set(p.pinId, p));
-    return { ...result, byId: map };
+    // Numbering uses the BLOCK's configured mode (not the layout override),
+    // so a temporary layout swap in the modal doesn't change which numbering
+    // mode the user picked for that connector.
+    const numbering = applyNumberingMode(block.connectionPoints, block.pinout ?? effectivePinout);
+    return { ...result, byId: map, numberingMap: numbering };
   }, [block.connectionPoints, block.pinout, layoutOverride]);
 
   // Reserve horizontal room for the longest label so labels never overflow
@@ -80,8 +89,15 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
         if (!pos) return null;
         const isHighlighted = !highlightedPinIds || highlightedPinIds.has(pin.id);
         const isSelected = selectedPinId === pin.id;
+        const isWireStart = wireStartPinId === pin.id;
         const fill = isHighlighted ? pin.color || '#888' : '#222';
-        const stroke = isSelected ? '#00ffa0' : isHighlighted ? '#fff' : '#444';
+        const stroke = isWireStart
+          ? '#FF8800'
+          : isSelected
+            ? '#00ffa0'
+            : isHighlighted
+              ? '#fff'
+              : '#444';
 
         const cx = pos.x + labelPad;
         const cy = pos.y;
@@ -96,7 +112,7 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
             onClick={(e) => {
               if (!onPinClick) return;
               e.stopPropagation();
-              onPinClick(pin.id);
+              onPinClick(pin.id, e);
             }}
           >
             {/* Hit target — larger than the visible circle so clicks are easy */}
@@ -106,28 +122,45 @@ export const ConnectorPinoutView: React.FC<ConnectorPinoutViewProps> = ({
               r={PIN_RADIUS + 8}
               fill="transparent"
             />
+            {/* Wire-start ring */}
+            {isWireStart && (
+              <circle
+                cx={cx}
+                cy={cy}
+                r={PIN_RADIUS + 5}
+                fill="none"
+                stroke="#FF8800"
+                strokeWidth={2}
+                strokeDasharray="3,2"
+                pointerEvents="none"
+              />
+            )}
             <circle
               cx={cx}
               cy={cy}
               r={PIN_RADIUS}
               fill={fill}
               stroke={stroke}
-              strokeWidth={isSelected ? 2.5 : 1.5}
+              strokeWidth={isWireStart || isSelected ? 2.5 : 1.5}
             />
-            {pin.pinNumber !== undefined && (
-              <text
-                x={cx}
-                y={cy + 3}
-                textAnchor="middle"
-                fontFamily="Roboto Mono, monospace"
-                fontSize={9}
-                fill={isHighlighted ? '#000' : '#666'}
-                fontWeight="bold"
-                pointerEvents="none"
-              >
-                {pin.pinNumber}
-              </text>
-            )}
+            {(() => {
+              const display = numberingMap.get(pin.id);
+              if (!display) return null;
+              return (
+                <text
+                  x={cx}
+                  y={cy + 3}
+                  textAnchor="middle"
+                  fontFamily="Roboto Mono, monospace"
+                  fontSize={display.length > 3 ? 7 : 9}
+                  fill={isHighlighted ? '#000' : '#666'}
+                  fontWeight="bold"
+                  pointerEvents="none"
+                >
+                  {display}
+                </text>
+              );
+            })()}
             <text
               x={labelX}
               y={cy + 3}

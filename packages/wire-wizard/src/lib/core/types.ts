@@ -36,11 +36,24 @@ export type PinSignalType =
   | 'pwm'
   | 'rf';
 
+export type PinNumberingMode = 'manual' | 'sequential' | 'row-col' | 'col-row';
+
 export interface PinoutLayout {
   shape: 'rectangle' | 'circle' | 'auto';
-  rows?: number;        // for rectangle layout
-  cols?: number;        // for rectangle layout
-  ringRadius?: number;  // for circle layout
+  rows?: number;                    // for rectangle layout
+  cols?: number;                    // for rectangle layout
+  ringRadius?: number;              // for circle layout
+  numberingMode?: PinNumberingMode; // how pin numbers are displayed in the pinout view (default 'manual')
+}
+
+export interface Conductor {
+  id: string;
+  fromInternalPinId: string;
+  toInternalPinId: string;
+  color?: string;       // overrides the source pin's color when set
+  label?: string;
+  gauge?: WireGauge;
+  netName?: string;
 }
 
 export interface ConnectionPoint {
@@ -139,8 +152,17 @@ export interface Wire {
   // Bus-port wire pin assignments — set in the pinout drill-in view when
   // this wire's endpoint is a bus port. The from/to point IDs still refer
   // to the bus port itself; these fields say which internal pin is in use.
+  // DEPRECATED in V2 — kept for backward compat. New code writes
+  // `conductors[]` below instead.
   fromInternalPinId?: string;
   toInternalPinId?: string;
+
+  /**
+   * When this wire connects two bus ports, `conductors` is the list of
+   * pin-to-pin mappings inside the cable. Authored in the pinout drill-in
+   * view. A wire with no `conductors` renders no internal lines.
+   */
+  conductors?: Conductor[];
 }
 
 export interface DiagramData {

@@ -660,9 +660,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
                     <BusPinoutModal
                         wire={wire}
                         blocks={blocks}
+                        allWires={wires}
                         siblingsAtBusPort={siblings}
                         updateConnectionPoint={contextUpdateConnectionPoint}
                         updateWire={contextUpdateWire}
+                        updateBlock={contextUpdateBlock}
+                        setWires={setWires}
                         saveToHistory={saveToHistory}
                         onClose={closePinout}
                     />

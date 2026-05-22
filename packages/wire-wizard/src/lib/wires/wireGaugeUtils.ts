@@ -87,8 +87,27 @@ export function getSegmentGauge(wire: Wire, segmentIndex: number): WireGauge | n
     }
   }
 
-  // Fall back to default wire gauge
-  return wire.wireGauge || null;
+  if (wire.wireGauge) return wire.wireGauge;
+
+  // For bus-port cables: fall back to the fattest gauge declared by any
+  // conductor inside the cable.
+  if (wire.conductors && wire.conductors.length > 0) {
+    const gauges = wire.conductors
+      .map((c) => c.gauge)
+      .filter((g): g is WireGauge => !!g);
+    if (gauges.length > 0) {
+      // AWG order — smaller string = fatter wire (4/0 > 1/0 > 1 AWG > 22 AWG)
+      const order: WireGauge[] = [
+        '4/0 AWG', '3/0 AWG', '2/0 AWG', '1/0 AWG',
+        '1 AWG', '2 AWG', '4 AWG', '6 AWG', '8 AWG',
+        '10 AWG', '12 AWG', '14 AWG', '16 AWG', '18 AWG', '20 AWG', '22 AWG',
+      ];
+      const idx = (g: WireGauge) => order.indexOf(g);
+      return gauges.reduce((fattest, g) => (idx(g) < idx(fattest) ? g : fattest));
+    }
+  }
+
+  return null;
 }
 
 /**
