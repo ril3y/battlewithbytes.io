@@ -4,7 +4,7 @@ import { MODAL_OVERLAY_STYLE } from '../../lib/core/styles';
 import { ConnectorPinoutView, getPinCenterInContainer } from './ConnectorPinoutView';
 import { PinDetailPanel } from './PinDetailPanel';
 import { ConductorList } from './ConductorList';
-import { NumberingModeSelect } from './NumberingModeSelect';
+import { LayoutControls } from './LayoutControls';
 import { propagateAcrossNet } from '../../lib/pinout/netPropagation';
 
 /** HSL-spread color palette used to pick visually-distinct default conductor colors. */
@@ -506,11 +506,12 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
 
           {/* Left connector */}
           <div ref={leftWrapRef} style={{ position: 'relative', zIndex: 1, maxWidth: 480 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
               <div style={{ fontSize: 10, letterSpacing: 1.5, color: '#00ffa0' }}>
                 {`${layout.left.block.label} · ${layout.left.pin.label}`.toUpperCase()}
               </div>
-              <NumberingModeSelect
+              <LayoutControls
+                pinCount={leftVirtualBlock.connectionPoints.length}
                 pinout={layout.left.block.pinout}
                 onChange={(next) => { ensureHistorySnapshot(); updateBlock(layout.left.block.id, { pinout: next }); }}
               />
@@ -522,14 +523,15 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
               wireStartPinId={wireStart?.side === 'left' ? wireStart.pinId : null}
               onPinClick={(pid, e) => handlePinClick('left', pid, e)}
               labelSide="right"
-              layoutOverride={autoRectangleLayout(leftVirtualBlock.connectionPoints.length)}
+              layoutOverride={layout.left.block.pinout ?? autoRectangleLayout(leftVirtualBlock.connectionPoints.length)}
             />
           </div>
 
           {/* Right connector */}
           <div ref={rightWrapRef} style={{ position: 'relative', zIndex: 1, maxWidth: 480 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-              <NumberingModeSelect
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+              <LayoutControls
+                pinCount={rightVirtualBlock.connectionPoints.length}
                 pinout={layout.right.block.pinout}
                 onChange={(next) => { ensureHistorySnapshot(); updateBlock(layout.right!.block.id, { pinout: next }); }}
               />
@@ -544,7 +546,7 @@ export const BusPinoutModal: React.FC<BusPinoutModalProps> = ({
               wireStartPinId={wireStart?.side === 'right' ? wireStart.pinId : null}
               onPinClick={(pid, e) => handlePinClick('right', pid, e)}
               labelSide="left"
-              layoutOverride={autoRectangleLayout(rightVirtualBlock.connectionPoints.length)}
+              layoutOverride={layout.right.block.pinout ?? autoRectangleLayout(rightVirtualBlock.connectionPoints.length)}
             />
           </div>
 

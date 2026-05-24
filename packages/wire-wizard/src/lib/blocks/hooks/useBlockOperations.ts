@@ -178,10 +178,18 @@ export function useBlockOperations({
     // Generate new unique ID
     const newBlockId = `block_${Date.now()}`;
 
-    // Create new connection points with new IDs
-    const newConnectionPoints = block.connectionPoints.map((point, index) => ({
+    // Build an old-id → new-id map so we can remap any bus port's
+    // `internalPinIds` array to point at the duplicate's pins.
+    const idMap = new Map<string, string>();
+    block.connectionPoints.forEach((point, index) => {
+      idMap.set(point.id, `${newBlockId}_pt_${index}`);
+    });
+
+    // Create new connection points with new IDs + remapped bus-port references.
+    const newConnectionPoints = block.connectionPoints.map((point) => ({
       ...point,
-      id: `${newBlockId}_pt_${index}` // New unique point IDs
+      id: idMap.get(point.id)!,
+      internalPinIds: point.internalPinIds?.map((id) => idMap.get(id) ?? id),
     }));
 
     // Create duplicated block offset by 20px
