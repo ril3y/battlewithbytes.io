@@ -31,7 +31,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   const tooltipId = useRef(
     `tooltip-${Math.random().toString(36).substr(2, 9)}`,
   ).current;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Function to check if child contains an input element that has focus
   const checkChildFocus = () => {
@@ -173,7 +173,7 @@ const Tooltip: React.FC<TooltipProps> = ({
                 style={{ clipPath: "polygon(100% 0, 0% 100%, 100% 100%)" }}
               ></span>
             </div>
-            <style jsx>{`
+            <style>{`
               @keyframes fadeIn {
                 from {
                   opacity: 0;
