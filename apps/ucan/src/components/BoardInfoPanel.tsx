@@ -10,7 +10,7 @@
 import React, { useState, useEffect } from "react";
 import { BoardCapabilities, SerialConfig, ActionRule } from "../types";
 import CollapsiblePanel from "./CollapsiblePanel";
-import Tooltip from "@/lib/utils/Tooltip";
+import Tooltip from "@battlewithbytes/utils/Tooltip";
 import {
   loadLastDevice,
   formatDeviceName,

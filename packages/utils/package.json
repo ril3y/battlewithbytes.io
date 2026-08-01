@@ -6,16 +6,23 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./basePath": "./src/basePath.ts"
+    "./basePath": "./src/basePath.ts",
+    "./inputUtils": "./src/inputUtils.ts",
+    "./Tooltip": "./src/Tooltip.tsx"
   },
   "scripts": {
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
   "devDependencies": {
     "@battlewithbytes/eslint-config": "workspace:*",
     "@battlewithbytes/tsconfig": "workspace:*",
+    "@types/react": "^19",
     "eslint": "^9",
+    "react": "^19.0.0",
     "typescript": "^5"
   }
 }

@@ -7,8 +7,8 @@ import {
   isValidVoltage,
   getParameterWarning,
   getParameterTooltip,
-} from "@/lib/utils/inputUtils";
-import Tooltip from "@/lib/utils/Tooltip";
+} from "@battlewithbytes/utils/inputUtils";
+import Tooltip from "@battlewithbytes/utils/Tooltip";
 import mosfetData from "./mosfetData.json";
 
 interface MosfetDetails {

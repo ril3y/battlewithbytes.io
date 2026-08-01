@@ -296,6 +296,9 @@ importers:
 
   apps/mosfet-calculator:
     dependencies:
+      '@battlewithbytes/utils':
+        specifier: workspace:^
+        version: link:../../packages/utils
       next:
         specifier: 15.3.0
         version: 15.3.0(@babel/core@7.28.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -345,6 +348,9 @@ importers:
 
   apps/ohms-law-calculator:
     dependencies:
+      '@battlewithbytes/utils':
+        specifier: workspace:^
+        version: link:../../packages/utils
       next:
         specifier: 15.3.0
         version: 15.3.0(@babel/core@7.28.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -639,9 +645,15 @@ importers:
       '@battlewithbytes/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@types/react':
+        specifier: ^19
+        version: 19.2.7
       eslint:
         specifier: ^9
         version: 9.39.2(jiti@2.6.1)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.3
       typescript:
         specifier: ^5
         version: 5.9.3
