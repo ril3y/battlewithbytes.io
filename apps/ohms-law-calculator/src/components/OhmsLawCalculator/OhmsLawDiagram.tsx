@@ -5,7 +5,7 @@ import type { OhmsLawValues } from "@/types/tools";
 import {
   parseFieldValue,
   formatValueWithSuffix,
-} from "@/lib/utils/inputUtils";
+} from "@battlewithbytes/utils/inputUtils";
 
 interface OhmsLawDiagramProps {
   values: OhmsLawValues;

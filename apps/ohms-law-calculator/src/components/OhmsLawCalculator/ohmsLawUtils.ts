@@ -5,7 +5,7 @@ import {
   parseValueWithSuffix, // Use the corrected, robust parser
   formatValueWithSuffix, // Used for formatting within descriptions
   // parseFieldValue // Removed - use parseValueWithSuffix directly
-} from "@/lib/utils/inputUtils";
+} from "@battlewithbytes/utils/inputUtils";
 
 /**
  * Calculate the missing value in Ohm's Law based on the provided values

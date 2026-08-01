@@ -3,7 +3,7 @@
 import React from "react";
 import type { OhmsLawResults } from "@/types/tools";
 // Import only the necessary utility
-import { formatValueWithSuffix } from "@/lib/utils/inputUtils";
+import { formatValueWithSuffix } from "@battlewithbytes/utils/inputUtils";
 
 interface DescriptionProps {
   results: OhmsLawResults;
