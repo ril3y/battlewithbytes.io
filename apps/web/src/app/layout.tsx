@@ -6,6 +6,7 @@ import "../styles/prism-theme.css";
 import ClientQuakeTerminalWrapper from "@/components/ClientQuakeTerminalWrapper";
 import StandaloneWrapper from "@/components/StandaloneWrapper";
 import GoatCounter from "@/components/GoatCounter";
+import { SITE_URL } from "@/lib/utils/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,10 +19,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title:
     "Battle With Bytes | Cybersecurity, Embedded Hardware & Software Engineering",
   description:
     "A personal hub for sharing insights on cybersecurity, embedded hardware, and software engineering. Ask me about little data.",
+  icons: {
+    icon: [
+      { url: "/images/favicon.ico", sizes: "any" },
+      { url: "/images/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/images/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/images/apple-touch-icon.png",
+    shortcut: "/images/favicon.ico",
+  },
+  manifest: "/images/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -31,25 +43,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="icon"
-          type="image/x-icon"
-          href="/images/favicon.ico"
-          sizes="any"
-        />
-        <link
-          rel="apple-touch-icon"
-          type="image/x-icon"
-          href="/images/favicon.ico"
-          sizes="180x180"
-        />
-        <link
-          rel="shortcut icon"
-          type="image/x-icon"
-          href="/images/favicon.ico"
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >

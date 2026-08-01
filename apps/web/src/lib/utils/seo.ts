@@ -3,6 +3,11 @@
  * Helps generate consistent metadata across the site
  */
 
+import type { Metadata } from "next";
+
+/** Canonical origin for the deployed site (matches public/CNAME). */
+export const SITE_URL = "https://battlewithbytes.io";
+
 export interface SEOProps {
   title: string;
   description: string;
@@ -31,7 +36,7 @@ export const defaultSEO: SEOProps = {
     "MOSFET calculator",
     "Ohm's Law calculator",
   ],
-  ogImage: "/images/og-image.png",
+  ogImage: "/images/site_logo.png",
   type: "website",
 };
 
@@ -52,6 +57,38 @@ export function generateSEO(props: Partial<SEOProps> = {}): SEOProps {
       : defaultSEO.title,
     // Combine keywords
     keywords: [...(defaultSEO.keywords || []), ...(props.keywords || [])],
+  };
+}
+
+/**
+ * Build a Next.js Metadata object from SEO props, including OpenGraph,
+ * Twitter card, and canonical URL. Relative image/canonical paths resolve
+ * against metadataBase (set in the root layout).
+ */
+export function buildMetadata(props: Partial<SEOProps> = {}): Metadata {
+  const seo = generateSEO(props);
+  return {
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      url: seo.canonical,
+      type: seo.type === "article" ? "article" : "website",
+      images: seo.ogImage ? [{ url: seo.ogImage }] : [],
+      siteName: "Battle With Bytes",
+      ...(seo.type === "article" && seo.publishedAt
+        ? { publishedTime: seo.publishedAt, modifiedTime: seo.updatedAt }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+      images: seo.ogImage ? [seo.ogImage] : [],
+    },
+    ...(seo.canonical ? { alternates: { canonical: seo.canonical } } : {}),
   };
 }
 
