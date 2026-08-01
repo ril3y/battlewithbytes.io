@@ -1,106 +1,85 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# --- Dependencies ---
+node_modules/
+.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# testing
-/coverage
+# --- Next.js / build output ---
+.next/
+out/
+build/
+dist/
+/static-export/
+*.tsbuildinfo
+next-env.d.ts
 
-# next.js
-/.next/
-/out/
+# --- Test / lint output ---
+coverage/
+eslint-report.json
+jest-results.json
+build-output.txt
 
-# production
-/build
+# --- Turborepo ---
+.turbo
 
-# misc
-.DS_Store
-*.pem
+# --- Rust / Cargo ---
+**/target/
+**/*.rs.bk
+**/Cargo.lock
+*.pdb
 
-# debug
+# --- WASM build output (generated or fetched at build time) ---
+**/pkg/
+**/*.wasm
+**/*.wasm.gz
+
+# --- Logs ---
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# Rust/Cargo
-target/
-**/*.rs.bk
-*.pdb
-Cargo.lock
-
-# WASM build output (will be generated during build)
-packages/battlemagic-core/pkg/
-packages/*/pkg/
-# Node modules
-/node_modules/
-
-# Production build output
-/.next/
-/out/
-/build/
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# --- Env files (opt in deliberately if ever needed) ---
+.env*
 
-# Local environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Editor directories and files
+# --- Editor / OS ---
 .vscode/
 .idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-
-# Build artifacts
-dist/
-*.log
-
-# Optional: if using coverage tool
-coverage/
-
-# Mac-specific files
+.DS_Store
 .AppleDouble
 .LSOverride
+Thumbs.db
 
-# Exclude static exports that are deployed
-/static-export/
+# --- Vercel ---
+.vercel
 
-# Reference directories (root level only)
+# --- Package-manager lockfiles other than pnpm-lock.yaml ---
+package-lock.json
+yarn.lock
+
+# --- Firmware files and debugging artifacts ---
+*.so
+*.bin
+*.elf
+*.hex
+*.srec
+*.pyc
+*.py[cod]
+# tracked test fixtures are exempt
+!packages/battlemagic-analyzer/fixtures/*.elf
+
+# --- Editor temp / abandoned rewrites ---
+*.new
+
+# --- Local scratch (never tracked) ---
+/experiments/
 /uCAN
 nul
-
-# Temporary documentation and notes (root level only)
 /repo.md
 /notes.txt
 /*_IMPLEMENTATION*.md
@@ -110,41 +89,8 @@ nul
 /QUICK_REFERENCE.md
 /PHASE*.md
 
-# Build tooling (not needed in production)
-experiments/yowasp-clang/
-
-# Claude Code local settings (never commit)
+# --- Claude Code local settings (never commit) ---
 .claude/settings.local.json
 
-# Turborepo
-.turbo
-dist/
-build/
-
-# Workspace
-apps/*/node_modules
-packages/*/node_modules
-apps/*/.next
-apps/*/out
-packages/*/dist
-
-# Rust
-**/target/
-**/*.rs.bk
-**/Cargo.lock
-
-# WASM
-**/pkg/
-**/*.wasm
-# WASM binaries (generated during build)
-apps/web/public/wasm/*.wasm
-
-# Firmware files and debugging artifacts
-*.so
-*.bin
-*.elf
-*.hex
-*.srec
-firmware_*.bin
-*.pyc
-*.py[cod]
+# --- Misc ---
+*.pem

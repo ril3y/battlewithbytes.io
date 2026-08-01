@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path to the ELF file
-const elfPath = path.join(__dirname, '..', '..', 'b94203ea530de4ec07eaa010cfa1466cf3cc2f72052fa7320b645ce3b305683a.elf');
+const elfPath = path.join(__dirname, 'fixtures', 'firmware-sample-arm.elf');
 
 console.log('Loading ELF file:', elfPath);
 

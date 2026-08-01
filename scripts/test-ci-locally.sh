@@ -8,7 +8,8 @@ echo "This simulates the GitHub Actions Ubuntu environment"
 echo ""
 
 # Use Ubuntu 24.04 to match CI
-MSYS_NO_PATHCONV=1 docker run --rm -v "X:/battlewithbytes.io:/repo" -w /repo ubuntu:24.04 bash -c '
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+MSYS_NO_PATHCONV=1 docker run --rm -v "${REPO_ROOT}:/repo" -w /repo ubuntu:24.04 bash -c '
 set -e
 
 echo "Installing system dependencies..."
