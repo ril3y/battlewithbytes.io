@@ -16,8 +16,7 @@
   ],
   "scripts": {
     "build": "echo 'WASM build handled by build:wasm task'",
-    "build:wasm": "wasm-pack build --target bundler --out-dir pkg",
-    "test": "echo 'Skipping WASM tests - integration tests require native target'"
+    "build:wasm": "wasm-pack build --target bundler --out-dir pkg"
   },
   "keywords": [
     "wasm",
@@ -30,7 +29,7 @@
   ],
   "author": "ril3y",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "serialport": "^13.0.0"
   }
 }
