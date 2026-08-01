@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   calculateNChannelConduction,
   calculatePChannelConduction,
@@ -14,52 +14,39 @@ import Description from "./Description";
 import type { MosfetDetails, MosfetInputValues } from "@/types/tools";
 import "./styles.css";
 
+const EMPTY_DETAILS: MosfetDetails = { vth: "", rds_on: "" };
+const EMPTY_INPUTS: MosfetInputValues = {
+  vg: "",
+  vcc: "",
+  vd: "",
+  vs: "0",
+  loadResistance: "",
+};
+
+const EMPTY_RESULTS = {
+  description: "Please select a MOSFET and provide valid numeric input values.",
+  conducting: null as boolean | null,
+  voltageAcrossLoad: "",
+  powerDissipated: "",
+  currentThroughLoad: "",
+  vgs: "",
+  id: "",
+  vd: "",
+};
+
 export default function MosfetCalculator() {
   const [mosfetType, setMosfetType] = useState<string>("n-channel");
   const [mosfetName, setMosfetName] = useState<string>("");
-  const [mosfetDetails, setMosfetDetails] = useState<MosfetDetails>({
-    vth: "",
-    rds_on: "",
-  });
-  const [inputValues, setInputValues] = useState<MosfetInputValues>({
-    vg: "",
-    vcc: "",
-    vd: "",
-    vs: "0",
-    loadResistance: "",
-  });
-  const [description, setDescription] = useState<string>("");
-  const [conducting, setConducting] = useState<boolean | null>(null);
-  const [voltageAcrossLoad, setVoltageAcrossLoad] = useState<string>("");
-  const [powerDissipated, setPowerDissipated] = useState<string>("");
-  const [currentThroughLoad, setCurrentThroughLoad] = useState<string>("");
-  const [vgs, setVgs] = useState<string>("");
-  const [id, setId] = useState<string>("");
-  const [vd, setVd] = useState<string>("");
-  const [numericLoadResistance, setNumericLoadResistance] = useState<
-    number | null
-  >(null);
+  const [mosfetDetails, setMosfetDetails] =
+    useState<MosfetDetails>(EMPTY_DETAILS);
+  const [inputValues, setInputValues] =
+    useState<MosfetInputValues>(EMPTY_INPUTS);
 
   const handleMosfetTypeChange = (type: string) => {
     setMosfetType(type);
     setMosfetName("");
-    setMosfetDetails({ vth: "", rds_on: "" });
-    setInputValues({
-      vg: "",
-      vcc: "",
-      vd: "",
-      vs: "0",
-      loadResistance: "",
-    });
-    setDescription("");
-    setConducting(null);
-    setVoltageAcrossLoad("");
-    setPowerDissipated("");
-    setCurrentThroughLoad("");
-    setVgs("");
-    setId("");
-    setVd("");
-    setNumericLoadResistance(null);
+    setMosfetDetails(EMPTY_DETAILS);
+    setInputValues(EMPTY_INPUTS);
   };
 
   const handleMosfetDetailsChange = (name: string, details: MosfetDetails) => {
@@ -71,16 +58,18 @@ export default function MosfetCalculator() {
     setInputValues({ ...inputValues, [name]: value });
   };
 
-  useEffect(() => {
+  // Every displayed result is a pure function of the selected MOSFET and
+  // the input values, so derive them in one place instead of fanning out
+  // into per-field state from an effect.
+  const results = useMemo(() => {
     const vth = parseFloat(mosfetDetails.vth);
     const rds_on = parseSiPrefixedValue(mosfetDetails.rds_on);
     const vg = parseFloat(inputValues.vg);
     const vs = parseFloat(inputValues.vs);
     const loadResistanceNum = parseSiPrefixedValue(inputValues.loadResistance);
-
-    setNumericLoadResistance(
-      isNaN(loadResistanceNum) ? null : loadResistanceNum,
-    );
+    const numericLoadResistance = isNaN(loadResistanceNum)
+      ? null
+      : loadResistanceNum;
 
     let vccNum = NaN;
     if (mosfetType === "n-channel") {
@@ -96,54 +85,33 @@ export default function MosfetCalculator() {
           !isNaN(loadResistanceNum)
         : !isNaN(vg) && !isNaN(vs) && !isNaN(loadResistanceNum);
 
-    const hasNChannelPower = mosfetType === "n-channel" && !isNaN(vccNum);
-    const hasPChannelPower = mosfetType === "p-channel";
-
-    if (
-      hasRequiredDetails &&
-      hasRequiredInputs &&
-      (hasNChannelPower || hasPChannelPower)
-    ) {
-      let results;
-      if (mosfetType === "n-channel") {
-        results = calculateNChannelConduction(
-          vth,
-          vg,
-          vs,
-          vccNum,
-          loadResistanceNum,
-          rds_on,
-        );
-      } else {
-        results = calculatePChannelConduction(
-          vth,
-          vg,
-          vs,
-          loadResistanceNum,
-          rds_on,
-        );
-      }
-
-      setDescription(results.description || "");
-      setConducting(results.conducting);
-      setVoltageAcrossLoad(results.voltageAcrossLoad || "");
-      setPowerDissipated(results.powerDissipated || "");
-      setCurrentThroughLoad(results.currentThroughLoad || "");
-      setVgs(results.vgs || "");
-      setId(results.id || "");
-      setVd(results.vd || "");
-    } else {
-      setDescription(
-        "Please select a MOSFET and provide valid numeric input values.",
-      );
-      setConducting(null);
-      setVoltageAcrossLoad("");
-      setPowerDissipated("");
-      setCurrentThroughLoad("");
-      setVgs("");
-      setId("");
-      setVd("");
+    if (!hasRequiredDetails || !hasRequiredInputs) {
+      return { ...EMPTY_RESULTS, numericLoadResistance };
     }
+
+    const calc =
+      mosfetType === "n-channel"
+        ? calculateNChannelConduction(
+            vth,
+            vg,
+            vs,
+            vccNum,
+            loadResistanceNum,
+            rds_on,
+          )
+        : calculatePChannelConduction(vth, vg, vs, loadResistanceNum, rds_on);
+
+    return {
+      description: calc.description || "",
+      conducting: calc.conducting,
+      voltageAcrossLoad: calc.voltageAcrossLoad || "",
+      powerDissipated: calc.powerDissipated || "",
+      currentThroughLoad: calc.currentThroughLoad || "",
+      vgs: calc.vgs || "",
+      id: calc.id || "",
+      vd: calc.vd || "",
+      numericLoadResistance,
+    };
   }, [mosfetType, inputValues, mosfetDetails]);
 
   return (
@@ -177,17 +145,17 @@ export default function MosfetCalculator() {
         </div>
       </div>
       <Description
-        description={description}
-        conducting={conducting}
-        voltageAcrossLoad={voltageAcrossLoad}
-        powerDissipated={powerDissipated}
-        currentThroughLoad={currentThroughLoad}
-        vgs={vgs}
-        id={id}
-        vd={vd}
+        description={results.description}
+        conducting={results.conducting}
+        voltageAcrossLoad={results.voltageAcrossLoad}
+        powerDissipated={results.powerDissipated}
+        currentThroughLoad={results.currentThroughLoad}
+        vgs={results.vgs}
+        id={results.id}
+        vd={results.vd}
         mosfetDetails={mosfetDetails}
         mosfetType={mosfetType}
-        loadResistance={numericLoadResistance}
+        loadResistance={results.numericLoadResistance}
       />
     </div>
   );
