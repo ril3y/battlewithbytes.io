@@ -5,7 +5,7 @@ import matter from "gray-matter";
 import { notFound } from "next/navigation";
 import { ProjectMetadata } from "@/lib/utils/projects";
 import { Metadata } from "next";
-import { generateSEO } from "@/lib/utils/seo";
+import { buildMetadata } from "@/lib/utils/seo";
 import Image from "next/image";
 import ProjectContent from "@/components/projects/ProjectContent";
 
@@ -22,10 +22,11 @@ interface ProjectPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>; // searchParams is also a Promise
 }
 
-// Function to get project data (metadata and content)
-async function getProjectData(
-  slug: string,
-): Promise<{ metadata: ProjectMetadata; content: string | null } | null> {
+// Function to get project data (metadata and raw MDX content)
+async function getProjectData(slug: string): Promise<{
+  metadata: ProjectMetadata;
+  content: string | null;
+} | null> {
   const indexPath = path.join(projectsDirectory, slug, "index.mdx");
   let indexData: matter.GrayMatterFile<string>;
   try {
@@ -36,30 +37,17 @@ async function getProjectData(
     return null;
   }
 
-  try {
-    // Always use index.mdx for content
-    const { content } = indexData;
-    return {
-      metadata: {
-        slug,
-        title: indexData.data.title || "Untitled Project",
-        description: indexData.data.description || "No description",
-        coverImage: indexData.data.coverImage || undefined,
-      },
-      content: content,
-    };
-  } catch (error) {
-    console.error(`Error processing index.mdx for slug "${slug}":`, error);
-    return {
-      metadata: {
-        slug,
-        title: indexData.data.title || "Untitled Project",
-        description: indexData.data.description || "No description",
-        coverImage: indexData.data.coverImage || undefined,
-      },
-      content: "",
-    };
-  }
+  const metadata: ProjectMetadata = {
+    slug,
+    title: indexData.data.title || "Untitled Project",
+    description: indexData.data.description || "No description",
+    coverImage: indexData.data.coverImage || undefined,
+  };
+
+  return {
+    metadata,
+    content: indexData.content.trim() ? indexData.content : null,
+  };
 }
 
 // Static paths generation
@@ -78,51 +66,21 @@ export async function generateMetadata({
 
   if (!projectData) {
     // Return metadata for a 404 page if project not found
-    return generateSEO({
+    return buildMetadata({
       title: "Project Not Found",
       description: "The requested project could not be found.",
-      // Add other relevant SEO props for 404 if needed
     });
   }
 
   const { metadata } = projectData;
 
-  // Use the centralized SEO utility
-  const seoProps = generateSEO({
+  return buildMetadata({
     title: metadata.title,
     description: metadata.description,
-    // Assuming the slug is the basis for the canonical URL path
     canonical: `/projects/${resolvedParams.slug}`,
-    ogImage: metadata.coverImage, // Use cover image for OG
-    // Add specific type if needed, e.g., 'article' for projects
-    // type: 'article',
+    ogImage: metadata.coverImage,
+    type: "article",
   });
-
-  // Map SEOProps to Next.js Metadata type
-  return {
-    title: seoProps.title,
-    description: seoProps.description,
-    keywords: seoProps.keywords, // Assuming generateSEO provides keywords
-    openGraph: {
-      title: seoProps.title,
-      description: seoProps.description,
-      url: seoProps.canonical,
-      type: "article", // Explicitly set to 'article' for project pages
-      images: seoProps.ogImage ? [{ url: seoProps.ogImage }] : [],
-      siteName: "Battle With Bytes",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: seoProps.title,
-      description: seoProps.description,
-      images: seoProps.ogImage ? [seoProps.ogImage] : [],
-    },
-    alternates: {
-      canonical: seoProps.canonical,
-    },
-    // Add structured data if generateSEO supports it or define it here
-    // other: { ...seoProps.other },
-  };
 }
 
 // The actual page component - corrected

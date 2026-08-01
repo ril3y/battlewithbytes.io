@@ -1,3 +1,5 @@
+"use client";
+
 import * as Tabs from "@radix-ui/react-tabs";
 import React from "react";
 import styles from "./RadixTabs.module.css";
