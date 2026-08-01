@@ -1,15 +1,4 @@
 {
   "extends": "./tsconfig.base.json",
-  "files": [],
-  "references": [
-    {
-      "path": "./apps/web"
-    },
-    {
-      "path": "./apps/battleterm-pwa"
-    },
-    {
-      "path": "./packages/battleterm"
-    }
-  ]
+  "files": []
 }

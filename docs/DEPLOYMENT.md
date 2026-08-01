@@ -108,18 +108,10 @@ For each application, you'll need to create a separate Vercel project:
    - **Install Command**: `cd ../.. && pnpm install`
 4. Click "Deploy"
 
-#### 7. WireMapper
+#### 7. Wire Wizard
 
-1. Create a new project
-2. Import the same repository
-3. Configure:
-   - **Project Name**: `wirewizard-battlewithbytes`
-   - **Framework Preset**: Next.js
-   - **Root Directory**: `apps/wirewizard`
-   - **Build Command**: `cd ../.. && pnpm turbo build --filter=@battlewithbytes/wirewizard`
-   - **Output Directory**: `out`
-   - **Install Command**: `cd ../.. && pnpm install`
-4. Click "Deploy"
+Wire Wizard ships inside the main web app (`packages/wire-wizard`, rendered
+at `/tools/wire-wizard`), so it needs no separate deployment.
 
 ### Method 2: Using Vercel CLI
 
