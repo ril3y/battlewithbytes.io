@@ -1,0 +1,20 @@
+{
+  "name": "@battlewithbytes/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared ESLint flat configs for BattleWithBytes apps and packages",
+  "exports": {
+    "./next": "./next.mjs",
+    "./library": "./library.mjs"
+  },
+  "dependencies": {
+    "@eslint/eslintrc": "^3",
+    "@eslint/js": "^9",
+    "eslint-config-next": "15.3.0",
+    "eslint-plugin-react-hooks": "^5",
+    "typescript-eslint": "^8"
+  },
+  "peerDependencies": {
+    "eslint": "^9"
+  }
+}
