@@ -123,13 +123,13 @@ jobs:
 
           # Clone unicorn.js (AlexAltea's version which produces embedded WASM)
           if [ ! -d ~/unicorn-src ]; then
-            git clone --depth 1 https://github.com/AltAltea/unicorn.js.git ~/unicorn-src
+            git clone --depth 1 https://github.com/AlexAltea/unicorn.js.git ~/unicorn-src
           fi
 
           cd ~/unicorn-src
 
           # Build ARM variant
-          npm install || true
+          npm install
           npm run build -- --arch=arm || {
             # Fallback: Manual build if npm script fails
             cd unicorn
@@ -137,13 +137,14 @@ jobs:
             cmake --build build -j$(nproc)
           }
 
-          # Copy output
+          # Copy output; fail loudly if neither build produced an artifact
           cp dist/unicorn-arm.min.js ~/unicorn-wasm-builds/output/unicorn-arm.js 2>/dev/null || \
-          cp dist/unicorn-arm.js ~/unicorn-wasm-builds/output/unicorn-arm.js 2>/dev/null || \
-          echo "Warning: Unicorn build may have failed"
+          cp dist/unicorn-arm.js ~/unicorn-wasm-builds/output/unicorn-arm.js
+
+          test -f ~/unicorn-wasm-builds/output/unicorn-arm.js
 
           echo "Unicorn build complete"
-          ls -la ~/unicorn-wasm-builds/output/ || true
+          ls -la ~/unicorn-wasm-builds/output/
 
       - name: Upload tool artifacts
         uses: actions/upload-artifact@v4
@@ -263,13 +264,13 @@ jobs:
           mkdir -p apps/battleforge/public/wasm/capstone
           mkdir -p apps/battleforge/public/wasm/unicorn
 
-          # Copy tool artifacts
-          cp artifacts/tools/capstone-wasm-build/output/* apps/battleforge/public/wasm/capstone/ 2>/dev/null || true
-          cp artifacts/tools/unicorn-wasm-builds/output/* apps/battleforge/public/wasm/unicorn/ 2>/dev/null || true
+          # Copy tool artifacts; a release must never publish with these missing
+          cp artifacts/tools/capstone-wasm-build/output/* apps/battleforge/public/wasm/capstone/
+          cp artifacts/tools/unicorn-wasm-builds/output/* apps/battleforge/public/wasm/unicorn/
 
-          # Copy compiler artifacts if present
+          # Copy compiler artifacts if present (optional job)
           if [ -d artifacts/compilers ]; then
-            cp artifacts/compilers/* apps/battleforge/public/wasm/ 2>/dev/null || true
+            cp artifacts/compilers/* apps/battleforge/public/wasm/
           fi
 
           echo "WASM files:"
