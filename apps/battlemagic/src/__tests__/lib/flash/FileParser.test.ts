@@ -22,9 +22,11 @@ describe("FileParser", () => {
     });
 
     it("should parse multiple records", async () => {
+      // Records are non-contiguous so they parse into separate segments
+      // (contiguous records are intentionally merged by the parser)
       const hexContent =
         ":10000000000102030405060708090A0B0C0D0E7B\n" +
-        ":10001000101112131415161718191A1B1C1D1E6B\n" +
+        ":10002000101112131415161718191A1B1C1D1E5B\n" +
         ":00000001FF";
       const file = new File([hexContent], "test.hex", { type: "text/plain" });
 
@@ -32,12 +34,12 @@ describe("FileParser", () => {
 
       expect(result.segments.length).toBe(2);
       expect(result.segments[0].address).toBe(0x0000);
-      expect(result.segments[1].address).toBe(0x0010);
+      expect(result.segments[1].address).toBe(0x0020);
     });
 
     it("should handle extended linear address records", async () => {
       const hexContent =
-        ":020000040008F2\n" +
+        ":020000040800F2\n" +
         ":10000000000102030405060708090A0B0C0D0E7B\n" +
         ":00000001FF";
       const file = new File([hexContent], "test.hex", { type: "text/plain" });
@@ -171,7 +173,7 @@ describe("FileParser", () => {
     it("should parse S3 data record (32-bit address)", async () => {
       const srecContent =
         "S00F000068747470733A2F2F7777772E61\n" +
-        "S3177AF00011223344556677889900112233443396\n" +
+        "S3157AF0000000112233445566778899001122334433A6\n" +
         "S5030001FB\n" +
         "S7057AF00000F8";
       const file = new File([srecContent], "test.s37", {
@@ -271,7 +273,7 @@ describe("FileParser", () => {
 
       expect(hex).toContain(":");
       expect(hex).toContain("04"); // Record length
-      expect(hex).toContain("00000000"); // Address
+      expect(hex).toContain(":04000000"); // Length + 16-bit address + record type (data)
       expect(hex).toContain("00"); // Record type (data)
     });
 
@@ -296,7 +298,10 @@ describe("FileParser", () => {
 
       for (const line of lines) {
         if (line.length > 0) {
-          expect(line).toMatch(/^:[0-9A-F]{2}[0-9A-F]{8}[0-9A-F]{2}/);
+          // : + length(2) + 16-bit address(4) + type(2) + data(2n) + checksum(2)
+          expect(line).toMatch(
+            /^:[0-9A-F]{2}[0-9A-F]{4}[0-9A-F]{2}([0-9A-F]{2})*[0-9A-F]{2}$/,
+          );
         }
       }
     });
@@ -308,8 +313,8 @@ describe("FileParser", () => {
       const srec = FileParser.toSRecord(data);
 
       expect(srec).toContain("S0"); // Header
-      expect(srec).toContain("S1"); // Data record (16-bit address)
-      expect(srec).toContain("S9"); // Start address
+      expect(srec).toContain("S3"); // Data record (32-bit address by default)
+      expect(srec).toContain("S7"); // Start address (32-bit termination)
     });
 
     it("should use 32-bit addressing for S-records by default", () => {
@@ -356,7 +361,7 @@ describe("FileParser", () => {
 
       expect(commands.length).toBe(1);
       expect(commands[0]).toContain("vFlashWrite");
-      expect(commands[0]).toContain("08000000");
+      expect(commands[0]).toContain("8000000"); // unpadded hex address
       expect(commands[0]).toContain("01020304");
     });
 
@@ -377,8 +382,8 @@ describe("FileParser", () => {
       const commands = FileParser.segmentsToFlashCommands(segments);
 
       expect(commands.length).toBe(2);
-      expect(commands[0]).toContain("08000000");
-      expect(commands[1]).toContain("08000100");
+      expect(commands[0]).toContain("8000000"); // unpadded hex addresses
+      expect(commands[1]).toContain("8000100");
     });
   });
 
@@ -399,7 +404,7 @@ describe("FileParser", () => {
       const hexString = FileParser.toIntelHex(data, baseAddress);
 
       // Verify the hex contains the address
-      expect(hexString).toContain("020000040002"); // Extended address 0x0002
+      expect(hexString).toContain("020000042000"); // Extended address record for upper 16 bits 0x2000
     });
   });
 });

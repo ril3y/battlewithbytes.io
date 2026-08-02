@@ -5,8 +5,8 @@
 
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import ConnectionBar from "../../../components/ConnectionBar";
-import { ConnectionState } from "../../../lib/gdb/types";
+import ConnectionBar from "../../components/ConnectionBar";
+import { ConnectionState } from "../../lib/gdb/types";
 
 describe("ConnectionBar Component", () => {
   const defaultProps = {
@@ -51,7 +51,10 @@ describe("ConnectionBar Component", () => {
 
     it("should display baud rate selector", () => {
       render(<ConnectionBar {...defaultProps} />);
-      const baudRateInputs = screen.getAllByDisplayValue("115200");
+      // Options render the rate via toLocaleString() (e.g. "115,200")
+      const baudRateInputs = screen.getAllByDisplayValue(
+        (115200).toLocaleString(),
+      );
       expect(baudRateInputs.length).toBeGreaterThan(0);
     });
   });
@@ -242,10 +245,13 @@ describe("ConnectionBar Component", () => {
 
   describe("Target Control Buttons", () => {
     it("should display target control buttons when connected", () => {
+      // Target control buttons (Halt/Run/Step/Reset) only render when a
+      // target is attached, not merely when GDB is connected
       const { container } = render(
         <ConnectionBar
           {...defaultProps}
           gdbState={ConnectionState.CONNECTED}
+          targetAttached={true}
         />,
       );
       const buttons = container.querySelectorAll("button");

@@ -21,19 +21,14 @@ export interface MockCapstoneInstruction {
  * Mock Capstone class
  */
 export class MockCapstone {
-  private mode: number;
-
-  constructor(_arch: number, mode: number) {
-    this.mode = mode;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(_arch: number, _mode: number) {
+    // Mock constructor - arch/mode are accepted but unused
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   detail(_enable: boolean): void {
     // Mock method
-  }
-
-  mode(mode: number): void {
-    this.mode = mode;
   }
 
   disasm(data: Uint8Array, baseAddress: number): MockCapstoneInstruction[] {
@@ -98,7 +93,7 @@ export class MockCapstone {
       // BX
       const rm = (inst >> 3) & 0xf;
       mnemonic = "bx";
-      op_str = `r${rm === 14 ? "lr" : rm}`;
+      op_str = rm === 14 ? "lr" : rm === 15 ? "pc" : `r${rm}`;
     } else if ((inst & 0xf000) === 0xd000) {
       // Conditional branch
       const cond = (inst >> 8) & 0xf;
@@ -256,7 +251,14 @@ export const MockCapstoneAPI = {
 
 /**
  * Mock module export
+ *
+ * The real @alexaltea/capstone-js dist bundle's default export (MCapstone) is a
+ * promise that resolves to the Capstone API object once WASM is initialized.
+ * CapstoneDisassembler does `const cs = await MCapstone` and expects
+ * `cs.Capstone`, `cs.ARCH_ARM`, `cs.MODE_THUMB`, etc. - so the default export
+ * here must be an awaitable resolving to the API object, not a factory.
  */
-export default function createMockCapstone() {
-  return Promise.resolve(MockCapstoneAPI);
-}
+const MCapstone: Promise<typeof MockCapstoneAPI> =
+  Promise.resolve(MockCapstoneAPI);
+
+export default MCapstone;

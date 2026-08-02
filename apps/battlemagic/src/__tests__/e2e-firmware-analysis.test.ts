@@ -18,6 +18,19 @@ import { generateTestFirmware, EXPECTED_ANALYSIS } from './fixtures/test_firmwar
 import { getAnalysisDatabase } from '../lib/db/AnalysisDatabase';
 import type { CommentType } from '../lib/db/AnalysisDatabase';
 
+// jsdom's Blob lacks text(); importFromMdb relies on it (jest.polyfills.js
+// already covers arrayBuffer() the same way)
+if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
+  Blob.prototype.text = function () {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(this);
+    });
+  };
+}
+
 describe('E2E Firmware Analysis Workflow', () => {
   let db: ReturnType<typeof getAnalysisDatabase>;
 
@@ -103,26 +116,31 @@ describe('E2E Firmware Analysis Workflow', () => {
     // STEP 5: Simulate Adding Comments of Different Types
     // =========================================================================
     const testAddress = results.functions[0].start_address;
+    // DbComment requires the composite primary key `${address}_${comment_type}`
     const comments = [
       {
+        id: `${testAddress}_standard`,
         address: testAddress,
         text: 'This is a standard comment',
         comment_type: 'standard' as CommentType,
         timestamp: Date.now(),
       },
       {
+        id: `${testAddress}_repeatable`,
         address: testAddress,
         text: 'This is a repeatable comment',
         comment_type: 'repeatable' as CommentType,
         timestamp: Date.now(),
       },
       {
+        id: `${testAddress + 0x100}_anterior`,
         address: testAddress + 0x100,
         text: 'This is an anterior comment',
         comment_type: 'anterior' as CommentType,
         timestamp: Date.now(),
       },
       {
+        id: `${testAddress + 0x200}_block`,
         address: testAddress + 0x200,
         text: 'This is a block comment',
         comment_type: 'block' as CommentType,
@@ -279,6 +297,7 @@ describe('E2E Firmware Analysis Workflow', () => {
 
     const dbComments = [
       {
+        id: `${0x08000100}_standard`,
         address: 0x08000100,
         text: 'Test comment',
         comment_type: 'standard' as CommentType,
@@ -392,6 +411,7 @@ describe('E2E Firmware Analysis Workflow', () => {
     analyzer.analyze_from_bytes(firmware);
 
     const testComment = {
+      id: `${0x08000100}_repeatable`,
       address: 0x08000100,
       text: 'Persistent comment',
       comment_type: 'repeatable' as CommentType,

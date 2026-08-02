@@ -267,7 +267,7 @@ export const EXPECTED_ANALYSIS = {
 
   // Expected cross-references
   xrefs: {
-    calls: 4, // BL instructions
+    calls: 3, // BL instructions (Reset->main, NMI->helper, MemManage->function_with_args)
     branches: 1, // B infinite_loop
     dataReads: 1, // LDR from literal pool
   },

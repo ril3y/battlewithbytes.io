@@ -165,7 +165,7 @@ describe('WASM Analyzer Integration', () => {
       expect(Array.isArray(results.vector_table)).toBe(true);
 
       // Should detect standard ARM Cortex-M vectors
-      expect(results.vector_table.length).toBeGreaterThanOrEqual(16);
+      expect(results.vector_table!.length).toBeGreaterThanOrEqual(16);
 
       analyzer.free();
     });
