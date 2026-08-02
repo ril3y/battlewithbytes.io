@@ -306,9 +306,23 @@ async function apiDownload(release) {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const tag = args.find(a => a.startsWith('--tag='))?.split('=')[1];
+  let tag = args.find(a => a.startsWith('--tag='))?.split('=')[1];
   const checkOnly = args.includes('--check');
   const force = args.includes('--force');
+
+  // No explicit tag: use the pinned release from wasm-release.json so
+  // builds are reproducible and Turbo cache-busts when the pin changes.
+  if (!tag) {
+    const pinPath = path.join(__dirname, '..', 'wasm-release.json');
+    if (fs.existsSync(pinPath)) {
+      try {
+        tag = JSON.parse(fs.readFileSync(pinPath, 'utf8')).tag;
+        if (tag) log(`Using pinned release from wasm-release.json: ${tag}`, 'dim');
+      } catch (err) {
+        log(`Could not read wasm-release.json (${err.message}), falling back to latest`, 'yellow');
+      }
+    }
+  }
 
   // Check mode - just verify files exist
   if (checkOnly) {

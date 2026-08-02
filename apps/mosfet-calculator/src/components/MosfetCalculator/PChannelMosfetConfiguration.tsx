@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import Tooltip from "@/lib/utils/Tooltip";
+import Tooltip from "@battlewithbytes/utils/Tooltip";
 import {
   parseValueWithSuffix,
   formatValueWithSuffix,
   isValidVoltage,
   getParameterWarning,
   getParameterTooltip,
-} from "@/lib/utils/inputUtils";
+} from "@battlewithbytes/utils/inputUtils";
 import mosfetData from "./mosfetData.json";
 
 interface MosfetDetails {

@@ -4,8 +4,10 @@ import {
   getBlogPostMetadata,
 } from "@/lib/blog";
 import BlogPost from "@/components/BlogPost";
+import MdxContent from "@/components/MdxContent";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { buildMetadata, generateArticleSchema } from "@/lib/utils/seo";
 
 // Define the params type
 type Params = {
@@ -34,10 +36,15 @@ export async function generateMetadata({
     };
   }
 
-  return {
-    title: `${postMetadata.title} | Battle With Bytes`,
+  return buildMetadata({
+    title: postMetadata.title,
     description: postMetadata.excerpt,
-  };
+    keywords: postMetadata.tags,
+    canonical: `/blog/${resolvedParams.slug}`,
+    ogImage: postMetadata.coverImage,
+    type: "article",
+    publishedAt: postMetadata.date,
+  });
 }
 
 export function generateStaticParams(): Array<Params> {
@@ -56,10 +63,25 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const articleSchema = generateArticleSchema(
+    post.metadata.title,
+    post.metadata.excerpt,
+    `/blog/${resolvedParams.slug}`,
+    post.metadata.date,
+    undefined,
+    post.metadata.coverImage,
+  );
+
   return (
     <main className="min-h-screen py-16 px-4">
-      {/* Pass the serialized content and metadata */}
-      <BlogPost content={post.content} metadata={post.metadata} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      {/* MDX compiles server-side; BlogPost is the interactive client shell */}
+      <BlogPost metadata={post.metadata}>
+        <MdxContent source={post.content} />
+      </BlogPost>
     </main>
   );
 }

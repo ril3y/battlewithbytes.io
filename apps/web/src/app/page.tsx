@@ -16,7 +16,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between py-8 gap-8 md:gap-16">
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
               <Image
-                src="/images/site_logo.png"
+                src="/images/site_logo.webp"
                 alt="Battle With Bytes Logo"
                 width={700}
                 height={380}

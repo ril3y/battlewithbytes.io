@@ -1,18 +1,9 @@
 name: Build and Deploy Tools
 
+# Manual-only: production deployment happens via deploy.yml (GitHub Pages).
+# This workflow just produces per-app artifacts for alternate platforms
+# (Vercel/Cloudflare), so it should not burn a 7-app matrix on every push.
 on:
-  push:
-    branches: ["master"]
-    paths:
-      - 'apps/battleterm/**'
-      - 'apps/ucan/**'
-      - 'apps/battleforge/**'
-      - 'apps/battlemagic/**'
-      - 'apps/mosfet-calculator/**'
-      - 'apps/ohms-law-calculator/**'
-      - 'apps/wirewizard/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
     inputs:
       app:
@@ -28,7 +19,6 @@ on:
           - battlemagic
           - mosfet-calculator
           - ohms-law-calculator
-          - wirewizard
 
 concurrency:
   group: "tools-deploy"
@@ -46,7 +36,6 @@ jobs:
           - battlemagic
           - mosfet-calculator
           - ohms-law-calculator
-          - wirewizard
     steps:
       - name: Check if app should be built
         id: should-build
@@ -95,7 +84,9 @@ jobs:
 
       - name: Install wasm-pack
         if: steps.should-build.outputs.build == 'true'
-        run: cargo install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
 
       - name: Get pnpm store directory
         if: steps.should-build.outputs.build == 'true'
@@ -192,4 +183,3 @@ jobs:
           echo "  battlemagic.battlewithbytes.io → battlemagic-deployment"
           echo "  mosfet-calculator.battlewithbytes.io → mosfet-calculator-deployment"
           echo "  ohms-law-calculator.battlewithbytes.io → ohms-law-calculator-deployment"
-          echo "  wirewizard.battlewithbytes.io → wirewizard-deployment"

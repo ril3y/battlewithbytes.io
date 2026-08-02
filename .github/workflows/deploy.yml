@@ -1,7 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Deploys only after the CI workflow succeeds on master (or on manual dispatch),
+# so a red build/test/lint run can no longer ship to production.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: ["master"]
   workflow_dispatch:
     inputs:
@@ -17,7 +21,6 @@ on:
           - battleforge
           - battlemagic
           - ucan
-          - wirewizard
           - mosfet-calculator
           - ohms-law-calculator
 
@@ -33,11 +36,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,7 +71,9 @@ jobs:
             packages/battlemagic-analyzer
 
       - name: Install wasm-pack
-        run: cargo install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -130,7 +137,7 @@ jobs:
           fi
 
           # Copy tool apps to /tools/ subdirectory (if built)
-          for app in battleterm battleforge battlemagic ucan wirewizard mosfet-calculator ohms-law-calculator; do
+          for app in battleterm battleforge battlemagic ucan mosfet-calculator ohms-law-calculator; do
             if [ -d "apps/$app/out" ]; then
               mkdir -p "_site/tools/$app"
               cp -r "apps/$app/out/"* "_site/tools/$app/"

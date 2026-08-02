@@ -1,3 +1,5 @@
+"use client";
+
 // src/components/HDMIPinout.jsx
 
 import React, { useState } from 'react';
