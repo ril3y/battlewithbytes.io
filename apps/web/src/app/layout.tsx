@@ -18,12 +18,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_TITLE =
+  "Battle With Bytes | Cybersecurity, Embedded Hardware & Software Engineering";
+const SITE_DESCRIPTION =
+  "A personal hub for sharing insights on cybersecurity, embedded hardware, and software engineering. Ask me about little data.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title:
-    "Battle With Bytes | Cybersecurity, Embedded Hardware & Software Engineering",
-  description:
-    "A personal hub for sharing insights on cybersecurity, embedded hardware, and software engineering. Ask me about little data.",
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  // Site-wide social defaults; pages that call buildMetadata() override these
+  openGraph: {
+    type: "website",
+    siteName: "Battle With Bytes",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    images: [{ url: "/images/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/images/og-image.png"],
+  },
   icons: {
     icon: [
       { url: "/images/favicon.ico", sizes: "any" },

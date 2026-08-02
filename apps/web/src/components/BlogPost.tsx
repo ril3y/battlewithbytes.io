@@ -1,27 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
-import Prism from "prismjs";
 import GiscusComments from "./GiscusComments";
 
-// Import Prism core styles
+// Prism theme for the build-time-highlighted markup emitted by
+// rehype-prism-plus (see MdxContent)
 import "prismjs/themes/prism-tomorrow.css";
-
-// Import Prism language components and styles
-import "prismjs/components/prism-c";
-import "prismjs/components/prism-cpp";
-import "prismjs/components/prism-javascript";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-json";
-import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-css";
-import "prismjs/components/prism-jsx";
-import "prismjs/components/prism-tsx";
 
 interface BlogPostProps {
   /** Server-rendered MDX content (see MdxContent). */
@@ -38,13 +24,6 @@ interface BlogPostProps {
 
 export default function BlogPost({ children, metadata }: BlogPostProps) {
   const formattedDate = format(new Date(metadata.date), "MMMM d, yyyy");
-
-  // Syntax-highlight code blocks after hydration; the article HTML itself
-  // is prerendered at build time so crawlers and no-JS readers get the
-  // full text.
-  useEffect(() => {
-    Prism.highlightAll();
-  }, []);
 
   return (
     <article className="max-w-4xl mx-auto px-4 py-8">
