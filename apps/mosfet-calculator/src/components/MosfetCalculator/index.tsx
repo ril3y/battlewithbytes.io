@@ -8,8 +8,7 @@ import {
 } from "./mosfetUtils";
 import MosfetTypeSelector from "./MosfetTypeSelector";
 import MosfetDiagram from "./MosfetDiagram";
-import NChannelMosfetConfiguration from "./NChannelMosfetConfiguration";
-import PChannelMosfetConfiguration from "./PChannelMosfetConfiguration";
+import MosfetConfiguration from "./MosfetConfiguration";
 import Description from "./Description";
 import type { MosfetDetails, MosfetInputValues } from "@/types/tools";
 import "./styles.css";
@@ -125,23 +124,14 @@ export default function MosfetCalculator() {
           <MosfetDiagram mosfetType={mosfetType} inputValues={inputValues} />
         </div>
         <div className="mosfet-right-section">
-          {mosfetType === "n-channel" ? (
-            <NChannelMosfetConfiguration
-              mosfetName={mosfetName}
-              mosfetDetails={mosfetDetails}
-              inputValues={inputValues}
-              onDetailsChange={handleMosfetDetailsChange}
-              onInputChange={handleInputChange}
-            />
-          ) : (
-            <PChannelMosfetConfiguration
-              mosfetName={mosfetName}
-              mosfetDetails={mosfetDetails}
-              inputValues={inputValues}
-              onDetailsChange={handleMosfetDetailsChange}
-              onInputChange={handleInputChange}
-            />
-          )}
+          <MosfetConfiguration
+            channelType={mosfetType === "n-channel" ? "n-channel" : "p-channel"}
+            mosfetName={mosfetName}
+            mosfetDetails={mosfetDetails}
+            inputValues={inputValues}
+            onDetailsChange={handleMosfetDetailsChange}
+            onInputChange={handleInputChange}
+          />
         </div>
       </div>
       <Description
