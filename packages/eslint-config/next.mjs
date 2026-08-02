@@ -25,10 +25,24 @@ const nextConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "prefer-const": "warn",
-      "react-hooks/exhaustive-deps": "warn",
+      // These gate the build. The repo is at zero warnings; if a rule
+      // genuinely must be broken, use a targeted
+      // eslint-disable-next-line with a `-- reason` explaining why,
+      // rather than demoting the rule for everyone.
+      // A leading underscore marks a binding as intentionally unused
+      // (positional params, destructured slots, ignored catch bindings)
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "error",
+      "prefer-const": "error",
+      "react-hooks/exhaustive-deps": "error",
     },
   },
 ];

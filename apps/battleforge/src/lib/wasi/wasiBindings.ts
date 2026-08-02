@@ -151,7 +151,9 @@ export function createWASIBindings(
 
   const wasiBindings = {
     // Environment variables
-    environ_get: (_environ: number, _environ_buf: number) => {
+    // ABI: environ_get(environ: ptr, environ_buf: ptr) -> errno.
+    // Args unused: we expose no environment variables, so nothing is written.
+    environ_get: () => {
       return 0; // No environment variables
     },
 
@@ -588,14 +590,9 @@ export function createWASIBindings(
       return 0;
     },
 
-    path_readlink: (
-      _fd: number,
-      _path_ptr: number,
-      _path_len: number,
-      _buf_ptr: number,
-      _buf_len: number,
-      _bufused_ptr: number,
-    ) => {
+    // ABI: path_readlink(fd, path_ptr, path_len, buf_ptr, buf_len, bufused_ptr)
+    // -> errno. Args unused: the VFS has no symlinks, so nothing is resolved.
+    path_readlink: () => {
       return 0;
     },
 
@@ -606,28 +603,18 @@ export function createWASIBindings(
     fd_sync: () => 0,
     fd_tell: () => 0,
     fd_fdstat_set_flags: () => 0,
-    fd_filestat_set_times: (
-      _fd: number,
-      _atim: bigint,
-      _mtim: bigint,
-      _fst_flags: number,
-    ) => 0,
-    fd_pread: (
-      _fd: number,
-      _iovs: number,
-      _iovsLen: number,
-      _offset: bigint,
-      _nread: number,
-    ) => 0,
-    fd_advise: (_fd: number, _offset: bigint, _len: bigint, _advice: number) =>
-      0,
+    // ABI: fd_filestat_set_times(fd, atim, mtim, fst_flags) -> errno.
+    // Args unused: the VFS does not track timestamps.
+    fd_filestat_set_times: () => 0,
+    // ABI: fd_pread(fd, iovs, iovs_len, offset, nread) -> errno.
+    // Args unused: positional reads are unsupported; reports 0 bytes read.
+    fd_pread: () => 0,
+    // ABI: fd_advise(fd, offset, len, advice) -> errno. Advisory only, no-op.
+    fd_advise: () => 0,
 
-    poll_oneoff: (
-      _in_: number,
-      _out: number,
-      _nsubscriptions: number,
-      _nevents: number,
-    ) => {
+    // ABI: poll_oneoff(in, out, nsubscriptions, nevents) -> errno.
+    // Args unused: there is nothing async to poll in this single-threaded VFS.
+    poll_oneoff: () => {
       return 0;
     },
 
@@ -696,12 +683,9 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
       __table_base: 0,
 
       // System calls - most return -1 (not implemented) or 0 (success)
-      __syscall_openat: (
-        dirfd: number,
-        path_ptr: number,
-        flags: number,
-        mode: number,
-      ) => {
+      // ABI: __syscall_openat(dirfd, path_ptr, flags, mode). The trailing `mode`
+      // arg is unused: the VFS has no permission bits.
+      __syscall_openat: (dirfd: number, path_ptr: number, flags: number) => {
         // Read path from memory
         const memory = getMemory();
         if (!memory) return -1;
@@ -904,8 +888,8 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
           `[VFS] __syscall_unlinkat: dirfd=${dirfd}, path="${pathStr}", flags=${flags}`,
         );
 
-        // Handle AT_FDCWD (-100)
-        const AT_FDCWD = -100;
+        // Paths are resolved against the VFS root, so AT_FDCWD (-100) and any
+        // other dirfd behave identically here.
         let fullPath = pathStr;
         if (!pathStr.startsWith("/")) {
           fullPath = "/" + pathStr;
@@ -986,7 +970,9 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
       __syscall_fchown32: () => 0,
       __syscall_fchownat: () => 0,
       __syscall_ftruncate64: () => 0,
-      __syscall_getcwd: (buf: number, size: number) => {
+      // ABI: __syscall_getcwd(buf, size). `size` is unused: the cwd is always
+      // the 2-byte string "/", which fits in any buffer libc would pass.
+      __syscall_getcwd: (buf: number) => {
         const memory = getMemory();
         if (!memory) return -1;
         const cwd = "/";
@@ -1009,7 +995,9 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
       __syscall_linkat: () => -1,
 
       // Emscripten runtime functions
-      emscripten_notify_memory_growth: (_idx: number) => {
+      // ABI: emscripten_notify_memory_growth(memoryIndex). Index unused - we
+      // re-read `memory.buffer` on every access instead of caching views.
+      emscripten_notify_memory_growth: () => {
         // Memory growth notification - no action needed
       },
       _emscripten_throw_longjmp: () => {
@@ -1017,10 +1005,12 @@ export function createClangImports(fs: VirtualFileSystem, args: string[] = []) {
       },
 
       // Invoke wrappers for dynamic calls (used by Emscripten's function pointer system)
-      invoke_vi: (_idx: number, _a: number) => {
+      // ABI: invoke_XX(funcTableIndex, ...args). Args unused - these are stubs
+      // that swallow the indirect call rather than dispatching through the table.
+      invoke_vi: () => {
         // void function(int) - stub
       },
-      invoke_ii: (_idx: number, _a: number) => {
+      invoke_ii: () => {
         // int function(int) - stub
         return 0;
       },

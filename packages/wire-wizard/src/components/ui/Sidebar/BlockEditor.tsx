@@ -29,8 +29,7 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
   const {
     selectedBlockId,
     selectedPointId,
-    selectPoint,
-    clearSelection
+    selectPoint
   } = useSelection();
 
   const {
@@ -45,20 +44,6 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
   // Check if the block is an SVG component (custom or generated)
   // We'll hide Color and Shape inputs for these as they don't apply
   const isSvgBlock = selectedBlock ? !!(selectedBlock.svgComponent || selectedBlock.componentType) : false;
-
-  // Handler for setting selected point
-  const handleSetSelectedPointId = (pointId: string | null) => {
-    if (pointId && selectedBlockId) {
-      selectPoint(selectedBlockId, pointId);
-    } else {
-      // Don't fully clear - just clear point selection while keeping block selected
-      // We need to keep the block selected, so we re-select it
-      if (selectedBlockId) {
-        // This is a bit of a workaround - ideally we'd have selectBlock in useSelection
-        // For now, we'll just select the point as null which clears point selection
-      }
-    }
-  };
 
   // Handler for adding connection point - uses selectedBlockId from context
   const handleAddConnectionPoint = () => {

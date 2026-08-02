@@ -178,7 +178,8 @@ export function useWireManipulation({
 
       // If this was the last wire in the bus, remove the bus group
       if (remainingWiresInBus.length === 0) {
-        const { [wireToRemove.busGroupId]: removed, ...remainingBusGroups } = busGroups;
+        const remainingBusGroups = { ...busGroups };
+        delete remainingBusGroups[wireToRemove.busGroupId];
         setBusGroups(remainingBusGroups);
       }
     }
@@ -254,7 +255,7 @@ export function useWireManipulation({
           1000 // Large tolerance since we know the click was on the wire
         );
 
-        let newBendPoints = [...wire.bendPoints];
+        const newBendPoints = [...wire.bendPoints];
         if (result && result.segmentIndex !== -1) {
           newBendPoints.splice(result.segmentIndex, 0, newBendPoint);
         } else {
@@ -274,7 +275,7 @@ export function useWireManipulation({
           1000
         );
 
-        let newBendPoints = [...wire.bendPoints];
+        const newBendPoints = [...wire.bendPoints];
         if (result && result.segmentIndex !== -1) {
           newBendPoints.splice(result.segmentIndex, 0, newBendPoint);
         } else {

@@ -32,6 +32,7 @@ export function PlatformSelector({
               className="platform-icon"
               style={{ backgroundColor: `${platform.color}20` }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized, and `platform.icon` is a registry-supplied URL that may be remote; the onError fallback below also depends on plain <img> semantics */}
               <img
                 src={platform.icon}
                 alt={platform.name}

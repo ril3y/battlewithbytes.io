@@ -13,7 +13,6 @@ import type {
   EdgeLayout,
   LayoutOptions,
   Point,
-  BasicBlock,
 } from "./types";
 
 export class CFGLayoutEngine {
@@ -265,8 +264,6 @@ export class CFGLayoutEngine {
           fromLayout,
           toLayout,
           edge.type,
-          block,
-          cfg,
         );
 
         edges.push(edgeLayout);
@@ -283,8 +280,6 @@ export class CFGLayoutEngine {
     from: BlockLayout,
     to: BlockLayout,
     type: EdgeType,
-    fromBlock: BasicBlock,
-    cfg: ControlFlowGraph,
   ): EdgeLayout {
     // Calculate edge color
     const color = this.getEdgeColor(type);

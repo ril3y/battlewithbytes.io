@@ -68,8 +68,9 @@ import { generate as generateXTConnector, getDimensions as getXTConnectorDimensi
 import { generate as generateRingTerminal, getDimensions as getRingTerminalDimensions } from './components/ring-terminal/generator';
 import { generate as generateWireJunction, getDimensions as getWireJunctionDimensions } from './components/wire-junction/generator';
 
-// Import custom SVG generator for user-provided components
-import { generate as generateCustomSVG, getDimensions as getCustomSVGDimensions, createFromUrl as createCustomSVGFromUrl } from './components/custom-svg/generator';
+// NOTE: the custom-svg generator is not imported here — it is re-exported
+// directly from its module further down (see the `export { ... } from
+// './components/custom-svg/generator'` block).
 
 // ============================================================================
 // Component Metadata

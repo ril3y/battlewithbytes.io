@@ -253,7 +253,8 @@ export function useBusOperations(deps: UseBusOperationsDeps): UseBusOperationsRe
   const ungroupBus = useCallback((busGroupId: string) => {
     setWires(wires.map(wire => {
       if (wire.busGroupId === busGroupId) {
-        const { busGroupId: _, ...wireWithoutBus } = wire;
+        const wireWithoutBus = { ...wire };
+        delete wireWithoutBus.busGroupId;
         return wireWithoutBus;
       }
       return wire;

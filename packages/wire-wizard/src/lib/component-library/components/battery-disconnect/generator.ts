@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: Required<BatteryDisconnectConfig> = {
 const WIDTH = 80;
 const HEIGHT = 100;
 
-export function getDimensions(config: BatteryDisconnectConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

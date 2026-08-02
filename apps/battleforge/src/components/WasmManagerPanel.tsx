@@ -61,6 +61,7 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only init + WasmManager subscription. `loadCompilerInfo` depends on the `onLog` prop, which callers pass as an inline closure; adding it would tear down and re-create the subscription (and re-fetch every compiler info) on every parent render.
   }, []);
 
   const loadCompilerInfo = useCallback(async () => {
@@ -120,7 +121,7 @@ export function WasmManagerPanel({ onLog }: WasmManagerPanelProps) {
       WasmManager.clearManifestCache();
       await loadCompilerInfo();
       onLog?.("Checked for updates", "info");
-    } catch (_e) {
+    } catch {
       onLog?.("Failed to check for updates", "error");
     }
   }, [loadCompilerInfo, onLog]);
@@ -508,13 +509,9 @@ function CompilerCard({
 }
 
 // Status badge component
-function StatusBadge({
-  state,
-  hasUpdate: _hasUpdate,
-}: {
-  state: string;
-  hasUpdate: boolean;
-}) {
+// `hasUpdate` stays in the props contract for callers, but is not read here:
+// the "update available" case is already carried by `state`.
+function StatusBadge({ state }: { state: string; hasUpdate: boolean }) {
   let bgColor: string;
   let textColor: string;
   let label: string;

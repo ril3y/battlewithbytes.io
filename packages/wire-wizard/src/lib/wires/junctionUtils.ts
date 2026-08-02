@@ -3,7 +3,6 @@
  */
 
 import { Wire, Block, BendPoint } from '../core/types';
-import { snapToGrid } from '../core/utils';
 
 export interface TJunctionResult {
   wireA: Wire;
@@ -28,6 +27,7 @@ export function createTJunction(
   junctionX: number,
   junctionY: number,
   blocks: Block[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- positional slot kept: callers pass the grid size here, but snapping is already done by the caller (see below), so this function ignores it
   gridSize: number = 10,
   segmentIndex: number = 0,
   newWireBendPoints: BendPoint[] = [],

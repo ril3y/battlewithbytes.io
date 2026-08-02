@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: Required<KillSwitchConfig> = {
 const WIDTH = 80;
 const HEIGHT = 100;
 
-export function getDimensions(config: KillSwitchConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

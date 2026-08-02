@@ -26,7 +26,6 @@ interface WireNearClickResult {
 
 export function useWireOperations({
   wires,
-  blocks,
   getWireEndpointPosition,
   GRID_SIZE,
 }: UseWireOperationsProps) {

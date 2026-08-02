@@ -10,7 +10,7 @@ const NEG_BUS_HEIGHT = 40; // 2 grid units
 
 import type { GeneratorResult, ConnectionPointDefinition } from '../../types';
 import { getFuseColor } from '../../utils/standardColors';
-import { wrapSvg, textLabel } from '../../utils/svgUtils';
+import { wrapSvg } from '../../utils/svgUtils';
 
 export interface FuseBlockConfig {
   numberOfFuses?: number;

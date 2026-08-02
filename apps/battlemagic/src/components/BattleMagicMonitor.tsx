@@ -15,7 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { withBasePath } from "@battlewithbytes/utils";
 import { GdbClient, GdbClientCallbacks } from "../lib/gdb/GdbClient";
-import { ConnectionState, Target, StopReply } from "../lib/gdb/types";
+import { ConnectionState, StopReply } from "../lib/gdb/types";
 import { XrefProvider } from "../lib/context/XrefContext";
 import { useAnalysisOptional } from "../lib/context/AnalysisContext";
 import { useFirmwareOptional } from "../lib/context/FirmwareContext";
@@ -40,7 +40,8 @@ import XrefPanel from "./XrefPanel";
 import { FirmwareDumpWorkflow } from "./FirmwareDumpWorkflow";
 import { ChipDatabaseSettings } from "./ChipDatabaseSettings";
 import AnalysisProgressModal from "./AnalysisProgressModal";
-import { saveGdbPort, saveUartPort } from "../utils/deviceStorage";
+// Note: saveGdbPort / saveUartPort are now called from useGdbOrchestrator,
+// which owns the connect flows.
 import { MemoryRegion } from "../lib/memory/MemoryMapParser";
 import { ProjectProvider } from "../lib/context/ProjectContext";
 import { detectArchitecture } from "../lib/wasmAnalyzer";
@@ -50,7 +51,11 @@ import { getAnalysisDatabase } from "../lib/db/AnalysisDatabase";
 // Custom hooks
 import { useGdbConnection } from "./BattleMagicMonitor/hooks/useGdbConnection";
 import { useUartConnection } from "./BattleMagicMonitor/hooks/useUartConnection";
-import { usePanelLayout } from "./BattleMagicMonitor/hooks/usePanelLayout";
+import {
+  usePanelLayout,
+  type PanelVisibility,
+  type RightPanelType,
+} from "./BattleMagicMonitor/hooks/usePanelLayout";
 import { useDebugState } from "./BattleMagicMonitor/hooks/useDebugState";
 import { useProjectState } from "./BattleMagicMonitor/hooks/useProjectState";
 import { useAnalysisState } from "./BattleMagicMonitor/hooks/useAnalysisState";
@@ -83,8 +88,25 @@ export default function BattleMagicMonitor() {
 
   // Custom hooks for state management
   const gdb = useGdbConnection();
+  // `addGdbOutput` is useCallback([])-stable inside useGdbConnection. Pulling it
+  // out of `gdb` lets callbacks invoke it as a plain function rather than a
+  // `gdb.addGdbOutput()` method call, so exhaustive-deps tracks the stable
+  // function instead of the whole (per-render) `gdb` object.
+  const { addGdbOutput } = gdb;
   const uart = useUartConnection(230400);
   const panels = usePanelLayout(25);
+  // usePanelLayout hands back plain useState setters and a useRef, all of which
+  // are stable for the lifetime of the component. Destructuring them lets the
+  // callbacks below call them directly instead of as `panels.setX()` method
+  // calls, so exhaustive-deps can see the real (stable) dependency instead of
+  // demanding the whole `panels` object, which is rebuilt on every render.
+  const {
+    setVisiblePanels,
+    setActiveRightPanel,
+    setIsDragging,
+    setConsoleWidth,
+    containerRef: panelContainerRef,
+  } = panels;
   const debug = useDebugState();
   const project = useProjectState({
     onProjectLoaded: (name, baudRate, cpu, regions, breakpoints) => {
@@ -139,7 +161,6 @@ export default function BattleMagicMonitor() {
   // Run only once on mount
   useEffect(() => {
     setIsClient(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize GDB client
@@ -316,24 +337,24 @@ export default function BattleMagicMonitor() {
       }
 
       // FALLBACK: Read from GDB (live debugging mode)
-      if (!gdb.gdbClient || gdb.gdbState !== ConnectionState.ATTACHED)
-        return null;
+      const client = gdb.gdbClient;
+      if (!client || gdb.gdbState !== ConnectionState.ATTACHED) return null;
 
       try {
         console.log(
           `[Monitor] Reading from GDB: 0x${address.toString(16)} (${length} bytes)`,
         );
-        const data = await gdb.gdbClient.readMemory(address, length);
-        gdb.addGdbOutput(
+        const data = await client.readMemory(address, length);
+        addGdbOutput(
           `[Read ${length} bytes from 0x${address.toString(16).toUpperCase()}]`,
         );
         return data;
       } catch (error) {
-        gdb.addGdbOutput(`[Memory read failed: ${error}]`);
+        addGdbOutput(`[Memory read failed: ${error}]`);
         return null;
       }
     },
-    [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, firmwareContext],
+    [gdb.gdbClient, gdb.gdbState, addGdbOutput, firmwareContext],
   );
 
   // Target control handlers
@@ -463,7 +484,9 @@ export default function BattleMagicMonitor() {
         // Don't modify state if GDB command failed
       }
     },
-    [gdb, debug],
+    // `project` is genuinely needed for project.setHasUnsavedChanges; `gdb` and
+    // `debug` were already whole-object deps here, so this adds no new churn.
+    [gdb, debug, project],
   );
 
   // Clear all debug.breakpoints from both GDB and UI state
@@ -514,26 +537,12 @@ export default function BattleMagicMonitor() {
   // Analysis handler
   const handleAnalysisComplete = useCallback(
     (results: AnalysisResults) => {
-      gdb.addGdbOutput("[Analysis] Binary analysis completed successfully");
-      gdb.addGdbOutput(
+      addGdbOutput("[Analysis] Binary analysis completed successfully");
+      addGdbOutput(
         `[Analysis] Results: ${results.totalInstructions} instructions, ${results.functionsDetected} functions`,
       );
     },
-    [gdb.addGdbOutput],
-  );
-
-  // Vector table navigation handler
-  const handleNavigateToAddress = useCallback(
-    (address: number) => {
-      // Switch to debugger view
-      panels.setActiveRightPanel("debugger");
-      // Set the program counter to the target address for navigation
-      debug.setProgramCounter(address);
-      gdb.addGdbOutput(
-        `[Navigation] Jumping to address 0x${address.toString(16).toUpperCase()}`,
-      );
-    },
-    [gdb.addGdbOutput],
+    [addGdbOutput],
   );
 
   // Project management handlers
@@ -571,124 +580,37 @@ export default function BattleMagicMonitor() {
     updateProjectState();
   }, [updateProjectState]);
 
-  const handleNewProject = useCallback(() => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    const newProjectData = projectManager.newProject();
-    project.setProjectName(newProjectData.metadata.name);
-    uart.setBaudRate(newProjectData.gdbSettings.baudRate);
-    setSelectedMemoryMapCpu(newProjectData.memoryMap.selectedCpu);
-    setCustomMemoryRegions(newProjectData.memoryMap.customRegions);
-    debug.setBreakpoints(newProjectData.breakpoints);
-    project.setHasUnsavedChanges(false);
-    gdb.addGdbOutput("[New project created]");
-  }, [project, uart, debug, gdb]);
-
-  const handleSaveProject = useCallback(async () => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    try {
-      // Update project state with current values
-      updateProjectState();
-
-      // Save project (localStorage + auto-save MDB via AnalysisContext)
-      await projectManager.saveProject();
-
-      // Also trigger MDB save if analysis context is available
-      if (analysisContext) {
-        await analysisContext.saveToDatabase();
-        gdb.addGdbOutput("[Save] Analysis data saved to database");
-      }
-
-      gdb.addGdbOutput("[Save] Project saved successfully");
-    } catch (error) {
-      gdb.addGdbOutput(`[Save] Failed to save project: ${error}`);
-    }
-  }, [updateProjectState, analysisContext, gdb.addGdbOutput]);
-
-  const handleExportProject = useCallback(() => {
-    const projectManager = project.projectManager;
-    if (!projectManager) return;
-
-    try {
-      // Update project state before export
-      updateProjectState();
-
-      // Export project file (download)
-      projectManager.exportProject();
-
-      gdb.addGdbOutput("[Export] Project file downloaded");
-    } catch (error) {
-      gdb.addGdbOutput(`[Export] Failed to export project: ${error}`);
-    }
-  }, [updateProjectState, gdb.addGdbOutput]);
-
-  const handleLoadProject = useCallback(
-    async (file: File) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      try {
-        await projectManager.loadFromFile(file);
-        // State will be updated by the onProjectLoaded callback
-      } catch (error) {
-        gdb.addGdbOutput(`[Failed to load project: ${error}]`);
-      }
-    },
-    [project, gdb],
-  );
-
-  const handleAutoSaveToggle = useCallback(
-    (enabled: boolean) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      projectManager.setAutoSave(enabled);
-    },
-    [project],
-  );
-
-  const handleEditMetadata = useCallback(
-    (name: string, description: string) => {
-      const projectManager = project.projectManager;
-      if (!projectManager) return;
-
-      projectManager.updateMetadata(name, description);
-      project.setProjectName(name);
-      project.setHasUnsavedChanges(true);
-      gdb.addGdbOutput(`[Project renamed: ${name}]`);
-    },
-    [project, gdb],
-  );
+  // Note: new/save/load/export/auto-save/metadata handlers now live in
+  // useProjectState and are consumed as `project.handleNewProject` etc. in the
+  // JSX below. The local duplicates left over from that refactor were dead and
+  // have been removed.
 
   // Database operation handlers
   const handleExportDatabase = useCallback(async () => {
     if (!analysisContext) return;
 
     try {
-      gdb.addGdbOutput("[Exporting analysis database...]");
+      addGdbOutput("[Exporting analysis database...]");
       await analysisContext.exportDatabase();
-      gdb.addGdbOutput("[Database exported successfully]");
+      addGdbOutput("[Database exported successfully]");
     } catch (error) {
-      gdb.addGdbOutput(`[Database export failed: ${error}]`);
+      addGdbOutput(`[Database export failed: ${error}]`);
     }
-  }, [analysisContext, gdb.addGdbOutput]);
+  }, [analysisContext, addGdbOutput]);
 
   const handleImportDatabase = useCallback(
     async (file: File) => {
       if (!analysisContext) return;
 
       try {
-        gdb.addGdbOutput(`[Importing analysis database: ${file.name}]`);
+        addGdbOutput(`[Importing analysis database: ${file.name}]`);
         await analysisContext.importDatabase(file);
-        gdb.addGdbOutput("[Database imported successfully]");
+        addGdbOutput("[Database imported successfully]");
       } catch (error) {
-        gdb.addGdbOutput(`[Database import failed: ${error}]`);
+        addGdbOutput(`[Database import failed: ${error}]`);
       }
     },
-    [analysisContext, gdb.addGdbOutput],
+    [analysisContext, addGdbOutput],
   );
 
   // Auto-refresh registers when attached to target (only once per attach)
@@ -705,6 +627,7 @@ export default function BattleMagicMonitor() {
       // Reset flag when disconnected
       hasAutoRefreshedRef.current = false;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must fire only on an ATTACHED transition. `orchestrator` is a fresh object every render, so depending on it would re-run this effect on every render instead of once per attach.
   }, [gdb.gdbState]); // Only depend on state, not the callback functions
 
   // Auto-load analysis on startup if available
@@ -771,47 +694,53 @@ export default function BattleMagicMonitor() {
 
   // Panel visibility handlers
   const handlePanelToggle = useCallback(
-    (panel: keyof typeof panels.visiblePanels) => {
-      panels.setVisiblePanels((prev) => ({
+    (panel: keyof PanelVisibility) => {
+      setVisiblePanels((prev) => ({
         ...prev,
         [panel]: !prev[panel],
       }));
     },
-    [],
+    [setVisiblePanels],
   );
 
-  const handleViewToggle = useCallback((view: string) => {
-    panels.setActiveRightPanel(view as typeof panels.activeRightPanel);
-  }, []);
+  const handleViewToggle = useCallback(
+    (view: string) => {
+      setActiveRightPanel(view as RightPanelType);
+    },
+    [setActiveRightPanel],
+  );
 
-  const handleToolSelect = useCallback((tool: string) => {
-    panels.setActiveRightPanel(tool as typeof panels.activeRightPanel);
-  }, []);
+  const handleToolSelect = useCallback(
+    (tool: string) => {
+      setActiveRightPanel(tool as RightPanelType);
+    },
+    [setActiveRightPanel],
+  );
 
   // Panel resize handlers
   const handleMouseDown = useCallback(() => {
-    panels.setIsDragging(true);
-  }, []);
+    setIsDragging(true);
+  }, [setIsDragging]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!panels.isDragging || !panels.containerRef.current) return;
-      const containerRect = panels.containerRef.current.getBoundingClientRect();
+      if (!panels.isDragging || !panelContainerRef.current) return;
+      const containerRect = panelContainerRef.current.getBoundingClientRect();
       const offsetX = e.clientX - containerRect.left;
       // Calculate console width from the right side
       const newConsoleWidth =
         ((containerRect.width - offsetX) / containerRect.width) * 100;
       // Console can be 15-40% of screen width
       if (newConsoleWidth >= 15 && newConsoleWidth <= 40) {
-        panels.setConsoleWidth(newConsoleWidth);
+        setConsoleWidth(newConsoleWidth);
       }
     },
-    [panels.isDragging],
+    [panels.isDragging, panelContainerRef, setConsoleWidth],
   );
 
   const handleMouseUp = useCallback(() => {
-    panels.setIsDragging(false);
-  }, []);
+    setIsDragging(false);
+  }, [setIsDragging]);
 
   useEffect(() => {
     if (panels.isDragging) {
@@ -1060,10 +989,11 @@ export default function BattleMagicMonitor() {
                         }}
                       />
                     )}
-                    {/* panels.activeRightPanel === 'vector-table' && (
-                  <VectorTablePanel
-                    onNavigateToAddress={handleNavigateToAddress}
-                  />
+                    {/* TODO: re-enable once VectorTablePanel imports cleanly.
+                    Restoring this also needs a navigate handler that calls
+                    panels.setActiveRightPanel("debugger") + debug.setProgramCounter(address).
+                    panels.activeRightPanel === 'vector-table' && (
+                  <VectorTablePanel onNavigateToAddress={...} />
                 ) */}
                     {panels.activeRightPanel === "chip-settings" && (
                       <ChipDatabaseSettings

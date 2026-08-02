@@ -43,7 +43,7 @@ export class BasicBlockAnalyzer {
     const blocks = this.buildBlocks(instructions, blockStarts);
 
     // Step 3: Classify blocks and build edges
-    this.classifyBlocks(blocks, instructions);
+    this.classifyBlocks(blocks);
 
     // Step 4: Connect blocks with edges
     this.buildEdges(blocks);
@@ -144,10 +144,7 @@ export class BasicBlockAnalyzer {
   /**
    * Classify blocks based on their terminating instructions
    */
-  private classifyBlocks(
-    blocks: BasicBlock[],
-    allInstructions: DisassembledInstruction[],
-  ): void {
+  private classifyBlocks(blocks: BasicBlock[]): void {
     // Mark entry block
     if (blocks.length > 0) {
       blocks[0].type = BlockType.ENTRY;

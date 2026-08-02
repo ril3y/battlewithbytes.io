@@ -3,7 +3,7 @@
  * Helpers for converting AWG wire gauges to visual stroke widths
  */
 
-import type { Wire, WireGauge, WireSegmentGauge } from '../core/types';
+import type { Wire, WireGauge } from '../core/types';
 
 /**
  * AWG to diameter mapping (in mm)

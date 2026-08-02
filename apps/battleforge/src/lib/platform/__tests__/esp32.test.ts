@@ -3,14 +3,7 @@
  * Verifies ESP32-S3 and ESP32-C3 family.json schema validity and framework support
  */
 
-import type {
-  PlatformFamily,
-  FrameworkSupport,
-  Framework,
-  DeviceEntry,
-  Architecture,
-  ArchitectureConfig,
-} from "../types";
+import type { PlatformFamily, ArchitectureConfig } from "../types";
 
 // Mock architecture configs for tests (avoids needing async preload)
 const MOCK_ARCHITECTURE_CONFIGS: Record<string, ArchitectureConfig> = {

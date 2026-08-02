@@ -31,7 +31,8 @@ interface ErrorMessage {
 }
 
 type WorkerMessage = AnalyzeMessage;
-type WorkerResponse = ProgressMessage | ResultMessage | ErrorMessage;
+/** Every message this worker posts back to the main thread. */
+export type WorkerResponse = ProgressMessage | ResultMessage | ErrorMessage;
 
 // WASM instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

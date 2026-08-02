@@ -89,7 +89,7 @@ export const WiresList: React.FC = () => {
       }
       return result;
     }
-  }, [filteredWires, searchTerm, busGroups, isBusGroupMode, selectedWireId]);
+  }, [wires, filteredWires, searchTerm, busGroups, isBusGroupMode, selectedWireId]);
 
   if (wires.length === 0) {
     return null;

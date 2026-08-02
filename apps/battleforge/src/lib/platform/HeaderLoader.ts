@@ -7,7 +7,6 @@
  */
 
 import { HeaderCache } from "./HeaderCache";
-import { withBasePath } from "@battlewithbytes/utils";
 import { GitHubRegistryFetcher } from "../registry/GitHubRegistryFetcher";
 
 const cache = new HeaderCache();

@@ -5,8 +5,7 @@ export class SudoCommand extends Command {
   description = "Try to execute a command as root (for fun)";
   usage = "sudo [command]";
 
-  execute(args: string[]): string {
-     
+  execute(): string {
     return "Permission denied: You are not root!";
   }
 }

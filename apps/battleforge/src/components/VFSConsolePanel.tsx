@@ -14,7 +14,9 @@ interface VFSConsolePanelProps {
   onClose?: () => void;
 }
 
-export function VFSConsolePanel({ fs: _fs, onClose }: VFSConsolePanelProps) {
+// `fs` stays in the props contract for callers, but is not destructured here:
+// the VFSCommands interpreter that consumed it was removed (see TODO below).
+export function VFSConsolePanel({ onClose }: VFSConsolePanelProps) {
   const [lines, setLines] = useState<ConsoleLine[]>([
     {
       type: "output",

@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useDiagram, useSelection, useInteraction, useDisplay } from '../../lib/core/contexts';
 import { useCanvasTransform } from '../../lib/canvas/hooks/useCanvasTransform';
-import { useWireCreation } from '../../lib/canvas/hooks/useWireCreation';
-import { useDragState, type DragState } from '../../lib/canvas/hooks/useDragState';
+import { useWireCreation, type WireStart } from '../../lib/canvas/hooks/useWireCreation';
+import { useDragState } from '../../lib/canvas/hooks/useDragState';
 import { useCanvasEvents } from '../../lib/canvas/hooks/useCanvasEvents';
 import { usePointInteraction } from '../../lib/canvas/hooks/usePointInteraction';
 import { useBlockInteraction } from '../../lib/canvas/hooks/useBlockInteraction';
@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from '../../lib/keyboard/useKeyboardShortcuts';
 import { useBusOperations } from '../../lib/bus/hooks';
 import { useBlockOperations } from '../../lib/blocks/hooks';
 import { snapToGrid, screenToSVG, smartSnapToGrid } from '../../lib/core/utils';
-import type { Block, Wire, ConnectionPoint, BendPoint } from '../../lib/core/types';
+import type { Block, Wire, BendPoint } from '../../lib/core/types';
 import { getComponent } from '../../lib/component-library';
 import {
   findElectricallyConnectedWires,
@@ -53,7 +53,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
 
     // Global Contexts
     const {
-        blocks, wires, busGroups, gridSize, isLoaded,
+        blocks, wires, busGroups, gridSize,
         setBlocks, setWires, setBusGroups,
         updateBlock: contextUpdateBlock,
         removeBlock: contextRemoveBlock,
@@ -97,14 +97,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
 
     const {
         placementMode, targetBlockId,
-        isBusGroupMode, setBusGroupMode,
+        setBusGroupMode,
         addingToBusWireId, setAddingToBusWireId,
         editingPoint, setEditingPoint,
         addBlockMode, setAddBlockMode, newBlockShape,
         contextMenu, openContextMenu, closeContextMenu,
         openBlockModal, closeBlockModal, showBlockModal,
         editingBusName, startEditingBusName, updateEditingBusName, stopEditingBusName,
-        toggleBusWireExpanded, stopPlacement
+        stopPlacement
     } = useInteraction();
 
     const {
@@ -139,7 +139,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
     }, [zoom, pan]);
 
     // Inline Editing
-    const { editState, startEditingWire, startEditingConnection, startEditingBlock, updateLabel, stopEditing } = useInlineEditing();
+    const { editState, startEditingConnection, startEditingBlock, updateLabel, stopEditing } = useInlineEditing();
 
     // Drag State
     const {
@@ -165,12 +165,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
     const wireBendPoints = wireCreation.state.bendPoints;
     const mousePos = wireCreation.state.mousePos;
 
-    const setWireStart = useCallback((start: any) => {
+    const setWireStart = useCallback((start: WireStart | null) => {
         if (!start) wireCreation.cancelWire(); else wireCreation.startWire(start);
     }, [wireCreation]);
     const setMousePos = wireCreation.updateMousePos;
     const cancelWireCreation = wireCreation.cancelWire;
-    const setWireBendPoints = useCallback((pointsOrUpdater: any) => {
+    const setWireBendPoints = useCallback((pointsOrUpdater: BendPoint[] | ((prev: BendPoint[]) => BendPoint[])) => {
         let nextPoints: BendPoint[];
         if (typeof pointsOrUpdater === 'function') nextPoints = pointsOrUpdater(wireBendPoints);
         else nextPoints = pointsOrUpdater;
@@ -209,7 +209,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
 
     // Component Config Hook
     const {
-        componentToConfig, blockIdToEdit,
+        componentToConfig,
         handleComponentSelect, handleConfigurableComponent,
         handleConfigureBlock, handleConfigConfirm,
         closeConfig, getBlockForEdit, initialConfigForEdit,
@@ -259,7 +259,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
         closeContextMenu(); setAddingToBusWireId(null);
         stopEditing(); stopEditingBusName(); stopPlacement();
         setSidebarOpen(false);
-    }, [cancelWireCreation, stopEditing, stopPlacement, setSidebarOpen, setSelectedPointId, setSelectedWireId, setSelectedBlockId, setSelectedWireIds]);
+    }, [
+        cancelWireCreation, stopEditing, stopPlacement, setSidebarOpen,
+        setSelectedPointId, setSelectedWireId, setSelectedBlockId, setSelectedWireIds,
+        // All six below are stable identities (useState setters / useCallback([]) from
+        // InteractionContext), so listing them cannot re-create this callback more often.
+        setEditingPoint, setAddBlockMode, setBusGroupMode,
+        closeContextMenu, setAddingToBusWireId, stopEditingBusName,
+    ]);
 
     useKeyboardShortcuts({
         selectedBlockId, selectedBlockIds, selectedPointId, selectedBlockLabelId,
@@ -276,9 +283,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
         return () => container.removeEventListener('wheel', handleWheel);
     }, [handleWheel]);
 
-    // Derived Values
-    const selectedBlock = useMemo(() => blocks.find(b => b.id === selectedBlockId), [blocks, selectedBlockId]);
-
     // Unified Save Label
     const saveLabel = () => {
         if (editState.type === 'wire') {
@@ -289,7 +293,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
                 const toBlock = blocks.find(b => b.id === targetWire.toBlockId);
                 const targetComponent = toBlock?.componentType ? getComponent(toBlock.componentType) : null;
                 const sourceComponent = fromBlock?.componentType ? getComponent(fromBlock.componentType) : null;
-                let wireIdsToUpdate = new Set<string>([targetWire.id]);
+                const wireIdsToUpdate = new Set<string>([targetWire.id]);
                 const propagateToBus = (blockId: string) => wires.filter(w => w.fromBlockId === blockId || w.toBlockId === blockId).forEach(w => wireIdsToUpdate.add(w.id));
                 if (targetComponent?.metadata?.isCommonBus && toBlock) propagateToBus(toBlock.id);
                 if (sourceComponent?.metadata?.isCommonBus && fromBlock) propagateToBus(fromBlock.id);
@@ -544,7 +548,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ readOnly = false }) => {
                 setWires(wires.map(w => {
                   if (w.id !== wid) return w;
                   if (layer === null) {
-                    const { wireLayer, ...rest } = w;
+                    const rest = { ...w };
+                    delete rest.wireLayer;
                     return rest;
                   }
                   return { ...w, wireLayer: layer };

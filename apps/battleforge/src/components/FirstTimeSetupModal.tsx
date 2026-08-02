@@ -3,16 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { SelectedPlatform, LoadingProgress } from "../lib/platform/types";
 
-interface _SetupItem {
-  id: string;
-  name: string;
-  description: string;
-  size: string;
-  status: "pending" | "downloading" | "ready" | "error";
-  progress?: number;
-  message?: string;
-}
-
 interface FirstTimeSetupModalProps {
   isOpen: boolean;
   platform: SelectedPlatform;

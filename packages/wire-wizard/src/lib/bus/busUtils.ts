@@ -275,7 +275,7 @@ export function projectPointOntoPath(
   const projectionDistance = pointVector.x * pathDir.x + pointVector.y * pathDir.y;
 
   // Convert to percentage
-  let percent = projectionDistance / totalLength;
+  const percent = projectionDistance / totalLength;
 
   // Clamp to allowed range
   return Math.max(minPercent, Math.min(maxPercent, percent));

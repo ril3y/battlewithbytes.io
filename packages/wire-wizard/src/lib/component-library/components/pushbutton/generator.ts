@@ -28,7 +28,7 @@ const DEFAULT_CONFIG: Required<PushbuttonConfig> = {
 const WIDTH = 60;
 const HEIGHT = 80;
 
-export function getDimensions(config: PushbuttonConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

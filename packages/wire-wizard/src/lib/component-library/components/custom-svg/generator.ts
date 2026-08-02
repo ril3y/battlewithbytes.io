@@ -138,7 +138,6 @@ export function generate(config: CustomSVGConfig): GeneratorResult {
 
     // Extract inner content from SVG
     const innerContent = extractSVGContent(svgToUse);
-    const originalViewBox = parsed.viewBox || `0 0 ${width} ${height}`;
 
     finalSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${scaledWidth} ${scaledHeight}" width="${scaledWidth}" height="${scaledHeight}">

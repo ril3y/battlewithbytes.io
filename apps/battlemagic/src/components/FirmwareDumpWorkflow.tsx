@@ -865,6 +865,7 @@ export function FirmwareDumpWorkflow({
         message: `Analysis error: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `projectContext` comes from ProjectProvider, whose value is an unmemoized object literal, so it changes identity on every provider render. This callback is a dependency of the auto-analyze effect below, so destabilising it would re-run that effect on every provider render. It is only read here for a best-effort refresh of the "existing analysis" banner, which the mount effect below already recomputes with `projectContext` as a real dep.
   }, [
     dump,
     archInfo,

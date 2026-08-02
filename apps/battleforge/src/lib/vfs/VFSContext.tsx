@@ -51,49 +51,6 @@ interface VFSContextType {
 
 const VFSContext = createContext<VFSContextType | undefined>(undefined);
 
-const defaultMakefile = `# BattleForge Makefile
-# Auto-generated for STM32 ARM Cortex-M
-
-CC = clang
-LD = lld
-OBJCOPY = llvm-objcopy
-
-# Target settings (auto-configured by platform selector)
-TARGET = --target=thumbv7m-none-eabi
-CPU = -mcpu=cortex-m3
-THUMB = -mthumb
-
-# Compiler flags
-CFLAGS = $(TARGET) $(CPU) $(THUMB) -nostdlib -ffreestanding
-CFLAGS += -Os -g -Wall -Wextra
-
-# Include paths (auto-added from platform headers)
-INCLUDES = -I/cmsis -I/device -I/libc
-
-# Linker flags
-LDFLAGS = -flavor gnu -nostdlib --gc-sections
-
-# Source files
-SOURCES = main.c
-OBJECTS = $(SOURCES:.c=.o)
-
-# Output
-OUTPUT = firmware
-
-.PHONY: all clean
-
-all: $(OUTPUT).elf
-
-%.o: %.c
-\t$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-$(OUTPUT).elf: $(OBJECTS) linker.ld
-\t$(LD) $(LDFLAGS) --script=linker.ld $(OBJECTS) -o $@
-
-clean:
-\trm -f $(OBJECTS) $(OUTPUT).elf
-`;
-
 function createInitialState(): VFSState {
   // Start with empty state - files are added when platform is selected
   return {
@@ -126,15 +83,6 @@ export function VFSProvider({ children }: { children: ReactNode }) {
       return current;
     },
     [],
-  );
-
-  const findParentDirectory = useCallback(
-    (root: VFSDirectory, path: string): VFSDirectory | null => {
-      const parentPath = path.substring(0, path.lastIndexOf("/")) || "/";
-      const parent = findNode(root, parentPath);
-      return parent && isDirectory(parent) ? parent : null;
-    },
-    [findNode],
   );
 
   const updateNodeInTree = useCallback(

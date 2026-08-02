@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setEditingPoint,
 }) => {
   // Get state from contexts
-  const { blocks, wires } = useDiagram();
+  const { wires } = useDiagram();
   const { selectedBlockId, selectedWireId } = useSelection();
   const { sidebarOpen } = useDisplay();
 

@@ -238,7 +238,7 @@ export function useMouseMoveHandler(config: UseMouseMoveHandlerConfig): UseMouse
 
           // Update ALL wires that share this junction point
           setWires(wires.map(wire => {
-            let updated = { ...wire };
+            const updated = { ...wire };
             let modified = false;
 
             // Check if wire's start point matches the dragged junction

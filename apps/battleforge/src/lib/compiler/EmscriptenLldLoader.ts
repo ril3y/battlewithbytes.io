@@ -32,7 +32,7 @@ export async function executeLld(
     iframe.style.display = "none";
     document.body.appendChild(iframe);
 
-    const iframeWindow = iframe.contentWindow as any;
+    const iframeWindow = iframe.contentWindow;
     if (!iframeWindow) {
       iframe.remove();
       reject(new Error("Failed to create iframe"));

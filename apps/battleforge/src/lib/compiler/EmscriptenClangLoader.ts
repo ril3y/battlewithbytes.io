@@ -59,7 +59,7 @@ export async function executeClang(
     iframe.style.display = "none";
     document.body.appendChild(iframe);
 
-    const iframeWindow = iframe.contentWindow as any;
+    const iframeWindow = iframe.contentWindow;
     if (!iframeWindow) {
       iframe.remove();
       reject(new Error("Failed to create iframe"));
@@ -68,7 +68,6 @@ export async function executeClang(
 
     let stdout = "";
     let stderr = "";
-    const exitCode = 0;
     let resolved = false;
 
     const cleanup = () => {

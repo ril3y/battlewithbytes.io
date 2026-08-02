@@ -37,14 +37,15 @@ export function useUartConnection(
     useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
   const [baudRate, setBaudRate] = useState(initialBaudRate);
 
-  const { addUartLog, clearUartLogs } = useLogStore.getState();
-
+  // Read the store lazily inside each callback: zustand actions are created
+  // once by the store factory and never replaced, so this keeps the callback
+  // identity stable while always hitting the live store.
   const addUartOutput = useCallback((message: string) => {
-    addUartLog(message);
+    useLogStore.getState().addUartLog(message);
   }, []);
 
   const clearUartOutput = useCallback(() => {
-    clearUartLogs();
+    useLogStore.getState().clearUartLogs();
   }, []);
 
   return {

@@ -34,6 +34,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@battlewithbytes/eslint-config": "workspace:*",
     "@battlewithbytes/tailwind-config": "workspace:*",
     "@battlewithbytes/tsconfig": "workspace:*",
     "@eslint/eslintrc": "^3",

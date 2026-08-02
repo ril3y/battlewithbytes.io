@@ -30,54 +30,9 @@ export default function BattleMagicTestPage() {
     setOutput((prev) => [...prev, `[${timestamp}] ${line}`]);
   };
 
-  const handleLoadWasm = () => {
-    addOutput("Loading WASM module...");
-    wasm.load();
-  };
-
-  const handleTestVersion = () => {
-    if (!wasm.module) {
-      addOutput("ERROR: WASM not loaded");
-      return;
-    }
-    try {
-      const version = wasm.module.version();
-      addOutput(`✓ Version: ${version}`);
-    } catch (err) {
-      addOutput(`ERROR: ${err}`);
-    }
-  };
-
-  const handleTestDisassembler = () => {
-    if (!wasm.module) {
-      addOutput("ERROR: WASM not loaded");
-      return;
-    }
-
-    try {
-      const disasm = new wasm.module.Disassembler(0x08000000);
-      addOutput("✓ Created Disassembler instance");
-
-      const testBytes = new Uint8Array([0x00, 0xbf, 0x01, 0x20]);
-      addOutput(
-        `Testing with bytes: ${Array.from(testBytes)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join(" ")}`,
-      );
-
-      const instructions = disasm.disassemble_thumb(testBytes, 10);
-      addOutput(`✓ Disassembled ${instructions.length} instructions`);
-
-      instructions.forEach((instr: WasmInstruction, idx: number) => {
-        const addr = instr.address?.toString(16).padStart(8, "0") || "????????";
-        const mnemonic = instr.mnemonic || "???";
-        const operands = instr.operands || "";
-        addOutput(`  [${idx}] 0x${addr}: ${mnemonic} ${operands}`);
-      });
-    } catch (err) {
-      addOutput(`ERROR: ${err}`);
-    }
-  };
+  // Note: the module loads itself (preload: true above) and "Retry Load" calls
+  // wasm.reload, so the old manual Load WASM / Test Version / Test Disassembler
+  // handlers had no buttons left to hang off and have been removed.
 
   const handleClear = () => {
     setOutput([]);
@@ -107,13 +62,8 @@ export default function BattleMagicTestPage() {
       return "arm";
     }
 
-    // e_flags is at offset 0x24 for 32-bit ELF
-    const e_flags = new DataView(bytes.buffer, bytes.byteOffset).getUint32(
-      0x24,
-      true,
-    );
-
-    // EF_ARM_EABI_VER5 = 0x05000000
+    // Mode is decided from the entry point, not e_flags (offset 0x24), so the
+    // EABI version flags are not read here.
     // Check for Thumb entry point bit (bit 0 of entry point address at offset 0x18)
     const entryPoint = new DataView(bytes.buffer, bytes.byteOffset).getUint32(
       0x18,
@@ -385,7 +335,7 @@ export default function BattleMagicTestPage() {
             <div className="p-4 font-mono text-sm h-96 overflow-y-auto bg-black/50">
               {output.length === 0 ? (
                 <div className="text-gray-600 italic">
-                  No output yet. Click Load WASM to begin...
+                  No output yet. Choose an ELF file and disassemble to begin...
                 </div>
               ) : (
                 output.map((line, idx) => (

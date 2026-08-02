@@ -7,7 +7,6 @@
 
 import type {
   PlatformManifestV2,
-  SourceDefinition,
   DeviceDefinitionV2,
   DeviceSourceFiles,
 } from "./types";

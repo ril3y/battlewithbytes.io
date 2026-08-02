@@ -64,10 +64,8 @@ export function TerminalPanel({ output }: TerminalPanelProps) {
     }
   }, [output]);
 
-  const _handleClear = useCallback(() => {
-    // Note: This would need to be lifted to parent to actually clear
-    // For now it's a placeholder - parent would need to pass onClear prop
-  }, []);
+  // Clearing the terminal needs an `onClear` prop from the parent that owns
+  // `output`; there is no local state to reset, so no handler exists yet.
 
   return (
     <div className="terminal-panel">

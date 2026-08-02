@@ -2,7 +2,7 @@
  * Utilities for working with wire paths and geometry
  */
 
-import { Wire, BendPoint } from '../core/types';
+import { Wire } from '../core/types';
 import { snapToGrid } from '../core/utils';
 
 export interface Point {

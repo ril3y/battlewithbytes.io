@@ -112,11 +112,11 @@ export function createCHeaderCompletionProvider(
   return {
     triggerCharacters: TRIGGER_CHARS,
 
+    // Monaco also passes `context` and `token`; neither is needed here, so the
+    // trailing parameters are omitted rather than declared and ignored.
     provideCompletionItems(
       model: Monaco.editor.ITextModel,
       position: Monaco.Position,
-      _context: Monaco.languages.CompletionContext,
-      _token: Monaco.CancellationToken,
     ): Monaco.languages.ProviderResult<Monaco.languages.CompletionList> {
       const lineContent = model.getLineContent(position.lineNumber);
       const textUntilPosition = lineContent.substring(0, position.column - 1);
@@ -136,11 +136,7 @@ export function createCHeaderCompletionProvider(
       const headers = scanAvailableHeaders(getVFSFiles);
 
       // Filter headers based on what's been typed
-      const filteredHeaders = filterHeaders(
-        headers,
-        typedPath,
-        isSystemInclude,
-      );
+      const filteredHeaders = filterHeaders(headers, typedPath);
 
       // Convert to Monaco completion items
       const suggestions = filteredHeaders.map((header, index) =>
@@ -290,10 +286,11 @@ function generateIncludePaths(
 /**
  * Filters headers based on user input
  */
+// Filtering is identical for `<...>` and "..." includes, so the caller's
+// isSystemInclude flag is not taken here.
 function filterHeaders(
   headers: AvailableHeader[],
   typedPath: string,
-  _isSystemInclude: boolean,
 ): AvailableHeader[] {
   const lowerTyped = typedPath.toLowerCase();
 

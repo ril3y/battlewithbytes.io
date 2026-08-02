@@ -568,7 +568,10 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     isFolder: false,
     isEditable: true,
   });
-  const [_renamingPath, _setRenamingPath] = useState<string | null>(null);
+  // Inline-rename is half-wired: the context menu records which node is being
+  // renamed, but `RenameInput` is not mounted in the tree yet, so nothing reads
+  // the value back. The setter is kept so the existing menu action still works.
+  const [, setRenamingPath] = useState<string | null>(null);
 
   // Dialog state for new file/folder
   const [newFileDialog, setNewFileDialog] = useState<{
@@ -745,7 +748,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
 
   const handleRename = useCallback(() => {
     if (contextMenu.nodeId) {
-      _setRenamingPath(contextMenu.nodeId);
+      setRenamingPath(contextMenu.nodeId);
     }
     closeContextMenu();
   }, [contextMenu.nodeId, closeContextMenu]);
@@ -778,12 +781,14 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     closeContextMenu();
   }, [contextMenu.nodeId, contextMenu.isFolder, getFile, closeContextMenu]);
 
-  const _handleRenameSubmit = useCallback(
+  // Submit handler for the not-yet-mounted inline RenameInput (see above).
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- WIP counterpart to RenameInput; kept so the rename feature can be finished without re-deriving it
+  const handleRenameSubmit = useCallback(
     (oldPath: string, newName: string) => {
       if (renameFile) {
         renameFile(oldPath, newName);
       }
-      _setRenamingPath(null);
+      setRenamingPath(null);
     },
     [renameFile],
   );

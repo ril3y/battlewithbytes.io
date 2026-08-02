@@ -240,7 +240,6 @@ function drawTerminal(x: number, y: number, orientation: 'top' | 'bottom' | 'lef
     const h = 16;
     let tx = x;
     let ty = y;
-    let rot = 0;
 
     // Adjust position based on orientation to protrude OUT from x,y
     // x,y is the anchor point on the body edge
@@ -255,14 +254,13 @@ function drawTerminal(x: number, y: number, orientation: 'top' | 'bottom' | 'lef
             ty = y - h;
             break;
         case 'left':
+            // Rotation for left/right is applied via the transform below.
             tx = x - h;
             ty = y - w / 2;
-            rot = 90; // Swap w/h visually or rotate
             break;
         case 'right':
             tx = x;
             ty = y - w / 2;
-            rot = 90;
             break;
         case 'center':
             tx = x - w / 2;

@@ -24,7 +24,7 @@ const DEFAULT_CONFIG: Required<SPSTSwitchConfig> = {
 const WIDTH = 80;
 const HEIGHT = 50;
 
-export function getDimensions(config: SPSTSwitchConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

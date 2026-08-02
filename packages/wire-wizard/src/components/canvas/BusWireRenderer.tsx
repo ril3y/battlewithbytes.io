@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Wire, BendPoint } from '../../lib/core/types';
+import type { Wire } from '../../lib/core/types';
 import type { DragState } from '../../lib/canvas/hooks/useDragState';
 
 /**
@@ -90,14 +90,16 @@ export const BusWireRenderer: React.FC<BusWireRendererProps> = ({
 }) => {
   // Get the first wire to access shared properties (bendPoints, converge settings)
   const primaryWire = busWires[0];
-  if (!primaryWire) return null;
 
   // Check if any wire in the bus is selected
   const anySelected = busWires.some(w => w.id === selectedWireId);
 
-  // Calculate bus geometry (memoized for performance)
-  // Calculate bus geometry (memoized for performance)
+  // Calculate bus geometry (memoized for performance).
+  // NOTE: this hook must run before any early return so hook order stays
+  // stable across renders (an empty bus previously bailed out above it).
   const busGeometry = useMemo(() => {
+    if (!primaryWire) return null;
+
     // Get primary wire endpoints to establish the "canonical" direction of the bus
     const pFrom = getWireEndpointPosition(primaryWire, true);
     const pTo = getWireEndpointPosition(primaryWire, false);
@@ -260,6 +262,8 @@ export const BusWireRenderer: React.FC<BusWireRendererProps> = ({
       wireOrientations,
     };
   }, [busWires, primaryWire, getWireEndpointPosition, snapToGrid, GRID_SIZE]);
+
+  if (!primaryWire || !busGeometry) return null;
 
   const draggingLabel = isDraggingType('wireLabel');
   const draggingBusConverge = isDraggingType('busConverge');
