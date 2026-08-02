@@ -25,17 +25,26 @@ const CONFIG = {
   repo: 'battleforge_boards',
   wasmDir: path.join(__dirname, '..', 'public', 'wasm'),
 
-  // Required files for a working installation
+  // Required files for a working installation. The .wasm.gz paths are what
+  // public/wasm/manifest.json points the runtime at; the clang_arm/* files
+  // serve the standalone loading path.
   requiredFiles: [
+    'clang-arm.wasm.gz',
+    'lld.wasm.gz',
     'clang_arm/clang.wasm',
     'clang_arm/clang.js',
     'clang_arm/lld.wasm',
     'clang_arm/lld.js',
+    'capstone/capstone-arm.wasm.gz',
+    'capstone/capstone-arm.js',
+    'capstone/capstone-api.js',
     'manifest.json',
   ],
 
   // Optional files (don't fail if missing)
   optionalFiles: [
+    'clang-xtensa.wasm.gz',
+    'clang_riscv/clang-riscv.wasm.gz',
     'clang_arm/llvm-ar.wasm',
     'clang_arm/llvm-objdump.wasm',
     'clang_riscv/clang-riscv.wasm',
@@ -248,6 +257,11 @@ function reorganizeFiles() {
     'capstone-arm.wasm': 'capstone/capstone-arm.wasm',
     'capstone-arm.js': 'capstone/capstone-arm.js',
     'capstone-api.js': 'capstone/capstone-api.js',
+    // Gzipped runtime binaries (paths match public/wasm/manifest.json);
+    // clang-arm.wasm.gz, clang-xtensa.wasm.gz, and lld.wasm.gz stay at the
+    // wasm root, so they need no mapping here
+    'clang-riscv.wasm.gz': 'clang_riscv/clang-riscv.wasm.gz',
+    'capstone-arm.wasm.gz': 'capstone/capstone-arm.wasm.gz',
   };
 
   let moved = 0;
@@ -266,6 +280,11 @@ function reorganizeFiles() {
       fs.renameSync(srcPath, destPath);
       log(`  Moved ${flatName} -> ${targetPath}`, 'dim');
       moved++;
+    } else if (fs.existsSync(srcPath) && fs.existsSync(destPath)) {
+      // Destination already present (e.g. tracked in git): drop the flat
+      // duplicate so it doesn't ship in the deploy output
+      fs.unlinkSync(srcPath);
+      log(`  Removed flat duplicate ${flatName} (already at ${targetPath})`, 'dim');
     }
   }
 
