@@ -38,6 +38,6 @@ export interface BlockEditorProps {
 }
 
 /**
- * Props for WiresList - uses contexts for most state
+ * Props for WiresList - uses contexts for all state, so no props today.
  */
-export interface WiresListProps { }
+export type WiresListProps = Record<string, never>;

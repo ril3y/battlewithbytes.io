@@ -23,18 +23,20 @@
     "dev": "tsc --watch",
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit",
-    "lint": "echo 'no lint configured'"
+    "lint": "eslint src/"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@battlewithbytes/eslint-config": "workspace:*",
+    "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/node": "^20.0.0",
-    "rimraf": "^5.0.0"
+    "eslint": "^9",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
   },
   "keywords": [
     "wire-wizard",

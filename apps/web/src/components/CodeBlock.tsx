@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef } from "react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";

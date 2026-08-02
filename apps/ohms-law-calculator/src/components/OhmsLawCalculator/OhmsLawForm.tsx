@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Tooltip from "@/lib/utils/Tooltip"; // Assuming Tooltip component exists
+import Tooltip from "@battlewithbytes/utils/Tooltip"; // Assuming Tooltip component exists
 import {
   // Import necessary functions from the corrected inputUtils
   isValidNumberInput,
@@ -11,7 +11,7 @@ import {
   getParameterWarning,
   getParameterTooltip,
   // FieldType // Removed as validateFieldInput/parseFieldValue are removed
-} from "@/lib/utils/inputUtils";
+} from "@battlewithbytes/utils/inputUtils";
 import type { OhmsLawValues } from "@/types/tools";
 
 interface OhmsLawFormProps {

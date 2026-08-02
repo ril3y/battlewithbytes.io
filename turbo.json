@@ -85,7 +85,6 @@
       ]
     },
     "lint": {
-      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".eslintrc.json",
@@ -99,7 +98,6 @@
       "cache": false
     },
     "type-check": {
-      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "tsconfig.json"

@@ -12,7 +12,7 @@ const APP_PORTS = {
   battlemagic: 5567,
   "mosfet-calculator": 5561,
   "ohms-law-calculator": 5562,
-  wirewizard: 5563,
+
 };
 
 // App groups for convenience
@@ -20,14 +20,14 @@ const APP_GROUPS = {
   tools: [
     "mosfet-calculator",
     "ohms-law-calculator",
-    "wirewizard",
+
     "battleterm",
     "ucan",
     "battleforge",
     "battlemagic",
   ],
   calculators: ["mosfet-calculator", "ohms-law-calculator"],
-  engineering: ["battleterm", "ucan", "battleforge", "battlemagic", "wirewizard"],
+  engineering: ["battleterm", "ucan", "battleforge", "battlemagic"],
 };
 
 function parseArgs() {

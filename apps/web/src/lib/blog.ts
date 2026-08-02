@@ -1,11 +1,6 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { serialize } from "next-mdx-remote/serialize";
-import type { MDXRemoteSerializeResult } from "next-mdx-remote";
-import remarkGfm from "remark-gfm";
-import rehypeSlug from "rehype-slug";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
 
 const BLOG_DIR = path.join(process.cwd(), "src/content/blog");
 const isDev = process.env.NODE_ENV === "development";
@@ -21,10 +16,11 @@ export interface BlogMetadata {
   coverImage?: string;
 }
 
-// Define the structure for a full blog post with serialized content
+// Define the structure for a full blog post with raw MDX content;
+// compilation happens in the MdxContent server component at render time.
 export interface BlogPost {
   metadata: BlogMetadata;
-  content: MDXRemoteSerializeResult; // Changed from string
+  content: string;
 }
 
 export function getBlogSlugs(): string[] {
@@ -96,18 +92,16 @@ export function getBlogPostMetadata(slug: string): BlogMetadata | null {
 // Synchronous function to get metadata for all posts, sorted by date
 export function getBlogPostsMetadata(): BlogMetadata[] {
   const slugs = getBlogSlugs();
-  console.log(`[DEBUG] Found blog slugs for metadata:`, slugs);
 
   const posts = slugs
     .map((slug) => getBlogPostMetadata(slug))
     .filter((post): post is BlogMetadata => post !== null) // Type guard to remove nulls
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  console.log(`[DEBUG] Processed metadata for ${posts.length} posts.`);
   return posts;
 }
 
-// Async function to get a single post with *serialized* content
+// Function to get a single post with raw MDX content
 export async function getBlogPostBySlug(
   slug: string,
 ): Promise<BlogPost | null> {
@@ -125,21 +119,6 @@ export async function getBlogPostBySlug(
     if (typeof data.enabled !== "undefined" && data.enabled === false) {
       return null;
     }
-
-    // Serialize the MDX content
-    const mdxSource = await serialize(content, {
-      // Optionally pass scope variables available to MDX
-      // scope: data,
-      mdxOptions: {
-        remarkPlugins: [remarkGfm],
-        rehypePlugins: [
-          rehypeSlug, // Add slugs to headings
-          [rehypeAutolinkHeadings, { behavior: "wrap" }], // Add links to headings
-        ],
-        format: "mdx", // Ensure format is set if needed
-      },
-      parseFrontmatter: false, // We already parsed it with gray-matter
-    });
 
     // Process cover image path (duplicated from getBlogPostMetadata - consider refactoring)
     let coverImage = data.coverImage;
@@ -161,7 +140,7 @@ export async function getBlogPostBySlug(
         author: data.author || "Battle With Bytes",
         coverImage: coverImage,
       },
-      content: mdxSource, // Return the serialized content
+      content: content, // Raw MDX; compiled by MdxContent at render time
     };
   } catch (error) {
     console.error(`Error processing or serializing blog post ${slug}:`, error);

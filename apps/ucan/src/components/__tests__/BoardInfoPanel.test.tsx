@@ -31,7 +31,7 @@ jest.mock("../../core/serialBridge", () => ({
   getAuthorizedPorts: jest.fn(() => Promise.resolve([])),
 }));
 
-jest.mock("@/lib/utils/Tooltip", () => ({
+jest.mock("@battlewithbytes/utils/Tooltip", () => ({
   __esModule: true,
   default: ({
     children,

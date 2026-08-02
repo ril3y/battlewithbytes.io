@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "type-check": {
+      "dependsOn": ["^build", "^build:wasm"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig.json"],
+      "outputs": ["tsconfig.tsbuildinfo"]
+    }
+  }
+}

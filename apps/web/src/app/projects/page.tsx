@@ -2,10 +2,11 @@ import React from "react";
 import { Metadata } from "next";
 import { getAllProjects } from "@/lib/utils/projects"; // Utility to fetch project data
 import ProjectCard from "@/components/projects/ProjectCard"; // Component to display each project
-import { generateSEO } from "@/lib/utils/seo"; // SEO utility
+import { buildMetadata } from "@/lib/utils/seo"; // SEO utility
 
 // Generate metadata for the projects page
-export const metadata: Metadata = generateSEO({
+export const metadata: Metadata = buildMetadata({
+  canonical: "/projects",
   title: "Projects",
   description:
     "A collection of personal projects spanning cybersecurity, embedded systems, software development, and more.",

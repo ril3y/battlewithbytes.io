@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["master", "turborepo-migration"]
+    branches: [master]
   pull_request:
-    branches: ["master"]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -14,9 +14,51 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
 jobs:
-  lint-and-test:
+  rust-check:
+    name: Rust Lint & Test
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/battlemagic-core
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+
+      - name: Run Rust tests
+        working-directory: packages/battlemagic-core
+        run: wasm-pack test --node --all-features
+
+      - name: Run Clippy
+        working-directory: packages/battlemagic-core
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Check formatting
+        working-directory: packages/battlemagic-core
+        run: cargo fmt --check
+
+  build-and-test:
+    name: Build, Test & Lint (Turborepo)
+    runs-on: ubuntu-latest
+    needs: rust-check
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,9 +76,6 @@ jobs:
           version: 9.14.4
           run_install: false
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -50,7 +89,9 @@ jobs:
             packages/battlemagic-analyzer
 
       - name: Install wasm-pack
-        run: cargo install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -87,11 +128,29 @@ jobs:
         env:
           TURBO_CACHE_DIR: .turbo
           NEXT_TELEMETRY_DISABLED: 1
+          # battleforge's prebuild downloads pinned WASM compilers from a
+          # GitHub release; authenticated requests avoid runner rate limits
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # battlemagic's suite has ~139 known-failing tests and is quarantined
+      # below as advisory-only; every other package's tests gate the build.
       - name: Run tests
-        run: pnpm run test
+        run: pnpm turbo run test --filter='!@battlewithbytes/battlemagic'
+        env:
+          TURBO_CACHE_DIR: .turbo
+
+      - name: Run battlemagic tests (advisory - known failing suites)
+        run: pnpm turbo run test --filter='@battlewithbytes/battlemagic'
         env:
           TURBO_CACHE_DIR: .turbo
         continue-on-error: true
 
-      # Turbo cache is automatically saved by actions/cache on cache miss
+      - name: Type check
+        run: pnpm run type-check
+        env:
+          TURBO_CACHE_DIR: .turbo
+
+  # Vercel PR previews were removed with the CI consolidation: the site
+  # deploys to GitHub Pages via deploy.yml, and the preview job depended on
+  # Vercel secrets that are not configured. Reintroduce deliberately if a
+  # preview environment is ever set up.

@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "pnpm turbo build --filter=${VERCEL_GIT_COMMIT_REF}",
+  "buildCommand": "pnpm turbo build --filter=@battlewithbytes/web",
   "installCommand": "pnpm install",
   "framework": null,
-  "outputDirectory": "out"
+  "outputDirectory": "apps/web/out"
 }
