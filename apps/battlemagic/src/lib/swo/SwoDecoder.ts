@@ -515,11 +515,9 @@ export class SwoDecoder extends BaseDecoder {
     if (raw.length > 0) {
       const header = raw[0];
 
-      // Check TC bit (bit 7) - 1 = correlation packet
-      const isCorrelation = (header & 0x80) !== 0;
-
-      // TS bit (bit 2) - 0 = synchronous, 1 = timestamp delayed
-      const isDelayed = (header & 0x04) !== 0;
+      // Header bits not yet surfaced on TimestampPacket:
+      //   TC bit (bit 7) - 1 = correlation packet
+      //   TS bit (bit 2) - 0 = synchronous, 1 = timestamp delayed
 
       // Extract initial timestamp bits
       value = (header >> 4) & 0x07;
@@ -553,7 +551,10 @@ export class SwoDecoder extends BaseDecoder {
    * Manchester decoding support (requires hardware)
    * Currently not implemented - would require bit-level processing
    */
-  private decodeManchesterBit(bit: number): number | null {
+  private decodeManchesterBit(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- placeholder signature for unimplemented Manchester decoding; keeps the intended API shape
+    bit: number,
+  ): number | null {
     // Manchester encoding uses transitions to represent bits
     // This would require hardware support or very high sample rates
     // Placeholder for future implementation

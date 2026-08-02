@@ -91,6 +91,7 @@ export function PlatformSelectorModal({
       setSelectedDevice(null);
       setSelectedFramework(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must not depend on `loadFamiliesForPlatform`: it is memoised on `families`, and this effect's own call to it populates `families`, so listing it would re-trigger the effect after every load (repeat network fetch loop). This should only run when the modal opens or the selection/registry changes.
   }, [isOpen, currentSelection, registry]);
 
   const loadRegistry = async () => {
@@ -158,94 +159,99 @@ export function PlatformSelectorModal({
     }
   };
 
-  const loadFamiliesForPlatform = async (platform: PlatformEntry) => {
-    setLoading(true);
-    // Extract base platform from the entry
-    const basePlatform = (platform as unknown as { platform?: string }).platform || platform.id.split("-")[0];
-    const familyIds = platform.families || [(platform as unknown as { family?: string }).family || platform.id.split("-")[1]];
+  // Memoised on `families` (the only reactive value it reads) so that callers
+  // which depend on it stay referentially stable between family loads.
+  const loadFamiliesForPlatform = useCallback(
+    async (platform: PlatformEntry) => {
+      setLoading(true);
+      // Extract base platform from the entry
+      const basePlatform = (platform as unknown as { platform?: string }).platform || platform.id.split("-")[0];
+      const familyIds = platform.families || [(platform as unknown as { family?: string }).family || platform.id.split("-")[1]];
 
-    const fetcher = new GitHubRegistryFetcher();
+      const fetcher = new GitHubRegistryFetcher();
 
-    // Load frameworks.json for display metadata
-    let frameworksData: Record<string, { name: string; description: string; supported: boolean }> = {};
-    try {
-      const fwJson = await fetcher.fetchJson<{ frameworks?: Record<string, { name: string; description: string; supported: boolean }> }>("frameworks.json");
-      frameworksData = fwJson.frameworks || {};
-    } catch {
-      console.warn("Failed to load frameworks.json");
-    }
+      // Load frameworks.json for display metadata
+      let frameworksData: Record<string, { name: string; description: string; supported: boolean }> = {};
+      try {
+        const fwJson = await fetcher.fetchJson<{ frameworks?: Record<string, { name: string; description: string; supported: boolean }> }>("frameworks.json");
+        frameworksData = fwJson.frameworks || {};
+      } catch {
+        console.warn("Failed to load frameworks.json");
+      }
 
-    for (const familyId of familyIds) {
-      if (!familyId) continue;
-      const cacheKey = `${platform.id}/${familyId}`;
-      if (!families.has(cacheKey)) {
-        try {
-          // Fetch manifest from GitHub (try v2 first, then v1)
-          const manifest = await fetcher.fetchPlatformManifestByFamily(basePlatform, familyId);
-          if (manifest) {
+      for (const familyId of familyIds) {
+        if (!familyId) continue;
+        const cacheKey = `${platform.id}/${familyId}`;
+        if (!families.has(cacheKey)) {
+          try {
+            // Fetch manifest from GitHub (try v2 first, then v1)
+            const manifest = await fetcher.fetchPlatformManifestByFamily(basePlatform, familyId);
+            if (manifest) {
 
-            // Transform manifest frameworks object to FrameworkSupport array
-            let frameworkSupports: FrameworkSupport[] = [];
-            if (manifest.frameworks && typeof manifest.frameworks === "object") {
-              frameworkSupports = Object.entries(manifest.frameworks)
-                .filter(([fwId]) => {
-                  // Only include supported frameworks from frameworks.json
-                  const fwMeta = frameworksData[fwId];
-                  return !fwMeta || fwMeta.supported !== false;
-                })
-                .map(([fwId, fwConfig]) => {
-                  const fwMeta = frameworksData[fwId] || { name: fwId, description: "" };
-                  const config = fwConfig as Record<string, unknown>;
-                  return {
-                    frameworkId: fwId as FrameworkId,
-                    enabled: true,
-                    version: (config.version as string) || "1.0.0",
-                    framework: {
-                      id: fwId as FrameworkId,
-                      name: fwMeta.name || fwId,
-                      description: fwMeta.description || "",
+              // Transform manifest frameworks object to FrameworkSupport array
+              let frameworkSupports: FrameworkSupport[] = [];
+              if (manifest.frameworks && typeof manifest.frameworks === "object") {
+                frameworkSupports = Object.entries(manifest.frameworks)
+                  .filter(([fwId]) => {
+                    // Only include supported frameworks from frameworks.json
+                    const fwMeta = frameworksData[fwId];
+                    return !fwMeta || fwMeta.supported !== false;
+                  })
+                  .map(([fwId, fwConfig]) => {
+                    const fwMeta = frameworksData[fwId] || { name: fwId, description: "" };
+                    const config = fwConfig as Record<string, unknown>;
+                    return {
+                      frameworkId: fwId as FrameworkId,
+                      enabled: true,
                       version: (config.version as string) || "1.0.0",
-                      compilerFlags: [],
-                      linkerFlags: [],
-                      defines: [],
-                      includePaths: [],
-                    },
-                  };
-                });
-            }
+                      framework: {
+                        id: fwId as FrameworkId,
+                        name: fwMeta.name || fwId,
+                        description: fwMeta.description || "",
+                        version: (config.version as string) || "1.0.0",
+                        compilerFlags: [],
+                        linkerFlags: [],
+                        defines: [],
+                        includePaths: [],
+                      },
+                    };
+                  });
+              }
 
-            // Transform manifest to PlatformFamily format
-            // Use type assertions since registry types differ from platform types
-            const familyData: PlatformFamily = {
-              id: manifest.family || familyId,
-              name: manifest.name,
-              description: manifest.description,
-              architecture: manifest.architecture as unknown as import("../lib/platform/types").Architecture,
-              devices: (manifest.devices || []) as unknown as import("../lib/platform/types").DeviceEntry[],
-              headers: {
-                url: manifest.headers?.url || "",
-                size: 0, // Size not available in registry manifest
-                checksum: manifest.headers?.hash || "",
-                includes: manifest.headers?.includes || [],
-              },
-              libs: {
+              // Transform manifest to PlatformFamily format
+              // Use type assertions since registry types differ from platform types
+              const familyData: PlatformFamily = {
+                id: manifest.family || familyId,
+                name: manifest.name,
+                description: manifest.description,
                 architecture: manifest.architecture as unknown as import("../lib/platform/types").Architecture,
-                required: [],
-                optional: [],
-              },
-              compilerFlags: manifest.build?.compilerFlags || [],
-              linkerFlags: manifest.build?.linkerFlags || [],
-              frameworks: frameworkSupports.length > 0 ? frameworkSupports : undefined,
-            };
-            setFamilies((prev) => new Map(prev).set(cacheKey, familyData));
+                devices: (manifest.devices || []) as unknown as import("../lib/platform/types").DeviceEntry[],
+                headers: {
+                  url: manifest.headers?.url || "",
+                  size: 0, // Size not available in registry manifest
+                  checksum: manifest.headers?.hash || "",
+                  includes: manifest.headers?.includes || [],
+                },
+                libs: {
+                  architecture: manifest.architecture as unknown as import("../lib/platform/types").Architecture,
+                  required: [],
+                  optional: [],
+                },
+                compilerFlags: manifest.build?.compilerFlags || [],
+                linkerFlags: manifest.build?.linkerFlags || [],
+                frameworks: frameworkSupports.length > 0 ? frameworkSupports : undefined,
+              };
+              setFamilies((prev) => new Map(prev).set(cacheKey, familyData));
+            }
+          } catch (err) {
+            console.error("Failed to load family:", err);
           }
-        } catch (err) {
-          console.error("Failed to load family:", err);
         }
       }
-    }
-    setLoading(false);
-  };
+      setLoading(false);
+    },
+    [families],
+  );
 
   const handlePlatformSelect = useCallback(
     async (platform: PlatformEntry) => {
@@ -258,7 +264,7 @@ export function PlatformSelectorModal({
 
       await loadFamiliesForPlatform(platform);
     },
-    [families],
+    [loadFamiliesForPlatform],
   );
 
   const handleFamilySelect = useCallback((family: PlatformFamily) => {
@@ -412,26 +418,37 @@ export function PlatformSelectorModal({
                       onClick={() => handlePlatformSelect(platform)}
                       disabled={!platform.supported}
                     >
+                      {/*
+                        These vendor marks stay as plain <img>: this app is a
+                        static export with `images.unoptimized`, so next/image
+                        performs no optimisation here, and it would additionally
+                        require intrinsic width/height that would override the
+                        CSS sizing of `.platform-icon`.
+                      */}
                       <div className="platform-icon">
                         {platform.id === "stm32" && (
+                          // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized: next/image adds no value and forces intrinsic dimensions
                           <img
                             src="/platforms/icons/st.ico"
                             alt="STMicroelectronics"
                           />
                         )}
                         {platform.id === "esp32" && (
+                          // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized: next/image adds no value and forces intrinsic dimensions
                           <img
                             src="/platforms/icons/espressif.png"
                             alt="Espressif"
                           />
                         )}
                         {platform.id === "nrf" && (
+                          // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized: next/image adds no value and forces intrinsic dimensions
                           <img
                             src="/platforms/icons/nordic.png"
                             alt="Nordic Semiconductor"
                           />
                         )}
                         {platform.id === "rp2040" && (
+                          // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized: next/image adds no value and forces intrinsic dimensions
                           <img
                             src="/platforms/icons/raspberrypi.png"
                             alt="Raspberry Pi"

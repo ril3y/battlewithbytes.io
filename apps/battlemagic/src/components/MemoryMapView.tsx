@@ -305,7 +305,18 @@ export const MemoryMapView: React.FC<MemoryMapViewProps> = ({
         }
       }
     },
-    [isDragging, dragStart, regions, viewState.zoom, viewState.offset],
+    // viewState.hoveredRegion is read above to decide whether to update state;
+    // without it here the comparison runs against a stale value and the hover
+    // highlight sticks. It only changes when the hovered region changes, so it
+    // adds no per-render churn.
+    [
+      isDragging,
+      dragStart,
+      regions,
+      viewState.zoom,
+      viewState.offset,
+      viewState.hoveredRegion,
+    ],
   );
 
   const handleMouseDown = useCallback(

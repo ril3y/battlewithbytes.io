@@ -82,7 +82,11 @@ describe('Comment Types UI Integration', () => {
         <select
           data-testid="comment-type-select"
           value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value as any)}
+          onChange={(e) =>
+            setSelectedType(
+              e.target.value as 'standard' | 'repeatable' | 'anterior' | 'block',
+            )
+          }
         >
           <option value="standard">Standard</option>
           <option value="repeatable">Repeatable</option>

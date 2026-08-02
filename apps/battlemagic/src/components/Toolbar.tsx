@@ -27,14 +27,13 @@ interface ToolbarProps {
   onRefreshMemory?: () => void;
 }
 
+// Note: uartConnected / onConnectGdb / onDisconnectGdb / onConnectUart /
+// onDisconnectUart remain part of ToolbarProps (callers still pass them) but
+// the toolbar itself no longer renders connection buttons, so they are not
+// destructured here.
 export default function Toolbar({
   gdbState,
   targetAttached,
-  uartConnected = false,
-  onConnectGdb,
-  onDisconnectGdb,
-  onConnectUart,
-  onDisconnectUart,
   onScanTargets,
   onHalt,
   onRun,
@@ -46,7 +45,6 @@ export default function Toolbar({
   const gdbConnected =
     gdbState === ConnectionState.CONNECTED ||
     gdbState === ConnectionState.ATTACHED;
-  const isConnecting = gdbState === ConnectionState.CONNECTING;
 
   const ToolbarButton = ({
     icon,

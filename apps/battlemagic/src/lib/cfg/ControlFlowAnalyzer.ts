@@ -199,12 +199,7 @@ export class ControlFlowAnalyzer {
       if (visited.has(blockId)) {
         // Found a back edge if block is in current path
         if (inStack.has(blockId)) {
-          const loop = this.extractLoop(
-            blockId,
-            path[path.length - 1],
-            path,
-            cfg,
-          );
+          const loop = this.extractLoop(blockId, path[path.length - 1], path);
           if (loop) {
             loops.push(loop);
           }
@@ -241,7 +236,6 @@ export class ControlFlowAnalyzer {
     header: string,
     backedge: string,
     path: string[],
-    cfg: ControlFlowGraph,
   ): Loop | null {
     // Find all blocks in loop body
     const headerIndex = path.indexOf(header);

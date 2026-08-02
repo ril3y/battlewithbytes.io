@@ -148,6 +148,10 @@ export function DiagramProvider({ children, initialData, storageKey = 'wire-wiza
       history.resetHistory({ ...saved, blocks: migratedBlocks });
     }
     setIsLoaded(true);
+    // Mount-only hydration from localStorage. Re-running this (when `history` takes a
+    // new identity, or the host swaps `storageKey`) would overwrite the user's
+    // in-progress edits with the last persisted snapshot and reset the undo stack.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must run exactly once on mount
   }, []);
 
   // Auto-save to localStorage whenever data changes
@@ -376,7 +380,8 @@ export function DiagramProvider({ children, initialData, storageKey = 'wire-wiza
           const remainingWiresInBus = updatedWires.filter(w => w.busGroupId === wireToRemove.busGroupId);
           if (remainingWiresInBus.length === 0) {
             setBusGroups(prev => {
-              const { [wireToRemove.busGroupId!]: _, ...rest } = prev;
+              const rest = { ...prev };
+              delete rest[wireToRemove.busGroupId!];
               return rest;
             });
           }

@@ -3,11 +3,7 @@
  * Tests manifest normalization, version parsing, and backward compatibility
  */
 
-import type {
-  WasmManifest,
-  AvailableCompiler,
-  AvailableLinker,
-} from "../types";
+import type { WasmManifest, AvailableCompiler } from "../types";
 
 // Test data - v1 (legacy) manifest format
 const legacyManifest = {

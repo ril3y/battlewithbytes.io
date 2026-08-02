@@ -18,7 +18,6 @@ import {
   type FrameworkId,
   type Architecture,
   loadRegistry,
-  loadLibraryManifest,
   getLibrariesForPlatform,
   searchLibraries as searchRegistryLibraries,
 } from "../library";
@@ -83,10 +82,23 @@ export function useLibraryManager(): UseLibraryManagerReturn {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
 
+  // Declared ahead of its consumers (the mount effect and the install/uninstall
+  // callbacks below) so they can list it as a dependency without tripping the
+  // const TDZ during render. It has no dependencies of its own, so its identity
+  // never changes and none of those consumers actually re-run because of it.
+  const refreshInstalled = useCallback(async () => {
+    try {
+      const installed = await managerRef.current.getInstalledLibraries();
+      setInstalledLibraries(installed);
+    } catch (err) {
+      console.error("[useLibraryManager] Failed to refresh installed:", err);
+    }
+  }, []);
+
   // Load installed libraries on mount
   useEffect(() => {
     refreshInstalled();
-  }, []);
+  }, [refreshInstalled]);
 
   const searchLibraries = useCallback(
     async (query: string, options?: SearchOptions) => {
@@ -142,7 +154,7 @@ export function useLibraryManager(): UseLibraryManagerReturn {
         setProgress(null);
       }
     },
-    [],
+    [refreshInstalled],
   );
 
   // Load curated libraries from our registry
@@ -235,28 +247,22 @@ export function useLibraryManager(): UseLibraryManagerReturn {
         setProgress(null);
       }
     },
-    [],
+    [refreshInstalled],
   );
 
-  const uninstallLibrary = useCallback(async (name: string) => {
-    setError(null);
+  const uninstallLibrary = useCallback(
+    async (name: string) => {
+      setError(null);
 
-    try {
-      await managerRef.current.uninstallLibrary(name);
-      await refreshInstalled();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Uninstall failed");
-    }
-  }, []);
-
-  const refreshInstalled = useCallback(async () => {
-    try {
-      const installed = await managerRef.current.getInstalledLibraries();
-      setInstalledLibraries(installed);
-    } catch (err) {
-      console.error("[useLibraryManager] Failed to refresh installed:", err);
-    }
-  }, []);
+      try {
+        await managerRef.current.uninstallLibrary(name);
+        await refreshInstalled();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Uninstall failed");
+      }
+    },
+    [refreshInstalled],
+  );
 
   const clearCache = useCallback(async () => {
     try {

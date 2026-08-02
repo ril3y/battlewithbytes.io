@@ -324,6 +324,9 @@ export async function createUnicornInstance(
       end: number = 0
     ): number {
       // Create a callback function pointer
+      // Parameter list mirrors the "viiii" signature passed to addFunction
+      // below; the trailing user-data pointer is unused but must stay so the
+      // arity keeps matching that signature string.
       const wrappedCallback = (
         _uc: number,
         address: number,

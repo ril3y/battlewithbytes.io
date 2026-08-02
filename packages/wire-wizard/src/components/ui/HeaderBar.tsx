@@ -95,7 +95,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   canUndo,
   canRedo,
   onOpenComponentLibrary,
-  onOpenComponentEditor,
   onOpenSettings,
   backLink,
 }) => {

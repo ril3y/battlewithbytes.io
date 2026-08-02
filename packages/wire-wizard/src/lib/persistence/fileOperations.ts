@@ -8,6 +8,30 @@ import { DiagramData } from '../core/types';
 export const DEFAULT_STORAGE_KEY = 'wire-wizard-diagram';
 
 /**
+ * Minimal typings for the parts of the File System Access API we use.
+ * `showSaveFilePicker` is not in TypeScript's DOM lib, so we declare only the
+ * surface this module actually touches rather than pulling in a polyfill types
+ * package.
+ */
+interface SaveFilePickerOptions {
+  suggestedName?: string;
+  types?: Array<{ description: string; accept: Record<string, string[]> }>;
+}
+
+interface WritableFileStreamLike {
+  write(data: Blob): Promise<void>;
+  close(): Promise<void>;
+}
+
+interface SaveFileHandleLike {
+  createWritable(): Promise<WritableFileStreamLike>;
+}
+
+type WindowWithSaveFilePicker = Window & {
+  showSaveFilePicker(options?: SaveFilePickerOptions): Promise<SaveFileHandleLike>;
+};
+
+/**
  * Load diagram data from localStorage. Pass `null` for `storageKey` to disable.
  */
 export function loadFromLocalStorage(storageKey: string | null = DEFAULT_STORAGE_KEY): DiagramData | null {
@@ -47,7 +71,7 @@ export async function exportToFile(data: DiagramData): Promise<void> {
   // Try to use the File System Access API for a proper "Save As" dialog
   if ('showSaveFilePicker' in window) {
     try {
-      const handle = await (window as any).showSaveFilePicker({
+      const handle = await (window as WindowWithSaveFilePicker).showSaveFilePicker({
         suggestedName: `wire-wizard-${new Date().toISOString().slice(0, 10)}.json`,
         types: [
           {
@@ -60,9 +84,10 @@ export async function exportToFile(data: DiagramData): Promise<void> {
       await writable.write(blob);
       await writable.close();
       return;
-    } catch (err: any) {
-      // User cancelled the save dialog
-      if (err.name === 'AbortError') {
+    } catch (err) {
+      // User cancelled the save dialog (browsers throw a DOMException, which
+      // extends Error, with name 'AbortError').
+      if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
       // Fall through to legacy download if API fails
@@ -97,7 +122,7 @@ export function importFromFile(
         try {
           const data: DiagramData = JSON.parse(event.target?.result as string);
           onSuccess(data);
-        } catch (e) {
+        } catch {
           const errorMsg = 'Failed to load file. Invalid JSON format.';
           if (onError) {
             onError(errorMsg);

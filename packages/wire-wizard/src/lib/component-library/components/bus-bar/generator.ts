@@ -18,7 +18,6 @@ import {
   countersinkGradient,
   screwGradientDefs,
   phillipsScrew,
-  mountingHole,
   wrapSvg,
   textLabel,
 } from '../../utils/svgUtils';

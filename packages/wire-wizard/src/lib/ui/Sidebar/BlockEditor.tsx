@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import type { BlockShape, ConnectionPoint } from '../../core/types';
+import type { BlockShape, ConnectionPoint, ConnectionPointShape } from '../../core/types';
 import { useDiagram } from '../../core/contexts/DiagramContext';
 import { useSelection } from '../../core/contexts/SelectionContext';
 
@@ -535,7 +535,7 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
           <select
             value={editingPoint.shape || 'circle'}
             onChange={(e) => {
-              const val = e.target.value as any;
+              const val = e.target.value as ConnectionPointShape;
               setEditingPoint({ ...editingPoint, shape: val });
               updateConnectionPoint(selectedBlockId, selectedPointId, { shape: val });
             }}

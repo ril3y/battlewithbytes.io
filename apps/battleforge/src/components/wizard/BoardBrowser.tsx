@@ -145,6 +145,7 @@ export function BoardBrowser({ boards, onSelect }: BoardBrowserProps) {
             >
               <div className="board-thumbnail">
                 {board.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized, and `board.thumbnail` may be an arbitrary remote URL from the board registry, which next/image would reject without a remotePatterns entry
                   <img
                     src={board.thumbnail.startsWith('/') ? withBasePath(board.thumbnail) : board.thumbnail}
                     alt={board.name}

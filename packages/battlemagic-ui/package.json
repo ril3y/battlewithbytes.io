@@ -30,6 +30,7 @@
     "@battlewithbytes/battlemagic-core": "workspace:*"
   },
   "devDependencies": {
+    "@battlewithbytes/eslint-config": "workspace:*",
     "@battlewithbytes/tsconfig": "workspace:*",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",

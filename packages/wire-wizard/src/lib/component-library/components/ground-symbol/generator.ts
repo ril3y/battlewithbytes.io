@@ -26,13 +26,12 @@ const DEFAULT_CONFIG: Required<GroundSymbolConfig> = {
 const WIDTH = 40;
 const HEIGHT = 50;
 
-export function getDimensions(config: GroundSymbolConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 
 export function generate(config: GroundSymbolConfig = {}): GeneratorResult {
   const c = { ...DEFAULT_CONFIG, ...config };
-  const uniqueId = Math.random().toString(36).substring(2, 9);
 
   const centerX = WIDTH / 2;
   const strokeWidth = 2.5;

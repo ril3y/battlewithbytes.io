@@ -118,8 +118,7 @@ export function useProjectState(
       projectManager.destroy();
       projectManagerRef.current = null;
     };
-    // Run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Run only once on mount (the effect closes over no outer values)
   }, []);
 
   // Handlers

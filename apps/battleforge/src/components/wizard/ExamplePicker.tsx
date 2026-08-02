@@ -124,6 +124,7 @@ export function ExamplePicker({
       <div className="board-summary">
         <div className="board-thumb">
           {board.assets?.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static export + images.unoptimized, and the src is a registry-supplied path resolved at runtime, so next/image gains nothing and would need intrinsic dimensions the registry does not provide
             <img src={resolveImagePath(board.assets.thumbnail)} alt={board.name} />
           ) : (
             <div className="board-icon">

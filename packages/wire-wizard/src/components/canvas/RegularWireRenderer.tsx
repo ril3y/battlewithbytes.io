@@ -75,7 +75,6 @@ export const RegularWireRenderer: React.FC<RegularWireRendererProps> = ({
   GRID_SIZE,
   getWireEndpointPosition,
   screenToSVGCoords,
-  snapToGrid,
   setSelectedWireId,
   setSelectedWireLabelId,
   setContextMenu,
@@ -178,8 +177,8 @@ export const RegularWireRenderer: React.FC<RegularWireRendererProps> = ({
       );
 
       // Prepare list of new wires
-      let newWires = [wireA, wireB, wireC];
-      let wiresToRemove = [wire.id];
+      const newWires = [wireA, wireB, wireC];
+      const wiresToRemove = [wire.id];
 
       // If we started from another wire (bridge), split the source wire too
       if (wireStart.wireId && wireStart.bendIndex !== undefined && wires) {

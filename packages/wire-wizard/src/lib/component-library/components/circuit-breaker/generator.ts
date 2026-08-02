@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: Required<CircuitBreakerConfig> = {
 const WIDTH = 50;
 const HEIGHT = 90;
 
-export function getDimensions(config: CircuitBreakerConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

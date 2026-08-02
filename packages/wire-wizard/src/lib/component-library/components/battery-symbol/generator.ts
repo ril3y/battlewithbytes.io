@@ -40,7 +40,6 @@ export function getDimensions(config: BatterySymbolConfig = {}): { width: number
 
 export function generate(config: BatterySymbolConfig = {}): GeneratorResult {
   const c = { ...DEFAULT_CONFIG, ...config };
-  const uniqueId = Math.random().toString(36).substring(2, 9);
 
   const { width, height } = getDimensions(c);
   const centerX = width / 2;

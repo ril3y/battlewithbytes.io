@@ -10,7 +10,6 @@ import {
   loadLibraryManifest,
   getLibraries,
   getLibrariesForPlatform,
-  resolveIncludePath,
   getArchPortablePath,
 } from "./LibraryRegistry";
 import type {
@@ -525,7 +524,10 @@ export class LibraryManager {
   /**
    * Get build configuration for installed libraries
    */
-  getBuildConfig(architecture: Architecture): {
+  // Takes no architecture argument yet: the include paths below are the same
+  // for every target. An architecture parameter should be reintroduced when
+  // this starts aggregating per-library manifests (see note below).
+  getBuildConfig(): {
     includePaths: string[];
     defines: string[];
     compilerFlags: string[];

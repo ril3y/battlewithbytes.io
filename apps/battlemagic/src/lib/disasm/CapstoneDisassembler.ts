@@ -334,7 +334,6 @@ export class CapstoneDisassembler {
    * @param _operands Instruction operands (reserved for future use)
    * @returns True if instruction is a branch
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private isBranchInstruction(mnemonic: string, _operands: string): boolean {
     const mnLower = mnemonic.toLowerCase();
 
@@ -374,7 +373,6 @@ export class CapstoneDisassembler {
     _mnemonic: string,
     operands: string,
     address: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _size: number,
   ): number | undefined {
     try {

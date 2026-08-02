@@ -58,7 +58,6 @@ export function generate(config: HubMotorConfig = {}): GeneratorResult {
   const cableSplitX = cableEndX - 20;
 
   // Phase wire endpoints (where they split)
-  const phaseWireLength = 50;
   const phaseSpacing = 25;
 
   // Generate mounting bolts around hub (like wheel rim lugs)

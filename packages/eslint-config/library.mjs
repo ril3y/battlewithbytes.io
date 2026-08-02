@@ -13,17 +13,31 @@ const libraryConfig = [
     files: ["**/*.tsx", "**/*.jsx"],
     plugins: { "react-hooks": reactHooks },
     rules: {
-      "react-hooks/rules-of-hooks": "warn",
-      "react-hooks/exhaustive-deps": "warn",
+      // rules-of-hooks catches genuine correctness bugs (conditional or
+      // out-of-order hook calls), so it must never be a warning
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
     },
   },
   {
     rules: {
-      // Monorepo convention: quality rules warn (they gate nothing yet);
-      // tighten to "error" once the existing debt is paid down.
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "prefer-const": "warn",
+      // These gate the build. The repo is at zero warnings; if a rule
+      // genuinely must be broken, use a targeted
+      // eslint-disable-next-line with a `-- reason` explaining why,
+      // rather than demoting the rule for everyone.
+      // A leading underscore marks a binding as intentionally unused
+      // (positional params, destructured slots, ignored catch bindings)
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "error",
+      "prefer-const": "error",
     },
   },
 ];

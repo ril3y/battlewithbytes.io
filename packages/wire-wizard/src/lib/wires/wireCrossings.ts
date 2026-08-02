@@ -152,7 +152,6 @@ export function buildPathWithGaps(
 
   // Build path with gaps
   let path = '';
-  let currentPoint = pathPoints[0];
   let isFirstMove = true;
 
   for (let segIdx = 0; segIdx < pathPoints.length - 1; segIdx++) {
@@ -169,14 +168,11 @@ export function buildPathWithGaps(
         isFirstMove = false;
       }
       path += ` L ${segEnd.x} ${segEnd.y}`;
-      currentPoint = segEnd;
     } else {
       // Draw segment with gaps at crossings
       const dx = segEnd.x - segStart.x;
       const dy = segEnd.y - segStart.y;
       const segmentLength = Math.sqrt(dx * dx + dy * dy);
-      const unitX = segmentLength > 0 ? dx / segmentLength : 0;
-      const unitY = segmentLength > 0 ? dy / segmentLength : 0;
 
       let lastT = 0;
 
@@ -219,8 +215,6 @@ export function buildPathWithGaps(
         };
         path += ` L ${endPoint.x} ${endPoint.y}`;
       }
-
-      currentPoint = segEnd;
     }
   }
 

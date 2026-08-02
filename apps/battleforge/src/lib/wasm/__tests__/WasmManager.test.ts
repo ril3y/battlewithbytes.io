@@ -18,34 +18,9 @@ import {
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock IndexedDB
-const mockIDBData = new Map<string, unknown>();
-
-const mockIDBStore = {
-  get: jest.fn((key: string) => ({
-    result: mockIDBData.get(key),
-    onsuccess: null as ((event: unknown) => void) | null,
-    onerror: null as ((event: unknown) => void) | null,
-  })),
-  put: jest.fn((value: unknown) => {
-    if (typeof value === "object" && value !== null && "id" in value) {
-      mockIDBData.set((value as Record<string, unknown>).id as string, value);
-    }
-    return { onsuccess: null, onerror: null };
-  }),
-  delete: jest.fn((key: string) => {
-    mockIDBData.delete(key);
-    return { onsuccess: null, onerror: null };
-  }),
-  clear: jest.fn(() => {
-    mockIDBData.clear();
-    return { onsuccess: null, onerror: null };
-  }),
-  getAll: jest.fn(() => ({
-    result: Array.from(mockIDBData.values()),
-    onsuccess: null as ((event: unknown) => void) | null,
-  })),
-};
+// NOTE: an IndexedDB test double used to live here, but it was never installed
+// onto `globalThis.indexedDB`, so no test in this file exercised it. It has been
+// removed; the tests below only depend on the `fetch` mock above.
 
 // Sample manifest for tests
 const mockManifest: WasmManifest = {

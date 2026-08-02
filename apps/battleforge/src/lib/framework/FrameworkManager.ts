@@ -230,7 +230,6 @@ export class FrameworkManager {
       receivedLength += value.length;
 
       if (contentLength > 0) {
-        const percent = Math.round((receivedLength / contentLength) * 100);
         onProgress?.({
           stage: "downloading",
           message: `Downloading... ${(receivedLength / 1024).toFixed(0)} KB`,

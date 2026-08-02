@@ -41,20 +41,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsBusGroupMode,
   createBusGroup,
   ungroupBus,
-  expandedBusWires,
-  setExpandedBusWires,
   saveToHistory,
   placementMode,
   onStartPlacement,
   onStopPlacement
 }) => {
   // Get state from contexts
-  const { blocks, wires, busGroups, setWires, removeWire, addBendPointToWire, removeBendPoint, setBusGroups } = useDiagram();
-  const { selectedBlockId, selectedWireId, selectedWireIds, toggleWireSelection, setSelectedWireIds, selectWire, clearSelection } = useSelection();
+  const { blocks, wires, busGroups, removeWire } = useDiagram();
+  const { selectedBlockId, selectedWireId, selectedWireIds, toggleWireSelection, setSelectedWireIds, selectWire } = useSelection();
   const { sidebarOpen } = useDisplay();
-
-  const selectedBlock = selectedBlockId ? blocks.find(b => b.id === selectedBlockId) : undefined;
-  const selectedWire = selectedWireId ? wires.find(w => w.id === selectedWireId) : undefined;
 
   return (
     <div style={{

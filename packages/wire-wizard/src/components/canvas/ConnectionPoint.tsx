@@ -40,7 +40,6 @@ interface ConnectionPointProps {
 export const ConnectionPoint: React.FC<ConnectionPointProps> = ({
   block,
   connectionPoint: cp,
-  isBlockSelected,
   isPointSelected,
   isWireStartPoint,
   showConnectionLabels,
@@ -188,7 +187,6 @@ export const ConnectionPoint: React.FC<ConnectionPointProps> = ({
     if (!isPointSelected && !isWireStartPoint) return null;
 
     const highlightColor = isWireStartPoint ? '#FF8800' : '#00ffa0';
-    const highlightRadius = radius + 6; // Maintain proportional gap
 
     switch (shape) {
       case 'rectangle':

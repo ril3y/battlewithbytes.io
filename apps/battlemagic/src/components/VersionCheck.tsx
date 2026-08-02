@@ -101,7 +101,6 @@ export default function VersionCheck({
     return icons[category] || "📦";
   };
 
-  const _availableFeatures = versionManager.getAvailableFeatures();
   const featuresByCategory = {
     debug: versionManager.getFeaturesByCategory("debug"),
     target: versionManager.getFeaturesByCategory("target"),

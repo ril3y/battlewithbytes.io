@@ -36,8 +36,6 @@ export function useGdbConnection(): GdbConnectionState {
     ConnectionState.DISCONNECTED,
   );
   const [targets, setTargets] = useState<Target[]>([]);
-  // Use LogStore for output management
-  const { addGdbLog, clearGdbLogs } = useLogStore.getState();
 
   // State
   const [bmpVersion, setBmpVersion] = useState<BmpVersion | null>(null);
@@ -60,11 +58,14 @@ export function useGdbConnection(): GdbConnectionState {
     }
 
     lastOutputRef.current = { text: message, timestamp: now };
-    addGdbLog(message);
+    // Read the store lazily: zustand actions are created once by the store
+    // factory and never replaced, so this keeps the callback identity stable
+    // (no dep array churn) while always hitting the live store.
+    useLogStore.getState().addGdbLog(message);
   }, []);
 
   const clearGdbOutput = useCallback(() => {
-    clearGdbLogs();
+    useLogStore.getState().clearGdbLogs();
     lastOutputRef.current = null;
   }, []);
 

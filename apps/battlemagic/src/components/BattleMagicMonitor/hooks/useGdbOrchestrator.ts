@@ -1,9 +1,8 @@
 
 import { useCallback } from "react";
-import { ConnectionState, Target } from "../../../lib/gdb/types";
+import { ConnectionState } from "../../../lib/gdb/types";
 import { RegisterValue } from "../../RegistersPanel";
 import { StackFrame } from "../../StackPanel";
-import { Breakpoint } from "../../BreakpointsManager";
 import { saveGdbPort, saveUartPort } from "../../../utils/deviceStorage";
 
 // Import types from other hooks
@@ -12,6 +11,15 @@ import { UartConnectionState } from "./useUartConnection";
 import { DebugState } from "./useDebugState";
 import { ProjectState } from "./useProjectState";
 
+// Dependency-array policy for this hook:
+// `gdb`, `uart`, `debug` and `project` are plain object literals rebuilt on
+// every render by their owning hooks, so depending on the whole object makes a
+// callback churn each render. The handlers below therefore depend on the
+// individual fields that can actually change (`gdb.gdbClient`, `gdb.gdbState`,
+// `gdb.addGdbOutput` - the latter is useCallback([])-stable) and deliberately
+// omit `gdb.setTargets` / `gdb.setBmpVersion`, which are useState setters and
+// are stable by contract. exhaustive-deps cannot see that and asks for the
+// whole `gdb` object; the per-callback disables below record that decision.
 export function useGdbOrchestrator(
     gdb: GdbConnectionState,
     uart: UartConnectionState,
@@ -210,6 +218,7 @@ export function useGdbOrchestrator(
                 gdb.addGdbOutput(`[Failed to read registers: ${error}]`);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug]);
 
     const handleRefreshStack = useCallback(async () => {
@@ -227,6 +236,7 @@ export function useGdbOrchestrator(
         } catch (error) {
             gdb.addGdbOutput(`[Failed to read stack: ${error}]`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug]);
 
     // Target controls
@@ -248,6 +258,7 @@ export function useGdbOrchestrator(
         } catch (error) {
             gdb.addGdbOutput(`[Scan failed: ${error}]`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; `gdb.setTargets` is a stable useState setter.
     }, [gdb.gdbClient, gdb.addGdbOutput, project]);
 
     const handleHalt = useCallback(async () => {
@@ -266,6 +277,7 @@ export function useGdbOrchestrator(
         } catch (error) {
             gdb.addGdbOutput(`[Halt failed: ${error}]`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug, project, handleRefreshRegisters, handleRefreshStack]);
 
     const handleRun = useCallback(async () => {
@@ -279,6 +291,7 @@ export function useGdbOrchestrator(
         } catch (error) {
             gdb.addGdbOutput(`[Run failed: ${error}]`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.addGdbOutput, debug, project]);
 
     const handleReset = useCallback(async () => {
@@ -295,6 +308,7 @@ export function useGdbOrchestrator(
         } catch (error) {
             gdb.addGdbOutput(`[Reset failed: ${error}]`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, handleRefreshRegisters, handleRefreshStack]);
 
     const handleStep = useCallback(async () => {
@@ -315,6 +329,7 @@ export function useGdbOrchestrator(
             gdb.addGdbOutput(`[Step failed: ${error}]`);
             debug.setExecutionState("stopped");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- whole-`gdb` dep would rebuild this callback every render; the listed fields are the only mutable ones read here.
     }, [gdb.gdbClient, gdb.gdbState, gdb.addGdbOutput, debug, project, handleRefreshRegisters, handleRefreshStack]);
 
     return {

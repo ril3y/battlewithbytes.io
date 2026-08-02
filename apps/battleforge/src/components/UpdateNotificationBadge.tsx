@@ -18,6 +18,18 @@ export function UpdateNotificationBadge({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState<Set<string>>(new Set());
 
+  // Defined before the effect below so it can be listed as a dependency
+  // without hitting the const TDZ during render. It has no dependencies of its
+  // own, so its identity is stable and the effect still runs only on mount.
+  const checkForUpdates = useCallback(async () => {
+    try {
+      const updates = await WasmManager.checkForUpdates();
+      setNotifications(updates);
+    } catch (e) {
+      console.error("[UpdateNotificationBadge] Failed to check updates:", e);
+    }
+  }, []);
+
   useEffect(() => {
     // Check for updates on mount
     checkForUpdates();
@@ -46,16 +58,7 @@ export function UpdateNotificationBadge({
       unsubscribe();
       clearInterval(interval);
     };
-  }, []);
-
-  const checkForUpdates = useCallback(async () => {
-    try {
-      const updates = await WasmManager.checkForUpdates();
-      setNotifications(updates);
-    } catch (e) {
-      console.error("[UpdateNotificationBadge] Failed to check updates:", e);
-    }
-  }, []);
+  }, [checkForUpdates]);
 
   const handleUpdateOne = useCallback(
     async (notification: UpdateNotification) => {

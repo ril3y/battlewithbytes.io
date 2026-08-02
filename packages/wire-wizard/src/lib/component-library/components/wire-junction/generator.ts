@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: Required<WireJunctionConfig> = {
 const WIDTH = 50;
 const HEIGHT = 50;
 
-export function getDimensions(config: WireJunctionConfig = {}): { width: number; height: number } {
+export function getDimensions(): { width: number; height: number } {
   return { width: WIDTH, height: HEIGHT };
 }
 

@@ -5,7 +5,7 @@
  * Only props that are local to pages/index.tsx are passed as props.
  */
 
-import type { Block, Wire, BlockShape, ConnectionPoint } from '../../../lib/core/types';
+import type { BlockShape, ConnectionPoint } from '../../../lib/core/types';
 
 /**
  * Props that must be passed to Sidebar because they are NOT available from contexts:

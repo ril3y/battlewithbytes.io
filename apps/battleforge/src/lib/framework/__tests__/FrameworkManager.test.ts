@@ -5,8 +5,16 @@
  */
 
 /* Jest globals: describe, it, expect, beforeEach, afterEach */
-import { FrameworkManager } from "../FrameworkManager";
+import {
+  FrameworkManager,
+  type LoadFrameworkProgress,
+} from "../FrameworkManager";
 import type { Framework, FrameworkId } from "../../platform/types";
+
+// These tests install stand-ins for browser globals that jsdom does not
+// provide. Writing them through this alias keeps the assignments checked as
+// property writes instead of scattering `any` casts over the whole file.
+const testGlobal = globalThis as unknown as Record<string, unknown>;
 
 // Mock IndexedDB for testing
 class MockIDBDatabase {
@@ -16,15 +24,15 @@ class MockIDBDatabase {
 }
 
 class MockIDBRequest {
-  result: any = null;
-  error: any = null;
+  result: unknown = null;
+  error: unknown = null;
   onsuccess: (() => void) | null = null;
   onerror: (() => void) | null = null;
 }
 
 // Mock global indexedDB if not available
 if (typeof indexedDB === "undefined") {
-  (global as any).indexedDB = {
+  testGlobal.indexedDB = {
     open: () => {
       const request = new MockIDBRequest();
       setTimeout(() => {
@@ -38,14 +46,14 @@ if (typeof indexedDB === "undefined") {
 
 // Mock DecompressionStream if not available
 if (typeof DecompressionStream === "undefined") {
-  (global as any).DecompressionStream = class {
+  testGlobal.DecompressionStream = class {
     constructor() {}
   };
 }
 
 describe("FrameworkManager", () => {
   let frameworkManager: FrameworkManager;
-  let fetchMock: any;
+  let fetchMock: jest.Mock;
 
   const mockFramework: Framework = {
     id: "arduino",
@@ -65,7 +73,7 @@ describe("FrameworkManager", () => {
 
     // Mock fetch
     fetchMock = jest.fn();
-    global.fetch = fetchMock;
+    global.fetch = fetchMock as unknown as typeof fetch;
   });
 
   afterEach(() => {
@@ -231,8 +239,8 @@ describe("FrameworkManager", () => {
         }),
       };
 
-      const originalDecompressionStream = (global as any).DecompressionStream;
-      (global as any).DecompressionStream = class {
+      const originalDecompressionStream = testGlobal.DecompressionStream;
+      testGlobal.DecompressionStream = class {
         constructor() {
           return mockDecompressedStream;
         }
@@ -240,21 +248,21 @@ describe("FrameworkManager", () => {
 
       // Mock Blob
       global.Blob = class {
-        constructor(public parts: any[]) {}
+        constructor(public parts: unknown[]) {}
         stream() {
           return {
             pipeThrough: () => mockDecompressedStream,
           };
         }
-      } as any;
+      } as unknown as typeof Blob;
 
       try {
-        const progressCallbacks: any[] = [];
+        const progressCallbacks: LoadFrameworkProgress[] = [];
         const onProgress = jest.fn((progress) =>
           progressCallbacks.push(progress),
         );
 
-        const files = await frameworkManager.loadCoreFiles(
+        await frameworkManager.loadCoreFiles(
           mockFramework,
           "stm32",
           "f1",
@@ -274,7 +282,7 @@ describe("FrameworkManager", () => {
         expect(stages).toContain("caching");
         expect(stages).toContain("ready");
       } finally {
-        (global as any).DecompressionStream = originalDecompressionStream;
+        testGlobal.DecompressionStream = originalDecompressionStream;
       }
     });
 
@@ -310,22 +318,22 @@ describe("FrameworkManager", () => {
         }),
       };
 
-      (global as any).DecompressionStream = class {
+      testGlobal.DecompressionStream = class {
         constructor() {
           return mockDecompressedStream;
         }
       };
 
       global.Blob = class {
-        constructor(public parts: any[]) {}
+        constructor(public parts: unknown[]) {}
         stream() {
           return {
             pipeThrough: () => mockDecompressedStream,
           };
         }
-      } as any;
+      } as unknown as typeof Blob;
 
-      const progressUpdates: any[] = [];
+      const progressUpdates: LoadFrameworkProgress[] = [];
       const onProgress = jest.fn((progress) => {
         progressUpdates.push(progress);
       });

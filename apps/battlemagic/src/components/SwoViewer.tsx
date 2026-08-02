@@ -144,6 +144,7 @@ export default function SwoViewer({
         }
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `createTraceEntry` is declared below this hook, so naming it here would read it in the TDZ and throw during render. It is only ever invoked from the async onPacket callback. The observer must also stay identity-stable: it is a dep of the decoder effect below, which add/removeObserver's on it.
     [isPaused, onOutput],
   );
 
@@ -359,6 +360,7 @@ export default function SwoViewer({
     a.download = `swo_trace_${new Date().toISOString().replace(/:/g, "-")}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `filterEntries` is declared below this hook, so naming it here would read it in the TDZ and throw during render. It is only invoked from this click handler, long after the component body has run.
   }, [entries]);
 
   /**

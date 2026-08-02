@@ -514,14 +514,16 @@ export const WireListItem: React.FC<WireListItemProps> = ({
                     // Remove from bus (None/Ungroup Wire)
                     if (wire.busGroupId) {
                       const oldBusId = wire.busGroupId;
-                      const { busGroupId, ...wireWithoutBusGroup } = wire;
+                      const wireWithoutBusGroup = { ...wire };
+                      delete wireWithoutBusGroup.busGroupId;
                       setWires(wires.map(w => w.id === wire.id ? wireWithoutBusGroup : w));
 
                       // Check if old bus will be empty
                       const wiresInOldBus = wires.filter(w => w.busGroupId === oldBusId && w.id !== wire.id);
                       if (wiresInOldBus.length === 0) {
                         // Clean up old bus
-                        const { [oldBusId]: removed, ...rest } = busGroups;
+                        const rest = { ...busGroups };
+                        delete rest[oldBusId];
                         setBusGroups(rest);
                       }
                       saveToHistory();
@@ -540,7 +542,8 @@ export const WireListItem: React.FC<WireListItemProps> = ({
                       ));
 
                       // Remove the bus group definition
-                      const { [busIdToDelete]: removed, ...remainingBusGroups } = busGroups;
+                      const remainingBusGroups = { ...busGroups };
+                      delete remainingBusGroups[busIdToDelete];
                       setBusGroups(remainingBusGroups);
                       saveToHistory();
                     }
@@ -554,7 +557,8 @@ export const WireListItem: React.FC<WireListItemProps> = ({
                       const oldBusId = wire.busGroupId;
                       const wiresInOldBus = wires.filter(w => w.busGroupId === oldBusId && w.id !== wire.id);
                       if (wiresInOldBus.length === 0) {
-                        const { [oldBusId]: removed, ...remainingBusGroups } = busGroups;
+                        const remainingBusGroups = { ...busGroups };
+                        delete remainingBusGroups[oldBusId];
                         setBusGroups(remainingBusGroups);
                       }
                     }
@@ -577,7 +581,8 @@ export const WireListItem: React.FC<WireListItemProps> = ({
                       const oldBusId = wire.busGroupId;
                       const wiresInOldBus = wires.filter(w => w.busGroupId === oldBusId && w.id !== wire.id);
                       if (wiresInOldBus.length === 0) {
-                        const { [oldBusId]: removed, ...rest } = busGroups;
+                        const rest = { ...busGroups };
+                        delete rest[oldBusId];
                         setBusGroups(rest);
                       }
                     }

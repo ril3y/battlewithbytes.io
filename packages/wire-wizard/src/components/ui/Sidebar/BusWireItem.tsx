@@ -200,7 +200,8 @@ export const BusWireItem: React.FC<BusWireItemProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 // Remove this wire from the bus
-                const { busGroupId, ...wireWithoutBusGroup } = wire;
+                const wireWithoutBusGroup = { ...wire };
+                delete wireWithoutBusGroup.busGroupId;
                 setWires(wires.map(w => w.id === wire.id ? wireWithoutBusGroup : w));
                 saveToHistory();
               }}

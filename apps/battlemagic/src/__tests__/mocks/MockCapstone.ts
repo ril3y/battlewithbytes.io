@@ -21,12 +21,10 @@ export interface MockCapstoneInstruction {
  * Mock Capstone class
  */
 export class MockCapstone {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_arch: number, _mode: number) {
     // Mock constructor - arch/mode are accepted but unused
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   detail(_enable: boolean): void {
     // Mock method
   }
