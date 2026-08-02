@@ -1,0 +1,11 @@
+# Normalize text files to LF in the repository
+* text=auto eol=lf
+
+# Files fetched verbatim from GitHub releases by
+# apps/battleforge/scripts/download-wasm.js: keep them byte-identical to
+# the published asset so a build never leaves the tree dirty
+apps/battleforge/public/wasm/manifest.json -text eol=lf
+apps/battleforge/public/wasm/**/*.js -text eol=lf
+
+# Windows-only scripts keep CRLF
+*.ps1 text eol=crlf
