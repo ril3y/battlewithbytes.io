@@ -1,4 +1,4 @@
 {
   "comment": "Pinned WASM compiler release downloaded by scripts/download-wasm.js. Bump the tag to pick up a new release; because this file is git-tracked, changing it also invalidates Turbo's build cache so deploys can never reuse output built against old compiler binaries.",
-  "tag": "wasm-v1.0.0"
+  "tag": "wasm-v1.1.0"
 }
