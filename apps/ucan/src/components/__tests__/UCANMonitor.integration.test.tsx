@@ -58,13 +58,16 @@ jest.mock("../BoardInfoPanel", () => ({
   default: ({
     isConnected,
     capabilities,
+    onCreateRule,
   }: {
     isConnected: boolean;
     capabilities?: { board: string };
+    onCreateRule: () => void;
   }) => (
     <div data-testid="board-info-panel">
       <div>Connected: {isConnected ? "Yes" : "No"}</div>
       {capabilities && <div>Board: {capabilities.board}</div>}
+      <button onClick={onCreateRule}>Create Action Rule</button>
     </div>
   ),
 }));
@@ -148,8 +151,8 @@ jest.mock("../CollapsiblePanel", () => ({
 // Mock Next.js components
 jest.mock("next/image", () => ({
   __esModule: true,
-  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     <img {...props} />
   ),
 }));
@@ -226,6 +229,7 @@ jest.mock("../../core/messageBuffer", () => ({
     setFilter: jest.fn(),
     clear: jest.fn(),
     setUpdateCallback: jest.fn(),
+    destroy: jest.fn(),
   })),
   StatisticsEngine: jest.fn().mockImplementation(() => ({
     updateMessage: jest.fn(),
@@ -252,7 +256,11 @@ describe("UCANMonitor Integration Tests", () => {
     test("renders main UI components", () => {
       render(<UCANMonitor />);
 
-      expect(screen.getByText(/uCAN Monitor/i)).toBeInTheDocument();
+      // Heading text is split across elements (<span>u</span>CAN Monitor),
+      // so the accessible name is "u CAN Monitor" (space-joined).
+      expect(
+        screen.getByRole("heading", { name: /u\s?CAN Monitor/i }),
+      ).toBeInTheDocument();
       expect(screen.getByTestId("message-log")).toBeInTheDocument();
       expect(screen.getByTestId("filter-panel")).toBeInTheDocument();
       expect(screen.getByTestId("board-info-panel")).toBeInTheDocument();
@@ -339,7 +347,9 @@ describe("UCANMonitor Integration Tests", () => {
       });
       await user.click(autoScrollButton);
 
-      expect(screen.getByText(/SCROLL LOCKED/i)).toBeInTheDocument();
+      // Case-sensitive: the status bar shows "SCROLL LOCKED" while the
+      // toolbar button reads "Scroll Locked".
+      expect(screen.getByText(/SCROLL LOCKED/)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /Scroll Locked/i }),
       ).toBeInTheDocument();
@@ -350,7 +360,10 @@ describe("UCANMonitor Integration Tests", () => {
     test("shows export options", () => {
       render(<UCANMonitor />);
 
-      expect(screen.getByRole("button", { name: /CSV/i })).toBeInTheDocument();
+      // "📥 Import CSV" also matches /CSV/i, so target the export button name.
+      expect(
+        screen.getByRole("button", { name: "📄 CSV" }),
+      ).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /JSON/i })).toBeInTheDocument();
     });
 
@@ -360,7 +373,7 @@ describe("UCANMonitor Integration Tests", () => {
 
       render(<UCANMonitor />);
 
-      const csvButton = screen.getByRole("button", { name: /CSV/i });
+      const csvButton = screen.getByRole("button", { name: "📄 CSV" });
       await user.click(csvButton);
 
       expect(exportMessagesSpy).toHaveBeenCalledWith(
@@ -494,7 +507,10 @@ describe("UCANMonitor Integration Tests", () => {
     test("has proper heading structure", () => {
       render(<UCANMonitor />);
 
-      const heading = screen.getByRole("heading", { name: /uCAN Monitor/i });
+      // Accessible name is "u CAN Monitor" because the "u" is a separate span.
+      const heading = screen.getByRole("heading", {
+        name: /u\s?CAN Monitor/i,
+      });
       expect(heading).toBeInTheDocument();
     });
 
