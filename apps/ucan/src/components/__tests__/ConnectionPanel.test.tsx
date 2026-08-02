@@ -342,7 +342,10 @@ describe("ConnectionPanel", () => {
       await user.click(configButton);
 
       expect(screen.getByText("Serial Configuration")).toBeInTheDocument();
-      expect(screen.getByLabelText("Baud Rate")).toBeInTheDocument();
+      // Labels are not programmatically associated with the selects, so query
+      // the label text and the select (by its displayed value) separately
+      expect(screen.getByText("Baud Rate")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("115200 (Default)")).toBeInTheDocument();
     });
 
     test("allows changing baud rate", async () => {
@@ -357,8 +360,8 @@ describe("ConnectionPanel", () => {
       const configButton = screen.getByRole("button", { name: /Config/i });
       await user.click(configButton);
 
-      // Change baud rate
-      const baudRateSelect = screen.getByLabelText("Baud Rate");
+      // Change baud rate (select is identified by its current displayed value)
+      const baudRateSelect = screen.getByDisplayValue("115200 (Default)");
       await user.selectOptions(baudRateSelect, "230400");
 
       expect(onConfigChange).toHaveBeenCalledWith({
@@ -379,8 +382,8 @@ describe("ConnectionPanel", () => {
       const configButton = screen.getByRole("button", { name: /Config/i });
       await user.click(configButton);
 
-      // Change data bits
-      const dataBitsSelect = screen.getByLabelText("Data Bits");
+      // Change data bits (select is identified by its current displayed value)
+      const dataBitsSelect = screen.getByDisplayValue("8");
       await user.selectOptions(dataBitsSelect, "7");
 
       expect(onConfigChange).toHaveBeenCalledWith({
@@ -392,8 +395,8 @@ describe("ConnectionPanel", () => {
     test("displays current configuration summary", () => {
       render(<ConnectionPanel {...defaultProps} />);
 
-      // Should show current config at bottom
-      expect(screen.getByText(/115.2k baud, 8N1/i)).toBeInTheDocument();
+      // Should show current config at bottom (formatBaudRate(115200) => "115K")
+      expect(screen.getByText(/115K baud, 8N1/i)).toBeInTheDocument();
     });
   });
 

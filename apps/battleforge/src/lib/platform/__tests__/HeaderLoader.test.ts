@@ -8,15 +8,26 @@
  * Tests the GitHub-based header loading functionality
  */
 
-describe("HeaderLoader GitHub Integration", () => {
-  beforeAll(() => {
-    // Ensure fetch is available (Node 18+)
-    if (!global.fetch) {
-      console.log("fetch not available, skipping tests");
-    }
-  });
+/**
+ * These integration tests fetch real files from third-party GitHub repos
+ * (modm-io, ARM-software) on their moving default branches. That makes
+ * them slow, dependent on GitHub availability and rate limits, and prone
+ * to breaking when an upstream repo reorganizes - none of which says
+ * anything about this codebase. They also leak TLS handles, which is why
+ * jest warned about workers failing to exit.
+ *
+ * They stay runnable on demand:  RUN_NETWORK_TESTS=1 npx jest HeaderLoader
+ *
+ * TODO: HeaderLoader.ts itself has no unit tests - this file never imports
+ * it, it re-implements the URL parsing inline. Worth covering properly
+ * with a mocked fetch.
+ */
+const describeNetwork = process.env.RUN_NETWORK_TESTS
+  ? describe
+  : describe.skip;
 
-  describe("fetchGitHubFile", () => {
+describe("HeaderLoader GitHub Integration", () => {
+  describeNetwork("fetchGitHubFile (network)", () => {
     it("should fetch stm32f1xx.h from modm-io repo", async () => {
       // Note: Headers are in stm32f1xx/Include/ subdirectory
       const url = "https://raw.githubusercontent.com/modm-io/cmsis-header-stm32/master/stm32f1xx/Include/stm32f1xx.h";
@@ -75,7 +86,7 @@ describe("HeaderLoader GitHub Integration", () => {
     });
   });
 
-  describe("Header file list", () => {
+  describeNetwork("Header file list (network)", () => {
     const STM32_F1_FILES = [
       "stm32f1xx.h",
       "stm32f103xb.h",

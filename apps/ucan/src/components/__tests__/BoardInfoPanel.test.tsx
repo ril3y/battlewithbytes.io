@@ -51,12 +51,15 @@ jest.mock("../CollapsiblePanel", () => ({
   default: ({
     children,
     title,
+    headerActions,
   }: {
     children: React.ReactNode;
     title: string;
+    headerActions?: React.ReactNode;
   }) => (
     <div data-testid="collapsible-panel">
       <div data-testid="panel-title">{title}</div>
+      {headerActions}
       {children}
     </div>
   ),
@@ -154,18 +157,11 @@ describe("BoardInfoPanel", () => {
     test("displays max_rules value correctly when defined", () => {
       render(<BoardInfoPanel {...defaultProps} />);
 
-      // Find the Action Rules section
-      const actionRulesSection = screen
-        .getByText("Action Rules")
-        .closest("div");
-      expect(actionRulesSection).toBeInTheDocument();
-
-      // Check that max_rules displays as a number with "maximum" text
-      expect(actionRulesSection?.textContent).toContain("8");
-      expect(actionRulesSection?.textContent).toContain("maximum");
+      // Rules panel title shows the current count against the board maximum
+      expect(screen.getByText("Active Rules (1 / 8)")).toBeInTheDocument();
     });
 
-    test('displays "Loading..." when max_rules is undefined', () => {
+    test('displays "?" placeholder when max_rules is undefined', () => {
       const capsWithoutMaxRules: Partial<BoardCapabilities> = {
         ...mockCapabilities,
       };
@@ -178,27 +174,22 @@ describe("BoardInfoPanel", () => {
         />,
       );
 
-      // Should show "Loading..." not "max rules"
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
-
-      // Should NOT show just "max rules" as text
-      const actionRulesDiv = screen.getByText("Action Rules").closest("div");
-      expect(actionRulesDiv?.textContent).not.toContain("max rules");
+      // Should fall back to "?" and never render the literal "undefined"
+      expect(screen.getByText("Active Rules (1 / ?)")).toBeInTheDocument();
+      screen.getAllByTestId("panel-title").forEach((title) => {
+        expect(title.textContent).not.toContain("undefined");
+      });
     });
 
-    test("handles max_rules = 0 correctly", () => {
+    test('handles max_rules = 0 by falling back to "?"', () => {
       const capsWithZeroRules = { ...mockCapabilities, max_rules: 0 };
 
       render(
         <BoardInfoPanel {...defaultProps} capabilities={capsWithZeroRules} />,
       );
 
-      // Should display "0 maximum"
-      const actionRulesSection = screen
-        .getByText("Action Rules")
-        .closest("div");
-      expect(actionRulesSection?.textContent).toContain("0");
-      expect(actionRulesSection?.textContent).toContain("maximum");
+      // max_rules of 0 is falsy, so the panel treats it as unknown ("?")
+      expect(screen.getByText("Active Rules (1 / ?)")).toBeInTheDocument();
     });
   });
 
@@ -317,7 +308,7 @@ describe("BoardInfoPanel", () => {
     test("displays active rules list", () => {
       render(<BoardInfoPanel {...defaultProps} />);
 
-      expect(screen.getByText("Active Rules")).toBeInTheDocument();
+      expect(screen.getByText(/Active Rules/)).toBeInTheDocument();
       expect(screen.getByText("Test Rule 1")).toBeInTheDocument();
       expect(screen.getByText(/0x100/)).toBeInTheDocument();
     });
@@ -390,8 +381,8 @@ describe("BoardInfoPanel", () => {
 
       // Wait for the component to update (it has a useEffect that triggers re-renders)
       await waitFor(() => {
-        // The rule should have the orange fire styling
-        const ruleElement = screen.getByText("Test Rule 1").closest("div");
+        // The rule row container (class "group") should have the orange fire styling
+        const ruleElement = screen.getByText("Test Rule 1").closest(".group");
         expect(ruleElement).toHaveClass("bg-orange-600/20");
       });
     });

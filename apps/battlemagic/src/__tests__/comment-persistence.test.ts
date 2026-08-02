@@ -24,9 +24,10 @@ describe('Comment Persistence', () => {
   });
 
   it('should save and retrieve a single comment', async () => {
+    const address = 0x08000100;
     const comment: DbComment = {
-      id: '0x08000100_standard',
-      address: 0x08000100,
+      id: `${address}_standard`,
+      address,
       text: 'This is a test comment',
       comment_type: 'standard',
       timestamp: Date.now(),

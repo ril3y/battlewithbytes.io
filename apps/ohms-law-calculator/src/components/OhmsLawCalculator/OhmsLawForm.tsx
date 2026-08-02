@@ -23,8 +23,27 @@ interface OhmsLawFormProps {
   onClear: () => void;
 }
 
-// Warning ranges for each parameter (Assuming these are defined elsewhere or ok as is)
-// const warningRanges = { ... }; // Keep if needed, not shown here for brevity
+type FieldName = keyof OhmsLawValues;
+
+/** The four Ohm's-law quantities; the one being solved for is hidden. */
+const FIELDS: ReadonlyArray<{
+  name: FieldName;
+  label: string;
+  placeholder: string;
+}> = [
+  { name: "voltage", label: "Voltage (V)", placeholder: "Enter voltage" },
+  {
+    name: "current",
+    label: "Current (I)",
+    placeholder: "e.g., 5 (5A), 5m or 5mA (5mA)",
+  },
+  {
+    name: "resistance",
+    label: "Resistance (R)",
+    placeholder: "e.g., 5 (5Ω), 1k (1kΩ)",
+  },
+  { name: "power", label: "Power (P)", placeholder: "e.g., 5 (5W), 10m (10mW)" },
+];
 
 const OhmsLawForm: React.FC<OhmsLawFormProps> = ({
   values,
@@ -203,124 +222,37 @@ const OhmsLawForm: React.FC<OhmsLawFormProps> = ({
 
       {/* Input Fields */}
       <div className="space-y-4">
-        {/* Voltage Input */}
-        {calculationMode !== "voltage" && (
-          <div>
-            <label
-              htmlFor="voltageInput"
-              className="block text-sm font-medium mb-2"
-            >
-              Voltage (V)
-            </label>
-            <Tooltip text={getDisabledTooltip("voltage")} position="top">
-              <input
-                id="voltageInput" // Added id
-                type="text" // Use "text" for flexible input, validation handles format
-                inputMode="decimal" // Hint for mobile keyboards
-                name="voltage"
-                className={`w-full bg-black/30 border ${shouldDisableField("voltage") ? "border-red-800 bg-red-900/20 cursor-not-allowed text-gray-500" : "border-gray-700"} rounded-md p-2 text-white font-mono focus:border-[#00ff9d] focus:outline-none focus:ring-1 focus:ring-[#00ff9d]`}
-                value={values.voltage} // Display raw value from state
-                onChange={handleInputChange}
-                placeholder="Enter voltage"
-                disabled={shouldDisableField("voltage")}
-              />
-            </Tooltip>
-            {warnings.voltage && (
-              <div className="text-yellow-400 text-sm mt-1">
-                {warnings.voltage}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Current Input */}
-        {calculationMode !== "current" && (
-          <div>
-            <label
-              htmlFor="currentInput"
-              className="block text-sm font-medium mb-2"
-            >
-              Current (I)
-            </label>
-            <Tooltip text={getDisabledTooltip("current")} position="top">
-              <input
-                id="currentInput" // Added id
-                type="text"
-                inputMode="decimal"
-                name="current"
-                className={`w-full bg-black/30 border ${shouldDisableField("current") ? "border-red-800 bg-red-900/20 cursor-not-allowed text-gray-500" : "border-gray-700"} rounded-md p-2 text-white font-mono focus:border-[#00ff9d] focus:outline-none focus:ring-1 focus:ring-[#00ff9d]`}
-                value={values.current} // Display raw value from state
-                onChange={handleInputChange}
-                placeholder="e.g., 5 (5A), 5m or 5mA (5mA)"
-                disabled={shouldDisableField("current")}
-              />
-            </Tooltip>
-            {warnings.current && (
-              <div className="text-yellow-400 text-sm mt-1">
-                {warnings.current}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Resistance Input */}
-        {calculationMode !== "resistance" && (
-          <div>
-            <label
-              htmlFor="resistanceInput"
-              className="block text-sm font-medium mb-2"
-            >
-              Resistance (R)
-            </label>
-            <Tooltip text={getDisabledTooltip("resistance")} position="top">
-              <input
-                id="resistanceInput" // Added id
-                type="text"
-                inputMode="decimal"
-                name="resistance"
-                className={`w-full bg-black/30 border ${shouldDisableField("resistance") ? "border-red-800 bg-red-900/20 cursor-not-allowed text-gray-500" : "border-gray-700"} rounded-md p-2 text-white font-mono focus:border-[#00ff9d] focus:outline-none focus:ring-1 focus:ring-[#00ff9d]`}
-                value={values.resistance} // Display raw value from state
-                onChange={handleInputChange}
-                placeholder="e.g., 5 (5Ω), 1k (1kΩ)"
-                disabled={shouldDisableField("resistance")}
-              />
-            </Tooltip>
-            {warnings.resistance && (
-              <div className="text-yellow-400 text-sm mt-1">
-                {warnings.resistance}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Power Input */}
-        {calculationMode !== "power" && (
-          <div>
-            <label
-              htmlFor="powerInput"
-              className="block text-sm font-medium mb-2"
-            >
-              Power (P)
-            </label>
-            <Tooltip text={getDisabledTooltip("power")} position="top">
-              <input
-                id="powerInput" // Added id
-                type="text"
-                inputMode="decimal"
-                name="power"
-                className={`w-full bg-black/30 border ${shouldDisableField("power") ? "border-red-800 bg-red-900/20 cursor-not-allowed text-gray-500" : "border-gray-700"} rounded-md p-2 text-white font-mono focus:border-[#00ff9d] focus:outline-none focus:ring-1 focus:ring-[#00ff9d]`}
-                value={values.power} // Display raw value from state
-                onChange={handleInputChange}
-                placeholder="e.g., 5 (5W), 10m (10mW)"
-                disabled={shouldDisableField("power")}
-              />
-            </Tooltip>
-            {warnings.power && (
-              <div className="text-yellow-400 text-sm mt-1">
-                {warnings.power}
-              </div>
-            )}
-          </div>
+        {FIELDS.map(({ name, label, placeholder }) =>
+          calculationMode === name ? null : (
+            <div key={name}>
+              <label
+                htmlFor={`${name}Input`}
+                className="block text-sm font-medium mb-2"
+              >
+                {label}
+              </label>
+              <Tooltip text={getDisabledTooltip(name)} position="top">
+                <input
+                  id={`${name}Input`}
+                  // "text" keeps SI-suffix input (5m, 1k) working; validation
+                  // handles the format. inputMode hints mobile keyboards.
+                  type="text"
+                  inputMode="decimal"
+                  name={name}
+                  className={`w-full bg-black/30 border ${shouldDisableField(name) ? "border-red-800 bg-red-900/20 cursor-not-allowed text-gray-500" : "border-gray-700"} rounded-md p-2 text-white font-mono focus:border-[#00ff9d] focus:outline-none focus:ring-1 focus:ring-[#00ff9d]`}
+                  value={values[name]}
+                  onChange={handleInputChange}
+                  placeholder={placeholder}
+                  disabled={shouldDisableField(name)}
+                />
+              </Tooltip>
+              {warnings[name] && (
+                <div className="text-yellow-400 text-sm mt-1">
+                  {warnings[name]}
+                </div>
+              )}
+            </div>
+          ),
         )}
       </div>
 

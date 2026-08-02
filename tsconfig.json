@@ -1,4 +1,17 @@
 {
-  "extends": "./tsconfig.base.json",
+  "//": "Root stub: turbo drives per-workspace builds and each workspace extends @battlewithbytes/tsconfig directly. Kept so editors opening the repo root have a config; it deliberately does not extend the workspace package, which is not resolvable from the root.",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve"
+  },
   "files": []
 }

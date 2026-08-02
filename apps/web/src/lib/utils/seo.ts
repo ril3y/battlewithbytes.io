@@ -36,7 +36,8 @@ export const defaultSEO: SEOProps = {
     "MOSFET calculator",
     "Ohm's Law calculator",
   ],
-  ogImage: "/images/site_logo.png",
+  // Purpose-built 1200x630 card; the square logo gets cropped by scrapers
+  ogImage: "/images/og-image.png",
   type: "website",
 };
 
@@ -76,7 +77,15 @@ export function buildMetadata(props: Partial<SEOProps> = {}): Metadata {
       description: seo.description,
       url: seo.canonical,
       type: seo.type === "article" ? "article" : "website",
-      images: seo.ogImage ? [{ url: seo.ogImage }] : [],
+      // Only the shared card has known dimensions; per-page covers vary,
+      // so let scrapers measure those themselves
+      images: seo.ogImage
+        ? [
+            seo.ogImage === defaultSEO.ogImage
+              ? { url: seo.ogImage, width: 1200, height: 630 }
+              : { url: seo.ogImage },
+          ]
+        : [],
       siteName: "Battle With Bytes",
       ...(seo.type === "article" && seo.publishedAt
         ? { publishedTime: seo.publishedAt, modifiedTime: seo.updatedAt }

@@ -10,7 +10,7 @@ type ErrorHandler = (error: Error) => void;
 
 export class MockSerialTransport {
   private port: SerialPort | null = null;
-  private isConnected = false;
+  private connected = false;
   private isReading = false;
   private dataHandlers: DataHandler[] = [];
   private errorHandlers: ErrorHandler[] = [];
@@ -19,7 +19,7 @@ export class MockSerialTransport {
 
   constructor() {
     this.port = null;
-    this.isConnected = false;
+    this.connected = false;
   }
 
   static isSupported(): boolean {
@@ -37,30 +37,38 @@ export class MockSerialTransport {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async connect(port: SerialPort, config: SerialConfig = {}): Promise<void> {
     this.port = port;
-    this.isConnected = true;
+    this.connected = true;
     this.isReading = true;
     this.startReading();
   }
 
   async disconnect(): Promise<void> {
     this.isReading = false;
-    this.isConnected = false;
+    this.connected = false;
     this.port = null;
   }
 
+  /**
+   * Matches the real SerialTransport API, which exposes isConnected()
+   * as a method (GdbClient calls transport.isConnected()).
+   */
+  isConnected(): boolean {
+    return this.connected;
+  }
+
   isConnectedStatus(): boolean {
-    return this.isConnected;
+    return this.connected;
   }
 
   async send(data: string): Promise<void> {
-    if (!this.isConnected) {
+    if (!this.connected) {
       throw new Error("Not connected to a port");
     }
     this.sentData.push(data);
   }
 
   async sendBytes(data: Uint8Array): Promise<void> {
-    if (!this.isConnected) {
+    if (!this.connected) {
       throw new Error("Not connected to a port");
     }
     const text = new TextDecoder().decode(data);

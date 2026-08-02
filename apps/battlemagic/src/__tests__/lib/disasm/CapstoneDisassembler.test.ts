@@ -4,11 +4,10 @@
  *
  * Note: These tests use a mock Capstone implementation since the real Capstone.js
  * requires WebAssembly which is not available in Jest's Node environment.
- * The mock is automatically loaded from __mocks__/@alexaltea/capstone-js.ts
+ * jest.config.js maps '@alexaltea/capstone-js' (including the dist bundle path)
+ * to __mocks__/@alexaltea/capstone-js.ts via moduleNameMapper, so no jest.mock()
+ * call is needed here.
  */
-
-// Enable manual mock
-jest.mock("@alexaltea/capstone-js");
 
 import {
   CapstoneDisassembler,

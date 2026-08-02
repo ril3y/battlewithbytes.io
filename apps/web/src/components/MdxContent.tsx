@@ -4,6 +4,7 @@ import Link from "next/link";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypePrism from "rehype-prism-plus";
 import * as Tabs from "@radix-ui/react-tabs";
 import RadixTabs from "./RadixTabs";
 import DropCap from "./DropCap";
@@ -155,6 +156,10 @@ export default function MdxContent({ source }: MdxContentProps) {
           rehypePlugins: [
             rehypeSlug,
             [rehypeAutolinkHeadings, { behavior: "wrap" }],
+            // Highlight fenced code blocks at build time so the exported
+            // HTML ships coloured code (no post-hydration flash). Code
+            // passed to <CodeBlock> as a prop still highlights client-side.
+            [rehypePrism, { ignoreMissing: true }],
           ],
           format: "mdx",
         },

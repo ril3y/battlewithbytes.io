@@ -158,7 +158,18 @@ export class GdbClient {
       cmd.reject(new Error("Connection closed"));
     }
     this.commandQueue = [];
-    this.currentCommand = null;
+
+    // Reject the in-flight command too: clearing it without settling its
+    // promise leaves any awaiting caller hanging forever, and its timeout
+    // handler no-ops once currentCommand is null
+    if (this.currentCommand) {
+      const inFlight = this.currentCommand;
+      this.currentCommand = null;
+      if (inFlight.timeoutHandle) {
+        clearTimeout(inFlight.timeoutHandle);
+      }
+      inFlight.reject(new Error("Connection closed"));
+    }
 
     // Disconnect transport
     await this.transport.disconnect();

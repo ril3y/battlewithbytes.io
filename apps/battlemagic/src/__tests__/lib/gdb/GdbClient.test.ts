@@ -74,7 +74,7 @@ describe("GdbClient", () => {
 
       try {
         await client.connect(mockPort);
-        fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (e) {
         expect((e as Error).message).toContain("Already connected");
       }
@@ -101,7 +101,7 @@ describe("GdbClient", () => {
     it("should return error when sending command while disconnected", async () => {
       try {
         await client.sendCommand("?");
-        fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (e) {
         expect((e as Error).message).toContain("Not connected");
       }
@@ -122,27 +122,38 @@ describe("GdbClient", () => {
           commands.push(cmd);
         });
 
-      // Queue multiple commands
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const promise1 = client.sendCommand("?");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const promise2 = client.sendCommand("g");
+      // Queue multiple commands (never answered here, so swallow the
+      // eventual command-timeout rejections)
+      client.sendCommand("?").catch(() => {});
+      client.sendCommand("g").catch(() => {});
 
       expect(commands.length).toBeGreaterThan(0);
     });
 
     it("should reject commands exceeding queue size", async () => {
       // Create client with small queue
-      const smallClient = new GdbClient({ maxQueueSize: 2 });
+      const smallClient = new GdbClient({ maxQueueSize: 2, commandTimeout: 100 });
       (smallClient as any).transport.isConnected = () => true;
+      (smallClient as any).transport.send = jest
+        .fn()
+        .mockResolvedValue(undefined);
 
-      try {
-        for (let i = 0; i < 5; i++) {
-          await smallClient.sendCommand("?");
-        }
-      } catch (e) {
-        expect((e as Error).message).toContain("queue");
-      }
+      // Issue commands without awaiting so the queue actually fills up:
+      // the first becomes the in-flight command, the next two fill the
+      // queue (maxQueueSize: 2), and the rest are rejected immediately.
+      const results = await Promise.all(
+        Array.from({ length: 5 }, () =>
+          smallClient.sendCommand("?").then(
+            () => null,
+            (e: Error) => e,
+          ),
+        ),
+      );
+
+      const queueErrors = results.filter(
+        (e): e is Error => e !== null && e.message.includes("queue"),
+      );
+      expect(queueErrors.length).toBeGreaterThan(0);
     });
   });
 
@@ -153,7 +164,7 @@ describe("GdbClient", () => {
 
     it("should read memory from target", async () => {
       const mockResponse = createMemoryReadResponse(SAMPLE_MEMORY.simple);
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
 
       const promise = client.readMemory(0x08000000, 16);
 
@@ -167,7 +178,7 @@ describe("GdbClient", () => {
     });
 
     it("should write memory to target", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.writeMemory(0x08000000, SAMPLE_MEMORY.simple);
@@ -181,7 +192,7 @@ describe("GdbClient", () => {
     });
 
     it("should handle different memory addresses", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMemoryReadResponse(new Uint8Array([0x42]));
 
       const addresses = [0x0, 0x08000000, 0x20000000, 0xffffffff];
@@ -195,7 +206,7 @@ describe("GdbClient", () => {
     });
 
     it("should handle hex string addresses", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMemoryReadResponse(new Uint8Array([0x01]));
 
       const promise = client.readMemory("08000000", 1);
@@ -212,7 +223,7 @@ describe("GdbClient", () => {
     });
 
     it("should read all registers", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
       const promise = client.readRegisters();
@@ -224,7 +235,7 @@ describe("GdbClient", () => {
     });
 
     it("should read single register", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createRegisterResponse("12345678");
 
       const promise = client.readRegister(0);
@@ -235,7 +246,7 @@ describe("GdbClient", () => {
     });
 
     it("should write single register", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.writeRegister(0, "deadbeef");
@@ -246,7 +257,7 @@ describe("GdbClient", () => {
     });
 
     it("should format registers for display", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
       const promise = client.getFormattedRegisters();
@@ -265,7 +276,7 @@ describe("GdbClient", () => {
     });
 
     it("should insert software breakpoint", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.insertBreakpoint(0x08000100, false);
@@ -276,7 +287,7 @@ describe("GdbClient", () => {
     });
 
     it("should insert hardware breakpoint", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.insertBreakpoint(0x08000100, true);
@@ -287,7 +298,7 @@ describe("GdbClient", () => {
     });
 
     it("should remove software breakpoint", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.removeBreakpoint(0x08000100, false);
@@ -298,7 +309,7 @@ describe("GdbClient", () => {
     });
 
     it("should remove hardware breakpoint", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.removeBreakpoint(0x08000100, true);
@@ -309,7 +320,7 @@ describe("GdbClient", () => {
     });
 
     it("should handle breakpoint errors", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("E01");
 
       const promise = client.insertBreakpoint(0x08000100);
@@ -317,9 +328,10 @@ describe("GdbClient", () => {
 
       try {
         await promise;
-        fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).toContain("Failed");
+        // E01 maps to a specific "no more hardware breakpoint units" message
+        expect((e as Error).message).toContain("E01");
       }
     });
   });
@@ -330,18 +342,28 @@ describe("GdbClient", () => {
     });
 
     it("should continue execution", async () => {
-      (client as any).transport.send = jest.fn();
+      // continue() is non-blocking: it resolves as soon as the command is
+      // sent. The stop reply arrives asynchronously via onStopped.
+      const onStopped = jest.fn();
+      const execClient = new GdbClient({ commandTimeout: 1000 }, { onStopped });
+      (execClient as any).transport.isConnected = () => true;
+      const sendMock = jest.fn().mockResolvedValue(undefined);
+      (execClient as any).transport.send = sendMock;
+
+      await execClient.continue();
+      expect(sendMock).toHaveBeenCalled();
+
+      // Simulate the asynchronous stop reply (T packet)
       const mockResponse = createStopReplyPacket(5);
+      (execClient as any).handlePacket(mockResponse);
 
-      const promise = client.continue();
-      (client as any).handlePacket(mockResponse);
-
-      const reply = await promise;
-      expect(reply.signal).toBe(5);
+      expect(onStopped).toHaveBeenCalledWith(
+        expect.objectContaining({ signal: 5 }),
+      );
     });
 
     it("should step one instruction", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createStopReplyPacket(5);
 
       const promise = client.step();
@@ -352,7 +374,7 @@ describe("GdbClient", () => {
     });
 
     it("should halt execution", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
 
       await client.halt();
       // Should not throw
@@ -360,7 +382,7 @@ describe("GdbClient", () => {
     });
 
     it("should get backtrace", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createRegisterResponse(REGISTER_DATA.armRegisters);
 
       const promise = client.getBacktrace();
@@ -378,7 +400,7 @@ describe("GdbClient", () => {
     });
 
     it("should attach to target", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.attach(0);
@@ -390,7 +412,7 @@ describe("GdbClient", () => {
 
     it("should detach from target", async () => {
       (client as any).state = ConnectionState.ATTACHED;
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.detach();
@@ -401,7 +423,7 @@ describe("GdbClient", () => {
     });
 
     it("should reset target", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.reset();
@@ -418,7 +440,7 @@ describe("GdbClient", () => {
     });
 
     it("should enable target power", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.enableTargetPower();
@@ -429,7 +451,7 @@ describe("GdbClient", () => {
     });
 
     it("should disable target power", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.disableTargetPower();
@@ -446,7 +468,7 @@ describe("GdbClient", () => {
     });
 
     it("should get BMP version", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const versionData =
         "426c61636b204d616769632050726f62652076657273696f6e20312e372e31"; // "Black Magic Probe version 1.7.1"
       const mockResponse = createMockPacket(versionData);
@@ -459,7 +481,7 @@ describe("GdbClient", () => {
     });
 
     it("should scan for SWD targets", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const scanData = "417661696c61626c6520546172676574733a"; // "Available Targets:"
       const mockResponse = createMockPacket(scanData);
 
@@ -472,7 +494,7 @@ describe("GdbClient", () => {
     });
 
     it("should scan for JTAG targets", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const scanData = "417661696c61626c6520546172676574733a"; // "Available Targets:"
       const mockResponse = createMockPacket(scanData);
 
@@ -493,21 +515,23 @@ describe("GdbClient", () => {
     it("should handle command timeout", async () => {
       const shortTimeoutClient = new GdbClient({ commandTimeout: 50 });
       (shortTimeoutClient as any).transport.isConnected = () => true;
-      (shortTimeoutClient as any).transport.send = jest.fn();
+      (shortTimeoutClient as any).transport.send = jest
+        .fn()
+        .mockResolvedValue(undefined);
 
       // Don't send response, let it timeout
       const promise = shortTimeoutClient.sendCommand("?");
 
       try {
         await promise;
-        fail("Should have timed out");
+        throw new Error("Should have timed out");
       } catch (e) {
         expect((e as Error).message).toContain("timeout");
       }
     });
 
     it("should propagate error responses", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("E01");
 
       const promise = client.readMemory(0x08000000, 16);
@@ -515,7 +539,7 @@ describe("GdbClient", () => {
 
       try {
         await promise;
-        fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (e) {
         expect((e as Error).message).toContain("Failed");
       }
@@ -535,19 +559,19 @@ describe("GdbClient", () => {
 
     it("should cancel pending commands on disconnect", async () => {
       (client as any).transport.isConnected = () => true;
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
 
-      const promise = client.sendCommand("?");
+      // The first command becomes the in-flight command; the second stays
+      // in the queue. Both must reject on disconnect - abandoning the
+      // in-flight one leaves its caller awaiting forever.
+      const inFlight = client.sendCommand("?");
+      const queued = client.sendCommand("g");
 
       // Disconnect without responding
       await client.disconnect();
 
-      try {
-        await promise;
-        fail("Should have been rejected");
-      } catch (e) {
-        expect((e as Error).message).toContain("Connection closed");
-      }
+      await expect(queued).rejects.toThrow("Connection closed");
+      await expect(inFlight).rejects.toThrow("Connection closed");
     });
   });
 
@@ -557,7 +581,7 @@ describe("GdbClient", () => {
     });
 
     it("should erase flash", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.flashErase(0x08000000, 4096);
@@ -568,7 +592,7 @@ describe("GdbClient", () => {
     });
 
     it("should write to flash", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const data = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
@@ -580,7 +604,7 @@ describe("GdbClient", () => {
     });
 
     it("should complete flash operations", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.flashDone();
@@ -597,7 +621,7 @@ describe("GdbClient", () => {
     });
 
     it("should send monitor command", async () => {
-      (client as any).transport.send = jest.fn();
+      (client as any).transport.send = jest.fn().mockResolvedValue(undefined);
       const mockResponse = createMockPacket("OK");
 
       const promise = client.sendMonitorCommand("version");

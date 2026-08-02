@@ -132,18 +132,10 @@ jobs:
           # GitHub release; authenticated requests avoid runner rate limits
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # battlemagic's suite has ~139 known-failing tests and is quarantined
-      # below as advisory-only; every other package's tests gate the build.
       - name: Run tests
-        run: pnpm turbo run test --filter='!@battlewithbytes/battlemagic'
+        run: pnpm run test
         env:
           TURBO_CACHE_DIR: .turbo
-
-      - name: Run battlemagic tests (advisory - known failing suites)
-        run: pnpm turbo run test --filter='@battlewithbytes/battlemagic'
-        env:
-          TURBO_CACHE_DIR: .turbo
-        continue-on-error: true
 
       - name: Type check
         run: pnpm run type-check
