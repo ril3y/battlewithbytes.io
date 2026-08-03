@@ -39,6 +39,13 @@ async function generateRSSFeed() {
             const fileContent = fs.readFileSync(mdxPath, 'utf-8');
             const { data: frontmatter } = matter(fileContent);
 
+            // Respect the same draft flag src/lib/blog.ts honours, so
+            // unpublished posts never reach subscribers
+            if (frontmatter.enabled === false) {
+              console.log(`Skipping ${dir}: marked enabled: false.`);
+              continue;
+            }
+
             if (frontmatter.title && frontmatter.date && frontmatter.excerpt && dir) {
               allPosts.push({
                 title: frontmatter.title,

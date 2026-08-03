@@ -44,6 +44,13 @@ function generateBlogData() {
             const fileContent = fs.readFileSync(mdxPath, 'utf-8');
             const { data: frontmatter } = matter(fileContent);
 
+            // Respect the same draft flag src/lib/blog.ts honours, so
+            // unpublished posts stay out of the terminal's listing
+            if (frontmatter.enabled === false) {
+              console.log(`Skipping ${dir}: marked enabled: false.`);
+              return;
+            }
+
             // Basic validation
             if (!frontmatter.title || !frontmatter.date || !frontmatter.excerpt) {
               console.warn(`Skipping ${dir}: Missing required frontmatter (title, date, excerpt).`);
