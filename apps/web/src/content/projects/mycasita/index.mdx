@@ -1,0 +1,14 @@
+---
+title: "MyCasita"
+date: "2026-11-11"
+tags: ["esp8266", "iot", "firmware", "sensors", "hardware"]
+author: "ril3y"
+description: "MyCasita is a self-hosted temperature, humidity and dew-point logger on a Wemos D1 mini (ESP8266). It serves its own dashboard at mycasita.local, computes dew point with the Magnus formula, pulls outdoor conditions from Open-Meteo to compare inside vs. outside, lets you annotate the charts with events, and keeps 30–60 days of crash-safe history in flash. No cloud, no app, no external assets — everything runs on the board, with a JSON HTTP API, an OpenAPI spec, optional MQTT, and desktop unit tests that simulate a power failure at every write."
+github: "https://github.com/ril3y/mycasita"
+coverImage: "/images/projects/mycasita/cover.webp"
+useThemeOverlay: true
+---
+
+A WiFi temperature, humidity and **dew-point** logger built on a Wemos D1 mini with a stacked DHT11/DHT22 or SHT30 shield. It serves its own dashboard, compares indoor against outdoor dew point so you know whether to open up or seal the room, and lets you mark events on the charts to see whether a change actually helped.
+
+I built it to chase a musty smell in a guest casita — and three weeks of its data is what tracked the source to condensation in a sealed roof cavity. The full write-up is on the blog: [MyCasita: the $6 sensor that found mold in my ceiling](/blog/mycasita).
